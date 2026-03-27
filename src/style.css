@@ -51,7 +51,9 @@ body::before {
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
 }
 
@@ -196,13 +198,20 @@ h2 {
 }
 
 .auth-form input:focus,
+.modal-form input:focus,
+.modal-form select:focus,
+.modal-form textarea:focus,
 .ghost-button:focus,
-.auth-form button:focus {
+.auth-form button:focus,
+.primary-button:focus,
+.icon-button:focus,
+.column-add-button:focus {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
 
 .auth-form button,
+.primary-button,
 .ghost-button {
   border: none;
   border-radius: 999px;
@@ -214,7 +223,8 @@ h2 {
     border-color 180ms ease;
 }
 
-.auth-form button {
+.auth-form button,
+.primary-button {
   padding: 14px 18px;
   background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
   color: white;
@@ -222,6 +232,7 @@ h2 {
 }
 
 .auth-form button:hover,
+.primary-button:hover,
 .ghost-button:hover {
   transform: translateY(-1px);
 }
@@ -245,6 +256,7 @@ h2 {
   display: flex;
   gap: 12px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .session-chip {
@@ -260,6 +272,10 @@ h2 {
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.5);
   color: var(--text);
+}
+
+.primary-button {
+  padding: 10px 16px;
 }
 
 .board {
@@ -283,6 +299,21 @@ h2 {
   align-items: start;
   padding-bottom: 14px;
   border-bottom: 1px solid rgba(92, 59, 35, 0.08);
+}
+
+.column-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.column-add-button {
+  border: 1px solid rgba(191, 90, 54, 0.18);
+  border-radius: 999px;
+  background: rgba(191, 90, 54, 0.08);
+  color: var(--accent-strong);
+  padding: 6px 10px;
+  cursor: pointer;
 }
 
 .column-header p {
@@ -355,6 +386,81 @@ h2 {
   font-size: 0.92rem;
 }
 
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(51, 34, 23, 0.4);
+  backdrop-filter: blur(10px);
+}
+
+.modal-card {
+  width: min(100%, 560px);
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  background: var(--surface-strong);
+  box-shadow: var(--shadow);
+  padding: 24px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+}
+
+.icon-button {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.modal-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.modal-form label {
+  display: grid;
+  gap: 8px;
+}
+
+.modal-form span {
+  font-size: 0.94rem;
+  color: var(--text-muted);
+}
+
+.modal-form input,
+.modal-form select,
+.modal-form textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid rgba(90, 58, 36, 0.12);
+  border-radius: 16px;
+  background: white;
+  color: var(--text);
+}
+
+.modal-form textarea {
+  resize: vertical;
+  min-height: 112px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: end;
+  gap: 10px;
+}
+
 @media (max-width: 1100px) {
   .shell:has(.auth-card) {
     grid-template-columns: 1fr;
@@ -402,8 +508,18 @@ h2 {
   }
 
   .session-chip,
-  .ghost-button {
+  .ghost-button,
+  .primary-button {
     text-align: center;
+  }
+
+  .modal-card {
+    padding: 20px;
+    border-radius: 22px;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
   }
 }
 

@@ -31,6 +31,7 @@ type BacklogItem = {
   display_title: string | null;
   primary_platform: PrimaryPlatform;
   note: string | null;
+  sort_order: number;
   works: WorkSummary | null;
 };
 
@@ -75,6 +76,11 @@ const platformLabels: Record<Exclude<PrimaryPlatform, null>, string> = {
 const appRoot = document.querySelector<HTMLDivElement>("#app");
 
 let currentSession: Session | null = null;
+let currentItems: BacklogItem[] = [];
+let addModalState: { isOpen: boolean; defaultStatus: BacklogStatus } = {
+  isOpen: false,
+  defaultStatus: "stacked",
+};
 
 void bootstrap();
 
@@ -104,7 +110,7 @@ async function renderApp() {
   const { data, error } = await supabase
     .from("backlog_items")
     .select(
-      "id, status, display_title, primary_platform, note, works(id, title, work_type, source_type, release_date, duration_bucket)",
+      "id, status, display_title, primary_platform, note, sort_order, works(id, title, work_type, source_type, release_date, duration_bucket)",
     )
     .order("sort_order")
     .order("created_at");
@@ -116,9 +122,12 @@ async function renderApp() {
   }
 
   const items = normalizeBacklogItems(data ?? []);
+  currentItems = items;
 
   getAppRoot().innerHTML = createBoardMarkup(items, currentSession);
   bindSignOutButton();
+  bindAddButtons();
+  bindAddModal();
 }
 
 function renderSignedOut() {
@@ -278,7 +287,12 @@ function createBoardMarkup(items: BacklogItem[], session: Session) {
               <h2>${statusLabels[status]}</h2>
               <p>${statusDescriptions[status]}</p>
             </div>
-            <span class="count-pill">${columnItems.length}</span>
+            <div class="column-actions">
+              <button class="column-add-button" type="button" data-add-status="${status}">
+                + 追加
+              </button>
+              <span class="count-pill">${columnItems.length}</span>
+            </div>
           </header>
           <div class="card-list">
             ${
@@ -303,11 +317,13 @@ function createBoardMarkup(items: BacklogItem[], session: Session) {
           </p>
         </div>
         <div class="header-actions">
+          <button id="open-add-button" class="primary-button" type="button">作品を追加</button>
           <p class="session-chip">${escapeHtml(session.user.email ?? "signed-in user")}</p>
           <button id="sign-out-button" class="ghost-button" type="button">ログアウト</button>
         </div>
       </section>
       <section class="board">${columns}</section>
+      ${addModalState.isOpen ? createAddModalMarkup(addModalState.defaultStatus) : ""}
     </main>
   `;
 }
@@ -344,6 +360,182 @@ function createCardMarkup(item: BacklogItem) {
   `;
 }
 
+function createAddModalMarkup(defaultStatus: BacklogStatus) {
+  const statusOptions = statusOrder
+    .map(
+      (status) => `
+        <option value="${status}" ${status === defaultStatus ? "selected" : ""}>
+          ${statusLabels[status]}
+        </option>
+      `,
+    )
+    .join("");
+
+  const platformOptions = [
+    { value: "", label: "未設定" },
+    ...Object.entries(platformLabels).map(([value, label]) => ({ value, label })),
+  ]
+    .map(
+      (option) => `
+        <option value="${option.value}">${option.label}</option>
+      `,
+    )
+    .join("");
+
+  return `
+    <div class="modal-backdrop" id="add-modal-backdrop">
+      <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="add-modal-title">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">Manual Add</p>
+            <h2 id="add-modal-title">手動で作品を追加</h2>
+          </div>
+          <button id="close-add-modal" class="icon-button" type="button" aria-label="閉じる">×</button>
+        </div>
+        <form id="add-item-form" class="modal-form">
+          <label>
+            <span>タイトル</span>
+            <input name="title" type="text" maxlength="120" required />
+          </label>
+          <label>
+            <span>種別</span>
+            <select name="workType">
+              <option value="movie">映画</option>
+              <option value="series">シリーズ</option>
+            </select>
+          </label>
+          <label>
+            <span>保存先列</span>
+            <select name="status">${statusOptions}</select>
+          </label>
+          <label>
+            <span>主視聴先</span>
+            <select name="primaryPlatform">${platformOptions}</select>
+          </label>
+          <label>
+            <span>メモ</span>
+            <textarea name="note" rows="4" maxlength="500"></textarea>
+          </label>
+          <div class="modal-actions">
+            <button id="cancel-add-modal" class="ghost-button" type="button">キャンセル</button>
+            <button class="primary-button" type="submit">追加する</button>
+          </div>
+          <p id="add-form-message" class="form-message" aria-live="polite"></p>
+        </form>
+      </section>
+    </div>
+  `;
+}
+
+function bindAddButtons() {
+  const openButton = document.querySelector<HTMLButtonElement>("#open-add-button");
+
+  openButton?.addEventListener("click", () => {
+    addModalState = { isOpen: true, defaultStatus: "stacked" };
+    void renderApp();
+  });
+
+  const columnButtons = document.querySelectorAll<HTMLButtonElement>("[data-add-status]");
+
+  for (const button of columnButtons) {
+    button.addEventListener("click", () => {
+      const status = button.dataset.addStatus as BacklogStatus | undefined;
+
+      if (!status) {
+        return;
+      }
+
+      addModalState = { isOpen: true, defaultStatus: status };
+      void renderApp();
+    });
+  }
+}
+
+function bindAddModal() {
+  const closeButton = document.querySelector<HTMLButtonElement>("#close-add-modal");
+  const cancelButton = document.querySelector<HTMLButtonElement>("#cancel-add-modal");
+  const backdrop = document.querySelector<HTMLDivElement>("#add-modal-backdrop");
+  const form = document.querySelector<HTMLFormElement>("#add-item-form");
+  const message = document.querySelector<HTMLParagraphElement>("#add-form-message");
+
+  const close = () => {
+    addModalState = { ...addModalState, isOpen: false };
+    void renderApp();
+  };
+
+  closeButton?.addEventListener("click", close);
+  cancelButton?.addEventListener("click", close);
+  backdrop?.addEventListener("click", (event) => {
+    if (event.target === backdrop) {
+      close();
+    }
+  });
+
+  form?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (!currentSession) {
+      return;
+    }
+
+    const formData = new FormData(form);
+    const title = getStringField(formData, "title").trim();
+    const workType = getStringField(formData, "workType") as Extract<WorkType, "movie" | "series">;
+    const status = getStringField(formData, "status") as BacklogStatus;
+    const primaryPlatform = normalizePrimaryPlatform(getStringField(formData, "primaryPlatform"));
+    const note = getNullableStringField(formData, "note");
+
+    if (!title) {
+      if (message) {
+        message.textContent = "タイトルを入力してください。";
+      }
+      return;
+    }
+
+    if (message) {
+      message.textContent = "作品を追加しています...";
+    }
+
+    const { data: work, error: workError } = await supabase
+      .from("works")
+      .insert({
+        created_by: currentSession.user.id,
+        source_type: "manual",
+        work_type: workType,
+        title,
+        search_text: buildSearchText(title),
+      })
+      .select("id")
+      .single();
+
+    if (workError) {
+      if (message) {
+        message.textContent = `作品の保存に失敗しました: ${workError.message}`;
+      }
+      return;
+    }
+
+    const { error: backlogError } = await supabase.from("backlog_items").insert({
+      user_id: currentSession.user.id,
+      work_id: work.id,
+      status,
+      primary_platform: primaryPlatform,
+      note,
+      sort_order: getNextSortOrder(status),
+    });
+
+    if (backlogError) {
+      if (message) {
+        message.textContent = `カードの保存に失敗しました: ${backlogError.message}`;
+      }
+      return;
+    }
+
+    addModalState = { ...addModalState, isOpen: false };
+    await renderApp();
+  });
+}
+
 function formatDurationBucket(value: WorkSummary["duration_bucket"]) {
   switch (value) {
     case "short":
@@ -357,6 +549,31 @@ function formatDurationBucket(value: WorkSummary["duration_bucket"]) {
     default:
       return null;
   }
+}
+
+function normalizePrimaryPlatform(value: string): PrimaryPlatform {
+  if (!value) {
+    return null;
+  }
+
+  return value as Exclude<PrimaryPlatform, null>;
+}
+
+function getNullableStringField(formData: FormData, key: string) {
+  const value = getStringField(formData, key).trim();
+  return value ? value : null;
+}
+
+function getNextSortOrder(status: BacklogStatus) {
+  const currentMax = currentItems
+    .filter((item) => item.status === status)
+    .reduce((max, item) => Math.max(max, item.sort_order), 0);
+
+  return currentMax + 1000;
+}
+
+function buildSearchText(title: string) {
+  return title.trim().toLocaleLowerCase("ja-JP");
 }
 
 function escapeHtml(value: string) {
