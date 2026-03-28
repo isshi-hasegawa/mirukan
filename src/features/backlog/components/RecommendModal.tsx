@@ -29,15 +29,7 @@ function filterItems(items: BacklogItem[], mode: ViewingMode): BacklogItem[] {
     .slice(0, 3);
 }
 
-function RecommendItem({
-  item,
-  onOpenDetail,
-  onMove,
-}: {
-  item: BacklogItem;
-  onOpenDetail: (itemId: string) => void;
-  onMove: (itemId: string) => void;
-}) {
+function RecommendItem({ item, onMove }: { item: BacklogItem; onMove: (itemId: string) => void }) {
   const [posterError, setPosterError] = useState(false);
   const work = item.works as WorkSummary;
   const title = item.display_title ?? work.title;
@@ -45,7 +37,7 @@ function RecommendItem({
 
   return (
     <li className="recommend-item">
-      <button type="button" className="recommend-item-info" onClick={() => onOpenDetail(item.id)}>
+      <div className="recommend-item-info">
         <div className="recommend-item-thumb">
           {posterUrl && !posterError ? (
             <img src={posterUrl} alt={title} onError={() => setPosterError(true)} />
@@ -54,7 +46,7 @@ function RecommendItem({
           )}
         </div>
         <span className="recommend-item-title">{title}</span>
-      </button>
+      </div>
       <button
         type="button"
         className="recommend-item-move"
@@ -70,11 +62,10 @@ function RecommendItem({
 type Props = {
   items: BacklogItem[];
   onClose: () => void;
-  onOpenDetail: (itemId: string) => void;
   onMoveToWantToWatch: (itemId: string) => void;
 };
 
-export function RecommendModal({ items, onClose, onOpenDetail, onMoveToWantToWatch }: Props) {
+export function RecommendModal({ items, onClose, onMoveToWantToWatch }: Props) {
   const [activeMode, setActiveMode] = useState<ViewingMode>("thoughtful");
 
   const stackedItems = items.filter((item) => item.status === "stacked");
@@ -122,12 +113,7 @@ export function RecommendModal({ items, onClose, onOpenDetail, onMoveToWantToWat
             ) : (
               <ul className="recommend-item-list" role="list">
                 {suggestions.map((item) => (
-                  <RecommendItem
-                    key={item.id}
-                    item={item}
-                    onOpenDetail={onOpenDetail}
-                    onMove={onMoveToWantToWatch}
-                  />
+                  <RecommendItem key={item.id} item={item} onMove={onMoveToWantToWatch} />
                 ))}
               </ul>
             )}
