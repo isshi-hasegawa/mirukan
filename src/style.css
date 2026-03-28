@@ -1350,15 +1350,11 @@ h3 {
   width: 32px;
   height: 32px;
   object-fit: contain;
-  padding: 6px;
+  padding: 4px;
 }
 
 .platform-picker-item.is-selected {
   border-color: var(--accent);
-}
-
-.platform-picker-item.is-selected img {
-  padding: 4px;
 }
 
 .platform-picker-none {
