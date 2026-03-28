@@ -58,6 +58,8 @@ let detailModalState: DetailModalState = {
 };
 let addModalSearchTimer: number | null = null;
 let addModalSearchRequestId = 0;
+let shouldRestoreAddModalSearchFocus = false;
+let addModalSearchSelection: { start: number; end: number } | null = null;
 
 void bootstrap();
 
@@ -208,6 +210,8 @@ function bindAddModal() {
   const close = () => {
     clearAddModalSearchTimer();
     addModalSearchRequestId += 1;
+    shouldRestoreAddModalSearchFocus = false;
+    addModalSearchSelection = null;
     addModalState = { ...addModalState, isOpen: false };
     renderSignedInView();
   };
@@ -222,6 +226,11 @@ function bindAddModal() {
 
   searchInput?.addEventListener("input", () => {
     const query = searchInput.value.trim();
+    shouldRestoreAddModalSearchFocus = true;
+    addModalSearchSelection = {
+      start: searchInput.selectionStart ?? query.length,
+      end: searchInput.selectionEnd ?? query.length,
+    };
     addModalState = { ...addModalState, searchQuery: query };
 
     if (!query) {
@@ -246,8 +255,22 @@ function bindAddModal() {
 
   searchButton?.addEventListener("click", async () => {
     const query = searchInput?.value.trim() ?? "";
+    shouldRestoreAddModalSearchFocus = true;
+    addModalSearchSelection = searchInput
+      ? {
+          start: searchInput.selectionStart ?? query.length,
+          end: searchInput.selectionEnd ?? query.length,
+        }
+      : null;
     await runAddModalSearch(query);
   });
+
+  if (shouldRestoreAddModalSearchFocus && searchInput) {
+    searchInput.focus({ preventScroll: true });
+    if (addModalSearchSelection) {
+      searchInput.setSelectionRange(addModalSearchSelection.start, addModalSearchSelection.end);
+    }
+  }
 
   bindSearchResultButtons();
 
@@ -460,6 +483,8 @@ function bindSearchResultButtons() {
         manualMode: false,
         isLoadingSeasons: selectedResult.tmdbMediaType === "tv",
       };
+      shouldRestoreAddModalSearchFocus = false;
+      addModalSearchSelection = null;
       renderSignedInView();
 
       if (selectedResult.tmdbMediaType !== "tv") {
@@ -498,6 +523,8 @@ function bindSearchResultButtons() {
       ...addModalState,
       selectedTmdbTarget: addModalState.selectedTmdbResult,
     };
+    shouldRestoreAddModalSearchFocus = false;
+    addModalSearchSelection = null;
     renderSignedInView();
   });
 
@@ -529,6 +556,8 @@ function bindSearchResultButtons() {
           seriesTitle: selectedResult.title,
         },
       };
+      shouldRestoreAddModalSearchFocus = false;
+      addModalSearchSelection = null;
       renderSignedInView();
     });
   }
