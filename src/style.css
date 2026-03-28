@@ -1108,9 +1108,9 @@ h3 {
   gap: 8px;
   width: 100%;
   padding: 12px 14px;
-  border: 1px solid rgba(92, 59, 35, 0.08);
+  border: none;
   border-radius: 16px;
-  background: rgba(92, 59, 35, 0.04);
+  background: none;
   color: var(--text);
   text-align: left;
   cursor: pointer;
@@ -1793,6 +1793,7 @@ h3 {
 .platform-picker-item {
   position: relative;
   cursor: pointer;
+  border: none;
   border-radius: 8px;
   overflow: hidden;
   background-clip: padding-box;
