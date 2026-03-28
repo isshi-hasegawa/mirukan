@@ -1384,11 +1384,11 @@ h3 {
 }
 
 .platform-picker-item[data-platform="netflix"] {
-  background: #e50914;
+  background: #000000;
 }
 
 .platform-picker-item[data-platform="prime_video"] {
-  background: #1a98ff;
+  background: #ffffff;
 }
 
 .platform-picker-item[data-platform="u_next"] {
@@ -1400,7 +1400,7 @@ h3 {
 }
 
 .platform-picker-item[data-platform="hulu"] {
-  background: #1ce783;
+  background: #040405;
 }
 
 .platform-picker-item[data-platform="apple_tv_plus"] {
