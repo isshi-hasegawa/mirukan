@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { DocumentTextIcon } from "@heroicons/react/24/outline";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../../../lib/supabase.ts";
 import { fetchTmdbSeasonOptions, searchTmdbWorks } from "../../../lib/tmdb.ts";
@@ -409,62 +410,58 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
           </div>
 
           <div className="modal-detail-fields">
-            <label>
-              <span>タイトル</span>
-              <input
-                name="title"
-                type="text"
-                maxLength={120}
-                value={resolvedTitle}
-                readOnly={!!selectedTmdbResult}
-                onChange={(e) => {
-                  if (!selectedTmdbResult) {
-                    setManualTitle(e.target.value);
-                  }
-                }}
-                required
-              />
-            </label>
-            <label>
-              <span>種別</span>
-              <select
-                name="workType"
-                disabled={!!selectedTmdbResult}
-                value={resolvedWorkType}
-                onChange={(e) => setWorkType(e.target.value as "movie" | "series")}
-              >
-                <option value="movie">映画</option>
-                <option value="series">シリーズ</option>
-              </select>
-            </label>
-            <label>
-              <span>保存先列</span>
-              <select
-                name="status"
-                value={status}
-                onChange={(e) => setStatus(e.target.value as BacklogStatus)}
-              >
-                {statusOrder.map((s) => (
-                  <option key={s} value={s}>
-                    {statusLabels[s]}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              <span>視聴先</span>
-              <PlatformPicker value={primaryPlatform} onChange={setPrimaryPlatform} />
-            </label>
-            <label>
-              <span>メモ</span>
+            <input
+              name="title"
+              type="text"
+              placeholder="タイトル"
+              aria-label="タイトル"
+              maxLength={120}
+              value={resolvedTitle}
+              readOnly={!!selectedTmdbResult}
+              onChange={(e) => {
+                if (!selectedTmdbResult) {
+                  setManualTitle(e.target.value);
+                }
+              }}
+              required
+            />
+            <div className="detail-status-picker" role="group" aria-label="種別">
+              {(["movie", "series"] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  className={`detail-status-btn${resolvedWorkType === t ? " is-active" : ""}`}
+                  disabled={!!selectedTmdbResult}
+                  onClick={() => setWorkType(t)}
+                >
+                  {t === "movie" ? "映画" : "シリーズ"}
+                </button>
+              ))}
+            </div>
+            <div className="detail-status-picker" role="group" aria-label="保存先列">
+              {statusOrder.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  className={`detail-status-btn${status === s ? " is-active" : ""}`}
+                  onClick={() => setStatus(s)}
+                >
+                  {statusLabels[s]}
+                </button>
+              ))}
+            </div>
+            <PlatformPicker value={primaryPlatform} onChange={setPrimaryPlatform} />
+            <div className="detail-note-editing">
+              <DocumentTextIcon className="detail-note-icon" />
               <textarea
                 name="note"
-                rows={4}
+                className="detail-inline-control detail-inline-textarea"
+                placeholder="メモを追加"
                 maxLength={500}
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
               />
-            </label>
+            </div>
           </div>
         </form>
         <div className="modal-footer">
