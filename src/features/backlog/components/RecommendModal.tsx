@@ -75,7 +75,7 @@ type Props = {
 };
 
 export function RecommendModal({ items, onClose, onOpenDetail, onMoveToWantToWatch }: Props) {
-  const [activeMode, setActiveMode] = useState<ViewingMode | null>(null);
+  const [activeMode, setActiveMode] = useState<ViewingMode>("thoughtful");
 
   const stackedItems = items.filter((item) => item.status === "stacked");
   const suggestions = activeMode ? filterItems(stackedItems, activeMode) : [];
@@ -117,13 +117,7 @@ export function RecommendModal({ items, onClose, onOpenDetail, onMoveToWantToWat
           </div>
 
           <div className="recommend-results">
-            {activeMode === null ? (
-              <ul className="recommend-item-list recommend-item-skeleton" role="list">
-                {[1, 2, 3].map((i) => (
-                  <li key={i} className="recommend-skeleton-item" />
-                ))}
-              </ul>
-            ) : suggestions.length === 0 ? (
+            {suggestions.length === 0 ? (
               <p className="recommend-empty">積みの中に該当する作品がありません</p>
             ) : (
               <ul className="recommend-item-list" role="list">
