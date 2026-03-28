@@ -6,6 +6,7 @@ declare
   work_tmdb_movie constant uuid := 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2';
   work_tmdb_series constant uuid := 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3';
   work_tmdb_season constant uuid := 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4';
+  work_tmdb_season_two constant uuid := 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5';
 begin
   insert into auth.users (
     instance_id,
@@ -261,6 +262,31 @@ begin
       75,
       0,
       50
+    ),
+    (
+      work_tmdb_season_two,
+      user_akari,
+      'tmdb',
+      'tv',
+      1396,
+      'season',
+      work_tmdb_series,
+      'ブレイキング・バッド シーズン2',
+      'Breaking Bad Season 2',
+      'ブレイキング・バッド シーズン2 breaking bad season 2',
+      '家族と秘密の両立がさらに難しくなっていく。',
+      '/e3oGYpoTUhOFK0jnyr9GFV0PB8V.jpg',
+      '2009-03-08',
+      null,
+      47,
+      'medium',
+      13,
+      null,
+      2,
+      array['Drama', 'Crime'],
+      75,
+      0,
+      75
     )
   on conflict (id) do update
   set
@@ -368,6 +394,19 @@ begin
     ),
     (
       'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb6',
+      user_akari,
+      work_tmdb_season_two,
+      'stacked',
+      null,
+      'netflix',
+      '次はシーズン2をまとめて進めたい。',
+      2000,
+      now() - interval '6 days',
+      now() - interval '1 day',
+      now() - interval '1 day'
+    ),
+    (
+      'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb7',
       user_ren,
       work_tmdb_movie,
       'stacked',

@@ -43,7 +43,10 @@ export function createInitialAddModalState(defaultStatus: BacklogStatus): AddMod
     searchQuery: "",
     searchResults: [],
     selectedTmdbResult: null,
+    selectedTmdbTarget: null,
+    seasonOptions: [],
     isSearching: false,
+    isLoadingSeasons: false,
     searchMessage: null,
     manualMode: false,
   };

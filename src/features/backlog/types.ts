@@ -1,4 +1,4 @@
-import type { TmdbSearchResult } from "../../lib/tmdb.ts";
+import type { TmdbSeasonOption, TmdbSearchResult, TmdbSelectionTarget } from "../../lib/tmdb.ts";
 
 export type BacklogStatus = "stacked" | "want_to_watch" | "watching" | "interrupted" | "watched";
 
@@ -50,7 +50,10 @@ export type AddModalState = {
   searchQuery: string;
   searchResults: TmdbSearchResult[];
   selectedTmdbResult: TmdbSearchResult | null;
+  selectedTmdbTarget: TmdbSelectionTarget | null;
+  seasonOptions: TmdbSeasonOption[];
   isSearching: boolean;
+  isLoadingSeasons: boolean;
   searchMessage: string | null;
   manualMode: boolean;
 };

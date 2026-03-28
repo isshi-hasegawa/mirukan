@@ -1,6 +1,6 @@
 import "./style.css";
 import { supabase } from "./lib/supabase.ts";
-import { searchTmdbWorks } from "./lib/tmdb.ts";
+import { fetchTmdbSeasonOptions, searchTmdbWorks } from "./lib/tmdb.ts";
 import {
   getNextSortOrder,
   getSortOrderForDrop,
@@ -41,7 +41,10 @@ let addModalState: AddModalState = {
   searchQuery: "",
   searchResults: [],
   selectedTmdbResult: null,
+  selectedTmdbTarget: null,
+  seasonOptions: [],
   isSearching: false,
+  isLoadingSeasons: false,
   searchMessage: null,
   manualMode: false,
 };
@@ -217,6 +220,8 @@ function bindAddModal() {
       ...addModalState,
       manualMode: !addModalState.manualMode,
       selectedTmdbResult: addModalState.manualMode ? addModalState.selectedTmdbResult : null,
+      selectedTmdbTarget: addModalState.manualMode ? addModalState.selectedTmdbTarget : null,
+      seasonOptions: addModalState.manualMode ? addModalState.seasonOptions : [],
     };
     renderSignedInView();
   });
@@ -230,6 +235,9 @@ function bindAddModal() {
         ...addModalState,
         searchQuery: query,
         searchResults: [],
+        selectedTmdbResult: null,
+        selectedTmdbTarget: null,
+        seasonOptions: [],
         searchMessage: "検索キーワードを入力してください。",
       };
       renderSignedInView();
@@ -243,7 +251,10 @@ function bindAddModal() {
       searchMessage: null,
       searchResults: [],
       selectedTmdbResult: null,
+      selectedTmdbTarget: null,
+      seasonOptions: [],
       manualMode: false,
+      isLoadingSeasons: false,
     };
     renderSignedInView();
 
@@ -254,6 +265,8 @@ function bindAddModal() {
         isSearching: false,
         searchQuery: query,
         searchResults: results,
+        selectedTmdbTarget: null,
+        seasonOptions: [],
         searchMessage:
           results.length > 0
             ? null
@@ -265,6 +278,8 @@ function bindAddModal() {
         isSearching: false,
         searchQuery: query,
         searchResults: [],
+        selectedTmdbTarget: null,
+        seasonOptions: [],
         searchMessage:
           error instanceof Error
             ? `TMDb 検索に失敗しました: ${error.message}`
@@ -290,7 +305,7 @@ function bindAddModal() {
     const status = getStringField(formData, "status") as BacklogStatus;
     const primaryPlatform = normalizePrimaryPlatform(getStringField(formData, "primaryPlatform"));
     const note = getNullableStringField(formData, "note");
-    const selectedTmdbResult = addModalState.manualMode ? null : addModalState.selectedTmdbResult;
+    const selectedTmdbTarget = addModalState.manualMode ? null : addModalState.selectedTmdbTarget;
 
     if (!title) {
       if (message) {
@@ -309,8 +324,8 @@ function bindAddModal() {
     let workError: { message: string } | null = null;
 
     try {
-      const result = selectedTmdbResult
-        ? await upsertTmdbWork(selectedTmdbResult, currentSession.user.id)
+      const result = selectedTmdbTarget
+        ? await upsertTmdbWork(selectedTmdbTarget, currentSession.user.id)
         : await supabase
             .from("works")
             .insert({
@@ -372,9 +387,15 @@ function bindAddModal() {
 
 function bindSearchResultButtons() {
   const searchResultButtons = document.querySelectorAll<HTMLButtonElement>("[data-tmdb-id]");
+  const selectSeriesTargetButton = document.querySelector<HTMLButtonElement>(
+    "[data-select-series-target]",
+  );
+  const selectSeasonButtons = document.querySelectorAll<HTMLButtonElement>(
+    "[data-select-season-number]",
+  );
 
   for (const button of searchResultButtons) {
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
       const tmdbId = Number(button.dataset.tmdbId);
       const tmdbMediaType = button.dataset.tmdbMediaType;
       const selectedResult = addModalState.searchResults.find(
@@ -388,7 +409,79 @@ function bindSearchResultButtons() {
       addModalState = {
         ...addModalState,
         selectedTmdbResult: selectedResult,
+        selectedTmdbTarget: selectedResult,
+        seasonOptions: [],
         manualMode: false,
+        isLoadingSeasons: selectedResult.tmdbMediaType === "tv",
+      };
+      renderSignedInView();
+
+      if (selectedResult.tmdbMediaType !== "tv") {
+        return;
+      }
+
+      try {
+        const seasonOptions = await fetchTmdbSeasonOptions(selectedResult);
+        addModalState = {
+          ...addModalState,
+          seasonOptions,
+          isLoadingSeasons: false,
+        };
+      } catch (error) {
+        addModalState = {
+          ...addModalState,
+          seasonOptions: [],
+          isLoadingSeasons: false,
+          searchMessage:
+            error instanceof Error
+              ? `シーズン一覧の取得に失敗しました: ${error.message}`
+              : "シーズン一覧の取得に失敗しました。",
+        };
+      }
+
+      renderSignedInView();
+    });
+  }
+
+  selectSeriesTargetButton?.addEventListener("click", () => {
+    if (!addModalState.selectedTmdbResult) {
+      return;
+    }
+
+    addModalState = {
+      ...addModalState,
+      selectedTmdbTarget: addModalState.selectedTmdbResult,
+    };
+    renderSignedInView();
+  });
+
+  for (const button of selectSeasonButtons) {
+    button.addEventListener("click", () => {
+      const seasonNumber = Number(button.dataset.selectSeasonNumber);
+      const selectedResult = addModalState.selectedTmdbResult;
+      const seasonOption = addModalState.seasonOptions.find(
+        (option) => option.seasonNumber === seasonNumber,
+      );
+
+      if (!selectedResult || !seasonOption || selectedResult.tmdbMediaType !== "tv") {
+        return;
+      }
+
+      addModalState = {
+        ...addModalState,
+        selectedTmdbTarget: {
+          tmdbId: selectedResult.tmdbId,
+          tmdbMediaType: "tv",
+          workType: "season",
+          title: seasonOption.title,
+          originalTitle: selectedResult.originalTitle,
+          overview: seasonOption.overview,
+          posterPath: seasonOption.posterPath,
+          releaseDate: seasonOption.releaseDate,
+          seasonNumber,
+          episodeCount: seasonOption.episodeCount,
+          seriesTitle: selectedResult.title,
+        },
       };
       renderSignedInView();
     });

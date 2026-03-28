@@ -354,13 +354,20 @@ function createAddModalMarkup(addModalState: AddModalState) {
     ? `
       <div class="selected-result">
         <p class="selected-result-label">選択中</p>
-        <p class="selected-result-title">${escapeHtml(addModalState.selectedTmdbResult.title)}</p>
+        <p class="selected-result-title">${escapeHtml(addModalState.selectedTmdbTarget?.title ?? addModalState.selectedTmdbResult.title)}</p>
         <p class="selected-result-meta">
-          ${addModalState.selectedTmdbResult.workType === "movie" ? "映画" : "シリーズ"}
-          · TMDb
           ${
-            addModalState.selectedTmdbResult.releaseDate
-              ? ` · ${escapeHtml(addModalState.selectedTmdbResult.releaseDate.slice(0, 4))}`
+            addModalState.selectedTmdbTarget?.workType === "season"
+              ? "シーズン"
+              : addModalState.selectedTmdbResult.workType === "movie"
+                ? "映画"
+                : "シリーズ"
+          }
+          ${addModalState.selectedTmdbTarget?.workType === "season" ? ` · シーズン${addModalState.selectedTmdbTarget.seasonNumber}` : ""}
+          ${
+            (addModalState.selectedTmdbTarget?.releaseDate ??
+            addModalState.selectedTmdbResult.releaseDate)
+              ? ` · ${escapeHtml((addModalState.selectedTmdbTarget?.releaseDate ?? addModalState.selectedTmdbResult.releaseDate)!.slice(0, 4))}`
               : ""
           }
         </p>
@@ -396,8 +403,48 @@ function createAddModalMarkup(addModalState: AddModalState) {
       ? `<p class="search-message">${escapeHtml(addModalState.searchMessage)}</p>`
       : "";
 
-  const resolvedTitle = addModalState.selectedTmdbResult?.title ?? "";
-  const resolvedWorkType = addModalState.selectedTmdbResult?.workType ?? "movie";
+  const resolvedTitle = addModalState.selectedTmdbTarget?.title ?? "";
+  const resolvedWorkType =
+    addModalState.selectedTmdbTarget?.workType === "season"
+      ? "series"
+      : (addModalState.selectedTmdbTarget?.workType ?? "movie");
+  const seasonPickerMarkup =
+    addModalState.selectedTmdbResult?.tmdbMediaType === "tv"
+      ? `
+        <div class="season-picker">
+          <p class="selected-result-label">追加単位</p>
+          <div class="season-option-list">
+            <button
+              class="season-option-button ${addModalState.selectedTmdbTarget?.workType !== "season" ? "is-selected" : ""}"
+              type="button"
+              data-select-series-target="true"
+            >
+              シリーズ全体
+            </button>
+            ${
+              addModalState.seasonOptions.length > 0
+                ? addModalState.seasonOptions
+                    .map(
+                      (season) => `
+                        <button
+                          class="season-option-button ${addModalState.selectedTmdbTarget?.workType === "season" && addModalState.selectedTmdbTarget.seasonNumber === season.seasonNumber ? "is-selected" : ""}"
+                          type="button"
+                          data-select-season-number="${season.seasonNumber}"
+                        >
+                          シーズン${season.seasonNumber}
+                          ${season.episodeCount ? `<span>${season.episodeCount}話</span>` : ""}
+                        </button>
+                      `,
+                    )
+                    .join("")
+                : addModalState.isLoadingSeasons
+                  ? '<p class="search-message">シーズン一覧を読み込んでいます...</p>'
+                  : ""
+            }
+          </div>
+        </div>
+      `
+      : "";
 
   return `
     <div class="modal-backdrop" id="add-modal-backdrop">
@@ -433,6 +480,7 @@ function createAddModalMarkup(addModalState: AddModalState) {
               </button>
             </div>
             ${selectedSummary}
+            ${seasonPickerMarkup}
             <div class="search-results">${searchResultsMarkup}</div>
           </div>
           <label>
