@@ -95,6 +95,7 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
     }
 
     resetSearchState();
+    const requestId = searchRequestIdRef.current;
 
     try {
       const results = await searchTmdbWorks(trimmed);
