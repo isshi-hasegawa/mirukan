@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { BacklogItem, BacklogStatus } from "../types.ts";
-import { platformLabels } from "../constants.ts";
 import { getDropSide } from "../helpers.ts";
+import { PlatformIcon } from "./PlatformIcon.tsx";
 
 type DropIndicator =
   | { type: "card"; itemId: string; side: "before" | "after" }
@@ -158,9 +158,7 @@ export function BacklogCard({
           <p className="card-title">{title}</p>
           <p className="card-meta">{metadata.join(" · ")}</p>
           <div className="card-footer">
-            {item.primary_platform && (
-              <span className="meta-chip">{platformLabels[item.primary_platform]}</span>
-            )}
+            {item.primary_platform && <PlatformIcon platform={item.primary_platform} />}
           </div>
           {item.note && <p className="card-note">{item.note}</p>}
         </div>

@@ -7,9 +7,9 @@ export type PrimaryPlatform =
   | "prime_video"
   | "u_next"
   | "disney_plus"
+  | "hulu"
   | "apple_tv_plus"
-  | "theater"
-  | "other"
+  | "apple_tv"
   | null;
 
 export type WorkSummary = {

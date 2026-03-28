@@ -5,7 +5,8 @@ import { fetchTmdbSeasonOptions, searchTmdbWorks } from "../../../lib/tmdb.ts";
 import type { TmdbSearchResult, TmdbSelectionTarget, TmdbSeasonOption } from "../../../lib/tmdb.ts";
 import { upsertTmdbWork, getNextSortOrder } from "../data.ts";
 import { buildSearchText, normalizePrimaryPlatform } from "../helpers.ts";
-import { platformLabels, statusLabels, statusOrder } from "../constants.ts";
+import { statusLabels, statusOrder } from "../constants.ts";
+import { PlatformPicker } from "./PlatformPicker.tsx";
 import type { BacklogItem, BacklogStatus, WorkType } from "../types.ts";
 
 type Props = {
@@ -425,18 +426,7 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
             </label>
             <label>
               <span>視聴先</span>
-              <select
-                name="primaryPlatform"
-                value={primaryPlatform}
-                onChange={(e) => setPrimaryPlatform(e.target.value)}
-              >
-                <option value="">未設定</option>
-                {Object.entries(platformLabels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
+              <PlatformPicker value={primaryPlatform} onChange={setPrimaryPlatform} />
             </label>
             <label>
               <span>メモ</span>

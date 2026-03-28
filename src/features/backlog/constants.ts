@@ -29,7 +29,7 @@ export const platformLabels: Record<Exclude<PrimaryPlatform, null>, string> = {
   prime_video: "Prime Video",
   u_next: "U-NEXT",
   disney_plus: "Disney+",
+  hulu: "Hulu",
   apple_tv_plus: "Apple TV+",
-  theater: "劇場",
-  other: "その他",
+  apple_tv: "Apple TV",
 };

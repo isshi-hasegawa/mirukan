@@ -2,7 +2,8 @@ import { useEffect, useRef } from "react";
 import { supabase } from "../../../lib/supabase.ts";
 import { getSortOrderForStatusChange } from "../data.ts";
 import { normalizePrimaryPlatform } from "../helpers.ts";
-import { platformLabels, statusLabels, statusOrder } from "../constants.ts";
+import { statusLabels, statusOrder } from "../constants.ts";
+import { PlatformPicker } from "./PlatformPicker.tsx";
 import type { BacklogItem, BacklogStatus, DetailModalState } from "../types.ts";
 
 type Props = {
@@ -225,10 +226,20 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
   };
 
   const statusOptions = statusOrder.map((s) => ({ value: s, label: statusLabels[s] }));
-  const platformOptions = [
-    { value: "", label: "未設定" },
-    ...Object.entries(platformLabels).map(([value, label]) => ({ value, label })),
-  ];
+
+  const handlePlatformSelect = async (value: string) => {
+    const platform = normalizePrimaryPlatform(value);
+    const { error } = await supabase
+      .from("backlog_items")
+      .update({ primary_platform: platform })
+      .eq("id", item.id);
+    if (error) {
+      onStateChange({ ...state, message: `更新に失敗しました: ${error.message}` });
+      return;
+    }
+    onUpdate({ ...item, primary_platform: platform });
+    onStateChange({ openItemId: item.id, editingField: null, draftValue: "", message: null });
+  };
 
   return (
     <div
@@ -266,12 +277,13 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
               work.title,
             )}
             {renderEditableField("status", "状態", statusLabels[item.status], statusOptions)}
-            {renderEditableField(
-              "primaryPlatform",
-              "視聴先",
-              item.primary_platform ? platformLabels[item.primary_platform] : "未設定",
-              platformOptions,
-            )}
+            <div className="detail-inline-field">
+              <span className="detail-inline-label">視聴先</span>
+              <PlatformPicker
+                value={item.primary_platform ?? ""}
+                onChange={(v) => void handlePlatformSelect(v)}
+              />
+            </div>
             {renderEditableField("note", "メモ", item.note ?? "未設定", undefined, true)}
 
             {state.message && (
