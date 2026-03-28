@@ -134,6 +134,7 @@ export function createBoardMarkup(
             aria-label="作品を探す"
             title="作品を探す"
           >
+            ${createSearchIcon()}
             作品を探す
           </button>
           <p class="session-chip">${escapeHtml(sessionEmail)}</p>
@@ -558,6 +559,15 @@ function createDotsIcon() {
       <circle cx="10" cy="4.25" r="1.4" />
       <circle cx="10" cy="10" r="1.4" />
       <circle cx="10" cy="15.75" r="1.4" />
+    </svg>
+  `;
+}
+
+function createSearchIcon() {
+  return `
+    <svg class="search-icon" viewBox="0 0 20 20" aria-hidden="true">
+      <circle cx="8.5" cy="8.5" r="4.75" />
+      <path d="M12.2 12.2 16 16" />
     </svg>
   `;
 }

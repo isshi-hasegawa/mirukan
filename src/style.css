@@ -242,6 +242,10 @@ h3 {
 
 .auth-form button,
 .primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   padding: 14px 18px;
   background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
   color: white;
@@ -376,6 +380,16 @@ h3 {
   width: 16px;
   height: 16px;
   fill: currentColor;
+}
+
+.search-icon {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.75;
+  fill: none;
 }
 
 .count-pill,
