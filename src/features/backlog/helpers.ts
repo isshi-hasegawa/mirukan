@@ -1,4 +1,4 @@
-import type { AddModalState, BacklogStatus, PrimaryPlatform } from "./types.ts";
+import type { PrimaryPlatform } from "./types.ts";
 
 export function getStringField(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -34,20 +34,4 @@ export function escapeHtml(value: string) {
 export function getDropSide(card: HTMLElement, clientY: number) {
   const rect = card.getBoundingClientRect();
   return clientY < rect.top + rect.height / 2 ? "before" : "after";
-}
-
-export function createInitialAddModalState(defaultStatus: BacklogStatus): AddModalState {
-  return {
-    isOpen: true,
-    defaultStatus,
-    searchQuery: "",
-    searchResults: [],
-    selectedTmdbResult: null,
-    selectedTmdbTarget: null,
-    seasonOptions: [],
-    isSearching: false,
-    isLoadingSeasons: false,
-    searchMessage: null,
-    manualMode: false,
-  };
 }

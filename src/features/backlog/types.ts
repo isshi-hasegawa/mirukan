@@ -1,5 +1,3 @@
-import type { TmdbSeasonOption, TmdbSearchResult, TmdbSelectionTarget } from "../../lib/tmdb.ts";
-
 export type BacklogStatus = "stacked" | "want_to_watch" | "watching" | "interrupted" | "watched";
 
 export type WorkType = "movie" | "series" | "season";
@@ -31,6 +29,9 @@ export type WorkSummary = {
   genres: string[];
   season_count: number | null;
   season_number: number | null;
+  focus_required_score: number | null;
+  background_fit_score: number | null;
+  completion_load_score: number | null;
 };
 
 export type BacklogItem = {
@@ -45,20 +46,6 @@ export type BacklogItem = {
 
 export type BacklogItemRow = Omit<BacklogItem, "works"> & {
   works: WorkSummary | WorkSummary[] | null;
-};
-
-export type AddModalState = {
-  isOpen: boolean;
-  defaultStatus: BacklogStatus;
-  searchQuery: string;
-  searchResults: TmdbSearchResult[];
-  selectedTmdbResult: TmdbSearchResult | null;
-  selectedTmdbTarget: TmdbSelectionTarget | null;
-  seasonOptions: TmdbSeasonOption[];
-  isSearching: boolean;
-  isLoadingSeasons: boolean;
-  searchMessage: string | null;
-  manualMode: boolean;
 };
 
 export type DetailModalState = {

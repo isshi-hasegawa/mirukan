@@ -178,7 +178,105 @@ function buildTmdbWorkUpdate(details: TmdbWorkDetails) {
     season_count: details.seasonCount,
     season_number: details.seasonNumber,
     genres: details.genres,
+    focus_required_score: calcFocusRequiredScore(details.genres),
+    background_fit_score: calcBackgroundFitScore(details.genres),
+    completion_load_score: calcCompletionLoadScore(details),
   };
+}
+
+const FOCUS_HIGH_GENRES = new Set([
+  "スリラー",
+  "ミステリー",
+  "ホラー",
+  "戦争",
+  "戦争&政治",
+  "歴史",
+  "ドキュメンタリー",
+]);
+const FOCUS_LOW_GENRES = new Set([
+  "コメディ",
+  "ロマンス",
+  "ファミリー",
+  "アニメーション",
+  "キッズ",
+  "音楽",
+  "リアリティ",
+  "ソープ",
+  "トーク",
+]);
+
+function calcFocusRequiredScore(genres: string[]): number {
+  if (genres.some((g) => FOCUS_HIGH_GENRES.has(g))) return 75;
+  if (genres.some((g) => FOCUS_LOW_GENRES.has(g))) return 25;
+  return 50;
+}
+
+const BG_HIGH_GENRES = new Set([
+  "コメディ",
+  "アニメーション",
+  "ファミリー",
+  "キッズ",
+  "音楽",
+  "リアリティ",
+  "トーク",
+  "ソープ",
+]);
+const BG_MED_GENRES = new Set([
+  "アクション",
+  "アドベンチャー",
+  "アクション&アドベンチャー",
+  "ロマンス",
+  "SF&ファンタジー",
+  "西部劇",
+]);
+const BG_LOW_GENRES = new Set([
+  "スリラー",
+  "ミステリー",
+  "ホラー",
+  "戦争",
+  "戦争&政治",
+  "歴史",
+  "ドキュメンタリー",
+]);
+
+function calcBackgroundFitScore(genres: string[]): number {
+  if (genres.some((g) => BG_LOW_GENRES.has(g))) return 0;
+  if (genres.some((g) => BG_HIGH_GENRES.has(g))) return 75;
+  if (genres.some((g) => BG_MED_GENRES.has(g))) return 50;
+  return 25;
+}
+
+function calcCompletionLoadScore(details: TmdbWorkDetails): number {
+  if (details.workType === "movie") {
+    const bucket = getDurationBucket(details.runtimeMinutes);
+    if (bucket === "short") return 0;
+    if (bucket === "medium") return 25;
+    if (bucket === "long") return 50;
+    if (bucket === "very_long") return 75;
+    return 50;
+  }
+
+  if (details.workType === "season") {
+    const episodeCount = details.episodeCount;
+    const runtime = details.typicalEpisodeRuntimeMinutes;
+    if (episodeCount !== null && runtime !== null) {
+      const totalHours = (episodeCount * runtime) / 60;
+      if (totalHours < 3) return 25;
+      if (totalHours < 10) return 50;
+      if (totalHours < 20) return 75;
+      return 100;
+    }
+    return 50;
+  }
+
+  // series
+  const seasonCount = details.seasonCount;
+  if (seasonCount !== null) {
+    if (seasonCount <= 1) return 50;
+    if (seasonCount <= 4) return 75;
+    return 100;
+  }
+  return 50;
 }
 
 async function upsertTmdbSeasonWork(
