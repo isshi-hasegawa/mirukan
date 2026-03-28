@@ -6,7 +6,6 @@ export function createSignedOutMarkup() {
   return `
     <main class="shell">
       <section class="intro-card">
-        <p class="eyebrow">Mirukan Local Preview</p>
         <h1>みるカンの土台を、まず本物のデータで見る。</h1>
         <p class="lead">
           ローカル Supabase に接続して、seed 済みの backlog をそのまま 5 列で確認できます。
@@ -53,7 +52,6 @@ export function createErrorMarkup(message: string) {
     <main class="shell">
       <section class="board-header">
         <div>
-          <p class="eyebrow">Mirukan Local Preview</p>
           <h1>backlog の取得でつまずいています。</h1>
           <p class="lead">${escapeHtml(message)}</p>
         </div>
@@ -68,7 +66,6 @@ export function createLoadingMarkup() {
     <main class="shell">
       <section class="board-header">
         <div>
-          <p class="eyebrow">Mirukan Local Preview</p>
           <h1>backlog を読み込んでいます。</h1>
           <p class="lead">ローカル Supabase の seed データを取得中です。</p>
         </div>
@@ -127,7 +124,6 @@ export function createBoardMarkup(
     <main class="shell">
       <section class="board-header">
         <div>
-          <p class="eyebrow">Mirukan Local Preview</p>
           <h1>みるカン</h1>
         </div>
         <div class="header-actions">
