@@ -299,6 +299,9 @@ h3 {
 }
 
 .ghost-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   padding: 10px 16px;
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.5);
@@ -390,6 +393,11 @@ h3 {
   stroke-linejoin: round;
   stroke-width: 1.75;
   fill: none;
+}
+
+.recommend-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .count-pill,

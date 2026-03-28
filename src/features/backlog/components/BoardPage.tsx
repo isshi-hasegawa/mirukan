@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { SparklesIcon } from "@heroicons/react/24/solid";
 import { supabase } from "../../../lib/supabase.ts";
 import { getSortOrderForDrop, getTopSortOrder, normalizeBacklogItems } from "../data.ts";
 import { getDropSide } from "../helpers.ts";
@@ -262,7 +263,8 @@ export function BoardPage({ session }: Props) {
         </div>
         <div className="header-actions">
           <button className="ghost-button" type="button" onClick={() => setIsRecommendOpen(true)}>
-            次何見る？
+            <SparklesIcon className="recommend-icon" />
+            見る作品を決める
           </button>
           {!isMobileLayout && (
             <button
