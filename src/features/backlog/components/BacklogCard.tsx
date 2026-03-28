@@ -1,8 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { FilmIcon, TvIcon } from "@heroicons/react/24/outline";
 import type { BacklogItem, BacklogStatus } from "../types.ts";
 import { getDropSide } from "../helpers.ts";
 import { PlatformIcon } from "./PlatformIcon.tsx";
+import { PosterImage } from "./PosterImage.tsx";
+
+const TOUCH_HOLD_MS = 300;
+const TOUCH_MOVE_THRESHOLD_PX = 8;
 
 type DropIndicator =
   | { type: "card"; itemId: string; side: "before" | "after" }
@@ -39,7 +43,6 @@ export function BacklogCard({
   onDragOver,
   onDrop,
 }: Props) {
-  const [posterError, setPosterError] = useState(false);
   const articleRef = useRef<HTMLElement>(null);
   const callbackRef = useRef({ onDragStart, onDragEnd, onDragOver, onDrop });
   const touchState = useRef<{
@@ -65,7 +68,7 @@ export function BacklogCard({
       touchState.current.timer = setTimeout(() => {
         touchState.current.isDragging = true;
         callbackRef.current.onDragStart(item.id, item.status);
-      }, 300);
+      }, TOUCH_HOLD_MS);
     };
 
     const onTouchMove = (e: TouchEvent) => {
@@ -74,7 +77,7 @@ export function BacklogCard({
       const dy = touch.clientY - touchState.current.startY;
 
       if (!touchState.current.isDragging) {
-        if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+        if (Math.abs(dx) > TOUCH_MOVE_THRESHOLD_PX || Math.abs(dy) > TOUCH_MOVE_THRESHOLD_PX) {
           if (touchState.current.timer) {
             clearTimeout(touchState.current.timer);
             touchState.current.timer = null;
@@ -133,12 +136,6 @@ export function BacklogCard({
   }, [item.id, item.status]);
 
   const work = item.works;
-
-  const posterUrl = work?.poster_path ? `https://image.tmdb.org/t/p/w185${work.poster_path}` : null;
-
-  useEffect(() => {
-    setPosterError(false);
-  }, [posterUrl]);
 
   if (!work) {
     return null;
@@ -259,15 +256,11 @@ export function BacklogCard({
       <div className="card-body">
         <div className="card-thumb-wrap">
           <div className="card-thumb">
-            {posterUrl && !posterError ? (
-              <img
-                src={posterUrl}
-                alt={`${title} のポスター`}
-                onError={() => setPosterError(true)}
-              />
-            ) : (
-              <div className="card-thumb-fallback">No Poster</div>
-            )}
+            <PosterImage
+              posterPath={work.poster_path}
+              alt={`${title} のポスター`}
+              fallbackClassName="card-thumb-fallback"
+            />
           </div>
         </div>
         <div className="card-content">

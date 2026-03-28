@@ -3,6 +3,8 @@ import type { BacklogItem, BacklogStatus } from "../types.ts";
 import { statusOrder, statusLabels } from "../constants.ts";
 import { KanbanColumn } from "./KanbanColumn.tsx";
 
+const SWIPE_THRESHOLD_PX = 50;
+
 type DropIndicator =
   | { type: "card"; itemId: string; side: "before" | "after" }
   | { type: "column"; status: BacklogStatus };
@@ -83,7 +85,7 @@ export function KanbanBoard({
     if (isMobileDragging) return;
     const dx = e.changedTouches[0].clientX - touchStartX.current;
     const dy = e.changedTouches[0].clientY - touchStartY.current;
-    if (Math.abs(dx) < 50) return;
+    if (Math.abs(dx) < SWIPE_THRESHOLD_PX) return;
     if (Math.abs(dy) > Math.abs(dx)) return;
     if (dx < 0 && currentIndex < statusOrder.length - 1) {
       onTabChange(statusOrder[currentIndex + 1]);

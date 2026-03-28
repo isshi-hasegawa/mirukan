@@ -9,7 +9,7 @@ import {
   type TmdbWorkDetails,
 } from "../../lib/tmdb.ts";
 import { buildSearchText } from "./helpers.ts";
-import type { BacklogItem, BacklogItemRow, BacklogStatus, WorkType } from "./types.ts";
+import type { BacklogItem, BacklogItemRow, BacklogStatus, WorkSummary, WorkType } from "./types.ts";
 
 export function normalizeBacklogItems(rows: unknown[]): BacklogItem[] {
   return rows.flatMap((row) => {
@@ -410,6 +410,24 @@ export async function addAllSeasons(
   }
 
   return { error: null };
+}
+
+export type ViewingMode = "focus" | "thoughtful" | "quick" | "background";
+
+export function applyModeFilter(work: WorkSummary, mode: ViewingMode): boolean {
+  if (mode === "background") {
+    return work.background_fit_score !== null && work.background_fit_score >= 50;
+  }
+
+  const duration =
+    work.work_type === "movie" ? work.runtime_minutes : work.typical_episode_runtime_minutes;
+
+  if (duration === null) return false;
+  if (mode === "focus" && duration < 80) return false;
+  if (mode === "thoughtful" && (duration < 40 || duration >= 80)) return false;
+  if (mode === "quick" && duration >= 40) return false;
+
+  return true;
 }
 
 function getDurationBucket(minutes: number | null) {

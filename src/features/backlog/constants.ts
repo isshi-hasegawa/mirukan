@@ -1,4 +1,11 @@
 import type { BacklogStatus, PrimaryPlatform } from "./types.ts";
+import netflixUrl from "../../assets/icons/netflix.svg?url";
+import primeVideoUrl from "../../assets/icons/prime_video.svg?url";
+import unextUrl from "../../assets/icons/unext.svg?url";
+import disneyPlusUrl from "../../assets/icons/disney_plus.svg?url";
+import huluUrl from "../../assets/icons/hulu.svg?url";
+import appleTvPlusUrl from "../../assets/icons/apple_tv_plus.svg?url";
+import appleTvUrl from "../../assets/icons/apple_tv.svg?url";
 
 export const statusOrder: BacklogStatus[] = [
   "stacked",
@@ -33,3 +40,15 @@ export const platformLabels: Record<Exclude<PrimaryPlatform, null>, string> = {
   apple_tv_plus: "Apple TV+",
   apple_tv: "Apple TV",
 };
+
+export const platformIcons: Record<Exclude<PrimaryPlatform, null>, string> = {
+  netflix: netflixUrl,
+  prime_video: primeVideoUrl,
+  u_next: unextUrl,
+  disney_plus: disneyPlusUrl,
+  hulu: huluUrl,
+  apple_tv_plus: appleTvPlusUrl,
+  apple_tv: appleTvUrl,
+};
+
+export const platformKeys = Object.keys(platformIcons) as Exclude<PrimaryPlatform, null>[];

@@ -10,10 +10,11 @@ import {
 import { supabase } from "../../../lib/supabase.ts";
 import { fetchTmdbTrending } from "../../../lib/tmdb.ts";
 import type { TmdbSearchResult } from "../../../lib/tmdb.ts";
+import { applyModeFilter, type ViewingMode } from "../data.ts";
 import { platformLabels } from "../constants.ts";
+import { PosterImage } from "./PosterImage.tsx";
 import type { BacklogItem, WorkSummary } from "../types.ts";
 
-type ViewingMode = "focus" | "thoughtful" | "quick" | "background";
 type ActiveTab = "trending" | ViewingMode;
 
 const MODES: {
@@ -36,22 +37,6 @@ function getSuggestionKey(item: SuggestionItem): string {
   if (item.source === "backlog") return item.backlogItem.id;
   if (item.source === "global") return item.work.id;
   return `${item.result.tmdbMediaType}-${item.result.tmdbId}`;
-}
-
-function applyModeFilter(work: WorkSummary, mode: ViewingMode): boolean {
-  if (mode === "background") {
-    return work.background_fit_score !== null && work.background_fit_score >= 50;
-  }
-
-  const duration =
-    work.work_type === "movie" ? work.runtime_minutes : work.typical_episode_runtime_minutes;
-
-  if (duration === null) return false;
-  if (mode === "focus" && duration < 80) return false;
-  if (mode === "thoughtful" && (duration < 40 || duration >= 80)) return false;
-  if (mode === "quick" && duration >= 40) return false;
-
-  return true;
 }
 
 function filterBacklogItems(items: BacklogItem[], mode: ViewingMode): SuggestionItem[] {
@@ -100,8 +85,6 @@ function RecommendItem({
   item: SuggestionItem;
   onMove: (item: SuggestionItem) => void;
 }) {
-  const [posterError, setPosterError] = useState(false);
-
   const { title, posterPath, runtime, workType, jpWatchPlatforms } = (() => {
     if (item.source === "trending") {
       return {
@@ -123,17 +106,17 @@ function RecommendItem({
   })();
   const WorkTypeIcon = workType === "movie" ? FilmIcon : TvIcon;
 
-  const posterUrl = posterPath ? `https://image.tmdb.org/t/p/w92${posterPath}` : null;
-
   return (
     <li className="recommend-item" onClick={() => onMove(item)}>
       <div className="recommend-item-info">
         <div className="recommend-item-thumb">
-          {posterUrl && !posterError ? (
-            <img src={posterUrl} alt={title} onError={() => setPosterError(true)} />
-          ) : (
-            <span className="recommend-item-thumb-fallback">{title.slice(0, 2)}</span>
-          )}
+          <PosterImage
+            posterPath={posterPath}
+            alt={title}
+            size="w92"
+            fallback={title.slice(0, 2)}
+            fallbackClassName="recommend-item-thumb-fallback"
+          />
         </div>
         <div className="recommend-item-meta">
           <span className="recommend-item-title">{title}</span>

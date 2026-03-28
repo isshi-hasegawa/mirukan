@@ -5,6 +5,7 @@ import { getSortOrderForStatusChange } from "../data.ts";
 import { normalizePrimaryPlatform } from "../helpers.ts";
 import { statusLabels, statusOrder } from "../constants.ts";
 import { PlatformPicker } from "./PlatformPicker.tsx";
+import { PosterImage } from "./PosterImage.tsx";
 import type { BacklogItem, BacklogStatus, DetailModalState } from "../types.ts";
 
 type Props = {
@@ -49,7 +50,6 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
 
   const work = item.works;
   const title = work.title;
-  const posterUrl = work.poster_path ? `https://image.tmdb.org/t/p/w500${work.poster_path}` : null;
   const WorkTypeIcon = work.work_type === "movie" ? FilmIcon : TvIcon;
   const workTypeLabel =
     work.work_type === "movie" ? "映画" : work.work_type === "series" ? "シリーズ" : "シーズン";
@@ -189,11 +189,12 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
       >
         <div className="detail-modal-body">
           <div className="detail-poster">
-            {posterUrl ? (
-              <img src={posterUrl} alt={`${title} のポスター`} />
-            ) : (
-              <div className="detail-poster-fallback">No Poster</div>
-            )}
+            <PosterImage
+              posterPath={work.poster_path}
+              alt={`${title} のポスター`}
+              size="w500"
+              fallbackClassName="detail-poster-fallback"
+            />
           </div>
           <div className="detail-title-area">
             <h2 id="detail-modal-title">{title}</h2>

@@ -10,6 +10,8 @@ import { platformLabels, statusLabels, statusOrder } from "../constants.ts";
 import { PlatformPicker } from "./PlatformPicker.tsx";
 import type { BacklogItem, BacklogStatus, WorkType } from "../types.ts";
 
+const SEARCH_DEBOUNCE_MS = 250;
+
 type Props = {
   defaultStatus: BacklogStatus;
   items: BacklogItem[];
@@ -97,7 +99,7 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
     }
     searchTimerRef.current = window.setTimeout(() => {
       void runSearch(query);
-    }, 250);
+    }, SEARCH_DEBOUNCE_MS);
   };
 
   const runSearch = async (query: string) => {
