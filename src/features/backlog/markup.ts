@@ -260,6 +260,10 @@ function createDetailModalMarkup(item: BacklogItem | null, detailModalState: Det
           />
         </label>
         <label>
+          <span>状態</span>
+          <select name="status">${createStatusOptions(item.status)}</select>
+        </label>
+        <label>
           <span>主視聴先</span>
           <select name="primaryPlatform">${platformOptions}</select>
         </label>
@@ -412,7 +416,17 @@ function createAddModalMarkup(addModalState: AddModalState) {
     addModalState.selectedTmdbResult?.tmdbMediaType === "tv"
       ? `
         <div class="season-picker">
-          <p class="selected-result-label">追加単位</p>
+          <div class="season-picker-header">
+            <div>
+              <p class="selected-result-label">追加単位</p>
+              <p class="season-picker-copy">シリーズ全体で積むか、シーズン単位で積むかを選べます。</p>
+            </div>
+            ${
+              addModalState.selectedTmdbTarget?.workType === "season"
+                ? `<span class="season-selection-badge">シーズン${addModalState.selectedTmdbTarget.seasonNumber}を選択中</span>`
+                : '<span class="season-selection-badge">シリーズ全体を選択中</span>'
+            }
+          </div>
           <div class="season-option-list">
             <button
               class="season-option-button ${addModalState.selectedTmdbTarget?.workType !== "season" ? "is-selected" : ""}"
@@ -552,6 +566,18 @@ function createPlatformOptions(selectedPlatform: BacklogItem["primary_platform"]
       (option) => `
         <option value="${option.value}" ${selectedPlatform === option.value ? "selected" : ""}>
           ${option.label}
+        </option>
+      `,
+    )
+    .join("");
+}
+
+function createStatusOptions(selectedStatus: BacklogStatus) {
+  return statusOrder
+    .map(
+      (status) => `
+        <option value="${status}" ${selectedStatus === status ? "selected" : ""}>
+          ${statusLabels[status]}
         </option>
       `,
     )

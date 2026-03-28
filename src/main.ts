@@ -768,6 +768,7 @@ function bindCardDetails() {
 
     const formData = new FormData(editForm);
     const displayTitle = getNullableStringField(formData, "displayTitle");
+    const status = getStringField(formData, "status") as BacklogStatus;
     const primaryPlatform = normalizePrimaryPlatform(getStringField(formData, "primaryPlatform"));
     const note = getNullableStringField(formData, "note");
 
@@ -779,6 +780,7 @@ function bindCardDetails() {
       .from("backlog_items")
       .update({
         display_title: displayTitle,
+        status,
         primary_platform: primaryPlatform,
         note,
       })
@@ -796,6 +798,7 @@ function bindCardDetails() {
         ? {
             ...item,
             display_title: displayTitle,
+            status,
             primary_platform: primaryPlatform,
             note,
           }

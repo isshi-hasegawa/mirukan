@@ -227,7 +227,7 @@ export async function fetchTmdbWorkDetails(target: TmdbSelectionTarget): Promise
       tmdbId: json.id,
       tmdbMediaType: "movie",
       workType: "movie",
-      title: translatedTitle ?? json.title,
+      title: firstNonBlank(translatedTitle, json.title, target.title, "Untitled movie"),
       originalTitle: json.original_title ?? target.originalTitle,
       overview: json.overview ?? target.overview,
       posterPath: json.poster_path ?? target.posterPath,
@@ -257,7 +257,13 @@ export async function fetchTmdbWorkDetails(target: TmdbSelectionTarget): Promise
       tmdbId: target.tmdbId,
       tmdbMediaType: "tv",
       workType: "season",
-      title: translatedTitle ?? seasonJson.name,
+      title: resolveSeasonTitle(
+        target.seriesTitle,
+        target.seasonNumber,
+        translatedTitle,
+        seasonJson.name,
+        target.title,
+      ),
       originalTitle: seasonJson.name,
       overview: seasonJson.overview ?? target.overview,
       posterPath: seasonJson.poster_path ?? target.posterPath,
@@ -282,7 +288,7 @@ export async function fetchTmdbWorkDetails(target: TmdbSelectionTarget): Promise
     tmdbId: json.id,
     tmdbMediaType: "tv",
     workType: "series",
-    title: translatedTitle ?? json.name,
+    title: firstNonBlank(translatedTitle, json.name, target.title, "Untitled series"),
     originalTitle: json.original_name ?? target.originalTitle,
     overview: json.overview ?? target.overview,
     posterPath: json.poster_path ?? target.posterPath,
@@ -343,4 +349,40 @@ async function fetchTvSeriesDetails(tmdbId: number) {
   }
 
   return (await response.json()) as TmdbTvDetailsResponse;
+}
+
+function firstNonBlank(...values: Array<string | null | undefined>) {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return "";
+}
+
+function resolveSeasonTitle(
+  seriesTitle: string,
+  seasonNumber: number,
+  ...candidates: Array<string | null | undefined>
+) {
+  const fallback = `${seriesTitle} シーズン${seasonNumber}`;
+  const chosen = firstNonBlank(...candidates, fallback);
+
+  if (isGenericSeasonLabel(chosen)) {
+    return fallback;
+  }
+
+  return chosen;
+}
+
+function isGenericSeasonLabel(value: string) {
+  const normalized = value.trim().toLowerCase();
+
+  return (
+    /^season\s*\d+$/i.test(value.trim()) ||
+    /^シーズン\s*\d+$/.test(value.trim()) ||
+    normalized === "season" ||
+    normalized === "シーズン"
+  );
 }
