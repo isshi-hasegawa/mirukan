@@ -74,6 +74,7 @@ export async function upsertTmdbWork(
   userId: string,
 ): Promise<PostgrestSingleResponse<{ id: string }>> {
   const workType = result.workType as Extract<WorkType, "movie" | "series">;
+  const details = await fetchTmdbWorkDetails(result);
 
   const { data: existing, error: selectError } = await supabase
     .from("works")
@@ -89,10 +90,23 @@ export async function upsertTmdbWork(
   }
 
   if (existing) {
+    const { error: updateError } = await supabase
+      .from("works")
+      .update(buildTmdbWorkUpdate(details))
+      .eq("id", existing.id);
+
+    if (updateError) {
+      return {
+        data: null,
+        error: updateError,
+        count: null,
+        status: 400,
+        statusText: "Bad Request",
+      };
+    }
+
     return { data: existing, error: null, count: null, status: 200, statusText: "OK" };
   }
-
-  const details = await fetchTmdbWorkDetails(result);
 
   return supabase
     .from("works")
@@ -112,6 +126,12 @@ function buildTmdbWorkInsert(
     tmdb_media_type: details.tmdbMediaType,
     tmdb_id: details.tmdbId,
     work_type: workType,
+    ...buildTmdbWorkUpdate(details),
+  };
+}
+
+function buildTmdbWorkUpdate(details: TmdbWorkDetails) {
+  return {
     title: details.title,
     original_title: details.originalTitle,
     search_text: buildSearchText(

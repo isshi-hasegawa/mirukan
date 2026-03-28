@@ -38,6 +38,17 @@ type TmdbTvDetailsResponse = {
   genres?: Array<{ id: number; name: string }>;
 };
 
+type TmdbTranslationsResponse = {
+  translations?: Array<{
+    iso_639_1?: string;
+    iso_3166_1?: string;
+    data?: {
+      title?: string;
+      name?: string;
+    };
+  }>;
+};
+
 export type TmdbSearchResult = {
   tmdbId: number;
   tmdbMediaType: "movie" | "tv";
@@ -125,6 +136,8 @@ export async function fetchTmdbWorkDetails(result: TmdbSearchResult): Promise<Tm
     throw new Error(`TMDb details failed with status ${response.status}`);
   }
 
+  const translatedTitle = await fetchPreferredJapaneseTitle(result);
+
   if (result.tmdbMediaType === "movie") {
     const json = (await response.json()) as TmdbMovieDetailsResponse;
 
@@ -132,7 +145,7 @@ export async function fetchTmdbWorkDetails(result: TmdbSearchResult): Promise<Tm
       tmdbId: json.id,
       tmdbMediaType: "movie",
       workType: "movie",
-      title: json.title,
+      title: translatedTitle ?? json.title,
       originalTitle: json.original_title ?? result.originalTitle,
       overview: json.overview ?? result.overview,
       posterPath: json.poster_path ?? result.posterPath,
@@ -152,7 +165,7 @@ export async function fetchTmdbWorkDetails(result: TmdbSearchResult): Promise<Tm
     tmdbId: json.id,
     tmdbMediaType: "tv",
     workType: "series",
-    title: json.name,
+    title: translatedTitle ?? json.name,
     originalTitle: json.original_name ?? result.originalTitle,
     overview: json.overview ?? result.overview,
     posterPath: json.poster_path ?? result.posterPath,
@@ -165,4 +178,34 @@ export async function fetchTmdbWorkDetails(result: TmdbSearchResult): Promise<Tm
         ? json.number_of_seasons
         : null,
   };
+}
+
+async function fetchPreferredJapaneseTitle(result: TmdbSearchResult) {
+  const path =
+    result.tmdbMediaType === "movie"
+      ? `/movie/${result.tmdbId}/translations`
+      : `/tv/${result.tmdbId}/translations`;
+
+  const url = new URL(`https://api.themoviedb.org/3${path}`);
+  url.searchParams.set("api_key", env.tmdbApiKey);
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const json = (await response.json()) as TmdbTranslationsResponse;
+  const japaneseTranslation =
+    json.translations?.find(
+      (translation) => translation.iso_639_1 === "ja" && translation.iso_3166_1 === "JP",
+    ) ?? json.translations?.find((translation) => translation.iso_639_1 === "ja");
+
+  if (!japaneseTranslation?.data) {
+    return null;
+  }
+
+  return result.tmdbMediaType === "movie"
+    ? (japaneseTranslation.data.title ?? null)
+    : (japaneseTranslation.data.name ?? null);
 }
