@@ -2,7 +2,6 @@ import { useState } from "react";
 import type { BacklogItem, WorkSummary } from "../types.ts";
 
 type ViewingMode = "focus" | "thoughtful" | "quick";
-type WorkTypeFilter = "movie" | "series_season" | null;
 
 const MODES: { id: ViewingMode; label: string; icon: string }[] = [
   { id: "focus", label: "ガッツリ", icon: "🎬" },
@@ -10,16 +9,7 @@ const MODES: { id: ViewingMode; label: string; icon: string }[] = [
   { id: "quick", label: "サクッと", icon: "⚡" },
 ];
 
-const WORK_TYPE_FILTERS: { id: NonNullable<WorkTypeFilter>; label: string }[] = [
-  { id: "movie", label: "映画" },
-  { id: "series_season", label: "シリーズ" },
-];
-
-function filterItems(
-  items: BacklogItem[],
-  mode: ViewingMode,
-  workTypeFilter: WorkTypeFilter,
-): BacklogItem[] {
+function filterItems(items: BacklogItem[], mode: ViewingMode): BacklogItem[] {
   return items
     .filter((item) => {
       const work = item.works;
@@ -33,9 +23,6 @@ function filterItems(
         return false;
       if (mode === "quick" && (completion_load_score === null || completion_load_score >= 25))
         return false;
-
-      if (workTypeFilter === "movie" && work.work_type !== "movie") return false;
-      if (workTypeFilter === "series_season" && work.work_type === "movie") return false;
 
       return true;
     })
@@ -89,17 +76,12 @@ type Props = {
 
 export function RecommendModal({ items, onClose, onOpenDetail, onMoveToWantToWatch }: Props) {
   const [activeMode, setActiveMode] = useState<ViewingMode | null>(null);
-  const [workTypeFilter, setWorkTypeFilter] = useState<WorkTypeFilter>(null);
 
   const stackedItems = items.filter((item) => item.status === "stacked");
-  const suggestions = activeMode ? filterItems(stackedItems, activeMode, workTypeFilter) : [];
+  const suggestions = activeMode ? filterItems(stackedItems, activeMode) : [];
 
   const handleModeClick = (mode: ViewingMode) => {
     setActiveMode((prev) => (prev === mode ? null : mode));
-  };
-
-  const handleWorkTypeClick = (wt: NonNullable<WorkTypeFilter>) => {
-    setWorkTypeFilter((prev) => (prev === wt ? null : wt));
   };
 
   return (
@@ -144,19 +126,6 @@ export function RecommendModal({ items, onClose, onOpenDetail, onMoveToWantToWat
                     {mode.icon}
                   </span>
                   <span className="recommend-mode-label">{mode.label}</span>
-                </button>
-              ))}
-            </div>
-
-            <div className="recommend-work-type-filter">
-              {WORK_TYPE_FILTERS.map((wt) => (
-                <button
-                  key={wt.id}
-                  type="button"
-                  className={`recommend-work-type-button${workTypeFilter === wt.id ? " is-active" : ""}`}
-                  onClick={() => handleWorkTypeClick(wt.id)}
-                >
-                  {wt.label}
                 </button>
               ))}
             </div>
