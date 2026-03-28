@@ -75,7 +75,8 @@ code {
 .shell:has(.board) {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  min-height: 100svh;
+  height: 100svh;
+  overflow: hidden;
 }
 
 .intro-card,
@@ -999,7 +1000,8 @@ h3 {
   }
 
   .shell:has(.board) {
-    min-height: auto;
+    height: auto;
+    overflow: visible;
   }
 
   .intro-card,
