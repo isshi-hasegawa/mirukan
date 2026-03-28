@@ -213,14 +213,6 @@ h3 {
   color: var(--text);
 }
 
-.auth-form input:focus-visible,
-.modal-form input:focus-visible,
-.modal-form textarea:focus-visible {
-  outline: none;
-  border-color: rgba(191, 90, 54, 0.45);
-  box-shadow: 0 0 0 3px rgba(191, 90, 54, 0.12);
-}
-
 .ghost-button:focus-visible,
 .auth-form button:focus-visible,
 .primary-button:focus-visible,
@@ -911,6 +903,7 @@ h3 {
   border-radius: 16px;
   background: white;
   color: var(--text);
+  outline: none;
 }
 
 .modal-detail-fields .detail-inline-textarea {
