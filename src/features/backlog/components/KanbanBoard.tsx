@@ -19,6 +19,7 @@ type Props = {
   onOpenDetail: (itemId: string) => void;
   onToggleMenu: (itemId: string) => void;
   onDeleteItem: (itemId: string) => void;
+  onMarkAsWatched: (itemId: string) => void;
   onDragStart: (itemId: string, status: BacklogStatus) => void;
   onDragEnd: () => void;
   onDragOver: (itemId: string, clientY: number) => void;
@@ -43,6 +44,7 @@ export function KanbanBoard({
   onOpenDetail,
   onToggleMenu,
   onDeleteItem,
+  onMarkAsWatched,
   onDragStart,
   onDragEnd,
   onDragOver,
@@ -99,6 +101,7 @@ export function KanbanBoard({
     onOpenDetail,
     onToggleMenu,
     onDeleteItem,
+    onMarkAsWatched,
     onDragStart,
     onDragEnd,
     onDragOver,

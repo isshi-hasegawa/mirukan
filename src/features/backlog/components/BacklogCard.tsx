@@ -14,6 +14,7 @@ type Props = {
   onOpenDetail: () => void;
   onToggleMenu: (itemId: string) => void;
   onDeleteItem: (itemId: string) => void;
+  onMarkAsWatched: (itemId: string) => void;
   onDragStart: (itemId: string, status: BacklogStatus) => void;
   onDragEnd: () => void;
   onDragOver: (itemId: string, clientY: number) => void;
@@ -31,6 +32,7 @@ export function BacklogCard({
   onOpenDetail,
   onToggleMenu,
   onDeleteItem,
+  onMarkAsWatched,
   onDragStart,
   onDragEnd,
   onDragOver,
@@ -224,6 +226,16 @@ export function BacklogCard({
           </button>
           {isMenuOpen && (
             <div className="card-menu" data-card-menu={item.id}>
+              <button
+                className="card-menu-item"
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMarkAsWatched(item.id);
+                }}
+              >
+                視聴済みにする
+              </button>
               <button
                 className="card-menu-item danger"
                 type="button"

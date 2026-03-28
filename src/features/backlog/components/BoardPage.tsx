@@ -129,6 +129,23 @@ export function BoardPage({ session }: Props) {
     await loadItems();
   };
 
+  const handleMarkAsWatched = async (itemId: string) => {
+    const sortOrder = getTopSortOrder(items, "watched");
+
+    const { error: updateError } = await supabase
+      .from("backlog_items")
+      .update({ status: "watched", sort_order: sortOrder })
+      .eq("id", itemId);
+
+    if (updateError) {
+      window.alert(`変更に失敗しました: ${updateError.message}`);
+      return;
+    }
+
+    setOpenMenuId(null);
+    await loadItems();
+  };
+
   const handleMoveToWantToWatch = async (itemId: string) => {
     const sortOrder = getTopSortOrder(items, "want_to_watch");
 
@@ -257,6 +274,7 @@ export function BoardPage({ session }: Props) {
         onOpenDetail={handleOpenDetail}
         onToggleMenu={handleToggleMenu}
         onDeleteItem={(itemId) => void handleDeleteItem(itemId)}
+        onMarkAsWatched={(itemId) => void handleMarkAsWatched(itemId)}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
         onDragOver={handleDragOver}
