@@ -212,6 +212,7 @@ h3 {
 .ghost-button:focus,
 .auth-form button:focus,
 .primary-button:focus,
+.primary-icon-button:focus,
 .icon-button:focus,
 .column-add-button:focus {
   outline: 2px solid var(--accent);
@@ -220,6 +221,7 @@ h3 {
 
 .auth-form button,
 .primary-button,
+.primary-icon-button,
 .ghost-button {
   border: none;
   border-radius: 999px;
@@ -241,6 +243,7 @@ h3 {
 
 .auth-form button:hover,
 .primary-button:hover,
+.primary-icon-button:hover,
 .ghost-button:hover {
   transform: translateY(-1px);
 }
@@ -286,6 +289,21 @@ h3 {
   padding: 10px 16px;
 }
 
+.primary-icon-button,
+.column-add-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+}
+
+.primary-icon-button {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+  color: white;
+}
+
 .board {
   display: grid;
   grid-template-columns: repeat(5, minmax(240px, 1fr));
@@ -304,12 +322,12 @@ h3 {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  align-items: start;
+  align-items: center;
   padding-bottom: 14px;
   border-bottom: 1px solid rgba(92, 59, 35, 0.08);
 }
 
-.column-actions {
+.column-title-group {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -320,14 +338,16 @@ h3 {
   border-radius: 999px;
   background: rgba(191, 90, 54, 0.08);
   color: var(--accent-strong);
-  padding: 6px 10px;
   cursor: pointer;
 }
 
-.column-header p {
-  margin-top: 6px;
-  color: var(--text-muted);
-  font-size: 0.88rem;
+.plus-icon {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 1.75;
+  fill: none;
 }
 
 .count-pill,

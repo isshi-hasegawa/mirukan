@@ -1,5 +1,5 @@
 import type { AddModalState, BacklogItem, BacklogStatus } from "./types.ts";
-import { platformLabels, statusDescriptions, statusLabels, statusOrder } from "./constants.ts";
+import { platformLabels, statusLabels, statusOrder } from "./constants.ts";
 import { escapeHtml } from "./helpers.ts";
 
 export function createSignedOutMarkup() {
@@ -95,16 +95,19 @@ export function createBoardMarkup(
       return `
         <section class="board-column" data-column-status="${status}">
           <header class="column-header">
-            <div>
+            <div class="column-title-group">
               <h2>${statusLabels[status]}</h2>
-              <p>${statusDescriptions[status]}</p>
-            </div>
-            <div class="column-actions">
-              <button class="column-add-button" type="button" data-add-status="${status}">
-                + 追加
-              </button>
               <span class="count-pill">${columnItems.length}</span>
             </div>
+            <button
+              class="column-add-button"
+              type="button"
+              data-add-status="${status}"
+              aria-label="${statusLabels[status]} に追加"
+              title="${statusLabels[status]} に追加"
+            >
+              ${createPlusIcon()}
+            </button>
           </header>
           <div class="card-list" data-dropzone-status="${status}">
             ${
@@ -129,7 +132,15 @@ export function createBoardMarkup(
           </p>
         </div>
         <div class="header-actions">
-          <button id="open-add-button" class="primary-button" type="button">作品を追加</button>
+          <button
+            id="open-add-button"
+            class="primary-icon-button"
+            type="button"
+            aria-label="作品を追加"
+            title="作品を追加"
+          >
+            ${createPlusIcon()}
+          </button>
           <p class="session-chip">${escapeHtml(sessionEmail)}</p>
           <button id="sign-out-button" class="ghost-button" type="button">ログアウト</button>
         </div>
@@ -322,5 +333,13 @@ function createAddModalMarkup(addModalState: AddModalState) {
         </form>
       </section>
     </div>
+  `;
+}
+
+function createPlusIcon() {
+  return `
+    <svg class="plus-icon" viewBox="0 0 20 20" aria-hidden="true">
+      <path d="M10 4.25v11.5M4.25 10h11.5" />
+    </svg>
   `;
 }
