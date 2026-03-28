@@ -1,12 +1,13 @@
 import { useState } from "react";
 import type { BacklogItem, WorkSummary } from "../types.ts";
 
-type ViewingMode = "focus" | "thoughtful" | "quick";
+type ViewingMode = "focus" | "thoughtful" | "quick" | "background";
 
 const MODES: { id: ViewingMode; label: string; icon: string }[] = [
   { id: "focus", label: "ガッツリ", icon: "🎬" },
   { id: "thoughtful", label: "じっくり", icon: "🤔" },
   { id: "quick", label: "サクッと", icon: "⚡" },
+  { id: "background", label: "ながら見", icon: "👀" },
 ];
 
 function filterItems(items: BacklogItem[], mode: ViewingMode): BacklogItem[] {
@@ -14,6 +15,10 @@ function filterItems(items: BacklogItem[], mode: ViewingMode): BacklogItem[] {
     .filter((item) => {
       const work = item.works;
       if (!work || work.source_type === "manual") return false;
+
+      if (mode === "background") {
+        return work.background_fit_score !== null && work.background_fit_score >= 50;
+      }
 
       const duration =
         work.work_type === "movie" ? work.runtime_minutes : work.typical_episode_runtime_minutes;
