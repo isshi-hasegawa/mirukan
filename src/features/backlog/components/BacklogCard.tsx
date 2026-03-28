@@ -3,6 +3,7 @@ import { FilmIcon, TvIcon } from "@heroicons/react/24/outline";
 import type { BacklogItem, BacklogStatus } from "../types.ts";
 import { getDropSide } from "../helpers.ts";
 import { PlatformIcon } from "./PlatformIcon.tsx";
+import { platformLogoPaths } from "../constants.ts";
 
 type DropIndicator =
   | { type: "card"; itemId: string; side: "before" | "after" }
@@ -253,7 +254,15 @@ export function BacklogCard({
       </div>
       {item.primary_platform && (
         <div className="card-platform-badge">
-          <PlatformIcon platform={item.primary_platform} />
+          {platformLogoPaths[item.primary_platform] ? (
+            <img
+              src={`https://image.tmdb.org/t/p/w45${platformLogoPaths[item.primary_platform]}`}
+              alt={item.primary_platform}
+              className="platform-logo"
+            />
+          ) : (
+            <PlatformIcon platform={item.primary_platform} />
+          )}
         </div>
       )}
       <div className="card-body">

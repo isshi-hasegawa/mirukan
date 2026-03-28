@@ -570,6 +570,14 @@ h3 {
   z-index: 2;
 }
 
+.platform-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  object-fit: cover;
+  display: block;
+}
+
 .card-content {
   display: grid;
   gap: 8px;
@@ -878,6 +886,17 @@ h3 {
   border-radius: 4px;
   object-fit: cover;
   flex-shrink: 0;
+}
+
+.search-result-thumb-logos,
+.recommend-item-thumb-logos {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  z-index: 1;
 }
 
 .recommend-item-platforms {
@@ -1693,6 +1712,7 @@ h3 {
 }
 
 .recommend-item-thumb {
+  position: relative;
   flex-shrink: 0;
   width: 40px;
   height: 60px;
