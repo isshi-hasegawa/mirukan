@@ -392,7 +392,7 @@ h3 {
 .board {
   display: grid;
   grid-template-columns: repeat(5, minmax(240px, 1fr));
-  gap: 14px;
+  gap: 10px;
   margin-top: 12px;
   overflow-x: auto;
   padding-bottom: 6px;
