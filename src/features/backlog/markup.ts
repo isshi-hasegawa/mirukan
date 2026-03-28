@@ -129,12 +129,12 @@ export function createBoardMarkup(
         <div class="header-actions">
           <button
             id="open-add-button"
-            class="primary-icon-button"
+            class="primary-button"
             type="button"
-            aria-label="作品を追加"
-            title="作品を追加"
+            aria-label="作品を探す"
+            title="作品を探す"
           >
-            ${createPlusIcon()}
+            作品を探す
           </button>
           <p class="session-chip">${escapeHtml(sessionEmail)}</p>
           <button id="sign-out-button" class="ghost-button" type="button">ログアウト</button>
