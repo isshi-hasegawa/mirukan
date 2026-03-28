@@ -419,7 +419,7 @@ function createAddModalMarkup(addModalState: AddModalState) {
       ? "series"
       : (addModalState.selectedTmdbTarget?.workType ?? "movie");
   const seasonPickerMarkup =
-    addModalState.selectedTmdbResult?.tmdbMediaType === "tv"
+    !addModalState.manualMode && addModalState.selectedTmdbResult?.tmdbMediaType === "tv"
       ? `
         <div class="season-picker">
           <div class="season-picker-header">
@@ -470,38 +470,38 @@ function createAddModalMarkup(addModalState: AddModalState) {
     <div class="modal-backdrop" id="add-modal-backdrop">
       <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="add-modal-title">
         <div class="modal-header">
-          <div>
-            <p class="eyebrow">Manual Add</p>
-            <h2 id="add-modal-title">手動で作品を追加</h2>
-          </div>
+          <h2 id="add-modal-title">作品を追加</h2>
           <button id="close-add-modal" class="icon-button" type="button" aria-label="閉じる">×</button>
         </div>
         <form id="add-item-form" class="modal-form">
           <div class="search-panel">
             <div class="search-panel-header">
-              <div>
-                <p class="eyebrow">Search First</p>
-                <h3>まず TMDb で探す</h3>
-              </div>
+              <h3>${addModalState.manualMode ? "手動で入力" : "TMDb で探す"}</h3>
               <button id="switch-manual-mode" class="ghost-button" type="button">
-                ${addModalState.manualMode ? "検索結果を使う" : "見つからなければ手動で追加"}
+                ${addModalState.manualMode ? "TMDb 検索に戻る" : "手動で入力"}
               </button>
             </div>
-            <div class="search-row">
-              <input
-                id="tmdb-search-query"
-                name="tmdbSearchQuery"
-                type="text"
-                placeholder="作品名で検索"
-                value="${escapeHtml(addModalState.searchQuery)}"
-              />
-              <button id="tmdb-search-button" class="primary-button" type="button">
-                ${addModalState.isSearching ? "検索中..." : "検索"}
-              </button>
-            </div>
-            ${selectedSummary}
-            ${seasonPickerMarkup}
-            <div class="search-results">${searchResultsMarkup}</div>
+            ${
+              addModalState.manualMode
+                ? ""
+                : `
+                  <div class="search-row">
+                    <input
+                      id="tmdb-search-query"
+                      name="tmdbSearchQuery"
+                      type="text"
+                      placeholder="作品名で検索"
+                      value="${escapeHtml(addModalState.searchQuery)}"
+                    />
+                    <button id="tmdb-search-button" class="primary-button" type="button">
+                      ${addModalState.isSearching ? "検索中..." : "検索"}
+                    </button>
+                  </div>
+                  ${selectedSummary}
+                  ${seasonPickerMarkup}
+                  <div class="search-results">${searchResultsMarkup}</div>
+                `
+            }
           </div>
           <label>
             <span>タイトル</span>
