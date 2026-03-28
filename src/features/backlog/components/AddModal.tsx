@@ -63,6 +63,16 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
+  const resetSearchState = () => {
+    searchRequestIdRef.current += 1;
+    setSearchResults([]);
+    setSelectedTmdbResult(null);
+    setSelectedTmdbTarget(null);
+    setSeasonOptions([]);
+    setSearchMessage(null);
+    setDuplicateNotice(null);
+  };
+
   const queueSearch = (query: string) => {
     if (searchTimerRef.current !== null) {
       window.clearTimeout(searchTimerRef.current);
@@ -80,23 +90,11 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
     }
 
     if (!trimmed) {
-      searchRequestIdRef.current += 1;
-      setSearchResults([]);
-      setSelectedTmdbResult(null);
-      setSelectedTmdbTarget(null);
-      setSeasonOptions([]);
-      setSearchMessage(null);
-      setDuplicateNotice(null);
+      resetSearchState();
       return;
     }
 
-    const requestId = ++searchRequestIdRef.current;
-    setSearchMessage(null);
-    setSearchResults([]);
-    setSelectedTmdbResult(null);
-    setSelectedTmdbTarget(null);
-    setSeasonOptions([]);
-    setDuplicateNotice(null);
+    resetSearchState();
 
     try {
       const results = await searchTmdbWorks(trimmed);
@@ -248,12 +246,7 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
                   if (query.trim()) {
                     queueSearch(query);
                   } else {
-                    searchRequestIdRef.current += 1;
-                    setSearchResults([]);
-                    setSelectedTmdbResult(null);
-                    setSelectedTmdbTarget(null);
-                    setSeasonOptions([]);
-                    setSearchMessage(null);
+                    resetSearchState();
                   }
                 }}
                 onChange={(e) => {
@@ -263,12 +256,7 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
                   if (query.trim()) {
                     queueSearch(query);
                   } else {
-                    searchRequestIdRef.current += 1;
-                    setSearchResults([]);
-                    setSelectedTmdbResult(null);
-                    setSelectedTmdbTarget(null);
-                    setSeasonOptions([]);
-                    setSearchMessage(null);
+                    resetSearchState();
                   }
                 }}
               />
