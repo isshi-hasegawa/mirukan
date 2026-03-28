@@ -759,6 +759,13 @@ h3 {
   font-size: 0.88rem;
 }
 
+.search-result-overview {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
 .selected-result {
   display: grid;
   gap: 4px;
