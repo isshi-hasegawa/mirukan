@@ -483,9 +483,11 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
           </div>
         </form>
         <div className="modal-footer">
-          <p className="form-message" aria-live="polite">
-            {formMessage}
-          </p>
+          {formMessage && (
+            <p className="form-message" aria-live="polite">
+              {formMessage}
+            </p>
+          )}
           <div className="modal-actions">
             <button className="ghost-button" type="button" onClick={onClose}>
               キャンセル
