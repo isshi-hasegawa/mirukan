@@ -29,6 +29,7 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
   const [status, setStatus] = useState<BacklogStatus>(defaultStatus);
   const [primaryPlatform, setPrimaryPlatform] = useState("");
   const [note, setNote] = useState("");
+  const [manualTitle, setManualTitle] = useState("");
   const [workType, setWorkType] = useState<"movie" | "series">("movie");
   const [formMessage, setFormMessage] = useState("");
 
@@ -37,7 +38,7 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
   const searchRequestIdRef = useRef(0);
   const isComposingRef = useRef(false);
 
-  const resolvedTitle = selectedTmdbTarget?.title ?? "";
+  const resolvedTitle = selectedTmdbTarget?.title ?? manualTitle;
   const resolvedWorkType =
     selectedTmdbTarget?.workType === "season"
       ? "series"
@@ -158,12 +159,7 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const title = (
-      selectedTmdbTarget?.title ??
-      (e.currentTarget as HTMLFormElement).querySelector<HTMLInputElement>('[name="title"]')
-        ?.value ??
-      ""
-    ).trim();
+    const title = resolvedTitle.trim();
 
     if (!title) {
       setFormMessage("タイトルを入力してください。");
@@ -439,9 +435,7 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
               readOnly={!!selectedTmdbResult}
               onChange={(e) => {
                 if (!selectedTmdbResult) {
-                  // manual mode: controlled via form but we don't track it in state
-                  // since resolvedTitle comes from selectedTmdbTarget or form input
-                  void e;
+                  setManualTitle(e.target.value);
                 }
               }}
               required
