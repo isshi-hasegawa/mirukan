@@ -1126,6 +1126,10 @@ h3 {
     position: static;
     max-width: 280px;
   }
+
+  .column-add-button {
+    display: none;
+  }
 }
 
 #spacer {
