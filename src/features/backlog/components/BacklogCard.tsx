@@ -234,7 +234,7 @@ export function BacklogCard({
                   onMarkAsWatched(item.id);
                 }}
               >
-                視聴済みにする
+                視聴済み
               </button>
               <button
                 className="card-menu-item danger"
