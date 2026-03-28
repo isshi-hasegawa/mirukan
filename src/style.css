@@ -267,26 +267,11 @@ h3 {
 
 .board-header {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 1fr auto;
   gap: 16px;
   align-items: center;
   padding: 14px 18px;
   border-radius: 28px;
-}
-
-.header-brand {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-}
-
-.board-header h1 {
-  font-size: clamp(1.9rem, 3vw, 2.6rem);
-  line-height: 1;
-}
-
-.board-header .eyebrow {
-  margin-bottom: 6px;
 }
 
 .header-actions {

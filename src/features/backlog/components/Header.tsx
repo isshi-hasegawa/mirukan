@@ -12,10 +12,6 @@ type Props = {
 export function Header({ session, isMobileLayout, onOpenRecommend, onOpenAddModal }: Props) {
   return (
     <header className="board-header">
-      <div className="header-brand">
-        <h1>みるカン</h1>
-      </div>
-
       <div className="header-actions">
         <button className="ghost-button" type="button" onClick={onOpenRecommend}>
           <SparklesIcon className="recommend-icon" />
