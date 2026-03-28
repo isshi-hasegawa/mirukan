@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../../../lib/supabase.ts";
-import { getSortOrderForDrop, getTopSortOrder, normalizeBacklogItems } from "../data.ts";
+import {
+  getSortOrderForDrop,
+  getTopSortOrder,
+  normalizeBacklogItems,
+  upsertTmdbWork,
+} from "../data.ts";
+import type { TmdbSearchResult } from "../../../lib/tmdb.ts";
 import { getDropSide } from "../helpers.ts";
 import type { BacklogItem, BacklogStatus, DetailModalState } from "../types.ts";
 import { useWindowSize } from "../hooks/useWindowSize.ts";
@@ -197,6 +203,15 @@ export function BoardPage({ session }: Props) {
     }
   };
 
+  const handleAddTmdbWorkToWantToWatch = async (result: TmdbSearchResult) => {
+    const { data, error } = await upsertTmdbWork(result, session.user.id);
+    if (error || !data) {
+      window.alert(`追加に失敗しました: ${error?.message ?? "不明なエラー"}`);
+      return;
+    }
+    await handleAddWorkToWantToWatch(data.id);
+  };
+
   const handleOpenDetail = (itemId: string) => {
     setOpenMenuId(null);
     setDetailModal({ openItemId: itemId, editingField: null, draftValue: "", message: null });
@@ -311,6 +326,7 @@ export function BoardPage({ session }: Props) {
           }}
           onMoveToWantToWatch={(itemId) => void handleMoveToWantToWatch(itemId)}
           onAddWorkToWantToWatch={(workId) => void handleAddWorkToWantToWatch(workId)}
+          onAddTmdbWorkToWantToWatch={(result) => handleAddTmdbWorkToWantToWatch(result)}
         />
       )}
 

@@ -27,7 +27,14 @@ const MODES: {
 
 type SuggestionItem =
   | { source: "backlog"; backlogItem: BacklogItem }
-  | { source: "global"; work: WorkSummary };
+  | { source: "global"; work: WorkSummary }
+  | { source: "trending"; result: TmdbSearchResult };
+
+function getSuggestionKey(item: SuggestionItem): string {
+  if (item.source === "backlog") return item.backlogItem.id;
+  if (item.source === "global") return item.work.id;
+  return `${item.result.tmdbMediaType}-${item.result.tmdbId}`;
+}
 
 function applyModeFilter(work: WorkSummary, mode: ViewingMode): boolean {
   if (mode === "background") {
@@ -92,9 +99,20 @@ function RecommendItem({
   onMove: (item: SuggestionItem) => void;
 }) {
   const [posterError, setPosterError] = useState(false);
-  const work = item.source === "backlog" ? (item.backlogItem.works as WorkSummary) : item.work;
-  const title = work.title;
-  const posterUrl = work.poster_path ? `https://image.tmdb.org/t/p/w92${work.poster_path}` : null;
+
+  const { title, posterPath, runtime } = (() => {
+    if (item.source === "trending") {
+      return { title: item.result.title, posterPath: item.result.posterPath, runtime: null };
+    }
+    const work = item.source === "backlog" ? (item.backlogItem.works as WorkSummary) : item.work;
+    return {
+      title: work.title,
+      posterPath: work.poster_path,
+      runtime: work.work_type === "movie" ? (work.runtime_minutes ?? null) : null,
+    };
+  })();
+
+  const posterUrl = posterPath ? `https://image.tmdb.org/t/p/w92${posterPath}` : null;
 
   return (
     <li className="recommend-item" onClick={() => onMove(item)}>
@@ -108,9 +126,7 @@ function RecommendItem({
         </div>
         <div className="recommend-item-meta">
           <span className="recommend-item-title">{title}</span>
-          {work.work_type === "movie" && work.runtime_minutes && (
-            <span className="recommend-item-runtime">{work.runtime_minutes}分</span>
-          )}
+          {runtime && <span className="recommend-item-runtime">{runtime}分</span>}
         </div>
       </div>
       <button type="button" className="recommend-item-move" title="見たい列に追加">
@@ -120,29 +136,12 @@ function RecommendItem({
   );
 }
 
-function TrendingCard({ result }: { result: TmdbSearchResult }) {
-  const [posterError, setPosterError] = useState(false);
-  const posterUrl = result.posterPath ? `https://image.tmdb.org/t/p/w92${result.posterPath}` : null;
-
-  return (
-    <li className="recommend-card" role="listitem">
-      <div className="recommend-card-thumb">
-        {posterUrl && !posterError ? (
-          <img src={posterUrl} alt={result.title} onError={() => setPosterError(true)} />
-        ) : (
-          <span className="recommend-card-thumb-fallback">{result.title.slice(0, 6)}</span>
-        )}
-      </div>
-      <span className="recommend-card-title">{result.title}</span>
-    </li>
-  );
-}
-
 type Props = {
   items: BacklogItem[];
   onClose: () => void;
   onMoveToWantToWatch: (itemId: string) => void;
   onAddWorkToWantToWatch: (workId: string) => void;
+  onAddTmdbWorkToWantToWatch: (result: TmdbSearchResult) => Promise<void>;
 };
 
 export function RecommendModal({
@@ -150,6 +149,7 @@ export function RecommendModal({
   onClose,
   onMoveToWantToWatch,
   onAddWorkToWantToWatch,
+  onAddTmdbWorkToWantToWatch,
 }: Props) {
   const [activeTab, setActiveTab] = useState<ActiveTab>("trending");
   const [globalSuggestions, setGlobalSuggestions] = useState<SuggestionItem[]>([]);
@@ -191,20 +191,27 @@ export function RecommendModal({
   const handleMove = (item: SuggestionItem) => {
     if (item.source === "backlog") {
       onMoveToWantToWatch(item.backlogItem.id);
-    } else {
+    } else if (item.source === "global") {
       onAddWorkToWantToWatch(item.work.id);
+    } else {
+      void onAddTmdbWorkToWantToWatch(item.result);
     }
   };
 
   const renderResults = () => {
     if (activeTab === "trending") {
-      if (trendingResults.length === 0) {
+      const trendingSuggestions: SuggestionItem[] = trendingResults
+        .slice(0, 4)
+        .map((result) => ({ source: "trending" as const, result }));
+
+      if (trendingSuggestions.length === 0) {
         return <p className="recommend-empty">トレンド情報を読み込み中...</p>;
       }
+
       return (
-        <ul className="recommend-list" role="list">
-          {trendingResults.slice(0, 20).map((result) => (
-            <TrendingCard key={`${result.tmdbMediaType}-${result.tmdbId}`} result={result} />
+        <ul className="recommend-item-list" role="list">
+          {trendingSuggestions.map((item) => (
+            <RecommendItem key={getSuggestionKey(item)} item={item} onMove={handleMove} />
           ))}
         </ul>
       );
@@ -215,11 +222,7 @@ export function RecommendModal({
     ) : (
       <ul className="recommend-item-list" role="list">
         {suggestions.map((item) => (
-          <RecommendItem
-            key={item.source === "backlog" ? item.backlogItem.id : item.work.id}
-            item={item}
-            onMove={handleMove}
-          />
+          <RecommendItem key={getSuggestionKey(item)} item={item} onMove={handleMove} />
         ))}
       </ul>
     );
