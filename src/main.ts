@@ -198,7 +198,6 @@ function bindAddModal() {
   const closeButton = document.querySelector<HTMLButtonElement>("#close-add-modal");
   const cancelButton = document.querySelector<HTMLButtonElement>("#cancel-add-modal");
   const backdrop = document.querySelector<HTMLDivElement>("#add-modal-backdrop");
-  const switchModeButton = document.querySelector<HTMLButtonElement>("#switch-manual-mode");
   const searchButton = document.querySelector<HTMLButtonElement>("#tmdb-search-button");
   const form = document.querySelector<HTMLFormElement>("#add-item-form");
   const message = document.querySelector<HTMLParagraphElement>("#add-form-message");
@@ -214,17 +213,6 @@ function bindAddModal() {
     if (event.target === backdrop) {
       close();
     }
-  });
-
-  switchModeButton?.addEventListener("click", () => {
-    addModalState = {
-      ...addModalState,
-      manualMode: !addModalState.manualMode,
-      selectedTmdbResult: addModalState.manualMode ? addModalState.selectedTmdbResult : null,
-      selectedTmdbTarget: addModalState.manualMode ? addModalState.selectedTmdbTarget : null,
-      seasonOptions: addModalState.manualMode ? addModalState.seasonOptions : [],
-    };
-    renderSignedInView();
   });
 
   searchButton?.addEventListener("click", async () => {
@@ -269,9 +257,7 @@ function bindAddModal() {
         selectedTmdbTarget: null,
         seasonOptions: [],
         searchMessage:
-          results.length > 0
-            ? null
-            : "TMDb で候補が見つかりませんでした。手動追加に切り替えられます。",
+          results.length > 0 ? null : "候補が見つかりませんでした。このまま入力して追加できます。",
       };
     } catch (error) {
       addModalState = {
@@ -282,9 +268,7 @@ function bindAddModal() {
         selectedTmdbTarget: null,
         seasonOptions: [],
         searchMessage:
-          error instanceof Error
-            ? `TMDb 検索に失敗しました: ${error.message}`
-            : "TMDb 検索に失敗しました。",
+          error instanceof Error ? `検索に失敗しました: ${error.message}` : "検索に失敗しました。",
       };
     }
 
@@ -306,7 +290,7 @@ function bindAddModal() {
     const status = getStringField(formData, "status") as BacklogStatus;
     const primaryPlatform = normalizePrimaryPlatform(getStringField(formData, "primaryPlatform"));
     const note = getNullableStringField(formData, "note");
-    const selectedTmdbTarget = addModalState.manualMode ? null : addModalState.selectedTmdbTarget;
+    const selectedTmdbTarget = addModalState.selectedTmdbTarget;
 
     if (!title) {
       if (message) {
