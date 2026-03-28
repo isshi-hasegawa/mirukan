@@ -1257,6 +1257,11 @@ h3 {
 
   .modal-detail-fields {
     overflow-y: visible;
+    align-self: start;
+  }
+
+  .modal-detail-submit {
+    margin-top: 0;
   }
 
   .search-panel {
