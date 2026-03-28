@@ -686,7 +686,9 @@ h3 {
 
 .search-result-button {
   display: grid;
-  gap: 4px;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
   width: 100%;
   padding: 14px 16px;
   border: 1px solid rgba(92, 59, 35, 0.1);
@@ -705,6 +707,43 @@ h3 {
 .search-result-title,
 .selected-result-title {
   font-weight: 700;
+}
+
+.search-result-thumb {
+  overflow: hidden;
+  border-radius: 12px;
+  aspect-ratio: 2 / 3;
+  background:
+    radial-gradient(circle at top left, rgba(255, 208, 143, 0.42), transparent 36%),
+    linear-gradient(180deg, rgba(191, 90, 54, 0.14), rgba(92, 59, 35, 0.08));
+  border: 1px solid rgba(92, 59, 35, 0.08);
+}
+
+.search-result-thumb img,
+.search-result-thumb-fallback {
+  width: 100%;
+  height: 100%;
+}
+
+.search-result-thumb img {
+  display: block;
+  object-fit: cover;
+}
+
+.search-result-thumb-fallback {
+  display: grid;
+  place-items: center;
+  padding: 6px;
+  color: var(--text-muted);
+  font-size: 0.62rem;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.search-result-content {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
 }
 
 .search-result-meta,

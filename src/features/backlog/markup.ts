@@ -387,27 +387,40 @@ function createAddModalMarkup(addModalState: AddModalState) {
 
   const searchResultsMarkup = addModalState.searchResults.length
     ? addModalState.searchResults
-        .map(
-          (result) => `
+        .map((result) => {
+          const posterUrl = result.posterPath
+            ? `https://image.tmdb.org/t/p/w185${result.posterPath}`
+            : null;
+
+          return `
             <button
               class="search-result-button ${addModalState.selectedTmdbResult?.tmdbId === result.tmdbId ? "is-selected" : ""}"
               type="button"
               data-tmdb-id="${result.tmdbId}"
               data-tmdb-media-type="${result.tmdbMediaType}"
             >
-              <span class="search-result-title">${escapeHtml(result.title)}</span>
-              <span class="search-result-meta">
-                ${result.workType === "movie" ? "映画" : "シリーズ"}
-                ${result.releaseDate ? ` · ${escapeHtml(result.releaseDate.slice(0, 4))}` : ""}
+              <span class="search-result-thumb">
+                ${
+                  posterUrl
+                    ? `<img src="${posterUrl}" alt="${escapeHtml(result.title)} のポスター" />`
+                    : '<span class="search-result-thumb-fallback">No Poster</span>'
+                }
               </span>
-              ${
-                result.overview
-                  ? `<span class="search-result-overview">${escapeHtml(result.overview)}</span>`
-                  : ""
-              }
+              <span class="search-result-content">
+                <span class="search-result-title">${escapeHtml(result.title)}</span>
+                <span class="search-result-meta">
+                  ${result.workType === "movie" ? "映画" : "シリーズ"}
+                  ${result.releaseDate ? ` · ${escapeHtml(result.releaseDate.slice(0, 4))}` : ""}
+                </span>
+                ${
+                  result.overview
+                    ? `<span class="search-result-overview">${escapeHtml(result.overview)}</span>`
+                    : ""
+                }
+              </span>
             </button>
-          `,
-        )
+          `;
+        })
         .join("")
     : addModalState.searchMessage
       ? `<p class="search-message">${escapeHtml(addModalState.searchMessage)}</p>`
