@@ -361,7 +361,7 @@ function firstNonBlank(...values: Array<string | null | undefined>) {
   return "";
 }
 
-function resolveSeasonTitle(
+export function resolveSeasonTitle(
   seriesTitle: string,
   seasonNumber: number,
   ...candidates: Array<string | null | undefined>
