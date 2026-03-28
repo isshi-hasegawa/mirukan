@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { DocumentTextIcon } from "@heroicons/react/24/outline";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../../../lib/supabase.ts";
-import { fetchTmdbSeasonOptions, searchTmdbWorks } from "../../../lib/tmdb.ts";
+import { fetchTmdbSeasonOptions, fetchTmdbTrending, searchTmdbWorks } from "../../../lib/tmdb.ts";
 import type { TmdbSearchResult, TmdbSelectionTarget, TmdbSeasonOption } from "../../../lib/tmdb.ts";
 import { upsertTmdbWork, getNextSortOrder, addAllSeasons } from "../data.ts";
 import { buildSearchText, normalizePrimaryPlatform } from "../helpers.ts";
@@ -24,6 +24,8 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
   const [selectedTmdbResult, setSelectedTmdbResult] = useState<TmdbSearchResult | null>(null);
   const [selectedTmdbTarget, setSelectedTmdbTarget] = useState<TmdbSelectionTarget | null>(null);
   const [seasonOptions, setSeasonOptions] = useState<TmdbSeasonOption[]>([]);
+
+  const [trendingResults, setTrendingResults] = useState<TmdbSearchResult[]>([]);
 
   const [isLoadingSeasons, setIsLoadingSeasons] = useState(false);
   const [searchMessage, setSearchMessage] = useState<string | null>(null);
@@ -48,6 +50,20 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
 
   useEffect(() => {
     searchInputRef.current?.focus();
+    const itemTmdbKeys = new Set(
+      items
+        .filter((item) => item.works?.tmdb_id && item.works?.tmdb_media_type)
+        .map((item) => `${item.works!.tmdb_media_type}-${item.works!.tmdb_id}`),
+    );
+    fetchTmdbTrending()
+      .then((results) => {
+        setTrendingResults(
+          results.filter((r) => !itemTmdbKeys.has(`${r.tmdbMediaType}-${r.tmdbId}`)),
+        );
+      })
+      .catch(() => {
+        // trending fetch failure is non-critical
+      });
     return () => {
       if (searchTimerRef.current !== null) {
         window.clearTimeout(searchTimerRef.current);
@@ -373,8 +389,10 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
             )}
 
             <div className="search-results">
-              {searchResults.length > 0
-                ? searchResults.map((result) => {
+              {(() => {
+                const displayResults = searchQuery.trim() === "" ? trendingResults : searchResults;
+                if (displayResults.length > 0) {
+                  return displayResults.map((result) => {
                     const posterUrl = result.posterPath
                       ? `https://image.tmdb.org/t/p/w185${result.posterPath}`
                       : null;
@@ -404,8 +422,10 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
                         </span>
                       </button>
                     );
-                  })
-                : searchMessage && <p className="search-message">{searchMessage}</p>}
+                  });
+                }
+                return searchMessage && <p className="search-message">{searchMessage}</p>;
+              })()}
             </div>
           </div>
 

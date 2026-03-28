@@ -122,6 +122,61 @@ export type TmdbWorkDetails = {
   seasonNumber: number | null;
 };
 
+const TRENDING_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+let trendingCache: { results: TmdbSearchResult[]; fetchedAt: number } | null = null;
+
+export async function fetchTmdbTrending(): Promise<TmdbSearchResult[]> {
+  if (trendingCache && Date.now() - trendingCache.fetchedAt < TRENDING_CACHE_TTL_MS) {
+    return trendingCache.results;
+  }
+
+  const url = new URL("https://api.themoviedb.org/3/trending/all/week");
+  url.searchParams.set("api_key", env.tmdbApiKey);
+  url.searchParams.set("language", "ja-JP");
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`TMDb trending failed with status ${response.status}`);
+  }
+
+  const json = (await response.json()) as TmdbMultiSearchResponse;
+
+  return json.results.flatMap((result): TmdbSearchResult[] => {
+    if (result.media_type !== "movie" && result.media_type !== "tv") {
+      return [];
+    }
+
+    const title = result.media_type === "movie" ? result.title : result.name;
+
+    if (!title) {
+      return [];
+    }
+
+    return [
+      {
+        tmdbId: result.id,
+        tmdbMediaType: result.media_type,
+        workType: result.media_type === "movie" ? "movie" : "series",
+        title,
+        originalTitle:
+          result.media_type === "movie"
+            ? (result.original_title ?? null)
+            : (result.original_name ?? null),
+        overview: result.overview ?? null,
+        posterPath: result.poster_path ?? null,
+        releaseDate:
+          result.media_type === "movie"
+            ? (result.release_date ?? null)
+            : (result.first_air_date ?? null),
+      },
+    ];
+  });
+
+  trendingCache = { results, fetchedAt: Date.now() };
+  return results;
+}
+
 export async function searchTmdbWorks(query: string) {
   const url = new URL("https://api.themoviedb.org/3/search/multi");
   url.searchParams.set("api_key", env.tmdbApiKey);

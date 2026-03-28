@@ -698,6 +698,7 @@ h3 {
 
 .modal-card {
   width: min(100% - 48px, 960px);
+  min-height: 520px;
   max-height: min(88svh, 920px);
   border: 1px solid var(--border);
   border-radius: 28px;
