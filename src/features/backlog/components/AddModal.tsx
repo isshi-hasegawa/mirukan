@@ -45,6 +45,7 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
       : (selectedTmdbTarget?.workType ?? workType);
 
   useEffect(() => {
+    searchInputRef.current?.focus();
     return () => {
       if (searchTimerRef.current !== null) {
         window.clearTimeout(searchTimerRef.current);
