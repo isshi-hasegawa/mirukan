@@ -260,7 +260,6 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
     >
       <section className="modal-card" role="dialog" aria-modal="true" aria-label="作品を追加">
         <form
-          id="add-modal-form"
           className="modal-form"
           onSubmit={(e) => {
             void handleSubmit(e);
@@ -482,23 +481,18 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
                 onChange={(e) => setNote(e.target.value)}
               />
             </div>
+            <div className="modal-detail-submit">
+              {formMessage && (
+                <p className="form-message" aria-live="polite">
+                  {formMessage}
+                </p>
+              )}
+              <button className="primary-button" type="submit">
+                追加する
+              </button>
+            </div>
           </div>
         </form>
-        <div className="modal-footer">
-          {formMessage && (
-            <p className="form-message" aria-live="polite">
-              {formMessage}
-            </p>
-          )}
-          <div className="modal-actions">
-            <button className="ghost-button" type="button" onClick={onClose}>
-              キャンセル
-            </button>
-            <button className="primary-button" type="submit" form="add-modal-form">
-              追加する
-            </button>
-          </div>
-        </div>
       </section>
     </div>
   );
