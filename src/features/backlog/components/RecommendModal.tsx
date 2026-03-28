@@ -45,7 +45,12 @@ function RecommendItem({ item, onMove }: { item: BacklogItem; onMove: (itemId: s
             <span className="recommend-item-thumb-fallback">{title.slice(0, 2)}</span>
           )}
         </div>
-        <span className="recommend-item-title">{title}</span>
+        <div className="recommend-item-meta">
+          <span className="recommend-item-title">{title}</span>
+          {work.work_type === "movie" && work.runtime_minutes && (
+            <span className="recommend-item-runtime">{work.runtime_minutes}分</span>
+          )}
+        </div>
       </div>
       <button
         type="button"

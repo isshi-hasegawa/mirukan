@@ -1501,12 +1501,24 @@ h3 {
   padding: 4px;
 }
 
+.recommend-item-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
 .recommend-item-title {
   font-size: 0.94rem;
   font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.recommend-item-runtime {
+  font-size: 0.8rem;
+  color: var(--text-muted);
 }
 
 .recommend-item-move {
