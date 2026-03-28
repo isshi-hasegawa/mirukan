@@ -498,8 +498,8 @@ h3 {
 
 .card-platform-badge {
   position: absolute;
-  top: 4px;
-  left: 4px;
+  top: 10px;
+  left: 10px;
   z-index: 2;
 }
 

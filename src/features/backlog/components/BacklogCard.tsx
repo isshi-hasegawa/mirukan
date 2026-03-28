@@ -146,6 +146,11 @@ export function BacklogCard({
           )}
         </div>
       </div>
+      {item.primary_platform && (
+        <div className="card-platform-badge">
+          <PlatformIcon platform={item.primary_platform} />
+        </div>
+      )}
       <div className="card-body">
         <div className="card-thumb-wrap">
           <div className="card-thumb">
@@ -159,11 +164,6 @@ export function BacklogCard({
               <div className="card-thumb-fallback">No Poster</div>
             )}
           </div>
-          {item.primary_platform && (
-            <div className="card-platform-badge">
-              <PlatformIcon platform={item.primary_platform} />
-            </div>
-          )}
         </div>
         <div className="card-content">
           <p className="card-title">{title}</p>
