@@ -1347,10 +1347,10 @@ h3 {
 
 .platform-picker-item img {
   display: block;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   object-fit: contain;
-  padding: 4px;
+  padding: 6px;
 }
 
 .platform-picker-item.is-selected {
@@ -1358,16 +1358,55 @@ h3 {
 }
 
 .platform-picker-item.is-selected img {
-  padding: 2px;
+  padding: 4px;
 }
 
 .platform-picker-none {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  font-size: 20px;
+  width: 44px;
+  height: 44px;
+  font-size: 18px;
   font-weight: bold;
-  color: var(--text-muted);
+  color: white;
+  background: var(--text-muted);
+  border-radius: 8px;
+}
+
+/* Platform-specific background colors */
+.platform-picker-item {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.platform-picker-item[data-platform="netflix"] {
+  background: #e50914;
+}
+
+.platform-picker-item[data-platform="prime_video"] {
+  background: #1a98ff;
+}
+
+.platform-picker-item[data-platform="u_next"] {
+  background: #000000;
+}
+
+.platform-picker-item[data-platform="disney_plus"] {
+  background: #113ccf;
+}
+
+.platform-picker-item[data-platform="hulu"] {
+  background: #1ce783;
+}
+
+.platform-picker-item[data-platform="apple_tv_plus"] {
+  background: #000000;
+}
+
+.platform-picker-item[data-platform="apple_tv"] {
+  background: #555555;
 }

@@ -41,6 +41,7 @@ export function PlatformPicker({ value, onChange }: Props) {
       {PLATFORMS.map((platform) => (
         <label
           key={platform}
+          data-platform={platform}
           className={`platform-picker-item${value === platform ? " is-selected" : ""}`}
           title={platformLabels[platform]}
         >
