@@ -133,6 +133,7 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
             inputRef.current = el;
           }}
           className="detail-inline-control detail-inline-textarea"
+          placeholder="メモを追加"
           rows={5}
           maxLength={500}
           value={state.draftValue}
