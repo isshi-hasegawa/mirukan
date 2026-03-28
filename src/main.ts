@@ -285,23 +285,45 @@ function bindAddModal() {
       message.textContent = "作品を追加しています...";
     }
 
-    const { data: work, error: workError } = selectedTmdbResult
-      ? await upsertTmdbWork(selectedTmdbResult, currentSession.user.id)
-      : await supabase
-          .from("works")
-          .insert({
-            created_by: currentSession.user.id,
-            source_type: "manual",
-            work_type: workType,
-            title,
-            search_text: buildSearchText(title),
-          })
-          .select("id")
-          .single();
+    let work: {
+      id: string;
+    } | null = null;
+    let workError: { message: string } | null = null;
+
+    try {
+      const result = selectedTmdbResult
+        ? await upsertTmdbWork(selectedTmdbResult, currentSession.user.id)
+        : await supabase
+            .from("works")
+            .insert({
+              created_by: currentSession.user.id,
+              source_type: "manual",
+              work_type: workType,
+              title,
+              search_text: buildSearchText(title),
+            })
+            .select("id")
+            .single();
+
+      work = result.data;
+      workError = result.error ? { message: result.error.message } : null;
+    } catch (error) {
+      workError = {
+        message:
+          error instanceof Error ? error.message : "作品の保存中に予期しないエラーが発生しました。",
+      };
+    }
 
     if (workError) {
       if (message) {
         message.textContent = `作品の保存に失敗しました: ${workError.message}`;
+      }
+      return;
+    }
+
+    if (!work) {
+      if (message) {
+        message.textContent = "作品の保存に失敗しました。";
       }
       return;
     }

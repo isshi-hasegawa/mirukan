@@ -15,6 +15,29 @@ type TmdbMultiSearchResponse = {
   }>;
 };
 
+type TmdbMovieDetailsResponse = {
+  id: number;
+  title: string;
+  original_title?: string | null;
+  overview?: string | null;
+  poster_path?: string | null;
+  release_date?: string | null;
+  runtime?: number | null;
+  genres?: Array<{ id: number; name: string }>;
+};
+
+type TmdbTvDetailsResponse = {
+  id: number;
+  name: string;
+  original_name?: string | null;
+  overview?: string | null;
+  poster_path?: string | null;
+  first_air_date?: string | null;
+  episode_run_time?: number[] | null;
+  number_of_seasons?: number | null;
+  genres?: Array<{ id: number; name: string }>;
+};
+
 export type TmdbSearchResult = {
   tmdbId: number;
   tmdbMediaType: "movie" | "tv";
@@ -24,6 +47,21 @@ export type TmdbSearchResult = {
   overview: string | null;
   posterPath: string | null;
   releaseDate: string | null;
+};
+
+export type TmdbWorkDetails = {
+  tmdbId: number;
+  tmdbMediaType: "movie" | "tv";
+  workType: "movie" | "series";
+  title: string;
+  originalTitle: string | null;
+  overview: string | null;
+  posterPath: string | null;
+  releaseDate: string | null;
+  genres: string[];
+  runtimeMinutes: number | null;
+  typicalEpisodeRuntimeMinutes: number | null;
+  seasonCount: number | null;
 };
 
 export async function searchTmdbWorks(query: string) {
@@ -71,4 +109,60 @@ export async function searchTmdbWorks(query: string) {
       },
     ];
   });
+}
+
+export async function fetchTmdbWorkDetails(result: TmdbSearchResult): Promise<TmdbWorkDetails> {
+  const path =
+    result.tmdbMediaType === "movie" ? `/movie/${result.tmdbId}` : `/tv/${result.tmdbId}`;
+
+  const url = new URL(`https://api.themoviedb.org/3${path}`);
+  url.searchParams.set("api_key", env.tmdbApiKey);
+  url.searchParams.set("language", "ja-JP");
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`TMDb details failed with status ${response.status}`);
+  }
+
+  if (result.tmdbMediaType === "movie") {
+    const json = (await response.json()) as TmdbMovieDetailsResponse;
+
+    return {
+      tmdbId: json.id,
+      tmdbMediaType: "movie",
+      workType: "movie",
+      title: json.title,
+      originalTitle: json.original_title ?? result.originalTitle,
+      overview: json.overview ?? result.overview,
+      posterPath: json.poster_path ?? result.posterPath,
+      releaseDate: json.release_date ?? result.releaseDate,
+      genres: (json.genres ?? []).map((genre) => genre.name),
+      runtimeMinutes: typeof json.runtime === "number" && json.runtime > 0 ? json.runtime : null,
+      typicalEpisodeRuntimeMinutes: null,
+      seasonCount: null,
+    };
+  }
+
+  const json = (await response.json()) as TmdbTvDetailsResponse;
+  const representativeEpisodeRuntime =
+    (json.episode_run_time ?? []).find((runtime) => runtime > 0) ?? null;
+
+  return {
+    tmdbId: json.id,
+    tmdbMediaType: "tv",
+    workType: "series",
+    title: json.name,
+    originalTitle: json.original_name ?? result.originalTitle,
+    overview: json.overview ?? result.overview,
+    posterPath: json.poster_path ?? result.posterPath,
+    releaseDate: json.first_air_date ?? result.releaseDate,
+    genres: (json.genres ?? []).map((genre) => genre.name),
+    runtimeMinutes: null,
+    typicalEpisodeRuntimeMinutes: representativeEpisodeRuntime,
+    seasonCount:
+      typeof json.number_of_seasons === "number" && json.number_of_seasons >= 0
+        ? json.number_of_seasons
+        : null,
+  };
 }

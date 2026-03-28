@@ -1,6 +1,10 @@
 import type { PostgrestSingleResponse } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase.ts";
-import type { TmdbSearchResult } from "../../lib/tmdb.ts";
+import {
+  fetchTmdbWorkDetails,
+  type TmdbSearchResult,
+  type TmdbWorkDetails,
+} from "../../lib/tmdb.ts";
 import { buildSearchText } from "./helpers.ts";
 import type { BacklogItem, BacklogItemRow, BacklogStatus, WorkType } from "./types.ts";
 
@@ -88,21 +92,60 @@ export async function upsertTmdbWork(
     return { data: existing, error: null, count: null, status: 200, statusText: "OK" };
   }
 
+  const details = await fetchTmdbWorkDetails(result);
+
   return supabase
     .from("works")
-    .insert({
-      created_by: userId,
-      source_type: "tmdb",
-      tmdb_media_type: result.tmdbMediaType,
-      tmdb_id: result.tmdbId,
-      work_type: workType,
-      title: result.title,
-      original_title: result.originalTitle,
-      search_text: buildSearchText([result.title, result.originalTitle].filter(Boolean).join(" ")),
-      overview: result.overview,
-      poster_path: result.posterPath,
-      release_date: result.releaseDate,
-    })
+    .insert(buildTmdbWorkInsert(details, userId, workType))
     .select("id")
     .single();
+}
+
+function buildTmdbWorkInsert(
+  details: TmdbWorkDetails,
+  userId: string,
+  workType: Extract<WorkType, "movie" | "series">,
+) {
+  return {
+    created_by: userId,
+    source_type: "tmdb" as const,
+    tmdb_media_type: details.tmdbMediaType,
+    tmdb_id: details.tmdbId,
+    work_type: workType,
+    title: details.title,
+    original_title: details.originalTitle,
+    search_text: buildSearchText(
+      [details.title, details.originalTitle, ...details.genres].filter(Boolean).join(" "),
+    ),
+    overview: details.overview,
+    poster_path: details.posterPath,
+    release_date: details.releaseDate,
+    runtime_minutes: details.runtimeMinutes,
+    typical_episode_runtime_minutes: details.typicalEpisodeRuntimeMinutes,
+    duration_bucket: getDurationBucket(
+      details.runtimeMinutes ?? details.typicalEpisodeRuntimeMinutes,
+    ),
+    season_count: details.seasonCount,
+    genres: details.genres,
+  };
+}
+
+function getDurationBucket(minutes: number | null) {
+  if (minutes === null) {
+    return null;
+  }
+
+  if (minutes <= 30) {
+    return "short" as const;
+  }
+
+  if (minutes <= 70) {
+    return "medium" as const;
+  }
+
+  if (minutes <= 120) {
+    return "long" as const;
+  }
+
+  return "very_long" as const;
 }
