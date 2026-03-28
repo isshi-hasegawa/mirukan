@@ -350,6 +350,12 @@ h3 {
   fill: none;
 }
 
+.dots-icon {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
 .count-pill,
 .meta-chip {
   display: inline-flex;
@@ -384,6 +390,7 @@ h3 {
     opacity 140ms ease,
     box-shadow 140ms ease,
     border-color 140ms ease;
+  position: relative;
 }
 
 .card[draggable="true"] {
@@ -401,6 +408,72 @@ h3 {
 .card-title {
   font-size: 1rem;
   font-weight: 700;
+}
+
+.card-topline {
+  display: flex;
+  justify-content: end;
+  min-height: 24px;
+  margin-bottom: -4px;
+}
+
+.card-menu-wrap {
+  position: relative;
+}
+
+.card-menu-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.card-menu-button:hover {
+  background: rgba(92, 59, 35, 0.08);
+}
+
+.card-menu-button:focus,
+.card-menu-item:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.card-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 3;
+  min-width: 132px;
+  padding: 6px;
+  border: 1px solid rgba(92, 59, 35, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 253, 248, 0.98);
+  box-shadow: 0 16px 40px rgba(75, 48, 30, 0.18);
+}
+
+.card-menu-item {
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  padding: 10px 12px;
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.card-menu-item:hover {
+  background: rgba(92, 59, 35, 0.08);
+}
+
+.card-menu-item.danger {
+  color: #9b2f18;
 }
 
 .card-meta,

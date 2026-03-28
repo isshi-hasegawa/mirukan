@@ -45,6 +45,7 @@ let addModalState: AddModalState = {
   manualMode: false,
 };
 let dragState: DragState | null = null;
+let openCardMenuId: string | null = null;
 
 void bootstrap();
 
@@ -91,6 +92,7 @@ async function renderApp() {
     currentItems,
     currentSession.user.email ?? "signed-in user",
     addModalState,
+    openCardMenuId,
   );
   bindSignedInInteractions();
 }
@@ -99,6 +101,7 @@ function bindSignedInInteractions() {
   bindSignOutButton();
   bindAddButtons();
   bindAddModal();
+  bindCardMenus();
   bindDragAndDrop();
 }
 
@@ -489,6 +492,70 @@ function bindDragAndDrop() {
       await moveItemByDropTarget(dragState.itemId, status, null, "after");
     });
   }
+}
+
+function bindCardMenus() {
+  const toggleButtons = document.querySelectorAll<HTMLButtonElement>("[data-card-menu-toggle]");
+  const deleteButtons = document.querySelectorAll<HTMLButtonElement>("[data-delete-backlog-id]");
+
+  for (const button of toggleButtons) {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+
+      const nextId = button.dataset.cardMenuToggle;
+
+      if (!nextId) {
+        return;
+      }
+
+      openCardMenuId = openCardMenuId === nextId ? null : nextId;
+      void renderApp();
+    });
+  }
+
+  for (const button of deleteButtons) {
+    button.addEventListener("click", async (event) => {
+      event.stopPropagation();
+
+      const backlogItemId = button.dataset.deleteBacklogId;
+
+      if (!backlogItemId) {
+        return;
+      }
+
+      const { error } = await supabase.from("backlog_items").delete().eq("id", backlogItemId);
+
+      if (error) {
+        window.alert(`削除に失敗しました: ${error.message}`);
+        return;
+      }
+
+      openCardMenuId = null;
+      await renderApp();
+    });
+  }
+
+  document.addEventListener(
+    "click",
+    (event) => {
+      if (!(event.target instanceof HTMLElement)) {
+        return;
+      }
+
+      if (
+        event.target.closest("[data-card-menu]") ||
+        event.target.closest("[data-card-menu-toggle]")
+      ) {
+        return;
+      }
+
+      if (openCardMenuId !== null) {
+        openCardMenuId = null;
+        void renderApp();
+      }
+    },
+    { once: true },
+  );
 }
 
 async function moveItemByDropTarget(

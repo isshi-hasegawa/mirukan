@@ -81,6 +81,7 @@ export function createBoardMarkup(
   items: BacklogItem[],
   sessionEmail: string,
   addModalState: AddModalState,
+  openCardMenuId: string | null,
 ) {
   const grouped = new Map<BacklogStatus, BacklogItem[]>(statusOrder.map((status) => [status, []]));
 
@@ -112,7 +113,7 @@ export function createBoardMarkup(
           <div class="card-list" data-dropzone-status="${status}">
             ${
               columnItems.length > 0
-                ? columnItems.map((item) => createCardMarkup(item)).join("")
+                ? columnItems.map((item) => createCardMarkup(item, openCardMenuId)).join("")
                 : '<p class="empty-state">この列にはまだカードがありません。</p>'
             }
           </div>
@@ -151,7 +152,7 @@ export function createBoardMarkup(
   `;
 }
 
-function createCardMarkup(item: BacklogItem) {
+function createCardMarkup(item: BacklogItem, openCardMenuId: string | null) {
   const work = item.works;
 
   if (!work) {
@@ -177,6 +178,34 @@ function createCardMarkup(item: BacklogItem) {
       data-card-status="${item.status}"
       data-sort-order="${item.sort_order}"
     >
+      <div class="card-topline">
+        <div class="card-menu-wrap">
+          <button
+            class="card-menu-button"
+            type="button"
+            data-card-menu-toggle="${item.id}"
+            aria-label="カードメニューを開く"
+            title="カードメニューを開く"
+          >
+            ${createDotsIcon()}
+          </button>
+          ${
+            openCardMenuId === item.id
+              ? `
+                <div class="card-menu" data-card-menu="${item.id}">
+                  <button
+                    class="card-menu-item danger"
+                    type="button"
+                    data-delete-backlog-id="${item.id}"
+                  >
+                    削除
+                  </button>
+                </div>
+              `
+              : ""
+          }
+        </div>
+      </div>
       <p class="card-title">${escapeHtml(title)}</p>
       <p class="card-meta">${metadata.map((value) => escapeHtml(String(value))).join(" · ")}</p>
       <div class="card-footer">
@@ -340,6 +369,16 @@ function createPlusIcon() {
   return `
     <svg class="plus-icon" viewBox="0 0 20 20" aria-hidden="true">
       <path d="M10 4.25v11.5M4.25 10h11.5" />
+    </svg>
+  `;
+}
+
+function createDotsIcon() {
+  return `
+    <svg class="dots-icon" viewBox="0 0 20 20" aria-hidden="true">
+      <circle cx="10" cy="4.25" r="1.4" />
+      <circle cx="10" cy="10" r="1.4" />
+      <circle cx="10" cy="15.75" r="1.4" />
     </svg>
   `;
 }
