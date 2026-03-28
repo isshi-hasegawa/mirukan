@@ -97,21 +97,6 @@ export function RecommendModal({ items, onClose, onOpenDetail, onMoveToWantToWat
         aria-modal="true"
         aria-label="次何見る？"
       >
-        <header className="modal-header">
-          <h2 className="modal-title">次何見る？</h2>
-          <button type="button" className="icon-button" onClick={onClose} aria-label="閉じる">
-            <svg viewBox="0 0 20 20" aria-hidden="true" width="20" height="20">
-              <path
-                d="M4 4l12 12M16 4L4 16"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                fill="none"
-              />
-            </svg>
-          </button>
-        </header>
-
         <div className="recommend-modal-body">
           <div className="recommend-filters">
             <div className="recommend-modes">
@@ -133,7 +118,11 @@ export function RecommendModal({ items, onClose, onOpenDetail, onMoveToWantToWat
 
           <div className="recommend-results">
             {activeMode === null ? (
-              <p className="recommend-guide">気分を選ぶとレコメンドします</p>
+              <ul className="recommend-item-list recommend-item-skeleton" role="list">
+                {[1, 2, 3].map((i) => (
+                  <li key={i} className="recommend-skeleton-item" />
+                ))}
+              </ul>
             ) : suggestions.length === 0 ? (
               <p className="recommend-empty">積みの中に該当する作品がありません</p>
             ) : (

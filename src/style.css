@@ -1291,6 +1291,7 @@ h3 {
 .recommend-modes {
   display: flex;
   gap: 8px;
+  justify-content: center;
 }
 
 .recommend-mode-button {
@@ -1449,6 +1450,25 @@ h3 {
   list-style: none;
   padding: 0;
   margin: 0;
+}
+
+.recommend-skeleton-item {
+  height: 108px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.3;
+  }
 }
 
 .recommend-item {
