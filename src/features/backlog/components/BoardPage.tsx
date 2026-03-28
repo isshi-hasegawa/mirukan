@@ -257,12 +257,7 @@ export function BoardPage({ session }: Props) {
         setOpenMenuId(null);
       }}
     >
-      <Header
-        session={session}
-        isMobileLayout={isMobileLayout}
-        onOpenRecommend={() => setIsRecommendOpen(true)}
-        onOpenAddModal={() => setAddModalStatus("stacked")}
-      />
+      <Header session={session} onOpenRecommend={() => setIsRecommendOpen(true)} />
 
       <KanbanBoard
         items={items}
