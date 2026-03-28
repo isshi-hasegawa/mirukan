@@ -81,6 +81,7 @@ let addModalState: { isOpen: boolean; defaultStatus: BacklogStatus } = {
   isOpen: false,
   defaultStatus: "stacked",
 };
+let dragState: { itemId: string; sourceStatus: BacklogStatus } | null = null;
 
 void bootstrap();
 
@@ -128,7 +129,7 @@ async function renderApp() {
   bindSignOutButton();
   bindAddButtons();
   bindAddModal();
-  bindStatusButtons();
+  bindDragAndDrop();
 }
 
 function renderSignedOut() {
@@ -282,7 +283,7 @@ function createBoardMarkup(items: BacklogItem[], session: Session) {
       const columnItems = grouped.get(status) ?? [];
 
       return `
-        <section class="board-column">
+        <section class="board-column" data-column-status="${status}">
           <header class="column-header">
             <div>
               <h2>${statusLabels[status]}</h2>
@@ -295,7 +296,7 @@ function createBoardMarkup(items: BacklogItem[], session: Session) {
               <span class="count-pill">${columnItems.length}</span>
             </div>
           </header>
-          <div class="card-list">
+          <div class="card-list" data-dropzone-status="${status}">
             ${
               columnItems.length > 0
                 ? columnItems.map((item) => createCardMarkup(item)).join("")
@@ -336,10 +337,6 @@ function createCardMarkup(item: BacklogItem) {
     return "";
   }
 
-  const statusIndex = statusOrder.indexOf(item.status);
-  const previousStatus = statusIndex > 0 ? statusOrder[statusIndex - 1] : null;
-  const nextStatus = statusIndex < statusOrder.length - 1 ? statusOrder[statusIndex + 1] : null;
-
   const title = item.display_title ?? work.title;
   const metadata = [
     work.work_type === "movie" ? "映画" : work.work_type === "series" ? "シリーズ" : "シーズン",
@@ -352,44 +349,21 @@ function createCardMarkup(item: BacklogItem) {
   const platformMarkup = item.primary_platform
     ? `<span class="meta-chip">${platformLabels[item.primary_platform]}</span>`
     : "";
-  const moveButtons = [
-    previousStatus
-      ? `
-        <button
-          class="card-move-button"
-          type="button"
-          data-move-id="${item.id}"
-          data-next-status="${previousStatus}"
-        >
-          ← ${statusLabels[previousStatus]}
-        </button>
-      `
-      : "",
-    nextStatus
-      ? `
-        <button
-          class="card-move-button"
-          type="button"
-          data-move-id="${item.id}"
-          data-next-status="${nextStatus}"
-        >
-          ${statusLabels[nextStatus]} →
-        </button>
-      `
-      : "",
-  ]
-    .filter(Boolean)
-    .join("");
 
   return `
-    <article class="card">
+    <article
+      class="card"
+      draggable="true"
+      data-card-id="${item.id}"
+      data-card-status="${item.status}"
+      data-sort-order="${item.sort_order}"
+    >
       <p class="card-title">${escapeHtml(title)}</p>
       <p class="card-meta">${metadata.map((value) => escapeHtml(String(value))).join(" · ")}</p>
       <div class="card-footer">
         ${platformMarkup}
       </div>
       ${noteMarkup}
-      ${moveButtons ? `<div class="card-actions">${moveButtons}</div>` : ""}
     </article>
   `;
 }
@@ -570,36 +544,195 @@ function bindAddModal() {
   });
 }
 
-function bindStatusButtons() {
-  const buttons = document.querySelectorAll<HTMLButtonElement>("[data-move-id]");
+function bindDragAndDrop() {
+  const cards = document.querySelectorAll<HTMLElement>("[data-card-id]");
+  const dropzones = document.querySelectorAll<HTMLElement>("[data-dropzone-status]");
 
-  for (const button of buttons) {
-    button.addEventListener("click", async () => {
-      const backlogItemId = button.dataset.moveId;
-      const nextStatus = button.dataset.nextStatus as BacklogStatus | undefined;
+  for (const card of cards) {
+    card.addEventListener("dragstart", (event) => {
+      const itemId = card.dataset.cardId;
+      const sourceStatus = card.dataset.cardStatus as BacklogStatus | undefined;
 
-      if (!backlogItemId || !nextStatus) {
+      if (!itemId || !sourceStatus) {
         return;
       }
 
-      button.disabled = true;
-
-      const { error } = await supabase
-        .from("backlog_items")
-        .update({
-          status: nextStatus,
-          sort_order: getNextSortOrder(nextStatus),
-        })
-        .eq("id", backlogItemId);
-
-      if (error) {
-        button.disabled = false;
-        window.alert(`列の移動に失敗しました: ${error.message}`);
-        return;
+      dragState = { itemId, sourceStatus };
+      card.classList.add("card-dragging");
+      event.dataTransfer?.setData("text/plain", itemId);
+      event.dataTransfer?.setDragImage(card, 24, 24);
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = "move";
       }
-
-      await renderApp();
     });
+
+    card.addEventListener("dragend", () => {
+      dragState = null;
+      clearDropIndicators();
+    });
+
+    card.addEventListener("dragover", (event) => {
+      if (!dragState) {
+        return;
+      }
+
+      event.preventDefault();
+      clearDropIndicators();
+      const side = getDropSide(card, event.clientY);
+      card.classList.add(side === "before" ? "drop-before" : "drop-after");
+    });
+
+    card.addEventListener("drop", async (event) => {
+      if (!dragState) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const targetItemId = card.dataset.cardId;
+      const targetStatus = card.dataset.cardStatus as BacklogStatus | undefined;
+
+      if (!targetItemId || !targetStatus || targetItemId === dragState.itemId) {
+        clearDropIndicators();
+        return;
+      }
+
+      const side = getDropSide(card, event.clientY);
+      await moveItemByDropTarget(dragState.itemId, targetStatus, targetItemId, side);
+    });
+  }
+
+  for (const dropzone of dropzones) {
+    dropzone.addEventListener("dragover", (event) => {
+      if (!dragState) {
+        return;
+      }
+
+      event.preventDefault();
+      if (!(event.target instanceof HTMLElement) || event.target.closest("[data-card-id]")) {
+        return;
+      }
+
+      clearDropIndicators();
+      dropzone.classList.add("dropzone-active");
+    });
+
+    dropzone.addEventListener("dragleave", (event) => {
+      if (!(event.target instanceof HTMLElement)) {
+        return;
+      }
+
+      const relatedTarget =
+        event instanceof DragEvent && event.relatedTarget instanceof Node
+          ? event.relatedTarget
+          : null;
+
+      if (relatedTarget && dropzone.contains(relatedTarget)) {
+        return;
+      }
+
+      dropzone.classList.remove("dropzone-active");
+    });
+
+    dropzone.addEventListener("drop", async (event) => {
+      if (!dragState) {
+        return;
+      }
+
+      event.preventDefault();
+
+      const status = dropzone.dataset.dropzoneStatus as BacklogStatus | undefined;
+
+      if (!status) {
+        clearDropIndicators();
+        return;
+      }
+
+      if (event.target instanceof HTMLElement && event.target.closest("[data-card-id]")) {
+        return;
+      }
+
+      await moveItemByDropTarget(dragState.itemId, status, null, "after");
+    });
+  }
+}
+
+async function moveItemByDropTarget(
+  itemId: string,
+  targetStatus: BacklogStatus,
+  targetItemId: string | null,
+  side: "before" | "after",
+) {
+  const sortOrder = getSortOrderForDrop(itemId, targetStatus, targetItemId, side);
+
+  const { error } = await supabase
+    .from("backlog_items")
+    .update({
+      status: targetStatus,
+      sort_order: sortOrder,
+    })
+    .eq("id", itemId);
+
+  clearDropIndicators();
+
+  if (error) {
+    window.alert(`ドラッグ移動に失敗しました: ${error.message}`);
+    return;
+  }
+
+  await renderApp();
+}
+
+function getSortOrderForDrop(
+  itemId: string,
+  targetStatus: BacklogStatus,
+  targetItemId: string | null,
+  side: "before" | "after",
+) {
+  const targetItems = currentItems
+    .filter((item) => item.id !== itemId && item.status === targetStatus)
+    .sort((left, right) => left.sort_order - right.sort_order);
+
+  if (!targetItemId) {
+    return targetItems.length > 0 ? targetItems.at(-1)!.sort_order + 1000 : 1000;
+  }
+
+  const targetIndex = targetItems.findIndex((item) => item.id === targetItemId);
+
+  if (targetIndex === -1) {
+    return targetItems.length > 0 ? targetItems.at(-1)!.sort_order + 1000 : 1000;
+  }
+
+  const insertionIndex = side === "before" ? targetIndex : targetIndex + 1;
+  const previous = insertionIndex > 0 ? targetItems[insertionIndex - 1] : null;
+  const next = insertionIndex < targetItems.length ? targetItems[insertionIndex] : null;
+
+  if (!previous && !next) {
+    return 1000;
+  }
+
+  if (!previous && next) {
+    return next.sort_order - 1000;
+  }
+
+  if (previous && !next) {
+    return previous.sort_order + 1000;
+  }
+
+  return (previous!.sort_order + next!.sort_order) / 2;
+}
+
+function getDropSide(card: HTMLElement, clientY: number) {
+  const rect = card.getBoundingClientRect();
+  return clientY < rect.top + rect.height / 2 ? "before" : "after";
+}
+
+function clearDropIndicators() {
+  for (const element of document.querySelectorAll(
+    ".drop-before, .drop-after, .dropzone-active, .card-dragging",
+  )) {
+    element.classList.remove("drop-before", "drop-after", "dropzone-active", "card-dragging");
   }
 }
 
