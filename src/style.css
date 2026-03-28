@@ -36,6 +36,7 @@ html {
 body {
   margin: 0;
   min-height: 100svh;
+  overflow-x: hidden;
 }
 
 body::before {
@@ -1154,6 +1155,123 @@ h3 {
 
   .column-add-button {
     display: none;
+  }
+
+  .board {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: none;
+    overflow-x: clip;
+  }
+
+  .board-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 12px;
+  }
+
+  .board-tabs {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    gap: 6px;
+    padding-bottom: 10px;
+  }
+
+  .board-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .board-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition:
+      background 0.15s,
+      color 0.15s,
+      border-color 0.15s;
+  }
+
+  .board-tab.is-active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  .board-tab-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.25);
+    color: inherit;
+  }
+
+  .board-tab.is-active .board-tab-badge {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  .board-tab:not(.is-active) .board-tab-badge {
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+  }
+
+  .board-tab-content {
+    flex: 1;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .board-tab-content .board-column {
+    width: 100%;
+    height: auto;
+    min-height: calc(100svh - 280px);
+  }
+
+  .fab {
+    position: fixed;
+    bottom: 24px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 16px rgba(191, 90, 54, 0.45);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    transition:
+      background 0.15s,
+      box-shadow 0.15s;
+  }
+
+  .fab:hover {
+    background: var(--accent-strong);
+    box-shadow: 0 6px 20px rgba(140, 52, 21, 0.5);
+  }
+
+  .fab:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
   }
 }
 

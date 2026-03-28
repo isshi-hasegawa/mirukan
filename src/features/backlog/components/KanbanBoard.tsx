@@ -1,5 +1,6 @@
+import { useEffect, useRef } from "react";
 import type { BacklogItem, BacklogStatus } from "../types.ts";
-import { statusOrder } from "../constants.ts";
+import { statusOrder, statusLabels } from "../constants.ts";
 import { KanbanColumn } from "./KanbanColumn.tsx";
 
 type DropIndicator =
@@ -10,6 +11,9 @@ type Props = {
   items: BacklogItem[];
   dropIndicator: DropIndicator | null;
   openMenuId: string | null;
+  isMobileLayout: boolean;
+  selectedTabStatus: BacklogStatus;
+  onTabChange: (status: BacklogStatus) => void;
   onOpenAddModal: (status: BacklogStatus) => void;
   onOpenDetail: (itemId: string) => void;
   onToggleMenu: (itemId: string) => void;
@@ -23,12 +27,16 @@ type Props = {
     side: "before" | "after",
   ) => void;
   onDropIndicatorChange: (indicator: DropIndicator | null) => void;
+  columnRef: (status: BacklogStatus, el: HTMLElement | null) => void;
 };
 
 export function KanbanBoard({
   items,
   dropIndicator,
   openMenuId,
+  isMobileLayout,
+  selectedTabStatus,
+  onTabChange,
   onOpenAddModal,
   onOpenDetail,
   onToggleMenu,
@@ -38,6 +46,7 @@ export function KanbanBoard({
   onDragOver,
   onDrop,
   onDropIndicatorChange,
+  columnRef,
 }: Props) {
   const grouped = new Map<BacklogStatus, BacklogItem[]>(statusOrder.map((status) => [status, []]));
 
@@ -45,24 +54,104 @@ export function KanbanBoard({
     grouped.get(item.status)?.push(item);
   }
 
+  const tabsRef = useRef<HTMLElement>(null);
+  const tabButtonRefs = useRef<Partial<Record<BacklogStatus, HTMLButtonElement | null>>>({});
+  const touchStartX = useRef<number>(0);
+  const currentIndex = statusOrder.indexOf(selectedTabStatus);
+
+  useEffect(() => {
+    if (isMobileLayout && tabButtonRefs.current[selectedTabStatus]) {
+      tabButtonRefs.current[selectedTabStatus]?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      });
+    }
+  }, [selectedTabStatus, isMobileLayout]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(dx) < 50) return;
+    if (dx < 0 && currentIndex < statusOrder.length - 1) {
+      onTabChange(statusOrder[currentIndex + 1]);
+    } else if (dx > 0 && currentIndex > 0) {
+      onTabChange(statusOrder[currentIndex - 1]);
+    }
+  };
+
+  const columnProps = (status: BacklogStatus) => ({
+    status,
+    items: grouped.get(status) ?? [],
+    dropIndicator,
+    openMenuId,
+    onOpenAddModal,
+    onOpenDetail,
+    onToggleMenu,
+    onDeleteItem,
+    onDragStart,
+    onDragEnd,
+    onDragOver,
+    onDrop,
+    onDropIndicatorChange,
+  });
+
+  if (isMobileLayout) {
+    return (
+      <section className="board board-mobile">
+        <nav className="board-tabs" role="tablist" ref={tabsRef}>
+          {statusOrder.map((status) => (
+            <button
+              key={status}
+              ref={(el) => {
+                tabButtonRefs.current[status] = el as HTMLButtonElement | null;
+              }}
+              type="button"
+              role="tab"
+              aria-selected={selectedTabStatus === status}
+              className={`board-tab${selectedTabStatus === status ? " is-active" : ""}`}
+              onClick={() => onTabChange(status)}
+            >
+              {statusLabels[status]}
+              <span className="board-tab-badge">{grouped.get(status)?.length ?? 0}</span>
+            </button>
+          ))}
+        </nav>
+        <div
+          className="board-tab-content"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          <KanbanColumn
+            key={selectedTabStatus}
+            {...columnProps(selectedTabStatus)}
+            extra={
+              <div
+                ref={(el) => columnRef(selectedTabStatus, el as HTMLElement | null)}
+                style={{ position: "absolute" }}
+              />
+            }
+          />
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="board">
       {statusOrder.map((status) => (
         <KanbanColumn
           key={status}
-          status={status}
-          items={grouped.get(status) ?? []}
-          dropIndicator={dropIndicator}
-          openMenuId={openMenuId}
-          onOpenAddModal={onOpenAddModal}
-          onOpenDetail={onOpenDetail}
-          onToggleMenu={onToggleMenu}
-          onDeleteItem={onDeleteItem}
-          onDragStart={onDragStart}
-          onDragEnd={onDragEnd}
-          onDragOver={onDragOver}
-          onDrop={onDrop}
-          onDropIndicatorChange={onDropIndicatorChange}
+          {...columnProps(status)}
+          extra={
+            <div
+              ref={(el) => columnRef(status, el as HTMLElement | null)}
+              style={{ position: "absolute" }}
+            />
+          }
         />
       ))}
     </section>

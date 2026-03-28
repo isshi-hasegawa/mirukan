@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../../../lib/supabase.ts";
 import { getSortOrderForDrop, getTopSortOrder, normalizeBacklogItems } from "../data.ts";
 import { getDropSide } from "../helpers.ts";
 import type { BacklogItem, BacklogStatus, DetailModalState } from "../types.ts";
+import { useWindowSize } from "../hooks/useWindowSize.ts";
 import { KanbanBoard } from "./KanbanBoard.tsx";
 import { AddModal } from "./AddModal.tsx";
 import { DetailModal } from "./DetailModal.tsx";
@@ -30,6 +31,16 @@ export function BoardPage({ session }: Props) {
   const [dragItemId, setDragItemId] = useState<string | null>(null);
   const [dropIndicator, setDropIndicator] = useState<DropIndicator | null>(null);
   const [isRecommendOpen, setIsRecommendOpen] = useState(false);
+  const [selectedTabStatus, setSelectedTabStatus] = useState<BacklogStatus>("stacked");
+
+  const windowWidth = useWindowSize();
+  const isMobileLayout = windowWidth <= 720;
+
+  const columnRefs = useRef<Partial<Record<BacklogStatus, HTMLElement | null>>>({});
+
+  const handleColumnRef = (status: BacklogStatus, el: HTMLElement | null) => {
+    columnRefs.current[status] = el;
+  };
 
   const loadItems = useCallback(async () => {
     const { data, error: fetchError } = await supabase
@@ -75,6 +86,12 @@ export function BoardPage({ session }: Props) {
     side: "before" | "after",
   ) => {
     if (!dragItemId) return;
+
+    // モバイルレイアウトでは列間ドラッグを無効化
+    if (isMobileLayout) {
+      const dragItem = items.find((i) => i.id === dragItemId);
+      if (dragItem && dragItem.status !== targetStatus) return;
+    }
 
     const sortOrder = getSortOrderForDrop(items, dragItemId, targetStatus, targetItemId, side);
 
@@ -125,7 +142,15 @@ export function BoardPage({ session }: Props) {
       return;
     }
 
+    setIsRecommendOpen(false);
     await loadItems();
+
+    if (isMobileLayout) {
+      setSelectedTabStatus("want_to_watch");
+    } else {
+      const col = columnRefs.current["want_to_watch"];
+      col?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    }
   };
 
   const handleOpenDetail = (itemId: string) => {
@@ -196,17 +221,19 @@ export function BoardPage({ session }: Props) {
           <button className="ghost-button" type="button" onClick={() => setIsRecommendOpen(true)}>
             次何見る？
           </button>
-          <button
-            className="primary-button"
-            type="button"
-            onClick={() => setAddModalStatus("stacked")}
-          >
-            <svg className="search-icon" viewBox="0 0 20 20" aria-hidden="true">
-              <circle cx="8.5" cy="8.5" r="4.75" />
-              <path d="M12.2 12.2 16 16" />
-            </svg>
-            作品を探す
-          </button>
+          {!isMobileLayout && (
+            <button
+              className="primary-button"
+              type="button"
+              onClick={() => setAddModalStatus("stacked")}
+            >
+              <svg className="search-icon" viewBox="0 0 20 20" aria-hidden="true">
+                <circle cx="8.5" cy="8.5" r="4.75" />
+                <path d="M12.2 12.2 16 16" />
+              </svg>
+              作品を探す
+            </button>
+          )}
           <p className="session-chip">{session.user.email ?? "signed-in user"}</p>
           <button
             className="ghost-button"
@@ -222,6 +249,9 @@ export function BoardPage({ session }: Props) {
         items={items}
         dropIndicator={dropIndicator}
         openMenuId={openMenuId}
+        isMobileLayout={isMobileLayout}
+        selectedTabStatus={selectedTabStatus}
+        onTabChange={setSelectedTabStatus}
         onOpenAddModal={setAddModalStatus}
         onOpenDetail={handleOpenDetail}
         onToggleMenu={handleToggleMenu}
@@ -233,7 +263,27 @@ export function BoardPage({ session }: Props) {
           void handleDrop(targetStatus, targetItemId, side)
         }
         onDropIndicatorChange={setDropIndicator}
+        columnRef={handleColumnRef}
       />
+
+      {isMobileLayout && (
+        <button
+          type="button"
+          className="fab"
+          aria-label="作品を追加"
+          onClick={() => setAddModalStatus(selectedTabStatus)}
+        >
+          <svg viewBox="0 0 20 20" aria-hidden="true" width="24" height="24">
+            <path
+              d="M10 4.25v11.5M4.25 10h11.5"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              fill="none"
+            />
+          </svg>
+        </button>
+      )}
 
       {isRecommendOpen && (
         <RecommendModal
