@@ -459,11 +459,16 @@ h3 {
   align-items: start;
 }
 
-.card-thumb {
+.card-thumb-wrap {
   position: relative;
+  aspect-ratio: 2 / 3;
+}
+
+.card-thumb {
   overflow: hidden;
   border-radius: 14px;
-  aspect-ratio: 2 / 3;
+  width: 100%;
+  height: 100%;
   background:
     radial-gradient(circle at top left, rgba(255, 208, 143, 0.42), transparent 36%),
     linear-gradient(180deg, rgba(191, 90, 54, 0.14), rgba(92, 59, 35, 0.08));

@@ -147,12 +147,18 @@ export function BacklogCard({
         </div>
       </div>
       <div className="card-body">
-        <div className="card-thumb">
-          {posterUrl && !posterError ? (
-            <img src={posterUrl} alt={`${title} のポスター`} onError={() => setPosterError(true)} />
-          ) : (
-            <div className="card-thumb-fallback">No Poster</div>
-          )}
+        <div className="card-thumb-wrap">
+          <div className="card-thumb">
+            {posterUrl && !posterError ? (
+              <img
+                src={posterUrl}
+                alt={`${title} のポスター`}
+                onError={() => setPosterError(true)}
+              />
+            ) : (
+              <div className="card-thumb-fallback">No Poster</div>
+            )}
+          </div>
           {item.primary_platform && (
             <div className="card-platform-badge">
               <PlatformIcon platform={item.primary_platform} />
@@ -162,7 +168,6 @@ export function BacklogCard({
         <div className="card-content">
           <p className="card-title">{title}</p>
           <p className="card-meta">{metadata.join(" · ")}</p>
-          <div className="card-footer" />
           {item.note && <p className="card-note">{item.note}</p>}
         </div>
       </div>
