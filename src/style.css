@@ -1429,7 +1429,7 @@ h3 {
     box-shadow: 0 6px 20px rgba(140, 52, 21, 0.5);
   }
 
-  .fab:focus {
+  .fab:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 3px;
   }

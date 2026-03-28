@@ -282,7 +282,7 @@ export function BoardPage({ session }: Props) {
         columnRef={handleColumnRef}
       />
 
-      {isMobileLayout && (
+      {isMobileLayout && addModalStatus === null && (
         <button
           type="button"
           className="fab"
