@@ -1,14 +1,19 @@
 import { useEffect, useState } from "react";
+import { FilmIcon, LightBulbIcon, BoltIcon, EyeIcon } from "@heroicons/react/24/outline";
 import { supabase } from "../../../lib/supabase.ts";
 import type { BacklogItem, WorkSummary } from "../types.ts";
 
 type ViewingMode = "focus" | "thoughtful" | "quick" | "background";
 
-const MODES: { id: ViewingMode; label: string; icon: string }[] = [
-  { id: "focus", label: "ガッツリ", icon: "🎬" },
-  { id: "thoughtful", label: "じっくり", icon: "🤔" },
-  { id: "quick", label: "サクッと", icon: "⚡" },
-  { id: "background", label: "ながら見", icon: "👀" },
+const MODES: {
+  id: ViewingMode;
+  label: string;
+  Icon: React.ComponentType<{ className: string }>;
+}[] = [
+  { id: "focus", label: "ガッツリ", Icon: FilmIcon },
+  { id: "thoughtful", label: "じっくり", Icon: LightBulbIcon },
+  { id: "quick", label: "サクッと", Icon: BoltIcon },
+  { id: "background", label: "ながら見", Icon: EyeIcon },
 ];
 
 type SuggestionItem =
@@ -170,9 +175,7 @@ export function RecommendModal({
                   className={`recommend-mode-button${activeMode === mode.id ? " is-active" : ""}`}
                   onClick={() => setActiveMode(mode.id)}
                 >
-                  <span className="recommend-mode-icon" aria-hidden="true">
-                    {mode.icon}
-                  </span>
+                  <mode.Icon className="recommend-mode-icon" aria-hidden="true" />
                   <span className="recommend-mode-label">{mode.label}</span>
                 </button>
               ))}
