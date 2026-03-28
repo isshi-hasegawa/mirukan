@@ -31,6 +31,27 @@ export function getNextSortOrder(items: BacklogItem[], status: BacklogStatus) {
   return currentMax + 1000;
 }
 
+export function getSortOrderForStatusChange(
+  items: BacklogItem[],
+  itemId: string,
+  targetStatus: BacklogStatus,
+) {
+  const currentItem = items.find((item) => item.id === itemId);
+
+  if (!currentItem) {
+    return getNextSortOrder(items, targetStatus);
+  }
+
+  if (currentItem.status === targetStatus) {
+    return currentItem.sort_order;
+  }
+
+  return getNextSortOrder(
+    items.filter((item) => item.id !== itemId),
+    targetStatus,
+  );
+}
+
 export function getSortOrderForDrop(
   items: BacklogItem[],
   itemId: string,

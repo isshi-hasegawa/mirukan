@@ -169,6 +169,7 @@ function createCardMarkup(item: BacklogItem, openCardMenuId: string | null) {
   }
 
   const title = item.display_title ?? work.title;
+  const posterUrl = work.poster_path ? `https://image.tmdb.org/t/p/w185${work.poster_path}` : null;
   const metadata = [
     work.work_type === "movie" ? "映画" : work.work_type === "series" ? "シリーズ" : "シーズン",
     work.release_date ? work.release_date.slice(0, 4) : null,
@@ -216,12 +217,23 @@ function createCardMarkup(item: BacklogItem, openCardMenuId: string | null) {
           }
         </div>
       </div>
-      <p class="card-title">${escapeHtml(title)}</p>
-      <p class="card-meta">${metadata.map((value) => escapeHtml(String(value))).join(" · ")}</p>
-      <div class="card-footer">
-        ${platformMarkup}
+      <div class="card-body">
+        <div class="card-thumb">
+          ${
+            posterUrl
+              ? `<img src="${posterUrl}" alt="${escapeHtml(title)} のポスター" />`
+              : '<div class="card-thumb-fallback">No Poster</div>'
+          }
+        </div>
+        <div class="card-content">
+          <p class="card-title">${escapeHtml(title)}</p>
+          <p class="card-meta">${metadata.map((value) => escapeHtml(String(value))).join(" · ")}</p>
+          <div class="card-footer">
+            ${platformMarkup}
+          </div>
+          ${noteMarkup}
+        </div>
       </div>
-      ${noteMarkup}
     </article>
   `;
 }
@@ -264,7 +276,7 @@ function createDetailModalMarkup(item: BacklogItem | null, detailModalState: Det
           <select name="status">${createStatusOptions(item.status)}</select>
         </label>
         <label>
-          <span>主視聴先</span>
+          <span>視聴先</span>
           <select name="primaryPlatform">${platformOptions}</select>
         </label>
         <label>
@@ -311,7 +323,7 @@ function createDetailModalMarkup(item: BacklogItem | null, detailModalState: Det
             <div class="detail-chip-row">${genres}</div>
             ${
               item.primary_platform
-                ? `<p class="detail-field"><span>主視聴先</span>${escapeHtml(platformLabels[item.primary_platform])}</p>`
+                ? `<p class="detail-field"><span>視聴先</span>${escapeHtml(platformLabels[item.primary_platform])}</p>`
                 : ""
             }
             ${
@@ -521,7 +533,7 @@ function createAddModalMarkup(addModalState: AddModalState) {
             <select name="status">${statusOptions}</select>
           </label>
           <label>
-            <span>主視聴先</span>
+            <span>視聴先</span>
             <select name="primaryPlatform">${platformOptions}</select>
           </label>
           <label>

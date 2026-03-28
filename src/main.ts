@@ -4,6 +4,7 @@ import { fetchTmdbSeasonOptions, searchTmdbWorks } from "./lib/tmdb.ts";
 import {
   getNextSortOrder,
   getSortOrderForDrop,
+  getSortOrderForStatusChange,
   normalizeBacklogItems,
   upsertTmdbWork,
 } from "./features/backlog/data.ts";
@@ -771,6 +772,7 @@ function bindCardDetails() {
     const status = getStringField(formData, "status") as BacklogStatus;
     const primaryPlatform = normalizePrimaryPlatform(getStringField(formData, "primaryPlatform"));
     const note = getNullableStringField(formData, "note");
+    const nextSortOrder = getSortOrderForStatusChange(currentItems, editingItemId, status);
 
     if (message) {
       message.textContent = "保存しています...";
@@ -781,6 +783,7 @@ function bindCardDetails() {
       .update({
         display_title: displayTitle,
         status,
+        sort_order: nextSortOrder,
         primary_platform: primaryPlatform,
         note,
       })
@@ -799,6 +802,7 @@ function bindCardDetails() {
             ...item,
             display_title: displayTitle,
             status,
+            sort_order: nextSortOrder,
             primary_platform: primaryPlatform,
             note,
           }

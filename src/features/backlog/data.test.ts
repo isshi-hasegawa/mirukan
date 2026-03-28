@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vite-plus/test";
-import { getNextSortOrder, getSortOrderForDrop } from "./data.ts";
+import { getNextSortOrder, getSortOrderForDrop, getSortOrderForStatusChange } from "./data.ts";
 import type { BacklogItem } from "./types.ts";
 
 function createItem(id: string, status: BacklogItem["status"], sortOrder: number): BacklogItem {
@@ -66,5 +66,23 @@ describe("getSortOrderForDrop", () => {
     const items = [createItem("a", "stacked", 1000)];
 
     expect(getSortOrderForDrop(items, "a", "watched", null, "after")).toBe(1000);
+  });
+});
+
+describe("getSortOrderForStatusChange", () => {
+  test("keeps the current sort order when the status does not change", () => {
+    const items = [createItem("a", "stacked", 1000), createItem("b", "watched", 1000)];
+
+    expect(getSortOrderForStatusChange(items, "a", "stacked")).toBe(1000);
+  });
+
+  test("moves the item to the end of the target column when the status changes", () => {
+    const items = [
+      createItem("a", "stacked", 1000),
+      createItem("b", "watched", 1000),
+      createItem("c", "watched", 2000),
+    ];
+
+    expect(getSortOrderForStatusChange(items, "a", "watched")).toBe(3000);
   });
 });
