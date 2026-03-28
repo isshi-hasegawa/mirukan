@@ -125,14 +125,20 @@ export type TmdbWorkDetails = {
 const TRENDING_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 let trendingCache: { results: TmdbSearchResult[]; fetchedAt: number } | null = null;
 
-export async function fetchTmdbTrending(): Promise<TmdbSearchResult[]> {
-  if (trendingCache && Date.now() - trendingCache.fetchedAt < TRENDING_CACHE_TTL_MS) {
-    return trendingCache.results;
+function shuffleArray<T>(arr: T[]): T[] {
+  const shuffled = [...arr];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
+  return shuffled;
+}
 
+async function fetchTrendingPage(page: number): Promise<TmdbSearchResult[]> {
   const url = new URL("https://api.themoviedb.org/3/trending/all/week");
   url.searchParams.set("api_key", env.tmdbApiKey);
   url.searchParams.set("language", "ja-JP");
+  url.searchParams.set("page", page.toString());
 
   const response = await fetch(url);
 
@@ -172,9 +178,29 @@ export async function fetchTmdbTrending(): Promise<TmdbSearchResult[]> {
       },
     ];
   });
+}
+
+export async function fetchTmdbTrending(): Promise<TmdbSearchResult[]> {
+  if (trendingCache && Date.now() - trendingCache.fetchedAt < TRENDING_CACHE_TTL_MS) {
+    return shuffleArray(trendingCache.results);
+  }
+
+  const pages = await Promise.all([
+    fetchTrendingPage(1),
+    fetchTrendingPage(2),
+    fetchTrendingPage(3),
+  ]);
+
+  const combined = pages.flat();
+  const seen = new Set<number>();
+  const results = combined.filter((item) => {
+    if (seen.has(item.tmdbId)) return false;
+    seen.add(item.tmdbId);
+    return true;
+  });
 
   trendingCache = { results, fetchedAt: Date.now() };
-  return results;
+  return shuffleArray(results);
 }
 
 export async function searchTmdbWorks(query: string) {
