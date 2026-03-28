@@ -1332,6 +1332,10 @@ h3 {
   background-clip: padding-box;
 }
 
+.platform-picker-item.is-selected {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
 .platform-picker-item input {
   position: absolute;
   opacity: 0;
