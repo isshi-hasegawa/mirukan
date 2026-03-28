@@ -25,6 +25,7 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
   const [isSearching, setIsSearching] = useState(false);
   const [isLoadingSeasons, setIsLoadingSeasons] = useState(false);
   const [searchMessage, setSearchMessage] = useState<string | null>(null);
+  const [duplicateNotice, setDuplicateNotice] = useState<string | null>(null);
   const [status, setStatus] = useState<BacklogStatus>(defaultStatus);
   const [primaryPlatform, setPrimaryPlatform] = useState("");
   const [note, setNote] = useState("");
@@ -84,6 +85,7 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
       setSeasonOptions([]);
       setIsSearching(false);
       setSearchMessage(null);
+      setDuplicateNotice(null);
       return;
     }
 
@@ -94,6 +96,7 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
     setSelectedTmdbResult(null);
     setSelectedTmdbTarget(null);
     setSeasonOptions([]);
+    setDuplicateNotice(null);
 
     try {
       const results = await searchTmdbWorks(trimmed);
@@ -112,10 +115,28 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
     }
   };
 
+  const checkDuplicates = (tmdbId: number, tmdbMediaType: "movie" | "tv") => {
+    const activeStatuses: BacklogItem["status"][] = ["watching", "interrupted", "watched"];
+    const matches = items.filter(
+      (item) =>
+        activeStatuses.includes(item.status) &&
+        item.works?.tmdb_id === tmdbId &&
+        item.works?.tmdb_media_type === tmdbMediaType,
+    );
+    if (matches.length === 0) {
+      setDuplicateNotice(null);
+      return;
+    }
+    const labels = matches.map((item) => statusLabels[item.status]);
+    const unique = [...new Set(labels)];
+    setDuplicateNotice(`「${unique.join("・")}」にすでにカードがあります`);
+  };
+
   const handleSelectResult = async (result: TmdbSearchResult) => {
     setSelectedTmdbResult(result);
     setSelectedTmdbTarget(result);
     setSeasonOptions([]);
+    checkDuplicates(result.tmdbId, result.tmdbMediaType);
 
     if (result.tmdbMediaType !== "tv") return;
 
@@ -299,6 +320,7 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
                   {(selectedTmdbTarget?.releaseDate ?? selectedTmdbResult.releaseDate) &&
                     ` · ${(selectedTmdbTarget?.releaseDate ?? selectedTmdbResult.releaseDate)!.slice(0, 4)}`}
                 </p>
+                {duplicateNotice && <p className="duplicate-notice">{duplicateNotice}</p>}
               </div>
             )}
 

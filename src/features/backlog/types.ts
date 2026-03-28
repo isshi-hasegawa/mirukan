@@ -19,6 +19,8 @@ export type WorkSummary = {
   title: string;
   work_type: WorkType;
   source_type: SourceType;
+  tmdb_id: number | null;
+  tmdb_media_type: "movie" | "tv" | null;
   original_title: string | null;
   overview: string | null;
   poster_path: string | null;

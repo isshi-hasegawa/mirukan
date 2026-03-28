@@ -33,7 +33,7 @@ export function BoardPage({ session }: Props) {
     const { data, error: fetchError } = await supabase
       .from("backlog_items")
       .select(
-        "id, status, display_title, primary_platform, note, sort_order, works(id, title, work_type, source_type, original_title, overview, poster_path, release_date, runtime_minutes, typical_episode_runtime_minutes, duration_bucket, genres, season_count)",
+        "id, status, display_title, primary_platform, note, sort_order, works(id, title, work_type, source_type, tmdb_id, tmdb_media_type, original_title, overview, poster_path, release_date, runtime_minutes, typical_episode_runtime_minutes, duration_bucket, genres, season_count)",
       )
       .order("sort_order")
       .order("created_at");

@@ -770,6 +770,14 @@ h3 {
   background: rgba(255, 255, 255, 0.68);
 }
 
+.duplicate-notice {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+
 .season-picker {
   display: grid;
   gap: 10px;
