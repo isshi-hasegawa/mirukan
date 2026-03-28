@@ -26,34 +26,23 @@ type Props = {
 };
 
 export function PlatformPicker({ value, onChange }: Props) {
+  const handlePlatformClick = (platform: Exclude<PrimaryPlatform, null>) => {
+    onChange(value === platform ? "" : platform);
+  };
+
   return (
-    <div className="platform-picker" role="radiogroup" aria-label="視聴先">
-      <label className={`platform-picker-item${value === "" ? " is-selected" : ""}`} title="未設定">
-        <input
-          type="radio"
-          name="platform"
-          value=""
-          checked={value === ""}
-          onChange={() => onChange("")}
-        />
-        <span className="platform-picker-none">—</span>
-      </label>
+    <div className="platform-picker" role="group" aria-label="視聴先">
       {PLATFORMS.map((platform) => (
-        <label
+        <button
           key={platform}
+          type="button"
           data-platform={platform}
           className={`platform-picker-item${value === platform ? " is-selected" : ""}`}
           title={platformLabels[platform]}
+          onClick={() => handlePlatformClick(platform)}
         >
-          <input
-            type="radio"
-            name="platform"
-            value={platform}
-            checked={value === platform}
-            onChange={() => onChange(platform)}
-          />
           <img src={PLATFORM_ICONS[platform]} alt={platformLabels[platform]} />
-        </label>
+        </button>
       ))}
     </div>
   );
