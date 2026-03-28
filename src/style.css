@@ -1469,14 +1469,10 @@ h3 {
   min-width: 0;
   background: transparent;
   border: none;
-  cursor: pointer;
+  cursor: auto;
   text-align: left;
   color: inherit;
   padding: 0;
-
-  &:hover .recommend-item-title {
-    text-decoration: underline;
-  }
 }
 
 .recommend-item-thumb {
