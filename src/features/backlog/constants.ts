@@ -33,15 +33,3 @@ export const platformLabels: Record<Exclude<PrimaryPlatform, null>, string> = {
   apple_tv_plus: "Apple TV+",
   apple_tv: "Apple TV",
 };
-
-// TMDb provider logo paths (static mapping for primary_platform display)
-// Note: These are from known TMDb provider IDs
-export const platformLogoPaths: Record<Exclude<PrimaryPlatform, null>, string | null> = {
-  netflix: "/t2yyOv40HZeVlLjYsCsPHnWLk4W.jpg",
-  prime_video: "/emjlyngmlVoGRT6FYvoCHx.jpg",
-  disney_plus: "/oVd7SmMjPvOtr5czt5XN8bFsS7Y.jpg",
-  hulu: "/Ixsvboz3gzcYEkxBPFk9L.jpg",
-  apple_tv_plus: "/p3Z0rC08Lv1htnKKVEw5d72cgH9.jpg",
-  apple_tv: "/uI2OGT8F0SJb1hEPkjgKtBYdEJZ.jpg",
-  u_next: null, // To be confirmed
-};
