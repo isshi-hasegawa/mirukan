@@ -30,6 +30,7 @@ export type WorkSummary = {
   duration_bucket: "short" | "medium" | "long" | "very_long" | null;
   genres: string[];
   season_count: number | null;
+  season_number: number | null;
 };
 
 export type BacklogItem = {

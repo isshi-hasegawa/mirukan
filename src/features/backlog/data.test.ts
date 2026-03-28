@@ -26,6 +26,7 @@ function createItem(id: string, status: BacklogItem["status"], sortOrder: number
       duration_bucket: null,
       genres: [],
       season_count: null,
+      season_number: null,
     },
   };
 }

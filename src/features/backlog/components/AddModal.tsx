@@ -112,14 +112,17 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
     }
   };
 
-  const checkDuplicates = (tmdbId: number, tmdbMediaType: "movie" | "tv") => {
+  const checkDuplicates = (target: TmdbSelectionTarget) => {
     const activeStatuses: BacklogItem["status"][] = ["watching", "interrupted", "watched"];
-    const matches = items.filter(
-      (item) =>
-        activeStatuses.includes(item.status) &&
-        item.works?.tmdb_id === tmdbId &&
-        item.works?.tmdb_media_type === tmdbMediaType,
-    );
+    const matches = items.filter((item) => {
+      const w = item.works;
+      if (!activeStatuses.includes(item.status)) return false;
+      if (w?.tmdb_id !== target.tmdbId || w?.tmdb_media_type !== target.tmdbMediaType) return false;
+      if (target.workType === "season") {
+        return w?.work_type === "season" && w?.season_number === target.seasonNumber;
+      }
+      return w?.work_type === target.workType;
+    });
     if (matches.length === 0) {
       setDuplicateNotice(null);
       return;
@@ -133,7 +136,7 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
     setSelectedTmdbResult(result);
     setSelectedTmdbTarget(result);
     setSeasonOptions([]);
-    checkDuplicates(result.tmdbId, result.tmdbMediaType);
+    checkDuplicates(result);
 
     if (result.tmdbMediaType !== "tv") return;
 
@@ -293,6 +296,7 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
                     onClick={() => {
                       if (selectedTmdbResult) {
                         setSelectedTmdbTarget(selectedTmdbResult);
+                        checkDuplicates(selectedTmdbResult);
                       }
                     }}
                   >
@@ -311,10 +315,10 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
                           type="button"
                           onClick={() => {
                             if (selectedTmdbResult?.tmdbMediaType !== "tv") return;
-                            setSelectedTmdbTarget({
+                            const target = {
                               tmdbId: selectedTmdbResult.tmdbId,
-                              tmdbMediaType: "tv",
-                              workType: "season",
+                              tmdbMediaType: "tv" as const,
+                              workType: "season" as const,
                               title: season.title,
                               originalTitle: selectedTmdbResult.originalTitle,
                               overview: season.overview,
@@ -323,7 +327,9 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
                               seasonNumber: season.seasonNumber,
                               episodeCount: season.episodeCount,
                               seriesTitle: selectedTmdbResult.title,
-                            });
+                            };
+                            setSelectedTmdbTarget(target);
+                            checkDuplicates(target);
                           }}
                         >
                           シーズン{season.seasonNumber}
