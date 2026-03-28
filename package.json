@@ -10,9 +10,14 @@
     "prepare": "vp config"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.100.1"
+    "@supabase/supabase-js": "^2.100.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
   },
   "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
     "typescript": "~5.9.3",
     "vite": "npm:@voidzero-dev/vite-plus-core@latest",
     "vite-plus": "latest"
