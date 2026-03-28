@@ -1,4 +1,4 @@
-import type { AddModalState, BacklogItem, BacklogStatus } from "./types.ts";
+import type { AddModalState, BacklogItem, BacklogStatus, DetailModalState } from "./types.ts";
 import { platformLabels, statusLabels, statusOrder } from "./constants.ts";
 import { escapeHtml } from "./helpers.ts";
 
@@ -82,7 +82,7 @@ export function createBoardMarkup(
   sessionEmail: string,
   addModalState: AddModalState,
   openCardMenuId: string | null,
-  openDetailItemId: string | null,
+  detailModalState: DetailModalState,
 ) {
   const grouped = new Map<BacklogStatus, BacklogItem[]>(statusOrder.map((status) => [status, []]));
 
@@ -149,7 +149,14 @@ export function createBoardMarkup(
       </section>
       <section class="board">${columns}</section>
       ${addModalState.isOpen ? createAddModalMarkup(addModalState) : ""}
-      ${openDetailItemId ? createDetailModalMarkup(items.find((item) => item.id === openDetailItemId) ?? null) : ""}
+      ${
+        detailModalState.openItemId
+          ? createDetailModalMarkup(
+              items.find((item) => item.id === detailModalState.openItemId) ?? null,
+              detailModalState,
+            )
+          : ""
+      }
     </main>
   `;
 }
@@ -219,7 +226,7 @@ function createCardMarkup(item: BacklogItem, openCardMenuId: string | null) {
   `;
 }
 
-function createDetailModalMarkup(item: BacklogItem | null) {
+function createDetailModalMarkup(item: BacklogItem | null, detailModalState: DetailModalState) {
   if (!item || !item.works) {
     return "";
   }
@@ -238,6 +245,41 @@ function createDetailModalMarkup(item: BacklogItem | null) {
   const genres = work.genres.length
     ? work.genres.map((genre) => `<span class="meta-chip">${escapeHtml(genre)}</span>`).join("")
     : '<span class="detail-empty">ジャンル未設定</span>';
+  const platformOptions = createPlatformOptions(item.primary_platform);
+  const detailFormMarkup = detailModalState.isEditing
+    ? `
+      <form id="detail-edit-form" class="detail-edit-form">
+        <label>
+          <span>表示名</span>
+          <input
+            name="displayTitle"
+            type="text"
+            maxlength="120"
+            value="${escapeHtml(item.display_title ?? "")}"
+            placeholder="${escapeHtml(work.title)}"
+          />
+        </label>
+        <label>
+          <span>主視聴先</span>
+          <select name="primaryPlatform">${platformOptions}</select>
+        </label>
+        <label>
+          <span>メモ</span>
+          <textarea name="note" rows="5" maxlength="500">${escapeHtml(item.note ?? "")}</textarea>
+        </label>
+        <div class="detail-actions">
+          <button id="cancel-detail-edit" class="ghost-button" type="button">キャンセル</button>
+          <button class="primary-button" type="submit">保存する</button>
+        </div>
+        <p id="detail-form-message" class="form-message" aria-live="polite">${escapeHtml(detailModalState.message ?? "")}</p>
+      </form>
+    `
+    : `
+      <div class="detail-actions">
+        <button id="open-detail-edit" class="primary-button" type="button">編集する</button>
+      </div>
+      <p id="detail-form-message" class="form-message" aria-live="polite">${escapeHtml(detailModalState.message ?? "")}</p>
+    `;
 
   return `
     <div class="modal-backdrop" id="detail-modal-backdrop">
@@ -278,6 +320,7 @@ function createDetailModalMarkup(item: BacklogItem | null) {
                 ? `<div class="detail-section"><h3>あらすじ</h3><p>${escapeHtml(work.overview)}</p></div>`
                 : ""
             }
+            ${detailFormMarkup}
           </div>
         </div>
       </section>
@@ -450,4 +493,19 @@ function createDotsIcon() {
       <circle cx="10" cy="15.75" r="1.4" />
     </svg>
   `;
+}
+
+function createPlatformOptions(selectedPlatform: BacklogItem["primary_platform"]) {
+  return [
+    { value: "", label: "未設定" },
+    ...Object.entries(platformLabels).map(([value, label]) => ({ value, label })),
+  ]
+    .map(
+      (option) => `
+        <option value="${option.value}" ${selectedPlatform === option.value ? "selected" : ""}>
+          ${option.label}
+        </option>
+      `,
+    )
+    .join("");
 }

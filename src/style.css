@@ -798,6 +798,47 @@ h3 {
   white-space: pre-wrap;
 }
 
+.detail-edit-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(92, 59, 35, 0.08);
+}
+
+.detail-edit-form label {
+  display: grid;
+  gap: 8px;
+}
+
+.detail-edit-form span {
+  color: var(--text-muted);
+  font-size: 0.94rem;
+}
+
+.detail-edit-form input,
+.detail-edit-form select,
+.detail-edit-form textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid rgba(90, 58, 36, 0.12);
+  border-radius: 16px;
+  background: white;
+  color: var(--text);
+}
+
+.detail-edit-form textarea {
+  resize: vertical;
+  min-height: 132px;
+}
+
+.detail-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+
 .detail-empty {
   color: var(--text-muted);
   font-size: 0.9rem;
@@ -882,6 +923,10 @@ h3 {
   .detail-poster {
     position: static;
     max-width: 280px;
+  }
+
+  .detail-actions {
+    flex-direction: column-reverse;
   }
 }
 

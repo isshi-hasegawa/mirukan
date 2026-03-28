@@ -55,6 +55,12 @@ export type AddModalState = {
   manualMode: boolean;
 };
 
+export type DetailModalState = {
+  openItemId: string | null;
+  isEditing: boolean;
+  message: string | null;
+};
+
 export type DragState = {
   itemId: string;
   sourceStatus: BacklogStatus;

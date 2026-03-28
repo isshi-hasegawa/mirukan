@@ -25,6 +25,7 @@ import type {
   AddModalState,
   BacklogItem,
   BacklogStatus,
+  DetailModalState,
   DragState,
   WorkType,
 } from "./features/backlog/types.ts";
@@ -46,7 +47,11 @@ let addModalState: AddModalState = {
 };
 let dragState: DragState | null = null;
 let openCardMenuId: string | null = null;
-let openDetailItemId: string | null = null;
+let detailModalState: DetailModalState = {
+  openItemId: null,
+  isEditing: false,
+  message: null,
+};
 
 void bootstrap();
 
@@ -101,7 +106,7 @@ function renderSignedInView() {
     currentSession.user.email ?? "signed-in user",
     addModalState,
     openCardMenuId,
-    openDetailItemId,
+    detailModalState,
   );
   bindSignedInInteractions();
 }
@@ -541,8 +546,12 @@ function bindCardMenus() {
       }
 
       openCardMenuId = null;
-      if (openDetailItemId === backlogItemId) {
-        openDetailItemId = null;
+      if (detailModalState.openItemId === backlogItemId) {
+        detailModalState = {
+          openItemId: null,
+          isEditing: false,
+          message: null,
+        };
       }
       await renderApp();
     });
@@ -584,7 +593,11 @@ function bindCardDetails() {
         return;
       }
 
-      openDetailItemId = itemId;
+      detailModalState = {
+        openItemId: itemId,
+        isEditing: false,
+        message: null,
+      };
       openCardMenuId = null;
       renderSignedInView();
     };
@@ -613,9 +626,18 @@ function bindCardDetails() {
   }
 
   const close = () => {
-    openDetailItemId = null;
+    detailModalState = {
+      openItemId: null,
+      isEditing: false,
+      message: null,
+    };
     renderSignedInView();
   };
+
+  const openEditButton = document.querySelector<HTMLButtonElement>("#open-detail-edit");
+  const cancelEditButton = document.querySelector<HTMLButtonElement>("#cancel-detail-edit");
+  const editForm = document.querySelector<HTMLFormElement>("#detail-edit-form");
+  const message = document.querySelector<HTMLParagraphElement>("#detail-form-message");
 
   closeButton?.addEventListener("click", close);
   backdrop?.addEventListener("click", (event) => {
@@ -624,10 +646,81 @@ function bindCardDetails() {
     }
   });
 
+  openEditButton?.addEventListener("click", () => {
+    detailModalState = {
+      ...detailModalState,
+      isEditing: true,
+      message: null,
+    };
+    renderSignedInView();
+  });
+
+  cancelEditButton?.addEventListener("click", () => {
+    detailModalState = {
+      ...detailModalState,
+      isEditing: false,
+      message: null,
+    };
+    renderSignedInView();
+  });
+
+  editForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const editingItemId = detailModalState.openItemId;
+
+    if (!editingItemId) {
+      return;
+    }
+
+    const formData = new FormData(editForm);
+    const displayTitle = getNullableStringField(formData, "displayTitle");
+    const primaryPlatform = normalizePrimaryPlatform(getStringField(formData, "primaryPlatform"));
+    const note = getNullableStringField(formData, "note");
+
+    if (message) {
+      message.textContent = "保存しています...";
+    }
+
+    const { error } = await supabase
+      .from("backlog_items")
+      .update({
+        display_title: displayTitle,
+        primary_platform: primaryPlatform,
+        note,
+      })
+      .eq("id", editingItemId);
+
+    if (error) {
+      if (message) {
+        message.textContent = `更新に失敗しました: ${error.message}`;
+      }
+      return;
+    }
+
+    currentItems = currentItems.map((item) =>
+      item.id === editingItemId
+        ? {
+            ...item,
+            display_title: displayTitle,
+            primary_platform: primaryPlatform,
+            note,
+          }
+        : item,
+    );
+
+    detailModalState = {
+      openItemId: editingItemId,
+      isEditing: false,
+      message: "更新しました。",
+    };
+    renderSignedInView();
+  });
+
   document.addEventListener(
     "keydown",
     (event) => {
-      if (event.key === "Escape" && openDetailItemId !== null) {
+      if (event.key === "Escape" && detailModalState.openItemId !== null) {
         close();
       }
     },
