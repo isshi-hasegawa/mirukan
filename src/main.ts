@@ -46,6 +46,7 @@ let addModalState: AddModalState = {
 };
 let dragState: DragState | null = null;
 let openCardMenuId: string | null = null;
+let openDetailItemId: string | null = null;
 
 void bootstrap();
 
@@ -75,7 +76,7 @@ async function renderApp() {
   const { data, error } = await supabase
     .from("backlog_items")
     .select(
-      "id, status, display_title, primary_platform, note, sort_order, works(id, title, work_type, source_type, release_date, duration_bucket)",
+      "id, status, display_title, primary_platform, note, sort_order, works(id, title, work_type, source_type, original_title, overview, poster_path, release_date, runtime_minutes, typical_episode_runtime_minutes, duration_bucket, genres, season_count)",
     )
     .order("sort_order")
     .order("created_at");
@@ -100,6 +101,7 @@ function renderSignedInView() {
     currentSession.user.email ?? "signed-in user",
     addModalState,
     openCardMenuId,
+    openDetailItemId,
   );
   bindSignedInInteractions();
 }
@@ -109,6 +111,7 @@ function bindSignedInInteractions() {
   bindAddButtons();
   bindAddModal();
   bindCardMenus();
+  bindCardDetails();
   bindDragAndDrop();
 }
 
@@ -538,6 +541,9 @@ function bindCardMenus() {
       }
 
       openCardMenuId = null;
+      if (openDetailItemId === backlogItemId) {
+        openDetailItemId = null;
+      }
       await renderApp();
     });
   }
@@ -559,6 +565,70 @@ function bindCardMenus() {
       if (openCardMenuId !== null) {
         openCardMenuId = null;
         renderSignedInView();
+      }
+    },
+    { once: true },
+  );
+}
+
+function bindCardDetails() {
+  const cards = document.querySelectorAll<HTMLElement>("[data-card-id]");
+  const closeButton = document.querySelector<HTMLButtonElement>("#close-detail-modal");
+  const backdrop = document.querySelector<HTMLDivElement>("#detail-modal-backdrop");
+
+  for (const card of cards) {
+    const open = () => {
+      const itemId = card.dataset.cardId;
+
+      if (!itemId) {
+        return;
+      }
+
+      openDetailItemId = itemId;
+      openCardMenuId = null;
+      renderSignedInView();
+    };
+
+    card.addEventListener("click", (event) => {
+      if (!(event.target instanceof HTMLElement)) {
+        return;
+      }
+
+      if (
+        event.target.closest("[data-card-menu-toggle]") ||
+        event.target.closest("[data-card-menu]")
+      ) {
+        return;
+      }
+
+      open();
+    });
+
+    card.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        open();
+      }
+    });
+  }
+
+  const close = () => {
+    openDetailItemId = null;
+    renderSignedInView();
+  };
+
+  closeButton?.addEventListener("click", close);
+  backdrop?.addEventListener("click", (event) => {
+    if (event.target === backdrop) {
+      close();
+    }
+  });
+
+  document.addEventListener(
+    "keydown",
+    (event) => {
+      if (event.key === "Escape" && openDetailItemId !== null) {
+        close();
       }
     },
     { once: true },

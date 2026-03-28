@@ -19,8 +19,15 @@ export type WorkSummary = {
   title: string;
   work_type: WorkType;
   source_type: SourceType;
+  original_title: string | null;
+  overview: string | null;
+  poster_path: string | null;
   release_date: string | null;
+  runtime_minutes: number | null;
+  typical_episode_runtime_minutes: number | null;
   duration_bucket: "short" | "medium" | "long" | "very_long" | null;
+  genres: string[];
+  season_count: number | null;
 };
 
 export type BacklogItem = {

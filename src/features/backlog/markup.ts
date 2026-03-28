@@ -82,6 +82,7 @@ export function createBoardMarkup(
   sessionEmail: string,
   addModalState: AddModalState,
   openCardMenuId: string | null,
+  openDetailItemId: string | null,
 ) {
   const grouped = new Map<BacklogStatus, BacklogItem[]>(statusOrder.map((status) => [status, []]));
 
@@ -148,6 +149,7 @@ export function createBoardMarkup(
       </section>
       <section class="board">${columns}</section>
       ${addModalState.isOpen ? createAddModalMarkup(addModalState) : ""}
+      ${openDetailItemId ? createDetailModalMarkup(items.find((item) => item.id === openDetailItemId) ?? null) : ""}
     </main>
   `;
 }
@@ -177,6 +179,7 @@ function createCardMarkup(item: BacklogItem, openCardMenuId: string | null) {
       data-card-id="${item.id}"
       data-card-status="${item.status}"
       data-sort-order="${item.sort_order}"
+      tabindex="0"
     >
       <div class="card-topline">
         <div class="card-menu-wrap">
@@ -213,6 +216,72 @@ function createCardMarkup(item: BacklogItem, openCardMenuId: string | null) {
       </div>
       ${noteMarkup}
     </article>
+  `;
+}
+
+function createDetailModalMarkup(item: BacklogItem | null) {
+  if (!item || !item.works) {
+    return "";
+  }
+
+  const work = item.works;
+  const title = item.display_title ?? work.title;
+  const posterUrl = work.poster_path ? `https://image.tmdb.org/t/p/w500${work.poster_path}` : null;
+  const metadata = [
+    work.work_type === "movie" ? "映画" : work.work_type === "series" ? "シリーズ" : "シーズン",
+    work.release_date ? work.release_date.slice(0, 4) : null,
+    work.runtime_minutes ? `${work.runtime_minutes}分` : null,
+    work.typical_episode_runtime_minutes ? `1話 ${work.typical_episode_runtime_minutes}分` : null,
+    work.season_count ? `${work.season_count}シーズン` : null,
+  ].filter(Boolean);
+
+  const genres = work.genres.length
+    ? work.genres.map((genre) => `<span class="meta-chip">${escapeHtml(genre)}</span>`).join("")
+    : '<span class="detail-empty">ジャンル未設定</span>';
+
+  return `
+    <div class="modal-backdrop" id="detail-modal-backdrop">
+      <section class="detail-modal-card" role="dialog" aria-modal="true" aria-labelledby="detail-modal-title">
+        <div class="detail-modal-header">
+          <p class="eyebrow">Detail</p>
+          <button id="close-detail-modal" class="icon-button" type="button" aria-label="閉じる">×</button>
+        </div>
+        <div class="detail-modal-body">
+          <div class="detail-poster">
+            ${
+              posterUrl
+                ? `<img src="${posterUrl}" alt="${escapeHtml(title)} のポスター" />`
+                : '<div class="detail-poster-fallback">No Poster</div>'
+            }
+          </div>
+          <div class="detail-content">
+            <h2 id="detail-modal-title">${escapeHtml(title)}</h2>
+            ${
+              work.original_title && work.original_title !== title
+                ? `<p class="detail-original-title">${escapeHtml(work.original_title)}</p>`
+                : ""
+            }
+            <p class="detail-meta">${metadata.map((value) => escapeHtml(String(value))).join(" · ")}</p>
+            <div class="detail-chip-row">${genres}</div>
+            ${
+              item.primary_platform
+                ? `<p class="detail-field"><span>主視聴先</span>${escapeHtml(platformLabels[item.primary_platform])}</p>`
+                : ""
+            }
+            ${
+              item.note
+                ? `<div class="detail-section"><h3>メモ</h3><p>${escapeHtml(item.note)}</p></div>`
+                : ""
+            }
+            ${
+              work.overview
+                ? `<div class="detail-section"><h3>あらすじ</h3><p>${escapeHtml(work.overview)}</p></div>`
+                : ""
+            }
+          </div>
+        </div>
+      </section>
+    </div>
   `;
 }
 
