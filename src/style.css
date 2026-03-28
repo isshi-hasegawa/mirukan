@@ -1512,17 +1512,21 @@ h3 {
 .recommend-item-move {
   flex-shrink: 0;
   padding: 6px 14px;
-  border: none;
-  border-radius: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
   background: transparent;
   color: var(--text-muted);
   font-size: 0.82rem;
-  cursor: auto;
-  transition: color 180ms ease;
+  cursor: pointer;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease;
 
   &:hover {
-    background: transparent;
-    color: var(--text);
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
   }
 }
 

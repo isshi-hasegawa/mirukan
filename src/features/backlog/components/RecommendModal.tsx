@@ -51,9 +51,9 @@ function RecommendItem({ item, onMove }: { item: BacklogItem; onMove: (itemId: s
         type="button"
         className="recommend-item-move"
         onClick={() => onMove(item.id)}
-        title="見たい列のトップへ移動"
+        title="見たい列に追加"
       >
-        見たいへ
+        見る
       </button>
     </li>
   );
