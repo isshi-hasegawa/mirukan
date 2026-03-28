@@ -33,6 +33,9 @@ function createItem(id: string, status: BacklogItem["status"], sortOrder: number
       genres: [],
       season_count: null,
       season_number: null,
+      focus_required_score: null,
+      background_fit_score: null,
+      completion_load_score: null,
     },
   };
 }
