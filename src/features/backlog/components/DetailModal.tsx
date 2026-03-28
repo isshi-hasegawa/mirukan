@@ -4,6 +4,7 @@ import { getSortOrderForStatusChange } from "../data.ts";
 import { normalizePrimaryPlatform } from "../helpers.ts";
 import { statusLabels, statusOrder } from "../constants.ts";
 import { PlatformPicker } from "./PlatformPicker.tsx";
+import noteUrl from "../../../assets/icons/note.svg?url";
 import type { BacklogItem, BacklogStatus, DetailModalState } from "../types.ts";
 
 type Props = {
@@ -118,8 +119,9 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
 
     if (!isEditing) {
       return (
-        <button className="detail-inline-field" type="button" onClick={() => startEditing("note")}>
-          <span className={`detail-inline-value${item.note ? "" : " is-placeholder"}`}>
+        <button className="detail-note-field" type="button" onClick={() => startEditing("note")}>
+          <img src={noteUrl} alt="" className="detail-note-icon" />
+          <span className={`detail-note-text${item.note ? "" : " is-placeholder"}`}>
             {item.note || "メモを追加"}
           </span>
         </button>
@@ -127,7 +129,8 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
     }
 
     return (
-      <div className="detail-inline-field is-editing">
+      <div className="detail-note-editing">
+        <img src={noteUrl} alt="" className="detail-note-icon" />
         <textarea
           ref={(el) => {
             inputRef.current = el;

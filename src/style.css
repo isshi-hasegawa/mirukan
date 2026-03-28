@@ -1063,8 +1063,9 @@ h3 {
 
 .detail-inline-field.is-editing {
   cursor: default;
+  padding: 0;
   background: transparent;
-  border-color: rgba(191, 90, 54, 0.32);
+  border: none;
 }
 
 .detail-inline-label {
@@ -1099,6 +1100,49 @@ h3 {
 
 .detail-inline-textarea::placeholder {
   color: var(--text-muted);
+}
+
+.detail-note-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgba(92, 59, 35, 0.08);
+  border-radius: 16px;
+  background: rgba(92, 59, 35, 0.04);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.detail-note-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.detail-note-text {
+  flex: 1;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.detail-note-text.is-placeholder {
+  color: var(--text-muted);
+}
+
+.detail-note-editing {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+
+.detail-note-editing .detail-note-icon {
+  margin-top: 8px;
 }
 
 .detail-status-picker {
