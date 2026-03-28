@@ -239,6 +239,7 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
           </button>
         </div>
         <form
+          id="add-modal-form"
           className="modal-form"
           onSubmit={(e) => {
             void handleSubmit(e);
@@ -425,85 +426,89 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
             </div>
           </div>
 
-          <label>
-            <span>タイトル</span>
-            <input
-              name="title"
-              type="text"
-              maxLength={120}
-              value={resolvedTitle}
-              readOnly={!!selectedTmdbResult}
-              onChange={(e) => {
-                if (!selectedTmdbResult) {
-                  setManualTitle(e.target.value);
-                }
-              }}
-              required
-            />
-          </label>
-          <label>
-            <span>種別</span>
-            <select
-              name="workType"
-              disabled={!!selectedTmdbResult}
-              value={resolvedWorkType}
-              onChange={(e) => setWorkType(e.target.value as "movie" | "series")}
-            >
-              <option value="movie">映画</option>
-              <option value="series">シリーズ</option>
-            </select>
-          </label>
-          <label>
-            <span>保存先列</span>
-            <select
-              name="status"
-              value={status}
-              onChange={(e) => setStatus(e.target.value as BacklogStatus)}
-            >
-              {statusOrder.map((s) => (
-                <option key={s} value={s}>
-                  {statusLabels[s]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>視聴先</span>
-            <select
-              name="primaryPlatform"
-              value={primaryPlatform}
-              onChange={(e) => setPrimaryPlatform(e.target.value)}
-            >
-              <option value="">未設定</option>
-              {Object.entries(platformLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>メモ</span>
-            <textarea
-              name="note"
-              rows={4}
-              maxLength={500}
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-            />
-          </label>
+          <div className="modal-detail-fields">
+            <label>
+              <span>タイトル</span>
+              <input
+                name="title"
+                type="text"
+                maxLength={120}
+                value={resolvedTitle}
+                readOnly={!!selectedTmdbResult}
+                onChange={(e) => {
+                  if (!selectedTmdbResult) {
+                    setManualTitle(e.target.value);
+                  }
+                }}
+                required
+              />
+            </label>
+            <label>
+              <span>種別</span>
+              <select
+                name="workType"
+                disabled={!!selectedTmdbResult}
+                value={resolvedWorkType}
+                onChange={(e) => setWorkType(e.target.value as "movie" | "series")}
+              >
+                <option value="movie">映画</option>
+                <option value="series">シリーズ</option>
+              </select>
+            </label>
+            <label>
+              <span>保存先列</span>
+              <select
+                name="status"
+                value={status}
+                onChange={(e) => setStatus(e.target.value as BacklogStatus)}
+              >
+                {statusOrder.map((s) => (
+                  <option key={s} value={s}>
+                    {statusLabels[s]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>視聴先</span>
+              <select
+                name="primaryPlatform"
+                value={primaryPlatform}
+                onChange={(e) => setPrimaryPlatform(e.target.value)}
+              >
+                <option value="">未設定</option>
+                {Object.entries(platformLabels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>メモ</span>
+              <textarea
+                name="note"
+                rows={4}
+                maxLength={500}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+              />
+            </label>
+          </div>
+        </form>
+        <div className="modal-footer">
+          <p className="form-message" aria-live="polite">
+            {formMessage}
+          </p>
           <div className="modal-actions">
             <button className="ghost-button" type="button" onClick={onClose}>
               キャンセル
             </button>
-            <button className="primary-button" type="submit">
+            <button className="primary-button" type="submit" form="add-modal-form">
               追加する
             </button>
           </div>
-          <p className="form-message" aria-live="polite">
-            {formMessage}
-          </p>
-        </form>
+        </div>
       </section>
     </div>
   );

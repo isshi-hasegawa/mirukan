@@ -618,7 +618,7 @@ h3 {
 }
 
 .modal-card {
-  width: min(100%, 560px);
+  width: min(100% - 48px, 860px);
   max-height: min(88svh, 920px);
   border: 1px solid var(--border);
   border-radius: 28px;
@@ -649,8 +649,12 @@ h3 {
 
 .modal-form {
   display: grid;
-  gap: 16px;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: 0 24px;
   margin-top: 20px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
   overflow-y: auto;
   padding-right: 4px;
 }
@@ -659,6 +663,8 @@ h3 {
   display: grid;
   gap: 14px;
   padding: 16px;
+  overflow-y: auto;
+  align-content: start;
   border-radius: 20px;
   background: rgba(191, 90, 54, 0.06);
 }
@@ -679,7 +685,6 @@ h3 {
 .search-results {
   display: grid;
   gap: 10px;
-  max-height: min(32svh, 280px);
   overflow-y: auto;
   padding-right: 4px;
 }
@@ -859,6 +864,22 @@ h3 {
 .modal-form textarea {
   resize: vertical;
   min-height: 112px;
+}
+
+.modal-detail-fields {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.modal-footer {
+  display: grid;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
 }
 
 .modal-actions {
@@ -1099,8 +1120,23 @@ h3 {
   }
 
   .modal-card {
+    width: min(100%, 560px);
     padding: 20px;
     border-radius: 22px;
+  }
+
+  .modal-form {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .modal-detail-fields {
+    overflow-y: visible;
+  }
+
+  .search-results {
+    max-height: min(32svh, 280px);
   }
 
   .card-body {
