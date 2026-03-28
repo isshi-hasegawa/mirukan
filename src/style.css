@@ -754,6 +754,13 @@ h3 {
   gap: 10px;
 }
 
+.search-row input {
+  border: none;
+  border-bottom: 1px solid rgba(90, 58, 36, 0.12);
+  background: transparent;
+  padding: 12px 0;
+}
+
 .search-results {
   display: grid;
   gap: 10px;
@@ -896,14 +903,11 @@ h3 {
   box-shadow: inset 0 0 0 1px rgba(191, 90, 54, 0.2);
 }
 
-.modal-form input {
-  width: 100%;
-  padding: 14px 16px;
-  border: 1px solid rgba(90, 58, 36, 0.12);
-  border-radius: 16px;
-  background: white;
-  color: var(--text);
-  outline: none;
+.modal-detail-fields > input {
+  border: none;
+  border-bottom: 1px solid rgba(90, 58, 36, 0.12);
+  background: transparent;
+  padding: 12px 0;
 }
 
 .modal-detail-fields .detail-inline-textarea {
