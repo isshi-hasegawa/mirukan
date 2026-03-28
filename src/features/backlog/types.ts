@@ -60,7 +60,8 @@ export type AddModalState = {
 
 export type DetailModalState = {
   openItemId: string | null;
-  isEditing: boolean;
+  editingField: "displayTitle" | "status" | "primaryPlatform" | "note" | null;
+  draftValue: string;
   message: string | null;
 };
 

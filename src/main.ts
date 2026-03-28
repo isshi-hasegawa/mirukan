@@ -53,7 +53,8 @@ let dragState: DragState | null = null;
 let openCardMenuId: string | null = null;
 let detailModalState: DetailModalState = {
   openItemId: null,
-  isEditing: false,
+  editingField: null,
+  draftValue: "",
   message: null,
 };
 let addModalSearchTimer: number | null = null;
@@ -758,7 +759,8 @@ function bindCardMenus() {
       if (detailModalState.openItemId === backlogItemId) {
         detailModalState = {
           openItemId: null,
-          isEditing: false,
+          editingField: null,
+          draftValue: "",
           message: null,
         };
       }
@@ -804,7 +806,8 @@ function bindCardDetails() {
 
       detailModalState = {
         openItemId: itemId,
-        isEditing: false,
+        editingField: null,
+        draftValue: "",
         message: null,
       };
       openCardMenuId = null;
@@ -837,16 +840,16 @@ function bindCardDetails() {
   const close = () => {
     detailModalState = {
       openItemId: null,
-      isEditing: false,
+      editingField: null,
+      draftValue: "",
       message: null,
     };
     renderSignedInView();
   };
 
-  const openEditButton = document.querySelector<HTMLButtonElement>("#open-detail-edit");
-  const cancelEditButton = document.querySelector<HTMLButtonElement>("#cancel-detail-edit");
-  const editForm = document.querySelector<HTMLFormElement>("#detail-edit-form");
   const message = document.querySelector<HTMLParagraphElement>("#detail-form-message");
+  const editTriggers = document.querySelectorAll<HTMLButtonElement>("[data-detail-edit-trigger]");
+  const editInput = document.querySelector<HTMLElement>("[data-detail-field-input]");
 
   closeButton?.addEventListener("click", close);
   backdrop?.addEventListener("click", (event) => {
@@ -855,54 +858,73 @@ function bindCardDetails() {
     }
   });
 
-  openEditButton?.addEventListener("click", () => {
-    detailModalState = {
-      ...detailModalState,
-      isEditing: true,
-      message: null,
-    };
-    renderSignedInView();
-  });
+  for (const trigger of editTriggers) {
+    trigger.addEventListener("click", () => {
+      const field = trigger.dataset.detailEditTrigger as DetailModalState["editingField"];
+      const currentItem = currentItems.find((item) => item.id === detailModalState.openItemId);
 
-  cancelEditButton?.addEventListener("click", () => {
-    detailModalState = {
-      ...detailModalState,
-      isEditing: false,
-      message: null,
-    };
-    renderSignedInView();
-  });
+      if (!field || !currentItem) {
+        return;
+      }
 
-  editForm?.addEventListener("submit", async (event) => {
-    event.preventDefault();
+      detailModalState = {
+        ...detailModalState,
+        editingField: field,
+        draftValue: getDetailDraftValue(currentItem, field),
+        message: null,
+      };
+      renderSignedInView();
+    });
+  }
 
+  if (editInput instanceof HTMLInputElement || editInput instanceof HTMLTextAreaElement) {
+    editInput.focus({ preventScroll: true });
+    editInput.select();
+  } else if (editInput instanceof HTMLSelectElement) {
+    editInput.focus({ preventScroll: true });
+  }
+
+  const saveEditingField = async () => {
     const editingItemId = detailModalState.openItemId;
+    const editingField = detailModalState.editingField;
 
-    if (!editingItemId) {
+    if (!editingItemId || !editingField) {
       return;
     }
 
-    const formData = new FormData(editForm);
-    const displayTitle = getNullableStringField(formData, "displayTitle");
-    const status = getStringField(formData, "status") as BacklogStatus;
-    const primaryPlatform = normalizePrimaryPlatform(getStringField(formData, "primaryPlatform"));
-    const note = getNullableStringField(formData, "note");
-    const nextSortOrder = getSortOrderForStatusChange(currentItems, editingItemId, status);
+    const currentItem = currentItems.find((item) => item.id === editingItemId);
+
+    if (!currentItem) {
+      return;
+    }
+
+    const update: Record<string, string | number | null> = {};
+    let nextSortOrder = currentItem.sort_order;
+
+    if (editingField === "displayTitle") {
+      update.display_title = detailModalState.draftValue.trim() || null;
+    }
+
+    if (editingField === "status") {
+      const status = detailModalState.draftValue as BacklogStatus;
+      update.status = status;
+      nextSortOrder = getSortOrderForStatusChange(currentItems, editingItemId, status);
+      update.sort_order = nextSortOrder;
+    }
+
+    if (editingField === "primaryPlatform") {
+      update.primary_platform = normalizePrimaryPlatform(detailModalState.draftValue);
+    }
+
+    if (editingField === "note") {
+      update.note = detailModalState.draftValue.trim() || null;
+    }
 
     if (message) {
       message.textContent = "保存しています...";
     }
 
-    const { error } = await supabase
-      .from("backlog_items")
-      .update({
-        display_title: displayTitle,
-        status,
-        sort_order: nextSortOrder,
-        primary_platform: primaryPlatform,
-        note,
-      })
-      .eq("id", editingItemId);
+    const { error } = await supabase.from("backlog_items").update(update).eq("id", editingItemId);
 
     if (error) {
       if (message) {
@@ -915,22 +937,103 @@ function bindCardDetails() {
       item.id === editingItemId
         ? {
             ...item,
-            display_title: displayTitle,
-            status,
-            sort_order: nextSortOrder,
-            primary_platform: primaryPlatform,
-            note,
+            display_title:
+              editingField === "displayTitle"
+                ? ((update.display_title as string | null) ?? null)
+                : item.display_title,
+            status:
+              editingField === "status"
+                ? (detailModalState.draftValue as BacklogStatus)
+                : item.status,
+            sort_order: editingField === "status" ? nextSortOrder : item.sort_order,
+            primary_platform:
+              editingField === "primaryPlatform"
+                ? normalizePrimaryPlatform(detailModalState.draftValue)
+                : item.primary_platform,
+            note: editingField === "note" ? ((update.note as string | null) ?? null) : item.note,
           }
         : item,
     );
 
     detailModalState = {
       openItemId: editingItemId,
-      isEditing: false,
+      editingField: null,
+      draftValue: "",
       message: "更新しました。",
     };
     renderSignedInView();
-  });
+  };
+
+  const cancelEditingField = () => {
+    if (detailModalState.editingField === null) {
+      return;
+    }
+
+    detailModalState = {
+      ...detailModalState,
+      editingField: null,
+      draftValue: "",
+      message: null,
+    };
+    renderSignedInView();
+  };
+
+  if (editInput instanceof HTMLInputElement) {
+    editInput.addEventListener("input", () => {
+      detailModalState = { ...detailModalState, draftValue: editInput.value };
+    });
+    editInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        void saveEditingField();
+      }
+      if (event.key === "Escape") {
+        event.preventDefault();
+        cancelEditingField();
+      }
+    });
+    editInput.addEventListener("blur", () => {
+      void saveEditingField();
+    });
+  }
+
+  if (editInput instanceof HTMLSelectElement) {
+    editInput.value = detailModalState.draftValue;
+    editInput.addEventListener("change", () => {
+      detailModalState = { ...detailModalState, draftValue: editInput.value };
+      void saveEditingField();
+    });
+    editInput.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        cancelEditingField();
+      }
+    });
+    editInput.addEventListener("blur", () => {
+      if (detailModalState.editingField !== null) {
+        void saveEditingField();
+      }
+    });
+  }
+
+  if (editInput instanceof HTMLTextAreaElement) {
+    editInput.addEventListener("input", () => {
+      detailModalState = { ...detailModalState, draftValue: editInput.value };
+    });
+    editInput.addEventListener("keydown", (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+        event.preventDefault();
+        void saveEditingField();
+      }
+      if (event.key === "Escape") {
+        event.preventDefault();
+        cancelEditingField();
+      }
+    });
+    editInput.addEventListener("blur", () => {
+      void saveEditingField();
+    });
+  }
 
   document.addEventListener(
     "keydown",
@@ -941,6 +1044,25 @@ function bindCardDetails() {
     },
     { once: true },
   );
+}
+
+function getDetailDraftValue(
+  item: BacklogItem,
+  field: NonNullable<DetailModalState["editingField"]>,
+) {
+  if (field === "displayTitle") {
+    return item.display_title ?? "";
+  }
+
+  if (field === "status") {
+    return item.status;
+  }
+
+  if (field === "primaryPlatform") {
+    return item.primary_platform ?? "";
+  }
+
+  return item.note ?? "";
 }
 
 async function moveItemByDropTarget(

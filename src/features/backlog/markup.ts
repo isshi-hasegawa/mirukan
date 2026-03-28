@@ -252,44 +252,9 @@ function createDetailModalMarkup(item: BacklogItem | null, detailModalState: Det
     ? work.genres.map((genre) => `<span class="meta-chip">${escapeHtml(genre)}</span>`).join("")
     : '<span class="detail-empty">ジャンル未設定</span>';
   const platformOptions = createPlatformOptions(item.primary_platform);
-  const detailFormMarkup = detailModalState.isEditing
-    ? `
-      <form id="detail-edit-form" class="detail-edit-form">
-        <label>
-          <span>表示名</span>
-          <input
-            name="displayTitle"
-            type="text"
-            maxlength="120"
-            value="${escapeHtml(item.display_title ?? "")}"
-            placeholder="${escapeHtml(work.title)}"
-          />
-        </label>
-        <label>
-          <span>状態</span>
-          <select name="status">${createStatusOptions(item.status)}</select>
-        </label>
-        <label>
-          <span>視聴先</span>
-          <select name="primaryPlatform">${platformOptions}</select>
-        </label>
-        <label>
-          <span>メモ</span>
-          <textarea name="note" rows="5" maxlength="500">${escapeHtml(item.note ?? "")}</textarea>
-        </label>
-        <div class="detail-actions">
-          <button id="cancel-detail-edit" class="ghost-button" type="button">キャンセル</button>
-          <button class="primary-button" type="submit">保存する</button>
-        </div>
-        <p id="detail-form-message" class="form-message" aria-live="polite">${escapeHtml(detailModalState.message ?? "")}</p>
-      </form>
-    `
-    : `
-      <div class="detail-actions">
-        <button id="open-detail-edit" class="primary-button" type="button">編集する</button>
-      </div>
-      <p id="detail-form-message" class="form-message" aria-live="polite">${escapeHtml(detailModalState.message ?? "")}</p>
-    `;
+  const displayTitleValue = item.display_title ?? "未設定";
+  const platformValue = item.primary_platform ? platformLabels[item.primary_platform] : "未設定";
+  const noteValue = item.note ?? "未設定";
 
   return `
     <div class="modal-backdrop" id="detail-modal-backdrop">
@@ -315,22 +280,40 @@ function createDetailModalMarkup(item: BacklogItem | null, detailModalState: Det
             }
             <p class="detail-meta">${metadata.map((value) => escapeHtml(String(value))).join(" · ")}</p>
             <div class="detail-chip-row">${genres}</div>
-            ${
-              item.primary_platform
-                ? `<p class="detail-field"><span>視聴先</span>${escapeHtml(platformLabels[item.primary_platform])}</p>`
-                : ""
-            }
-            ${
-              item.note
-                ? `<div class="detail-section"><h3>メモ</h3><p>${escapeHtml(item.note)}</p></div>`
-                : ""
-            }
+            ${createDetailEditableFieldMarkup({
+              field: "displayTitle",
+              label: "表示名",
+              value: displayTitleValue,
+              placeholder: work.title,
+              detailModalState,
+            })}
+            ${createDetailEditableFieldMarkup({
+              field: "status",
+              label: "状態",
+              value: statusLabels[item.status],
+              options: createStatusOptions(item.status),
+              detailModalState,
+            })}
+            ${createDetailEditableFieldMarkup({
+              field: "primaryPlatform",
+              label: "視聴先",
+              value: platformValue,
+              options: platformOptions,
+              detailModalState,
+            })}
+            ${createDetailEditableFieldMarkup({
+              field: "note",
+              label: "メモ",
+              value: noteValue,
+              multiline: true,
+              detailModalState,
+            })}
             ${
               work.overview
                 ? `<div class="detail-section"><h3>あらすじ</h3><p>${escapeHtml(work.overview)}</p></div>`
                 : ""
             }
-            ${detailFormMarkup}
+            <p id="detail-form-message" class="form-message" aria-live="polite">${escapeHtml(detailModalState.message ?? "")}</p>
           </div>
         </div>
       </section>
@@ -601,4 +584,77 @@ function createStatusOptions(selectedStatus: BacklogStatus) {
       `,
     )
     .join("");
+}
+
+function createDetailEditableFieldMarkup({
+  field,
+  label,
+  value,
+  detailModalState,
+  options,
+  placeholder,
+  multiline = false,
+}: {
+  field: "displayTitle" | "status" | "primaryPlatform" | "note";
+  label: string;
+  value: string;
+  detailModalState: DetailModalState;
+  options?: string;
+  placeholder?: string;
+  multiline?: boolean;
+}) {
+  const isEditing = detailModalState.editingField === field;
+  const draftValue = detailModalState.draftValue;
+
+  if (isEditing) {
+    const control = options
+      ? `
+        <select
+          class="detail-inline-control"
+          data-detail-field-input="${field}"
+          data-detail-field-select="${field}"
+        >
+          ${options}
+        </select>
+      `
+      : multiline
+        ? `
+          <textarea
+            class="detail-inline-control detail-inline-textarea"
+            data-detail-field-input="${field}"
+            data-detail-field-textarea="${field}"
+            rows="5"
+            maxlength="500"
+          >${escapeHtml(draftValue)}</textarea>
+        `
+        : `
+          <input
+            class="detail-inline-control"
+            data-detail-field-input="${field}"
+            data-detail-field-text="${field}"
+            type="text"
+            maxlength="120"
+            value="${escapeHtml(draftValue)}"
+            placeholder="${escapeHtml(placeholder ?? "")}"
+          />
+        `;
+
+    return `
+      <div class="detail-inline-field is-editing" data-detail-edit-container="${field}">
+        <span class="detail-inline-label">${label}</span>
+        ${control}
+      </div>
+    `;
+  }
+
+  return `
+    <button
+      class="detail-inline-field"
+      type="button"
+      data-detail-edit-trigger="${field}"
+    >
+      <span class="detail-inline-label">${label}</span>
+      <span class="detail-inline-value ${value === "未設定" ? "is-placeholder" : ""}">${escapeHtml(value)}</span>
+    </button>
+  `;
 }
