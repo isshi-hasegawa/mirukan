@@ -1459,6 +1459,13 @@ h3 {
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--surface);
+  cursor: pointer;
+
+  &:hover .recommend-item-move {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
 }
 
 .recommend-item-info {
@@ -1469,7 +1476,6 @@ h3 {
   min-width: 0;
   background: transparent;
   border: none;
-  cursor: auto;
   text-align: left;
   color: inherit;
   padding: 0;

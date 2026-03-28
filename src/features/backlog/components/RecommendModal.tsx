@@ -36,7 +36,7 @@ function RecommendItem({ item, onMove }: { item: BacklogItem; onMove: (itemId: s
   const posterUrl = work.poster_path ? `https://image.tmdb.org/t/p/w92${work.poster_path}` : null;
 
   return (
-    <li className="recommend-item">
+    <li className="recommend-item" onClick={() => onMove(item.id)}>
       <div className="recommend-item-info">
         <div className="recommend-item-thumb">
           {posterUrl && !posterError ? (
@@ -52,12 +52,7 @@ function RecommendItem({ item, onMove }: { item: BacklogItem; onMove: (itemId: s
           )}
         </div>
       </div>
-      <button
-        type="button"
-        className="recommend-item-move"
-        onClick={() => onMove(item.id)}
-        title="見たい列に追加"
-      >
+      <button type="button" className="recommend-item-move" title="見たい列に追加">
         見る
       </button>
     </li>
