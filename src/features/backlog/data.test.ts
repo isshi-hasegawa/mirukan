@@ -15,6 +15,8 @@ function createItem(id: string, status: BacklogItem["status"], sortOrder: number
       title: `Title ${id}`,
       work_type: "movie",
       source_type: "manual",
+      tmdb_id: null,
+      tmdb_media_type: null,
       original_title: null,
       overview: null,
       poster_path: null,
