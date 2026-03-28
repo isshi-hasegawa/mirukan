@@ -669,13 +669,6 @@ h3 {
   background: rgba(191, 90, 54, 0.06);
 }
 
-.search-panel-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: start;
-}
-
 .search-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -1135,6 +1128,10 @@ h3 {
     overflow-y: visible;
   }
 
+  .search-panel {
+    overflow-y: visible;
+  }
+
   .search-results {
     max-height: min(32svh, 280px);
   }
@@ -1152,7 +1149,6 @@ h3 {
     flex-direction: column-reverse;
   }
 
-  .search-panel-header,
   .search-row {
     grid-template-columns: 1fr;
     display: grid;

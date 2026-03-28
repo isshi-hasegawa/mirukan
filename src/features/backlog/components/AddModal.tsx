@@ -226,18 +226,7 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <section
-        className="modal-card"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="add-modal-title"
-      >
-        <div className="modal-header">
-          <h2 id="add-modal-title">作品を追加</h2>
-          <button className="icon-button" type="button" aria-label="閉じる" onClick={onClose}>
-            ×
-          </button>
-        </div>
+      <section className="modal-card" role="dialog" aria-modal="true" aria-label="作品を追加">
         <form
           id="add-modal-form"
           className="modal-form"
@@ -246,9 +235,6 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
           }}
         >
           <div className="search-panel">
-            <div className="search-panel-header">
-              <h3>作品を探す</h3>
-            </div>
             <div className="search-row">
               <input
                 ref={searchInputRef}
