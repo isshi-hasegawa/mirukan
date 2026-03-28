@@ -959,7 +959,7 @@ function bindCardDetails() {
       openItemId: editingItemId,
       editingField: null,
       draftValue: "",
-      message: "更新しました。",
+      message: null,
     };
     renderSignedInView();
   };

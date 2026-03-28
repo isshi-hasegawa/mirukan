@@ -313,7 +313,11 @@ function createDetailModalMarkup(item: BacklogItem | null, detailModalState: Det
                 ? `<div class="detail-section"><h3>あらすじ</h3><p>${escapeHtml(work.overview)}</p></div>`
                 : ""
             }
-            <p id="detail-form-message" class="form-message" aria-live="polite">${escapeHtml(detailModalState.message ?? "")}</p>
+            ${
+              detailModalState.message
+                ? `<p id="detail-form-message" class="form-message" aria-live="polite">${escapeHtml(detailModalState.message)}</p>`
+                : ""
+            }
           </div>
         </div>
       </section>
