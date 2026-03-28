@@ -143,7 +143,7 @@ export function BacklogCard({
     return null;
   }
 
-  const title = item.display_title ?? work.title;
+  const title = work.title;
   const metadata = [
     work.work_type === "movie" ? "映画" : work.work_type === "series" ? "シリーズ" : "シーズン",
     work.release_date ? work.release_date.slice(0, 4) : null,

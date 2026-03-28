@@ -84,8 +84,7 @@ function RecommendItem({
 }) {
   const [posterError, setPosterError] = useState(false);
   const work = item.source === "backlog" ? (item.backlogItem.works as WorkSummary) : item.work;
-  const title =
-    item.source === "backlog" ? (item.backlogItem.display_title ?? work.title) : work.title;
+  const title = work.title;
   const posterUrl = work.poster_path ? `https://image.tmdb.org/t/p/w92${work.poster_path}` : null;
 
   return (

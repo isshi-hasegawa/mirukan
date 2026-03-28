@@ -9,7 +9,7 @@ export const statusOrder: BacklogStatus[] = [
 ];
 
 export const statusLabels: Record<BacklogStatus, string> = {
-  stacked: "積み",
+  stacked: "ストック",
   want_to_watch: "見たい",
   watching: "視聴中",
   interrupted: "中断",
@@ -17,7 +17,7 @@ export const statusLabels: Record<BacklogStatus, string> = {
 };
 
 export const statusDescriptions: Record<BacklogStatus, string> = {
-  stacked: "あとで見る候補を雑多に積んでおく列",
+  stacked: "あとで見る候補をストックしておく列",
   want_to_watch: "近いうちに見る候補を寄せる列",
   watching: "いま進行中として扱う列",
   interrupted: "止まっているけれど終えていない列",

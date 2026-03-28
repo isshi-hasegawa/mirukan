@@ -47,7 +47,7 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
   }
 
   const work = item.works;
-  const title = item.display_title ?? work.title;
+  const title = work.title;
   const posterUrl = work.poster_path ? `https://image.tmdb.org/t/p/w500${work.poster_path}` : null;
   const metadata = [
     work.work_type === "movie" ? "映画" : work.work_type === "series" ? "シリーズ" : "シーズン",
@@ -57,20 +57,27 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
     work.season_count ? `${work.season_count}シーズン` : null,
   ].filter(Boolean);
 
+  const handleStatusSelect = async (status: BacklogStatus) => {
+    if (status === item.status) return;
+    const nextSortOrder = getSortOrderForStatusChange(items, item.id, status);
+    const { error } = await supabase
+      .from("backlog_items")
+      .update({ status, sort_order: nextSortOrder })
+      .eq("id", item.id);
+    if (error) {
+      onStateChange({ ...state, message: `更新に失敗しました: ${error.message}` });
+      return;
+    }
+    onUpdate({ ...item, status, sort_order: nextSortOrder });
+    onStateChange({ openItemId: item.id, editingField: null, draftValue: "", message: null });
+  };
+
   const saveField = async () => {
     if (!state.editingField || !item) return;
 
     const update: Record<string, string | number | null> = {};
-    let nextSortOrder = item.sort_order;
 
-    if (state.editingField === "displayTitle") {
-      update.display_title = state.draftValue.trim() || null;
-    } else if (state.editingField === "status") {
-      const status = state.draftValue as BacklogStatus;
-      update.status = status;
-      nextSortOrder = getSortOrderForStatusChange(items, item.id, status);
-      update.sort_order = nextSortOrder;
-    } else if (state.editingField === "primaryPlatform") {
+    if (state.editingField === "primaryPlatform") {
       update.primary_platform = normalizePrimaryPlatform(state.draftValue);
     } else if (state.editingField === "note") {
       update.note = state.draftValue.trim() || null;
@@ -85,12 +92,6 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
 
     const updatedItem: BacklogItem = {
       ...item,
-      display_title:
-        state.editingField === "displayTitle"
-          ? ((update.display_title as string | null) ?? null)
-          : item.display_title,
-      status: state.editingField === "status" ? (state.draftValue as BacklogStatus) : item.status,
-      sort_order: state.editingField === "status" ? nextSortOrder : item.sort_order,
       primary_platform:
         state.editingField === "primaryPlatform"
           ? normalizePrimaryPlatform(state.draftValue)
@@ -103,11 +104,8 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
   };
 
   const startEditing = (field: NonNullable<DetailModalState["editingField"]>) => {
-    let draftValue = "";
-    if (field === "displayTitle") draftValue = item.display_title ?? "";
-    else if (field === "status") draftValue = item.status;
-    else if (field === "primaryPlatform") draftValue = item.primary_platform ?? "";
-    else if (field === "note") draftValue = item.note ?? "";
+    const draftValue =
+      field === "primaryPlatform" ? (item.primary_platform ?? "") : (item.note ?? "");
     onStateChange({ ...state, editingField: field, draftValue, message: null });
   };
 
@@ -115,103 +113,33 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
     onStateChange({ ...state, editingField: null, draftValue: "", message: null });
   };
 
-  const renderEditableField = (
-    field: NonNullable<DetailModalState["editingField"]>,
-    label: string,
-    displayValue: string,
-    options?: { value: string; label: string }[],
-    multiline?: boolean,
-    placeholder?: string,
-  ) => {
-    const isEditing = state.editingField === field;
+  const renderNote = () => {
+    const isEditing = state.editingField === "note";
 
     if (!isEditing) {
       return (
-        <button className="detail-inline-field" type="button" onClick={() => startEditing(field)}>
-          <span className="detail-inline-label">{label}</span>
-          <span
-            className={`detail-inline-value${displayValue === "未設定" ? " is-placeholder" : ""}`}
-          >
-            {displayValue}
+        <button className="detail-inline-field" type="button" onClick={() => startEditing("note")}>
+          <span className={`detail-inline-value${item.note ? "" : " is-placeholder"}`}>
+            {item.note || "メモを追加"}
           </span>
         </button>
       );
     }
 
-    if (options) {
-      return (
-        <div className="detail-inline-field is-editing">
-          <span className="detail-inline-label">{label}</span>
-          <select
-            ref={(el) => {
-              inputRef.current = el;
-            }}
-            className="detail-inline-control"
-            value={state.draftValue}
-            onChange={(e) => onStateChange({ ...state, draftValue: e.target.value })}
-            onBlur={() => void saveField()}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                e.preventDefault();
-                cancelEditing();
-              }
-            }}
-          >
-            {options.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      );
-    }
-
-    if (multiline) {
-      return (
-        <div className="detail-inline-field is-editing">
-          <span className="detail-inline-label">{label}</span>
-          <textarea
-            ref={(el) => {
-              inputRef.current = el;
-            }}
-            className="detail-inline-control detail-inline-textarea"
-            rows={5}
-            maxLength={500}
-            value={state.draftValue}
-            onChange={(e) => onStateChange({ ...state, draftValue: e.target.value })}
-            onBlur={() => void saveField()}
-            onKeyDown={(e) => {
-              if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-                e.preventDefault();
-                void saveField();
-              }
-              if (e.key === "Escape") {
-                e.preventDefault();
-                cancelEditing();
-              }
-            }}
-          />
-        </div>
-      );
-    }
-
     return (
       <div className="detail-inline-field is-editing">
-        <span className="detail-inline-label">{label}</span>
-        <input
+        <textarea
           ref={(el) => {
             inputRef.current = el;
           }}
-          className="detail-inline-control"
-          type="text"
-          maxLength={120}
+          className="detail-inline-control detail-inline-textarea"
+          rows={5}
+          maxLength={500}
           value={state.draftValue}
-          placeholder={placeholder}
           onChange={(e) => onStateChange({ ...state, draftValue: e.target.value })}
           onBlur={() => void saveField()}
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
+            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
               e.preventDefault();
               void saveField();
             }
@@ -224,8 +152,6 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
       </div>
     );
   };
-
-  const statusOptions = statusOrder.map((s) => ({ value: s, label: statusLabels[s] }));
 
   const handlePlatformSelect = async (value: string) => {
     const platform = normalizePrimaryPlatform(value);
@@ -268,23 +194,23 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
             <p className="detail-meta">{metadata.join(" · ")}</p>
           </div>
           <div className="detail-fields">
-            {renderEditableField(
-              "displayTitle",
-              "表示名",
-              item.display_title ?? "未設定",
-              undefined,
-              false,
-              work.title,
-            )}
-            {renderEditableField("status", "状態", statusLabels[item.status], statusOptions)}
-            <div className="detail-inline-field">
-              <span className="detail-inline-label">視聴先</span>
-              <PlatformPicker
-                value={item.primary_platform ?? ""}
-                onChange={(v) => void handlePlatformSelect(v)}
-              />
+            <div className="detail-status-picker">
+              {statusOrder.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  className={`detail-status-btn${item.status === s ? " is-active" : ""}`}
+                  onClick={() => void handleStatusSelect(s)}
+                >
+                  {statusLabels[s]}
+                </button>
+              ))}
             </div>
-            {renderEditableField("note", "メモ", item.note ?? "未設定", undefined, true)}
+            <PlatformPicker
+              value={item.primary_platform ?? ""}
+              onChange={(v) => void handlePlatformSelect(v)}
+            />
+            {renderNote()}
 
             {state.message && (
               <p className="form-message" aria-live="polite">

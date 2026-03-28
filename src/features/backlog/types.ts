@@ -37,7 +37,6 @@ export type WorkSummary = {
 export type BacklogItem = {
   id: string;
   status: BacklogStatus;
-  display_title: string | null;
   primary_platform: PrimaryPlatform;
   note: string | null;
   sort_order: number;
@@ -50,7 +49,7 @@ export type BacklogItemRow = Omit<BacklogItem, "works"> & {
 
 export type DetailModalState = {
   openItemId: string | null;
-  editingField: "displayTitle" | "status" | "primaryPlatform" | "note" | null;
+  editingField: "primaryPlatform" | "note" | null;
   draftValue: string;
   message: string | null;
 };

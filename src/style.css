@@ -1097,6 +1097,40 @@ h3 {
   min-height: 108px;
 }
 
+.detail-status-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.detail-status-btn {
+  padding: 4px 12px;
+  border: 1px solid rgba(92, 59, 35, 0.2);
+  border-radius: 20px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.detail-status-btn:hover {
+  background: rgba(92, 59, 35, 0.08);
+  color: var(--text);
+}
+
+.detail-status-btn.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
 @media (max-width: 1100px) {
   .shell:has(.auth-card) {
     grid-template-columns: 1fr;

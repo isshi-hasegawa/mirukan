@@ -12,7 +12,6 @@ function createItem(id: string, status: BacklogItem["status"], sortOrder: number
   return {
     id,
     status,
-    display_title: null,
     primary_platform: null,
     note: null,
     sort_order: sortOrder,
