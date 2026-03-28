@@ -58,6 +58,17 @@ type TmdbSeasonDetailsResponse = {
   }>;
 };
 
+type TmdbWatchProvidersResponse = {
+  results?: {
+    JP?: {
+      flatrate?: Array<{
+        provider_id: number;
+        provider_name: string;
+      }>;
+    };
+  };
+};
+
 type TmdbTranslationsResponse = {
   translations?: Array<{
     iso_639_1?: string;
@@ -69,6 +80,17 @@ type TmdbTranslationsResponse = {
   }>;
 };
 
+// TMDb provider_id → mirukan プラットフォームキーのマッピング（日本向けサブスク）
+const TMDB_PROVIDER_ID_MAP: Record<number, string> = {
+  8: "netflix", // Netflix
+  9: "prime_video", // Amazon Prime Video
+  337: "disney_plus", // Disney+
+  413: "hulu", // Hulu (Japan)
+  350: "apple_tv_plus", // Apple TV+
+  2: "apple_tv", // Apple TV
+  97: "u_next", // U-NEXT
+};
+
 export type TmdbSearchResult = {
   tmdbId: number;
   tmdbMediaType: "movie" | "tv";
@@ -78,6 +100,7 @@ export type TmdbSearchResult = {
   overview: string | null;
   posterPath: string | null;
   releaseDate: string | null;
+  jpWatchPlatforms: string[];
 };
 
 export type TmdbSeasonSelectionTarget = {
@@ -121,6 +144,40 @@ export type TmdbWorkDetails = {
   seasonCount: number | null;
   seasonNumber: number | null;
 };
+
+async function fetchWatchProvidersJP(tmdbId: number, mediaType: "movie" | "tv"): Promise<string[]> {
+  const url = new URL(`https://api.themoviedb.org/3/${mediaType}/${tmdbId}/watch/providers`);
+  url.searchParams.set("api_key", env.tmdbApiKey);
+
+  const response = await fetch(url);
+  if (!response.ok) return [];
+
+  const json = (await response.json()) as TmdbWatchProvidersResponse;
+  const flatrate = json.results?.JP?.flatrate ?? [];
+
+  const seen = new Set<string>();
+  const platforms: string[] = [];
+  for (const provider of flatrate) {
+    const key = TMDB_PROVIDER_ID_MAP[provider.provider_id];
+    if (key && !seen.has(key)) {
+      seen.add(key);
+      platforms.push(key);
+    }
+  }
+  return platforms;
+}
+
+async function enrichWithWatchProviders(results: TmdbSearchResult[]): Promise<TmdbSearchResult[]> {
+  return Promise.all(
+    results.map(async (result) => {
+      const jpWatchPlatforms = await fetchWatchProvidersJP(
+        result.tmdbId,
+        result.tmdbMediaType,
+      ).catch(() => []);
+      return { ...result, jpWatchPlatforms };
+    }),
+  );
+}
 
 const TRENDING_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 let trendingCache: { results: TmdbSearchResult[]; fetchedAt: number } | null = null;
@@ -175,6 +232,7 @@ async function fetchTrendingPage(page: number): Promise<TmdbSearchResult[]> {
           result.media_type === "movie"
             ? (result.release_date ?? null)
             : (result.first_air_date ?? null),
+        jpWatchPlatforms: [],
       },
     ];
   });
@@ -193,11 +251,13 @@ export async function fetchTmdbTrending(): Promise<TmdbSearchResult[]> {
 
   const combined = pages.flat();
   const seen = new Set<number>();
-  const results = combined.filter((item) => {
+  const deduped = combined.filter((item) => {
     if (seen.has(item.tmdbId)) return false;
     seen.add(item.tmdbId);
     return true;
   });
+
+  const results = await enrichWithWatchProviders(deduped);
 
   trendingCache = { results, fetchedAt: Date.now() };
   return shuffleArray(results);
@@ -218,7 +278,7 @@ export async function searchTmdbWorks(query: string) {
 
   const json = (await response.json()) as TmdbMultiSearchResponse;
 
-  return json.results.flatMap((result): TmdbSearchResult[] => {
+  const base = json.results.flatMap((result): TmdbSearchResult[] => {
     if (result.media_type !== "movie" && result.media_type !== "tv") {
       return [];
     }
@@ -245,9 +305,12 @@ export async function searchTmdbWorks(query: string) {
           result.media_type === "movie"
             ? (result.release_date ?? null)
             : (result.first_air_date ?? null),
+        jpWatchPlatforms: [],
       },
     ];
   });
+
+  return enrichWithWatchProviders(base);
 }
 
 export async function fetchTmdbSeasonOptions(

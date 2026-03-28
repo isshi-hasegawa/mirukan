@@ -6,7 +6,7 @@ import { fetchTmdbSeasonOptions, fetchTmdbTrending, searchTmdbWorks } from "../.
 import type { TmdbSearchResult, TmdbSelectionTarget, TmdbSeasonOption } from "../../../lib/tmdb.ts";
 import { upsertTmdbWork, getNextSortOrder, addAllSeasons } from "../data.ts";
 import { buildSearchText, normalizePrimaryPlatform } from "../helpers.ts";
-import { statusLabels, statusOrder } from "../constants.ts";
+import { platformLabels, statusLabels, statusOrder } from "../constants.ts";
 import { PlatformPicker } from "./PlatformPicker.tsx";
 import type { BacklogItem, BacklogStatus, WorkType } from "../types.ts";
 
@@ -431,6 +431,18 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
                             {result.workType === "movie" ? "映画" : "シリーズ"}
                             {result.releaseDate && ` · ${result.releaseDate.slice(0, 4)}`}
                           </span>
+                          {result.jpWatchPlatforms.length > 0 && (
+                            <span className="search-result-platforms">
+                              {result.jpWatchPlatforms.map((key) => {
+                                const label = platformLabels[key as keyof typeof platformLabels];
+                                return label ? (
+                                  <span key={key} className="search-result-platform-badge">
+                                    {label}
+                                  </span>
+                                ) : null;
+                              })}
+                            </span>
+                          )}
                           {result.overview && (
                             <span className="search-result-overview">{result.overview}</span>
                           )}

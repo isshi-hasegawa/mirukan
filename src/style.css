@@ -856,6 +856,22 @@ h3 {
   overflow: hidden;
 }
 
+.search-result-platforms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.search-result-platform-badge {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 99px;
+  font-size: 0.78rem;
+  background: rgba(0, 0, 0, 0.07);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
 .selected-result {
   display: grid;
   gap: 4px;
