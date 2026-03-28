@@ -1329,13 +1329,7 @@ h3 {
   cursor: pointer;
   border-radius: 8px;
   overflow: hidden;
-  border: 2px solid transparent;
-  transition: border-color 0.2s;
   background-clip: padding-box;
-
-  &:hover {
-    border-color: var(--accent-soft);
-  }
 }
 
 .platform-picker-item input {
@@ -1352,10 +1346,6 @@ h3 {
   height: 36px;
   object-fit: contain;
   padding: 3px;
-}
-
-.platform-picker-item.is-selected {
-  border-color: var(--accent);
 }
 
 .platform-picker-none {
