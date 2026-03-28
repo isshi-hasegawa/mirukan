@@ -5,7 +5,6 @@ declare
   work_manual_movie constant uuid := 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1';
   work_tmdb_movie constant uuid := 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2';
   work_tmdb_series constant uuid := 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3';
-  work_tmdb_season constant uuid := 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4';
 begin
   insert into auth.users (
     instance_id,
@@ -229,38 +228,13 @@ begin
       null,
       47,
       'medium',
-      null,
+      7,
       5,
       null,
       array['Drama', 'Crime'],
       75,
       0,
       100
-    ),
-    (
-      work_tmdb_season,
-      user_akari,
-      'tmdb',
-      'tv',
-      1396,
-      'season',
-      work_tmdb_series,
-      'ブレイキング・バッド シーズン1',
-      'Breaking Bad Season 1',
-      'ブレイキング・バッド シーズン1 breaking bad season 1',
-      'Walter White takes his first steps into the drug trade.',
-      '/1BP4xYv9ZG4ZVHkL7ocOziBbSYH.jpg',
-      '2008-01-20',
-      null,
-      47,
-      'medium',
-      7,
-      null,
-      1,
-      array['Drama', 'Crime'],
-      75,
-      0,
-      50
     )
   on conflict (id) do update
   set
@@ -356,7 +330,7 @@ begin
     (
       'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb5',
       user_akari,
-      work_tmdb_season,
+      work_tmdb_series,
       'interrupted',
       null,
       'netflix',
@@ -595,7 +569,7 @@ begin
     created_at = excluded.created_at,
     updated_at = excluded.updated_at;
 
-  INSERT INTO public.works (id, created_by, source_type, tmdb_media_type, tmdb_id, work_type, parent_work_id, title, original_title, search_text, overview, poster_path, release_date, runtime_minutes, typical_episode_runtime_minutes, duration_bucket, episode_count, season_count, season_number, genres, focus_required_score, background_fit_score, completion_load_score, created_at, updated_at) VALUES ('70fdb090-fb0c-45b5-b47c-e7b7b40ec53e', '11111111-1111-1111-1111-111111111111', 'tmdb', 'tv', 94605, 'series', NULL, 'アーケイン', 'Arcane', 'アーケイン arcane アニメーション action & adventure', '科学、魔法、そしてぶつかり合う信念。繁栄を遂げる都市ピルトーヴァーと、その下に広がる街ゾウンを舞台に、敵同士として戦いに身を投じる姉妹の運命を描く。', '/fqldf2t8ztc9aiwn3k6mlX3tvRT.jpg', '2021-11-06', NULL, NULL, NULL, NULL, 2, NULL, '{アニメーション,"Action & Adventure"}', 25, 75, 50, '2026-03-28 12:58:54.506175+00', '2026-03-28 12:58:54.506175+00')
+  INSERT INTO public.works (id, created_by, source_type, tmdb_media_type, tmdb_id, work_type, parent_work_id, title, original_title, search_text, overview, poster_path, release_date, runtime_minutes, typical_episode_runtime_minutes, duration_bucket, episode_count, season_count, season_number, genres, focus_required_score, background_fit_score, completion_load_score, created_at, updated_at) VALUES ('70fdb090-fb0c-45b5-b47c-e7b7b40ec53e', '11111111-1111-1111-1111-111111111111', 'tmdb', 'tv', 94605, 'series', NULL, 'アーケイン', 'Arcane', 'アーケイン arcane アニメーション action & adventure', '科学、魔法、そしてぶつかり合う信念。繁栄を遂げる都市ピルトーヴァーと、その下に広がる街ゾウンを舞台に、敵同士として戦いに身を投じる姉妹の運命を描く。', '/fqldf2t8ztc9aiwn3k6mlX3tvRT.jpg', '2021-11-06', NULL, 44, NULL, 9, 2, NULL, '{アニメーション,"Action & Adventure"}', 25, 75, 50, '2026-03-28 12:58:54.506175+00', '2026-03-28 12:58:54.506175+00')
   on conflict (id) do update set
     created_by = excluded.created_by,
     source_type = excluded.source_type,
@@ -678,7 +652,7 @@ begin
 
   INSERT INTO public.works (id, created_by, source_type, tmdb_media_type, tmdb_id, work_type, parent_work_id, title, original_title, search_text, overview, poster_path, release_date, runtime_minutes, typical_episode_runtime_minutes, duration_bucket, episode_count, season_count, season_number, genres, focus_required_score, background_fit_score, completion_load_score, created_at, updated_at) VALUES ('c2720f69-5465-4a29-92cb-944dee988e92', '11111111-1111-1111-1111-111111111111', 'tmdb', 'tv', 95479, 'series', NULL, '呪術廻戦', '呪術廻戦', '呪術廻戦 呪術廻戦 アニメーション action & adventure sci-fi & fantasy', '驚異的な身体能力を持つ、少年・虎杖悠仁はごく普通の高校生活を送っていたが、ある日“呪い”に襲われた仲間を救うため、特級呪物“両面宿儺の指”を喰らい、己の魂に呪いを宿してしまう。
 
-呪いである“両面宿儺”と肉体を共有することとなった虎杖は、最強の呪術師である五条 悟の案内で、対呪い専門機関である「東京都立呪術高等専門学校」へと。編入することになり……', '/zKFkzRn1UyE11Jv9CJjVmvmQFvR.jpg', '2020-10-03', NULL, 24, 'short', NULL, 1, NULL, '{アニメーション,"Action & Adventure","Sci-Fi & Fantasy"}', 25, 75, 0, '2026-03-28 12:59:43.854125+00', '2026-03-28 13:00:49.721923+00')
+呪いである“両面宿儺”と肉体を共有することとなった虎杖は、最強の呪術師である五条 悟の案内で、対呪い専門機関である「東京都立呪術高等専門学校」へと。編入することになり……', '/zKFkzRn1UyE11Jv9CJjVmvmQFvR.jpg', '2020-10-03', NULL, 24, 'short', 59, 1, NULL, '{アニメーション,"Action & Adventure","Sci-Fi & Fantasy"}', 25, 75, 0, '2026-03-28 12:59:43.854125+00', '2026-03-28 13:00:49.721923+00')
   on conflict (id) do update set
     created_by = excluded.created_by,
     source_type = excluded.source_type,
@@ -1381,7 +1355,7 @@ begin
     created_at = excluded.created_at,
     updated_at = excluded.updated_at;
 
-  INSERT INTO public.works (id, created_by, source_type, tmdb_media_type, tmdb_id, work_type, parent_work_id, title, original_title, search_text, overview, poster_path, release_date, runtime_minutes, typical_episode_runtime_minutes, duration_bucket, episode_count, season_count, season_number, genres, focus_required_score, background_fit_score, completion_load_score, created_at, updated_at) VALUES ('395bcd82-47cd-44a0-9fa9-b7d196261826', '11111111-1111-1111-1111-111111111111', 'tmdb', 'tv', 126308, 'series', NULL, 'SHOGUN 将軍', 'Shōgun', 'shogun 将軍 shōgun ドラマ war & politics', '舞台は1600年の日本。吉井虎永公が、敵対勢力が団結する中、命を懸けて戦っている頃、近くの漁村に謎のヨーロッパ船が漂着しているのが発見される。', '/dQsgTPFzqqB5LrlWXmS0QkXALAT.jpg', '2024-02-27', NULL, NULL, NULL, NULL, 1, NULL, '{ドラマ,"War & Politics"}', 50, 25, 50, '2026-03-28 13:07:24.470789+00', '2026-03-28 13:07:24.470789+00')
+  INSERT INTO public.works (id, created_by, source_type, tmdb_media_type, tmdb_id, work_type, parent_work_id, title, original_title, search_text, overview, poster_path, release_date, runtime_minutes, typical_episode_runtime_minutes, duration_bucket, episode_count, season_count, season_number, genres, focus_required_score, background_fit_score, completion_load_score, created_at, updated_at) VALUES ('395bcd82-47cd-44a0-9fa9-b7d196261826', '11111111-1111-1111-1111-111111111111', 'tmdb', 'tv', 126308, 'series', NULL, 'SHOGUN 将軍', 'Shōgun', 'shogun 将軍 shōgun ドラマ war & politics', '舞台は1600年の日本。吉井虎永公が、敵対勢力が団結する中、命を懸けて戦っている頃、近くの漁村に謎のヨーロッパ船が漂着しているのが発見される。', '/dQsgTPFzqqB5LrlWXmS0QkXALAT.jpg', '2024-02-27', NULL, 71, NULL, 10, 1, NULL, '{ドラマ,"War & Politics"}', 50, 25, 50, '2026-03-28 13:07:24.470789+00', '2026-03-28 13:07:24.470789+00')
   on conflict (id) do update set
     created_by = excluded.created_by,
     source_type = excluded.source_type,
@@ -1408,7 +1382,7 @@ begin
     created_at = excluded.created_at,
     updated_at = excluded.updated_at;
 
-  INSERT INTO public.works (id, created_by, source_type, tmdb_media_type, tmdb_id, work_type, parent_work_id, title, original_title, search_text, overview, poster_path, release_date, runtime_minutes, typical_episode_runtime_minutes, duration_bucket, episode_count, season_count, season_number, genres, focus_required_score, background_fit_score, completion_load_score, created_at, updated_at) VALUES ('4dd4d70a-dde8-473a-918e-75e3a9db9fab', '11111111-1111-1111-1111-111111111111', 'tmdb', 'tv', 100088, 'series', NULL, 'THE LAST OF US', 'The Last of Us', 'the last of us the last of us ドラマ', '人体に寄生する菌類による感染症が発生。パンデミックから20年が経ち文明崩壊したアメリカでは、生存者による勢力争いが起こっていた。生存者の1人・ジョエルは、「ファイアフライ」の指導者・マーリーンから、身元不明の少女・エリーを隔離地域から脱出させる運び屋を任される。はじめは小さな仕事だったが、やがて壮絶な旅へ発展していき、2人は生き残りを懸け感染者がはびこるアメリカ全土を横断することに…。', '/8S6bv0xVYU4HojHD61yFF6EmYNK.jpg', '2023-01-15', NULL, NULL, NULL, NULL, 2, NULL, '{ドラマ}', 50, 25, 50, '2026-03-28 13:07:59.387643+00', '2026-03-28 13:08:12.647905+00')
+  INSERT INTO public.works (id, created_by, source_type, tmdb_media_type, tmdb_id, work_type, parent_work_id, title, original_title, search_text, overview, poster_path, release_date, runtime_minutes, typical_episode_runtime_minutes, duration_bucket, episode_count, season_count, season_number, genres, focus_required_score, background_fit_score, completion_load_score, created_at, updated_at) VALUES ('4dd4d70a-dde8-473a-918e-75e3a9db9fab', '11111111-1111-1111-1111-111111111111', 'tmdb', 'tv', 100088, 'series', NULL, 'THE LAST OF US', 'The Last of Us', 'the last of us the last of us ドラマ', '人体に寄生する菌類による感染症が発生。パンデミックから20年が経ち文明崩壊したアメリカでは、生存者による勢力争いが起こっていた。生存者の1人・ジョエルは、「ファイアフライ」の指導者・マーリーンから、身元不明の少女・エリーを隔離地域から脱出させる運び屋を任される。はじめは小さな仕事だったが、やがて壮絶な旅へ発展していき、2人は生き残りを懸け感染者がはびこるアメリカ全土を横断することに…。', '/8S6bv0xVYU4HojHD61yFF6EmYNK.jpg', '2023-01-15', NULL, 81, NULL, 9, 2, NULL, '{ドラマ}', 50, 25, 50, '2026-03-28 13:07:59.387643+00', '2026-03-28 13:08:12.647905+00')
   on conflict (id) do update set
     created_by = excluded.created_by,
     source_type = excluded.source_type,
@@ -1435,7 +1409,7 @@ begin
     created_at = excluded.created_at,
     updated_at = excluded.updated_at;
 
-  INSERT INTO public.works (id, created_by, source_type, tmdb_media_type, tmdb_id, work_type, parent_work_id, title, original_title, search_text, overview, poster_path, release_date, runtime_minutes, typical_episode_runtime_minutes, duration_bucket, episode_count, season_count, season_number, genres, focus_required_score, background_fit_score, completion_load_score, created_at, updated_at) VALUES ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3', '11111111-1111-1111-1111-111111111111', 'tmdb', 'tv', 1396, 'series', NULL, 'ブレイキング・バッド', 'Breaking Bad', 'ブレイキング・バッド breaking bad ドラマ 犯罪', '家族に金を残したい―。ガンで余命宣告された冴えない高校の化学教師が、元教え子と組みドラッグ精製と売買に手を染める。', '/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg', '2008-01-20', NULL, NULL, NULL, NULL, 5, NULL, '{ドラマ,犯罪}', 50, 25, 50, '2026-03-28 07:33:25.657433+00', '2026-03-28 13:08:42.307392+00')
+  INSERT INTO public.works (id, created_by, source_type, tmdb_media_type, tmdb_id, work_type, parent_work_id, title, original_title, search_text, overview, poster_path, release_date, runtime_minutes, typical_episode_runtime_minutes, duration_bucket, episode_count, season_count, season_number, genres, focus_required_score, background_fit_score, completion_load_score, created_at, updated_at) VALUES ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3', '11111111-1111-1111-1111-111111111111', 'tmdb', 'tv', 1396, 'series', NULL, 'ブレイキング・バッド', 'Breaking Bad', 'ブレイキング・バッド breaking bad ドラマ 犯罪', '家族に金を残したい―。ガンで余命宣告された冴えない高校の化学教師が、元教え子と組みドラッグ精製と売買に手を染める。', '/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg', '2008-01-20', NULL, 59, NULL, 7, 5, NULL, '{ドラマ,犯罪}', 50, 25, 50, '2026-03-28 07:33:25.657433+00', '2026-03-28 13:08:42.307392+00')
   on conflict (id) do update set
     created_by = excluded.created_by,
     source_type = excluded.source_type,
@@ -1732,60 +1706,6 @@ begin
     created_at = excluded.created_at,
     updated_at = excluded.updated_at;
 
-  INSERT INTO public.works (id, created_by, source_type, tmdb_media_type, tmdb_id, work_type, parent_work_id, title, original_title, search_text, overview, poster_path, release_date, runtime_minutes, typical_episode_runtime_minutes, duration_bucket, episode_count, season_count, season_number, genres, focus_required_score, background_fit_score, completion_load_score, created_at, updated_at) VALUES ('5c41fe41-9e5b-4001-a50f-5eefde7016d4', '11111111-1111-1111-1111-111111111111', 'tmdb', 'tv', 94605, 'season', '70fdb090-fb0c-45b5-b47c-e7b7b40ec53e', 'アーケイン シーズン1', 'シーズン1', 'アーケイン シーズン1 シーズン1 アニメーション action & adventure', '科学、魔法、そしてぶつかり合う信念。繁栄を遂げる都市ピルトーヴァーと、その下に広がる街ゾウンを舞台に、敵同士として戦いに身を投じる姉妹の運命を描く。', '/6FMWx79iAtZx8WHtOrRj0VlM8Tp.jpg', '2021-11-06', NULL, 44, 'medium', 9, NULL, 1, '{アニメーション,"Action & Adventure"}', 25, 75, 25, '2026-03-28 12:58:54.959305+00', '2026-03-28 12:58:54.959305+00')
-  on conflict (id) do update set
-    created_by = excluded.created_by,
-    source_type = excluded.source_type,
-    tmdb_media_type = excluded.tmdb_media_type,
-    tmdb_id = excluded.tmdb_id,
-    work_type = excluded.work_type,
-    parent_work_id = excluded.parent_work_id,
-    title = excluded.title,
-    original_title = excluded.original_title,
-    search_text = excluded.search_text,
-    overview = excluded.overview,
-    poster_path = excluded.poster_path,
-    release_date = excluded.release_date,
-    runtime_minutes = excluded.runtime_minutes,
-    typical_episode_runtime_minutes = excluded.typical_episode_runtime_minutes,
-    duration_bucket = excluded.duration_bucket,
-    episode_count = excluded.episode_count,
-    season_count = excluded.season_count,
-    season_number = excluded.season_number,
-    genres = excluded.genres,
-    focus_required_score = excluded.focus_required_score,
-    background_fit_score = excluded.background_fit_score,
-    completion_load_score = excluded.completion_load_score,
-    created_at = excluded.created_at,
-    updated_at = excluded.updated_at;
-
-  INSERT INTO public.works (id, created_by, source_type, tmdb_media_type, tmdb_id, work_type, parent_work_id, title, original_title, search_text, overview, poster_path, release_date, runtime_minutes, typical_episode_runtime_minutes, duration_bucket, episode_count, season_count, season_number, genres, focus_required_score, background_fit_score, completion_load_score, created_at, updated_at) VALUES ('42526ba7-110f-4aa1-abe6-aba5b49d566e', '11111111-1111-1111-1111-111111111111', 'tmdb', 'tv', 95479, 'season', 'c2720f69-5465-4a29-92cb-944dee988e92', '呪術廻戦 シーズン1', 'シーズン1', '呪術廻戦 シーズン1 シーズン1 アニメーション action & adventure sci-fi & fantasy', '', '/zKFkzRn1UyE11Jv9CJjVmvmQFvR.jpg', '2020-10-03', NULL, 24, 'short', 59, NULL, 1, '{アニメーション,"Action & Adventure","Sci-Fi & Fantasy"}', 25, 75, 0, '2026-03-28 12:59:44.500599+00', '2026-03-28 12:59:44.500599+00')
-  on conflict (id) do update set
-    created_by = excluded.created_by,
-    source_type = excluded.source_type,
-    tmdb_media_type = excluded.tmdb_media_type,
-    tmdb_id = excluded.tmdb_id,
-    work_type = excluded.work_type,
-    parent_work_id = excluded.parent_work_id,
-    title = excluded.title,
-    original_title = excluded.original_title,
-    search_text = excluded.search_text,
-    overview = excluded.overview,
-    poster_path = excluded.poster_path,
-    release_date = excluded.release_date,
-    runtime_minutes = excluded.runtime_minutes,
-    typical_episode_runtime_minutes = excluded.typical_episode_runtime_minutes,
-    duration_bucket = excluded.duration_bucket,
-    episode_count = excluded.episode_count,
-    season_count = excluded.season_count,
-    season_number = excluded.season_number,
-    genres = excluded.genres,
-    focus_required_score = excluded.focus_required_score,
-    background_fit_score = excluded.background_fit_score,
-    completion_load_score = excluded.completion_load_score,
-    created_at = excluded.created_at,
-    updated_at = excluded.updated_at;
-
   INSERT INTO public.works (id, created_by, source_type, tmdb_media_type, tmdb_id, work_type, parent_work_id, title, original_title, search_text, overview, poster_path, release_date, runtime_minutes, typical_episode_runtime_minutes, duration_bucket, episode_count, season_count, season_number, genres, focus_required_score, background_fit_score, completion_load_score, created_at, updated_at) VALUES ('6cbaa548-f6a4-467e-b343-3f87b0260440', '11111111-1111-1111-1111-111111111111', 'tmdb', 'tv', 86831, 'season', 'd152e344-88e8-4bb5-82d3-99ae0fe39bbb', 'ラブ、デス&ロボット シリーズ3', 'シリーズ3', 'ラブ、デス&ロボット シリーズ3 シリーズ3 アニメーション sci-fi & fantasy', 'ティム・ミラーとデヴィッド・フィンチャーによる、エミー賞受賞の短編アニメ集のシリーズ3。不気味な世界と奇妙な生物に満ちた、現実離れした物語へようこそ。', '/cRiDlzzZC5lL7fvImuSjs04SUIJ.jpg', '2022-05-20', NULL, 12, 'short', 9, NULL, 3, '{アニメーション,"Sci-Fi & Fantasy"}', 25, 75, 0, '2026-03-28 13:00:10.364327+00', '2026-03-28 13:00:10.364327+00')
   on conflict (id) do update set
     created_by = excluded.created_by,
@@ -1894,88 +1814,7 @@ begin
     created_at = excluded.created_at,
     updated_at = excluded.updated_at;
 
-  INSERT INTO public.works (id, created_by, source_type, tmdb_media_type, tmdb_id, work_type, parent_work_id, title, original_title, search_text, overview, poster_path, release_date, runtime_minutes, typical_episode_runtime_minutes, duration_bucket, episode_count, season_count, season_number, genres, focus_required_score, background_fit_score, completion_load_score, created_at, updated_at) VALUES ('88fba9a9-aa64-4746-9ecb-a1e5f8a9f2e4', '11111111-1111-1111-1111-111111111111', 'tmdb', 'tv', 126308, 'season', '395bcd82-47cd-44a0-9fa9-b7d196261826', 'SHOGUN 将軍 シーズン1', 'シーズン1', 'shogun 将軍 シーズン1 シーズン1 ドラマ war & politics', '', '/dQsgTPFzqqB5LrlWXmS0QkXALAT.jpg', '2024-02-27', NULL, 71, 'long', 10, NULL, 1, '{ドラマ,"War & Politics"}', 50, 25, 50, '2026-03-28 13:07:24.986772+00', '2026-03-28 13:07:24.986772+00')
-  on conflict (id) do update set
-    created_by = excluded.created_by,
-    source_type = excluded.source_type,
-    tmdb_media_type = excluded.tmdb_media_type,
-    tmdb_id = excluded.tmdb_id,
-    work_type = excluded.work_type,
-    parent_work_id = excluded.parent_work_id,
-    title = excluded.title,
-    original_title = excluded.original_title,
-    search_text = excluded.search_text,
-    overview = excluded.overview,
-    poster_path = excluded.poster_path,
-    release_date = excluded.release_date,
-    runtime_minutes = excluded.runtime_minutes,
-    typical_episode_runtime_minutes = excluded.typical_episode_runtime_minutes,
-    duration_bucket = excluded.duration_bucket,
-    episode_count = excluded.episode_count,
-    season_count = excluded.season_count,
-    season_number = excluded.season_number,
-    genres = excluded.genres,
-    focus_required_score = excluded.focus_required_score,
-    background_fit_score = excluded.background_fit_score,
-    completion_load_score = excluded.completion_load_score,
-    created_at = excluded.created_at,
-    updated_at = excluded.updated_at;
-
-  INSERT INTO public.works (id, created_by, source_type, tmdb_media_type, tmdb_id, work_type, parent_work_id, title, original_title, search_text, overview, poster_path, release_date, runtime_minutes, typical_episode_runtime_minutes, duration_bucket, episode_count, season_count, season_number, genres, focus_required_score, background_fit_score, completion_load_score, created_at, updated_at) VALUES ('f18002be-0d91-45fb-b3cd-35b68fb6fb65', '11111111-1111-1111-1111-111111111111', 'tmdb', 'tv', 100088, 'season', '4dd4d70a-dde8-473a-918e-75e3a9db9fab', 'THE LAST OF US シーズン1', 'シーズン1', 'the last of us シーズン1 シーズン1 ドラマ', '', '/pMfG5XIlmvCL9bQQiJKdTvmF2FW.jpg', '2023-01-15', NULL, 81, 'long', 9, NULL, 1, '{ドラマ}', 50, 25, 50, '2026-03-28 13:08:06.573688+00', '2026-03-28 13:08:06.573688+00')
-  on conflict (id) do update set
-    created_by = excluded.created_by,
-    source_type = excluded.source_type,
-    tmdb_media_type = excluded.tmdb_media_type,
-    tmdb_id = excluded.tmdb_id,
-    work_type = excluded.work_type,
-    parent_work_id = excluded.parent_work_id,
-    title = excluded.title,
-    original_title = excluded.original_title,
-    search_text = excluded.search_text,
-    overview = excluded.overview,
-    poster_path = excluded.poster_path,
-    release_date = excluded.release_date,
-    runtime_minutes = excluded.runtime_minutes,
-    typical_episode_runtime_minutes = excluded.typical_episode_runtime_minutes,
-    duration_bucket = excluded.duration_bucket,
-    episode_count = excluded.episode_count,
-    season_count = excluded.season_count,
-    season_number = excluded.season_number,
-    genres = excluded.genres,
-    focus_required_score = excluded.focus_required_score,
-    background_fit_score = excluded.background_fit_score,
-    completion_load_score = excluded.completion_load_score,
-    created_at = excluded.created_at,
-    updated_at = excluded.updated_at;
-
   INSERT INTO public.works (id, created_by, source_type, tmdb_media_type, tmdb_id, work_type, parent_work_id, title, original_title, search_text, overview, poster_path, release_date, runtime_minutes, typical_episode_runtime_minutes, duration_bucket, episode_count, season_count, season_number, genres, focus_required_score, background_fit_score, completion_load_score, created_at, updated_at) VALUES ('f0641e14-c999-4dc5-951a-cecdd5507eb1', '11111111-1111-1111-1111-111111111111', 'tmdb', 'tv', 100088, 'season', '4dd4d70a-dde8-473a-918e-75e3a9db9fab', 'THE LAST OF US シーズン2', 'シーズン2', 'the last of us シーズン2 シーズン2 ドラマ', '感染者がはびこるアメリカ全土を横断した危険な旅から5年。ジョエルとエリーはワイオミング州ジャクソンの町の一員となり、平穏に暮らしていた。しかし、ある壮絶な出来事によって安らぎは失われ、エリーは再び危険な旅へ赴くことに...。', '/2TpP0oApo9M7dKF2MkoYKOxRbb.jpg', '2025-04-13', NULL, 59, 'medium', 7, NULL, 2, '{ドラマ}', 50, 25, 25, '2026-03-28 13:08:13.101479+00', '2026-03-28 13:08:13.101479+00')
-  on conflict (id) do update set
-    created_by = excluded.created_by,
-    source_type = excluded.source_type,
-    tmdb_media_type = excluded.tmdb_media_type,
-    tmdb_id = excluded.tmdb_id,
-    work_type = excluded.work_type,
-    parent_work_id = excluded.parent_work_id,
-    title = excluded.title,
-    original_title = excluded.original_title,
-    search_text = excluded.search_text,
-    overview = excluded.overview,
-    poster_path = excluded.poster_path,
-    release_date = excluded.release_date,
-    runtime_minutes = excluded.runtime_minutes,
-    typical_episode_runtime_minutes = excluded.typical_episode_runtime_minutes,
-    duration_bucket = excluded.duration_bucket,
-    episode_count = excluded.episode_count,
-    season_count = excluded.season_count,
-    season_number = excluded.season_number,
-    genres = excluded.genres,
-    focus_required_score = excluded.focus_required_score,
-    background_fit_score = excluded.background_fit_score,
-    completion_load_score = excluded.completion_load_score,
-    created_at = excluded.created_at,
-    updated_at = excluded.updated_at;
-
-  INSERT INTO public.works (id, created_by, source_type, tmdb_media_type, tmdb_id, work_type, parent_work_id, title, original_title, search_text, overview, poster_path, release_date, runtime_minutes, typical_episode_runtime_minutes, duration_bucket, episode_count, season_count, season_number, genres, focus_required_score, background_fit_score, completion_load_score, created_at, updated_at) VALUES ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4', '11111111-1111-1111-1111-111111111111', 'tmdb', 'tv', 1396, 'season', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3', 'ブレイキング・バッド シーズン1', 'シーズン1', 'ブレイキング・バッド シーズン1 シーズン1 ドラマ 犯罪', 'ベテランプロデューサー、ヴィンス・ギリガンとマーク・ジョンソンの制作によるドラマ。主人公のウォルターは冴えない高校の化学教師だが、自身が末期がんに冒されていることを知った後、新しい人生に目覚める。かつては成功を嘱望される化学者だったウォルターだが、今はやる気のない高校生に授業を行うかたわら、洗車のアルバイトをして家計を助ける身。妻のスカイラーは、eBayでの売買でほどほどの稼ぎを得ていた。息子のウォルター・ジュニアは17才。意志の強い若者だったが、脳性まひに苦しんでいた。家族に残せるものがほとんどないことに気がついたウォルターは、新しい人生の目的に目覚め、愛する家族に財産を残すため犯罪に手を染めていく。', '/1BP4xYv9ZG4ZVHkL7ocOziBbSYH.jpg', '2008-01-20', NULL, 59, 'medium', 7, NULL, 1, '{ドラマ,犯罪}', 50, 25, 25, '2026-03-28 07:33:25.657433+00', '2026-03-28 13:08:35.127162+00')
   on conflict (id) do update set
     created_by = excluded.created_by,
     source_type = excluded.source_type,
@@ -2095,7 +1934,7 @@ begin
     updated_at = excluded.updated_at,
     last_interacted_at = excluded.last_interacted_at;
 
-  INSERT INTO public.backlog_items (id, user_id, work_id, status, display_title, primary_platform, note, sort_order, created_at, updated_at, last_interacted_at) VALUES ('d1651eaf-3678-4467-9b63-bb5c0155e716', '11111111-1111-1111-1111-111111111111', '5c41fe41-9e5b-4001-a50f-5eefde7016d4', 'stacked', NULL, NULL, NULL, 8000, '2026-03-28 12:58:54.969653+00', '2026-03-28 12:58:54.969653+00', '2026-03-28 12:58:54.969653+00')
+  INSERT INTO public.backlog_items (id, user_id, work_id, status, display_title, primary_platform, note, sort_order, created_at, updated_at, last_interacted_at) VALUES ('d1651eaf-3678-4467-9b63-bb5c0155e716', '11111111-1111-1111-1111-111111111111', '70fdb090-fb0c-45b5-b47c-e7b7b40ec53e', 'stacked', NULL, NULL, NULL, 8000, '2026-03-28 12:58:54.969653+00', '2026-03-28 12:58:54.969653+00', '2026-03-28 12:58:54.969653+00')
   on conflict (id) do update set
     user_id = excluded.user_id,
     work_id = excluded.work_id,
@@ -2472,7 +2311,7 @@ begin
     updated_at = excluded.updated_at,
     last_interacted_at = excluded.last_interacted_at;
 
-  INSERT INTO public.backlog_items (id, user_id, work_id, status, display_title, primary_platform, note, sort_order, created_at, updated_at, last_interacted_at) VALUES ('d5904b12-9d94-4355-b17a-830ec91707d3', '11111111-1111-1111-1111-111111111111', '88fba9a9-aa64-4746-9ecb-a1e5f8a9f2e4', 'stacked', NULL, NULL, NULL, 38000, '2026-03-28 13:07:24.997193+00', '2026-03-28 13:07:24.997193+00', '2026-03-28 13:07:24.997193+00')
+  INSERT INTO public.backlog_items (id, user_id, work_id, status, display_title, primary_platform, note, sort_order, created_at, updated_at, last_interacted_at) VALUES ('d5904b12-9d94-4355-b17a-830ec91707d3', '11111111-1111-1111-1111-111111111111', '395bcd82-47cd-44a0-9fa9-b7d196261826', 'stacked', NULL, NULL, NULL, 38000, '2026-03-28 13:07:24.997193+00', '2026-03-28 13:07:24.997193+00', '2026-03-28 13:07:24.997193+00')
   on conflict (id) do update set
     user_id = excluded.user_id,
     work_id = excluded.work_id,
@@ -2498,7 +2337,7 @@ begin
     updated_at = excluded.updated_at,
     last_interacted_at = excluded.last_interacted_at;
 
-  INSERT INTO public.backlog_items (id, user_id, work_id, status, display_title, primary_platform, note, sort_order, created_at, updated_at, last_interacted_at) VALUES ('588c86e4-5688-4dc2-a825-197a3bb2480f', '11111111-1111-1111-1111-111111111111', 'f18002be-0d91-45fb-b3cd-35b68fb6fb65', 'stacked', NULL, NULL, NULL, 40000, '2026-03-28 13:08:06.580808+00', '2026-03-28 13:08:06.580808+00', '2026-03-28 13:08:06.580808+00')
+  INSERT INTO public.backlog_items (id, user_id, work_id, status, display_title, primary_platform, note, sort_order, created_at, updated_at, last_interacted_at) VALUES ('588c86e4-5688-4dc2-a825-197a3bb2480f', '11111111-1111-1111-1111-111111111111', '4dd4d70a-dde8-473a-918e-75e3a9db9fab', 'stacked', NULL, NULL, NULL, 40000, '2026-03-28 13:08:06.580808+00', '2026-03-28 13:08:06.580808+00', '2026-03-28 13:08:06.580808+00')
   on conflict (id) do update set
     user_id = excluded.user_id,
     work_id = excluded.work_id,
@@ -2524,7 +2363,7 @@ begin
     updated_at = excluded.updated_at,
     last_interacted_at = excluded.last_interacted_at;
 
-  INSERT INTO public.backlog_items (id, user_id, work_id, status, display_title, primary_platform, note, sort_order, created_at, updated_at, last_interacted_at) VALUES ('149ace48-ffab-42ff-a59e-71db2b06509d', '11111111-1111-1111-1111-111111111111', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4', 'stacked', NULL, NULL, NULL, 42000, '2026-03-28 13:08:35.138988+00', '2026-03-28 13:08:35.138988+00', '2026-03-28 13:08:35.138988+00')
+  INSERT INTO public.backlog_items (id, user_id, work_id, status, display_title, primary_platform, note, sort_order, created_at, updated_at, last_interacted_at) VALUES ('149ace48-ffab-42ff-a59e-71db2b06509d', '11111111-1111-1111-1111-111111111111', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3', 'stacked', NULL, NULL, NULL, 42000, '2026-03-28 13:08:35.138988+00', '2026-03-28 13:08:35.138988+00', '2026-03-28 13:08:35.138988+00')
   on conflict (id) do update set
     user_id = excluded.user_id,
     work_id = excluded.work_id,

@@ -3,7 +3,7 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../../../lib/supabase.ts";
 import { fetchTmdbSeasonOptions, searchTmdbWorks } from "../../../lib/tmdb.ts";
 import type { TmdbSearchResult, TmdbSelectionTarget, TmdbSeasonOption } from "../../../lib/tmdb.ts";
-import { upsertTmdbWork, getNextSortOrder } from "../data.ts";
+import { upsertTmdbWork, getNextSortOrder, addAllSeasons } from "../data.ts";
 import { buildSearchText, normalizePrimaryPlatform } from "../helpers.ts";
 import { statusLabels, statusOrder } from "../constants.ts";
 import { PlatformPicker } from "./PlatformPicker.tsx";
@@ -154,6 +154,21 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
           : "シーズン一覧の取得に失敗しました。",
       );
     }
+  };
+
+  const handleAddAllSeasons = async () => {
+    if (!selectedTmdbResult) return;
+
+    setFormMessage("全シーズンを追加しています...");
+    const result = await addAllSeasons(selectedTmdbResult, session.user.id, status, items);
+
+    if (result.error) {
+      setFormMessage(`全シーズンの追加に失敗しました: ${result.error}`);
+      return;
+    }
+
+    onClose();
+    await onAdded();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -340,6 +355,18 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
                     : isLoadingSeasons && (
                         <p className="search-message">シーズン一覧を読み込んでいます...</p>
                       )}
+                  {seasonOptions.length > 0 && (
+                    <button
+                      className="season-option-button season-option-button--all"
+                      type="button"
+                      onClick={() => {
+                        if (!selectedTmdbResult) return;
+                        void handleAddAllSeasons();
+                      }}
+                    >
+                      全シーズン追加
+                    </button>
+                  )}
                 </div>
               </div>
             )}

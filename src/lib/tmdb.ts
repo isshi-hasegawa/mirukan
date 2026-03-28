@@ -189,7 +189,7 @@ export async function fetchTmdbSeasonOptions(
   const json = (await response.json()) as TmdbTvDetailsResponse;
 
   return (json.seasons ?? [])
-    .filter((season) => season.season_number > 0)
+    .filter((season) => season.season_number > 1)
     .map((season) => ({
       seasonNumber: season.season_number,
       title: resolveSeasonTitle(result.title, season.season_number, season.name?.trim()),
@@ -281,8 +281,19 @@ export async function fetchTmdbWorkDetails(target: TmdbSelectionTarget): Promise
   }
 
   const json = (await response.json()) as TmdbTvDetailsResponse;
-  const representativeEpisodeRuntime =
+
+  // S1 の情報を取得（series = S1 を兼ねるため）
+  const season1 = (json.seasons ?? []).find((s) => s.season_number === 1);
+  const season1EpisodeCount =
+    typeof season1?.episode_count === "number" ? season1.episode_count : null;
+
+  // 1話あたりの尺: S1 のエピソードから取得を試み、なければシリーズ全体の値を使う
+  let representativeEpisodeRuntime =
     (json.episode_run_time ?? []).find((runtime) => runtime > 0) ?? null;
+  if (representativeEpisodeRuntime === null && season1) {
+    const s1Details = await fetchSeasonEpisodeRuntime(target.tmdbId, 1);
+    representativeEpisodeRuntime = s1Details;
+  }
 
   return {
     tmdbId: json.id,
@@ -296,7 +307,7 @@ export async function fetchTmdbWorkDetails(target: TmdbSelectionTarget): Promise
     genres: (json.genres ?? []).map((genre) => genre.name),
     runtimeMinutes: null,
     typicalEpisodeRuntimeMinutes: representativeEpisodeRuntime,
-    episodeCount: null,
+    episodeCount: season1EpisodeCount,
     seasonCount:
       typeof json.number_of_seasons === "number" && json.number_of_seasons >= 0
         ? json.number_of_seasons
@@ -349,6 +360,23 @@ async function fetchTvSeriesDetails(tmdbId: number) {
   }
 
   return (await response.json()) as TmdbTvDetailsResponse;
+}
+
+async function fetchSeasonEpisodeRuntime(
+  tmdbId: number,
+  seasonNumber: number,
+): Promise<number | null> {
+  const url = new URL(`https://api.themoviedb.org/3/tv/${tmdbId}/season/${seasonNumber}`);
+  url.searchParams.set("api_key", env.tmdbApiKey);
+  url.searchParams.set("language", "ja-JP");
+
+  const response = await fetch(url);
+  if (!response.ok) return null;
+
+  const json = (await response.json()) as TmdbSeasonDetailsResponse;
+  return (
+    json.episodes?.find((ep) => typeof ep.runtime === "number" && ep.runtime > 0)?.runtime ?? null
+  );
 }
 
 function firstNonBlank(...values: Array<string | null | undefined>) {

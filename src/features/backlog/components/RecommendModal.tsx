@@ -40,24 +40,26 @@ function filterBacklogItems(items: BacklogItem[], mode: ViewingMode): Suggestion
   return items
     .filter((item) => {
       const work = item.works;
-      if (!work || work.source_type === "manual") return false;
+      if (!work || work.source_type === "manual" || work.work_type === "season") return false;
       return applyModeFilter(work, mode);
     })
     .sort(() => Math.random() - 0.5)
-    .slice(0, 3)
+    .slice(0, 2)
     .map((item) => ({ source: "backlog" as const, backlogItem: item }));
 }
 
 async function fetchGlobalSuggestions(
   mode: ViewingMode,
   excludeWorkIds: string[],
+  limit: number,
 ): Promise<SuggestionItem[]> {
   let query = supabase
     .from("works")
     .select(
       "id, title, work_type, source_type, tmdb_id, tmdb_media_type, original_title, overview, poster_path, release_date, runtime_minutes, typical_episode_runtime_minutes, duration_bucket, genres, season_count, season_number, focus_required_score, background_fit_score, completion_load_score",
     )
-    .eq("source_type", "tmdb");
+    .eq("source_type", "tmdb")
+    .neq("work_type", "season");
 
   if (excludeWorkIds.length > 0) {
     query = query.not("id", "in", `(${excludeWorkIds.join(",")})`);
@@ -69,7 +71,7 @@ async function fetchGlobalSuggestions(
   return (data as WorkSummary[])
     .filter((work) => applyModeFilter(work, mode))
     .sort(() => Math.random() - 0.5)
-    .slice(0, 3)
+    .slice(0, limit)
     .map((work) => ({ source: "global" as const, work }));
 }
 
@@ -130,19 +132,15 @@ export function RecommendModal({
   const localSuggestions = filterBacklogItems(stackedItems, activeMode);
 
   useEffect(() => {
-    if (localSuggestions.length > 0) {
-      setGlobalSuggestions([]);
-      return;
-    }
-
+    const globalLimit = 4 - localSuggestions.length;
     const excludeWorkIds = items
       .map((item) => item.works?.id)
       .filter((id): id is string => id !== undefined && id !== null);
 
-    void fetchGlobalSuggestions(activeMode, excludeWorkIds).then(setGlobalSuggestions);
+    void fetchGlobalSuggestions(activeMode, excludeWorkIds, globalLimit).then(setGlobalSuggestions);
   }, [activeMode, localSuggestions.length, items]);
 
-  const suggestions = localSuggestions.length > 0 ? localSuggestions : globalSuggestions;
+  const suggestions = [...localSuggestions, ...globalSuggestions];
 
   const handleMove = (item: SuggestionItem) => {
     if (item.source === "backlog") {

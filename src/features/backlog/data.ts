@@ -1,6 +1,7 @@
 import type { PostgrestSingleResponse } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase.ts";
 import {
+  fetchTmdbSeasonOptions,
   fetchTmdbWorkDetails,
   type TmdbSeasonSelectionTarget,
   type TmdbSearchResult,
@@ -269,6 +270,21 @@ async function upsertTmdbSeasonWork(
   target: TmdbSeasonSelectionTarget,
   userId: string,
 ): Promise<PostgrestSingleResponse<{ id: string }>> {
+  // S1 はシリーズとして保存（series = S1 を兼ねる）
+  if (target.seasonNumber === 1) {
+    const seriesTarget: TmdbSearchResult = {
+      tmdbId: target.tmdbId,
+      tmdbMediaType: "tv",
+      workType: "series",
+      title: target.seriesTitle,
+      originalTitle: target.originalTitle,
+      overview: target.overview,
+      posterPath: target.posterPath,
+      releaseDate: target.releaseDate,
+    };
+    return upsertTmdbWork(seriesTarget, userId);
+  }
+
   const seriesTarget: TmdbSearchResult = {
     tmdbId: target.tmdbId,
     tmdbMediaType: "tv",
@@ -327,6 +343,73 @@ async function upsertTmdbSeasonWork(
     .insert(buildTmdbWorkInsert(details, userId, "season", seriesResult.data.id))
     .select("id")
     .single();
+}
+
+export async function addAllSeasons(
+  seriesResult: TmdbSearchResult,
+  userId: string,
+  status: BacklogStatus,
+  existingItems: BacklogItem[],
+): Promise<{ error: string | null }> {
+  // シリーズ(=S1)を upsert
+  const seriesWork = await upsertTmdbWork(seriesResult, userId);
+  if (seriesWork.error || !seriesWork.data) {
+    return { error: seriesWork.error?.message ?? "シリーズの保存に失敗しました" };
+  }
+
+  const workIds = [seriesWork.data.id];
+
+  // S2 以降のシーズンを取得・upsert
+  const seasonOptions = await fetchTmdbSeasonOptions(seriesResult);
+  for (const season of seasonOptions) {
+    const target: TmdbSeasonSelectionTarget = {
+      tmdbId: seriesResult.tmdbId,
+      tmdbMediaType: "tv",
+      workType: "season",
+      title: season.title,
+      originalTitle: seriesResult.originalTitle,
+      overview: season.overview,
+      posterPath: season.posterPath,
+      releaseDate: season.releaseDate,
+      seasonNumber: season.seasonNumber,
+      episodeCount: season.episodeCount,
+      seriesTitle: seriesResult.title,
+    };
+    const seasonWork = await upsertTmdbSeasonWork(target, userId);
+    if (seasonWork.error || !seasonWork.data) {
+      return {
+        error: seasonWork.error?.message ?? `シーズン${season.seasonNumber}の保存に失敗しました`,
+      };
+    }
+    workIds.push(seasonWork.data.id);
+  }
+
+  // 既存の backlog_items に含まれる work_id は除外
+  const existingWorkIds = new Set(existingItems.map((item) => item.works?.id).filter(Boolean));
+  const newWorkIds = workIds.filter((id) => !existingWorkIds.has(id));
+
+  if (newWorkIds.length === 0) {
+    return { error: null };
+  }
+
+  let sortOrder = getNextSortOrder(existingItems, status);
+  const rows = newWorkIds.map((workId) => {
+    const row = {
+      user_id: userId,
+      work_id: workId,
+      status,
+      sort_order: sortOrder,
+    };
+    sortOrder += 1000;
+    return row;
+  });
+
+  const { error: insertError } = await supabase.from("backlog_items").insert(rows);
+  if (insertError) {
+    return { error: insertError.message };
+  }
+
+  return { error: null };
 }
 
 function getDurationBucket(minutes: number | null) {
