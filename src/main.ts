@@ -56,6 +56,8 @@ let detailModalState: DetailModalState = {
   isEditing: false,
   message: null,
 };
+let addModalSearchTimer: number | null = null;
+let addModalSearchRequestId = 0;
 
 void bootstrap();
 
@@ -198,11 +200,14 @@ function bindAddModal() {
   const closeButton = document.querySelector<HTMLButtonElement>("#close-add-modal");
   const cancelButton = document.querySelector<HTMLButtonElement>("#cancel-add-modal");
   const backdrop = document.querySelector<HTMLDivElement>("#add-modal-backdrop");
+  const searchInput = document.querySelector<HTMLInputElement>("#tmdb-search-query");
   const searchButton = document.querySelector<HTMLButtonElement>("#tmdb-search-button");
   const form = document.querySelector<HTMLFormElement>("#add-item-form");
   const message = document.querySelector<HTMLParagraphElement>("#add-form-message");
 
   const close = () => {
+    clearAddModalSearchTimer();
+    addModalSearchRequestId += 1;
     addModalState = { ...addModalState, isOpen: false };
     renderSignedInView();
   };
@@ -215,64 +220,33 @@ function bindAddModal() {
     }
   });
 
-  searchButton?.addEventListener("click", async () => {
-    const queryInput = document.querySelector<HTMLInputElement>("#tmdb-search-query");
-    const query = queryInput?.value.trim() ?? "";
+  searchInput?.addEventListener("input", () => {
+    const query = searchInput.value.trim();
+    addModalState = { ...addModalState, searchQuery: query };
 
     if (!query) {
+      clearAddModalSearchTimer();
+      addModalSearchRequestId += 1;
       addModalState = {
         ...addModalState,
-        searchQuery: query,
+        isSearching: false,
         searchResults: [],
         selectedTmdbResult: null,
         selectedTmdbTarget: null,
         seasonOptions: [],
-        searchMessage: "検索キーワードを入力してください。",
+        isLoadingSeasons: false,
+        searchMessage: null,
       };
       renderSignedInView();
       return;
     }
 
-    addModalState = {
-      ...addModalState,
-      searchQuery: query,
-      isSearching: true,
-      searchMessage: null,
-      searchResults: [],
-      selectedTmdbResult: null,
-      selectedTmdbTarget: null,
-      seasonOptions: [],
-      manualMode: false,
-      isLoadingSeasons: false,
-    };
-    renderSignedInView();
+    queueAddModalSearch(query);
+  });
 
-    try {
-      const results = await searchTmdbWorks(query);
-      addModalState = {
-        ...addModalState,
-        isSearching: false,
-        searchQuery: query,
-        searchResults: results,
-        selectedTmdbTarget: null,
-        seasonOptions: [],
-        searchMessage:
-          results.length > 0 ? null : "候補が見つかりませんでした。このまま入力して追加できます。",
-      };
-    } catch (error) {
-      addModalState = {
-        ...addModalState,
-        isSearching: false,
-        searchQuery: query,
-        searchResults: [],
-        selectedTmdbTarget: null,
-        seasonOptions: [],
-        searchMessage:
-          error instanceof Error ? `検索に失敗しました: ${error.message}` : "検索に失敗しました。",
-      };
-    }
-
-    renderSignedInView();
+  searchButton?.addEventListener("click", async () => {
+    const query = searchInput?.value.trim() ?? "";
+    await runAddModalSearch(query);
   });
 
   bindSearchResultButtons();
@@ -368,6 +342,93 @@ function bindAddModal() {
     };
     await renderApp();
   });
+}
+
+function queueAddModalSearch(query: string) {
+  clearAddModalSearchTimer();
+  addModalSearchTimer = window.setTimeout(() => {
+    void runAddModalSearch(query);
+  }, 250);
+}
+
+function clearAddModalSearchTimer() {
+  if (addModalSearchTimer !== null) {
+    window.clearTimeout(addModalSearchTimer);
+    addModalSearchTimer = null;
+  }
+}
+
+async function runAddModalSearch(query: string) {
+  const trimmedQuery = query.trim();
+  clearAddModalSearchTimer();
+
+  if (!trimmedQuery) {
+    addModalSearchRequestId += 1;
+    addModalState = {
+      ...addModalState,
+      searchQuery: "",
+      isSearching: false,
+      searchResults: [],
+      selectedTmdbResult: null,
+      selectedTmdbTarget: null,
+      seasonOptions: [],
+      isLoadingSeasons: false,
+      searchMessage: null,
+    };
+    renderSignedInView();
+    return;
+  }
+
+  const requestId = ++addModalSearchRequestId;
+  addModalState = {
+    ...addModalState,
+    searchQuery: trimmedQuery,
+    isSearching: true,
+    searchMessage: null,
+    searchResults: [],
+    selectedTmdbResult: null,
+    selectedTmdbTarget: null,
+    seasonOptions: [],
+    manualMode: false,
+    isLoadingSeasons: false,
+  };
+  renderSignedInView();
+
+  try {
+    const results = await searchTmdbWorks(trimmedQuery);
+
+    if (requestId !== addModalSearchRequestId || !addModalState.isOpen) {
+      return;
+    }
+
+    addModalState = {
+      ...addModalState,
+      isSearching: false,
+      searchQuery: trimmedQuery,
+      searchResults: results,
+      selectedTmdbTarget: null,
+      seasonOptions: [],
+      searchMessage:
+        results.length > 0 ? null : "候補が見つかりませんでした。このまま入力して追加できます。",
+    };
+  } catch (error) {
+    if (requestId !== addModalSearchRequestId || !addModalState.isOpen) {
+      return;
+    }
+
+    addModalState = {
+      ...addModalState,
+      isSearching: false,
+      searchQuery: trimmedQuery,
+      searchResults: [],
+      selectedTmdbTarget: null,
+      seasonOptions: [],
+      searchMessage:
+        error instanceof Error ? `検索に失敗しました: ${error.message}` : "検索に失敗しました。",
+    };
+  }
+
+  renderSignedInView();
 }
 
 function bindSearchResultButtons() {
