@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { SparklesIcon } from "@heroicons/react/24/solid";
 import { supabase } from "../../../lib/supabase.ts";
 import { getSortOrderForDrop, getTopSortOrder, normalizeBacklogItems } from "../data.ts";
 import { getDropSide } from "../helpers.ts";
 import type { BacklogItem, BacklogStatus, DetailModalState } from "../types.ts";
 import { useWindowSize } from "../hooks/useWindowSize.ts";
+import { Header } from "./Header.tsx";
 import { KanbanBoard } from "./KanbanBoard.tsx";
 import { AddModal } from "./AddModal.tsx";
 import { DetailModal } from "./DetailModal.tsx";
@@ -257,38 +257,12 @@ export function BoardPage({ session }: Props) {
         setOpenMenuId(null);
       }}
     >
-      <section className="board-header">
-        <div>
-          <h1>みるカン</h1>
-        </div>
-        <div className="header-actions">
-          <button className="ghost-button" type="button" onClick={() => setIsRecommendOpen(true)}>
-            <SparklesIcon className="recommend-icon" />
-            見る作品を決める
-          </button>
-          {!isMobileLayout && (
-            <button
-              className="primary-button"
-              type="button"
-              onClick={() => setAddModalStatus("stacked")}
-            >
-              <svg className="search-icon" viewBox="0 0 20 20" aria-hidden="true">
-                <circle cx="8.5" cy="8.5" r="4.75" />
-                <path d="M12.2 12.2 16 16" />
-              </svg>
-              作品を探す
-            </button>
-          )}
-          <p className="session-chip">{session.user.email ?? "signed-in user"}</p>
-          <button
-            className="ghost-button"
-            type="button"
-            onClick={() => void supabase.auth.signOut()}
-          >
-            ログアウト
-          </button>
-        </div>
-      </section>
+      <Header
+        session={session}
+        isMobileLayout={isMobileLayout}
+        onOpenRecommend={() => setIsRecommendOpen(true)}
+        onOpenAddModal={() => setAddModalStatus("stacked")}
+      />
 
       <KanbanBoard
         items={items}

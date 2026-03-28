@@ -266,12 +266,18 @@ h3 {
 }
 
 .board-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: start;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 16px;
+  align-items: center;
   padding: 14px 18px;
   border-radius: 28px;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  min-width: 0;
 }
 
 .board-header h1 {
@@ -287,7 +293,82 @@ h3 {
   display: flex;
   gap: 10px;
   align-items: center;
+  justify-content: center;
   flex-wrap: wrap;
+}
+
+.header-user {
+  display: flex;
+  align-items: center;
+}
+
+.user-menu-wrapper {
+  position: relative;
+}
+
+.user-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  color: var(--text);
+  white-space: nowrap;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.user-menu-trigger:hover {
+  background-color: var(--surface-strong);
+}
+
+.user-menu-trigger .chevron-icon {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s;
+}
+
+.user-menu-trigger[aria-expanded="true"] .chevron-icon {
+  transform: rotate(180deg);
+}
+
+.user-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 160px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+.user-menu-item {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 0.95rem;
+}
+
+.user-menu-item:first-child {
+  border-radius: 12px 12px 0 0;
+}
+
+.user-menu-item:last-child {
+  border-radius: 0 0 12px 12px;
+}
+
+.user-menu-item:hover {
+  background-color: var(--surface-muted);
 }
 
 .session-chip {
@@ -1084,11 +1165,12 @@ h3 {
   .board-header {
     width: 100%;
     min-width: 0;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
   }
 
   .header-actions {
-    flex-direction: column;
-    align-items: stretch;
+    display: none;
   }
 
   .session-chip,
