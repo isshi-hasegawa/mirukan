@@ -1,9 +1,18 @@
 import { useEffect, useState } from "react";
-import { FilmIcon, LightBulbIcon, BoltIcon, EyeIcon } from "@heroicons/react/24/outline";
+import {
+  FilmIcon,
+  LightBulbIcon,
+  BoltIcon,
+  EyeIcon,
+  SparklesIcon,
+} from "@heroicons/react/24/outline";
 import { supabase } from "../../../lib/supabase.ts";
+import { fetchTmdbTrending } from "../../../lib/tmdb.ts";
+import type { TmdbSearchResult } from "../../../lib/tmdb.ts";
 import type { BacklogItem, WorkSummary } from "../types.ts";
 
 type ViewingMode = "focus" | "thoughtful" | "quick" | "background";
+type ActiveTab = "trending" | ViewingMode;
 
 const MODES: {
   id: ViewingMode;
@@ -111,6 +120,24 @@ function RecommendItem({
   );
 }
 
+function TrendingCard({ result }: { result: TmdbSearchResult }) {
+  const [posterError, setPosterError] = useState(false);
+  const posterUrl = result.posterPath ? `https://image.tmdb.org/t/p/w92${result.posterPath}` : null;
+
+  return (
+    <li className="recommend-card" role="listitem">
+      <div className="recommend-card-thumb">
+        {posterUrl && !posterError ? (
+          <img src={posterUrl} alt={result.title} onError={() => setPosterError(true)} />
+        ) : (
+          <span className="recommend-card-thumb-fallback">{result.title.slice(0, 6)}</span>
+        )}
+      </div>
+      <span className="recommend-card-title">{result.title}</span>
+    </li>
+  );
+}
+
 type Props = {
   items: BacklogItem[];
   onClose: () => void;
@@ -124,20 +151,40 @@ export function RecommendModal({
   onMoveToWantToWatch,
   onAddWorkToWantToWatch,
 }: Props) {
-  const [activeMode, setActiveMode] = useState<ViewingMode>("thoughtful");
+  const [activeTab, setActiveTab] = useState<ActiveTab>("trending");
   const [globalSuggestions, setGlobalSuggestions] = useState<SuggestionItem[]>([]);
+  const [trendingResults, setTrendingResults] = useState<TmdbSearchResult[]>([]);
 
   const stackedItems = items.filter((item) => item.status === "stacked");
-  const localSuggestions = filterBacklogItems(stackedItems, activeMode);
+  const localSuggestions =
+    activeTab !== "trending" ? filterBacklogItems(stackedItems, activeTab) : [];
 
   useEffect(() => {
+    const itemTmdbKeys = new Set(
+      items
+        .filter((item) => item.works?.tmdb_id && item.works?.tmdb_media_type)
+        .map((item) => `${item.works!.tmdb_media_type}-${item.works!.tmdb_id}`),
+    );
+    fetchTmdbTrending()
+      .then((results) => {
+        setTrendingResults(
+          results.filter((r) => !itemTmdbKeys.has(`${r.tmdbMediaType}-${r.tmdbId}`)),
+        );
+      })
+      .catch(() => {
+        /* non-critical */
+      });
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "trending") return;
     const globalLimit = 4 - localSuggestions.length;
     const excludeWorkIds = items
       .map((item) => item.works?.id)
       .filter((id): id is string => id !== undefined && id !== null);
 
-    void fetchGlobalSuggestions(activeMode, excludeWorkIds, globalLimit).then(setGlobalSuggestions);
-  }, [activeMode, localSuggestions.length, items]);
+    void fetchGlobalSuggestions(activeTab, excludeWorkIds, globalLimit).then(setGlobalSuggestions);
+  }, [activeTab, localSuggestions.length, items]);
 
   const suggestions = [...localSuggestions, ...globalSuggestions];
 
@@ -147,6 +194,35 @@ export function RecommendModal({
     } else {
       onAddWorkToWantToWatch(item.work.id);
     }
+  };
+
+  const renderResults = () => {
+    if (activeTab === "trending") {
+      if (trendingResults.length === 0) {
+        return <p className="recommend-empty">トレンド情報を読み込み中...</p>;
+      }
+      return (
+        <ul className="recommend-list" role="list">
+          {trendingResults.slice(0, 20).map((result) => (
+            <TrendingCard key={`${result.tmdbMediaType}-${result.tmdbId}`} result={result} />
+          ))}
+        </ul>
+      );
+    }
+
+    return suggestions.length === 0 ? (
+      <p className="recommend-empty">積みの中に該当する作品がありません</p>
+    ) : (
+      <ul className="recommend-item-list" role="list">
+        {suggestions.map((item) => (
+          <RecommendItem
+            key={item.source === "backlog" ? item.backlogItem.id : item.work.id}
+            item={item}
+            onMove={handleMove}
+          />
+        ))}
+      </ul>
+    );
   };
 
   return (
@@ -165,12 +241,20 @@ export function RecommendModal({
         <div className="recommend-modal-body">
           <div className="recommend-filters">
             <div className="recommend-modes">
+              <button
+                type="button"
+                className={`recommend-mode-button${activeTab === "trending" ? " is-active" : ""}`}
+                onClick={() => setActiveTab("trending")}
+              >
+                <SparklesIcon className="recommend-mode-icon" aria-hidden="true" />
+                <span className="recommend-mode-label">トレンド</span>
+              </button>
               {MODES.map((mode) => (
                 <button
                   key={mode.id}
                   type="button"
-                  className={`recommend-mode-button${activeMode === mode.id ? " is-active" : ""}`}
-                  onClick={() => setActiveMode(mode.id)}
+                  className={`recommend-mode-button${activeTab === mode.id ? " is-active" : ""}`}
+                  onClick={() => setActiveTab(mode.id)}
                 >
                   <mode.Icon className="recommend-mode-icon" aria-hidden="true" />
                   <span className="recommend-mode-label">{mode.label}</span>
@@ -179,21 +263,7 @@ export function RecommendModal({
             </div>
           </div>
 
-          <div className="recommend-results">
-            {suggestions.length === 0 ? (
-              <p className="recommend-empty">積みの中に該当する作品がありません</p>
-            ) : (
-              <ul className="recommend-item-list" role="list">
-                {suggestions.map((item) => (
-                  <RecommendItem
-                    key={item.source === "backlog" ? item.backlogItem.id : item.work.id}
-                    item={item}
-                    onMove={handleMove}
-                  />
-                ))}
-              </ul>
-            )}
-          </div>
+          <div className="recommend-results">{renderResults()}</div>
         </div>
       </section>
     </div>
