@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { DocumentTextIcon } from "@heroicons/react/24/outline";
+import { DocumentTextIcon, FilmIcon, TvIcon } from "@heroicons/react/24/outline";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../../../lib/supabase.ts";
 import { fetchTmdbSeasonOptions, fetchTmdbTrending, searchTmdbWorks } from "../../../lib/tmdb.ts";
@@ -305,11 +305,22 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
                   {selectedTmdbTarget?.title ?? selectedTmdbResult.title}
                 </p>
                 <p className="selected-result-meta">
-                  {selectedTmdbTarget?.workType === "season"
-                    ? "シーズン"
-                    : selectedTmdbResult.workType === "movie"
-                      ? "映画"
-                      : "シリーズ"}
+                  {selectedTmdbTarget?.workType === "season" ? (
+                    <>
+                      <TvIcon className="work-type-icon" aria-hidden="true" />
+                      シーズン
+                    </>
+                  ) : selectedTmdbResult.workType === "movie" ? (
+                    <>
+                      <FilmIcon className="work-type-icon" aria-hidden="true" />
+                      映画
+                    </>
+                  ) : (
+                    <>
+                      <TvIcon className="work-type-icon" aria-hidden="true" />
+                      シリーズ
+                    </>
+                  )}
                   {selectedTmdbTarget?.workType === "season" &&
                     ` · シーズン${selectedTmdbTarget.seasonNumber}`}
                   {(selectedTmdbTarget?.releaseDate ?? selectedTmdbResult.releaseDate) &&
@@ -412,6 +423,11 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
                         <span className="search-result-content">
                           <span className="search-result-title">{result.title}</span>
                           <span className="search-result-meta">
+                            {result.workType === "movie" ? (
+                              <FilmIcon className="work-type-icon" aria-hidden="true" />
+                            ) : (
+                              <TvIcon className="work-type-icon" aria-hidden="true" />
+                            )}
                             {result.workType === "movie" ? "映画" : "シリーズ"}
                             {result.releaseDate && ` · ${result.releaseDate.slice(0, 4)}`}
                           </span>
@@ -453,7 +469,17 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
                   disabled={!!selectedTmdbResult}
                   onClick={() => setWorkType(t)}
                 >
-                  {t === "movie" ? "映画" : "シリーズ"}
+                  {t === "movie" ? (
+                    <>
+                      <FilmIcon className="work-type-icon" aria-hidden="true" />
+                      映画
+                    </>
+                  ) : (
+                    <>
+                      <TvIcon className="work-type-icon" aria-hidden="true" />
+                      シリーズ
+                    </>
+                  )}
                 </button>
               ))}
             </div>

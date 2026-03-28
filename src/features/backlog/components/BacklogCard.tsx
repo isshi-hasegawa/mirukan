@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { FilmIcon, TvIcon } from "@heroicons/react/24/outline";
 import type { BacklogItem, BacklogStatus } from "../types.ts";
 import { getDropSide } from "../helpers.ts";
 import { PlatformIcon } from "./PlatformIcon.tsx";
@@ -144,10 +145,10 @@ export function BacklogCard({
   }
 
   const title = work.title;
-  const metadata = [
-    work.work_type === "movie" ? "映画" : work.work_type === "series" ? "シリーズ" : "シーズン",
-    work.release_date ? work.release_date.slice(0, 4) : null,
-  ].filter(Boolean);
+  const WorkTypeIcon = work.work_type === "movie" ? FilmIcon : TvIcon;
+  const workTypeLabel =
+    work.work_type === "movie" ? "映画" : work.work_type === "series" ? "シリーズ" : "シーズン";
+  const metadataRest = [work.release_date ? work.release_date.slice(0, 4) : null].filter(Boolean);
 
   const isMenuOpen = openMenuId === item.id;
   const cardDropIndicator =
@@ -271,7 +272,11 @@ export function BacklogCard({
         </div>
         <div className="card-content">
           <p className="card-title">{title}</p>
-          <p className="card-meta">{metadata.join(" · ")}</p>
+          <p className="card-meta">
+            <WorkTypeIcon className="work-type-icon" aria-hidden="true" />
+            {workTypeLabel}
+            {metadataRest.length > 0 && ` · ${metadataRest.join(" · ")}`}
+          </p>
           {item.note && <p className="card-note">{item.note}</p>}
         </div>
       </div>

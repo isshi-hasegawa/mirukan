@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   FilmIcon,
+  TvIcon,
   LightBulbIcon,
   BoltIcon,
   EyeIcon,
@@ -100,17 +101,24 @@ function RecommendItem({
 }) {
   const [posterError, setPosterError] = useState(false);
 
-  const { title, posterPath, runtime } = (() => {
+  const { title, posterPath, runtime, workType } = (() => {
     if (item.source === "trending") {
-      return { title: item.result.title, posterPath: item.result.posterPath, runtime: null };
+      return {
+        title: item.result.title,
+        posterPath: item.result.posterPath,
+        runtime: null,
+        workType: item.result.workType,
+      };
     }
     const work = item.source === "backlog" ? (item.backlogItem.works as WorkSummary) : item.work;
     return {
       title: work.title,
       posterPath: work.poster_path,
       runtime: work.work_type === "movie" ? (work.runtime_minutes ?? null) : null,
+      workType: work.work_type as "movie" | "series",
     };
   })();
+  const WorkTypeIcon = workType === "movie" ? FilmIcon : TvIcon;
 
   const posterUrl = posterPath ? `https://image.tmdb.org/t/p/w92${posterPath}` : null;
 
@@ -126,7 +134,11 @@ function RecommendItem({
         </div>
         <div className="recommend-item-meta">
           <span className="recommend-item-title">{title}</span>
-          {runtime && <span className="recommend-item-runtime">{runtime}分</span>}
+          <span className="recommend-item-runtime">
+            <WorkTypeIcon className="work-type-icon" aria-hidden="true" />
+            {workType === "movie" ? "映画" : "シリーズ"}
+            {runtime != null && ` · ${runtime}分`}
+          </span>
         </div>
       </div>
       <button type="button" className="recommend-item-move" title="見たい列に追加">

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { DocumentTextIcon } from "@heroicons/react/24/outline";
+import { DocumentTextIcon, FilmIcon, TvIcon } from "@heroicons/react/24/outline";
 import { supabase } from "../../../lib/supabase.ts";
 import { getSortOrderForStatusChange } from "../data.ts";
 import { normalizePrimaryPlatform } from "../helpers.ts";
@@ -50,8 +50,10 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
   const work = item.works;
   const title = work.title;
   const posterUrl = work.poster_path ? `https://image.tmdb.org/t/p/w500${work.poster_path}` : null;
-  const metadata = [
-    work.work_type === "movie" ? "映画" : work.work_type === "series" ? "シリーズ" : "シーズン",
+  const WorkTypeIcon = work.work_type === "movie" ? FilmIcon : TvIcon;
+  const workTypeLabel =
+    work.work_type === "movie" ? "映画" : work.work_type === "series" ? "シリーズ" : "シーズン";
+  const metadataRest = [
     work.release_date ? work.release_date.slice(0, 4) : null,
     work.runtime_minutes ? `${work.runtime_minutes}分` : null,
     work.typical_episode_runtime_minutes ? `1話 ${work.typical_episode_runtime_minutes}分` : null,
@@ -195,7 +197,11 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
           </div>
           <div className="detail-title-area">
             <h2 id="detail-modal-title">{title}</h2>
-            <p className="detail-meta">{metadata.join(" · ")}</p>
+            <p className="detail-meta">
+              <WorkTypeIcon className="work-type-icon" aria-hidden="true" />
+              {workTypeLabel}
+              {metadataRest.length > 0 && ` · ${metadataRest.join(" · ")}`}
+            </p>
           </div>
           <div className="detail-fields">
             <div className="detail-status-picker">
