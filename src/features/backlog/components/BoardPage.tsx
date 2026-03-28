@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../../../lib/supabase.ts";
-import { getSortOrderForDrop, normalizeBacklogItems } from "../data.ts";
+import { getSortOrderForDrop, getTopSortOrder, normalizeBacklogItems } from "../data.ts";
 import { getDropSide } from "../helpers.ts";
 import type { BacklogItem, BacklogStatus, DetailModalState } from "../types.ts";
 import { KanbanBoard } from "./KanbanBoard.tsx";
 import { AddModal } from "./AddModal.tsx";
 import { DetailModal } from "./DetailModal.tsx";
+import { RecommendModal } from "./RecommendModal.tsx";
 
 type DropIndicator =
   | { type: "card"; itemId: string; side: "before" | "after" }
@@ -28,6 +29,7 @@ export function BoardPage({ session }: Props) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [dragItemId, setDragItemId] = useState<string | null>(null);
   const [dropIndicator, setDropIndicator] = useState<DropIndicator | null>(null);
+  const [isRecommendOpen, setIsRecommendOpen] = useState(false);
 
   const loadItems = useCallback(async () => {
     const { data, error: fetchError } = await supabase
@@ -110,6 +112,22 @@ export function BoardPage({ session }: Props) {
     await loadItems();
   };
 
+  const handleMoveToWantToWatch = async (itemId: string) => {
+    const sortOrder = getTopSortOrder(items, "want_to_watch");
+
+    const { error: updateError } = await supabase
+      .from("backlog_items")
+      .update({ status: "want_to_watch", sort_order: sortOrder })
+      .eq("id", itemId);
+
+    if (updateError) {
+      window.alert(`移動に失敗しました: ${updateError.message}`);
+      return;
+    }
+
+    await loadItems();
+  };
+
   const handleOpenDetail = (itemId: string) => {
     setOpenMenuId(null);
     setDetailModal({ openItemId: itemId, editingField: null, draftValue: "", message: null });
@@ -175,6 +193,9 @@ export function BoardPage({ session }: Props) {
           <h1>みるカン</h1>
         </div>
         <div className="header-actions">
+          <button className="ghost-button" type="button" onClick={() => setIsRecommendOpen(true)}>
+            次何見る？
+          </button>
           <button
             className="primary-button"
             type="button"
@@ -213,6 +234,18 @@ export function BoardPage({ session }: Props) {
         }
         onDropIndicatorChange={setDropIndicator}
       />
+
+      {isRecommendOpen && (
+        <RecommendModal
+          items={items}
+          onClose={() => setIsRecommendOpen(false)}
+          onOpenDetail={(itemId) => {
+            setIsRecommendOpen(false);
+            handleOpenDetail(itemId);
+          }}
+          onMoveToWantToWatch={(itemId) => void handleMoveToWantToWatch(itemId)}
+        />
+      )}
 
       {addModalStatus !== null && (
         <AddModal
