@@ -759,6 +759,7 @@ h3 {
   border-bottom: 1px solid rgba(90, 58, 36, 0.12);
   background: transparent;
   padding: 12px 0;
+  outline: none;
 }
 
 .search-results {
@@ -908,6 +909,7 @@ h3 {
   border-bottom: 1px solid rgba(90, 58, 36, 0.12);
   background: transparent;
   padding: 12px 0;
+  outline: none;
 }
 
 .modal-detail-fields .detail-inline-textarea {
