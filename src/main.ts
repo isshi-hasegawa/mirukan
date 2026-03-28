@@ -128,6 +128,7 @@ async function renderApp() {
   bindSignOutButton();
   bindAddButtons();
   bindAddModal();
+  bindStatusButtons();
 }
 
 function renderSignedOut() {
@@ -335,6 +336,10 @@ function createCardMarkup(item: BacklogItem) {
     return "";
   }
 
+  const statusIndex = statusOrder.indexOf(item.status);
+  const previousStatus = statusIndex > 0 ? statusOrder[statusIndex - 1] : null;
+  const nextStatus = statusIndex < statusOrder.length - 1 ? statusOrder[statusIndex + 1] : null;
+
   const title = item.display_title ?? work.title;
   const metadata = [
     work.work_type === "movie" ? "映画" : work.work_type === "series" ? "シリーズ" : "シーズン",
@@ -347,6 +352,34 @@ function createCardMarkup(item: BacklogItem) {
   const platformMarkup = item.primary_platform
     ? `<span class="meta-chip">${platformLabels[item.primary_platform]}</span>`
     : "";
+  const moveButtons = [
+    previousStatus
+      ? `
+        <button
+          class="card-move-button"
+          type="button"
+          data-move-id="${item.id}"
+          data-next-status="${previousStatus}"
+        >
+          ← ${statusLabels[previousStatus]}
+        </button>
+      `
+      : "",
+    nextStatus
+      ? `
+        <button
+          class="card-move-button"
+          type="button"
+          data-move-id="${item.id}"
+          data-next-status="${nextStatus}"
+        >
+          ${statusLabels[nextStatus]} →
+        </button>
+      `
+      : "",
+  ]
+    .filter(Boolean)
+    .join("");
 
   return `
     <article class="card">
@@ -356,6 +389,7 @@ function createCardMarkup(item: BacklogItem) {
         ${platformMarkup}
       </div>
       ${noteMarkup}
+      ${moveButtons ? `<div class="card-actions">${moveButtons}</div>` : ""}
     </article>
   `;
 }
@@ -534,6 +568,39 @@ function bindAddModal() {
     addModalState = { ...addModalState, isOpen: false };
     await renderApp();
   });
+}
+
+function bindStatusButtons() {
+  const buttons = document.querySelectorAll<HTMLButtonElement>("[data-move-id]");
+
+  for (const button of buttons) {
+    button.addEventListener("click", async () => {
+      const backlogItemId = button.dataset.moveId;
+      const nextStatus = button.dataset.nextStatus as BacklogStatus | undefined;
+
+      if (!backlogItemId || !nextStatus) {
+        return;
+      }
+
+      button.disabled = true;
+
+      const { error } = await supabase
+        .from("backlog_items")
+        .update({
+          status: nextStatus,
+          sort_order: getNextSortOrder(nextStatus),
+        })
+        .eq("id", backlogItemId);
+
+      if (error) {
+        button.disabled = false;
+        window.alert(`列の移動に失敗しました: ${error.message}`);
+        return;
+      }
+
+      await renderApp();
+    });
+  }
 }
 
 function formatDurationBucket(value: WorkSummary["duration_bucket"]) {

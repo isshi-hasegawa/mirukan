@@ -376,6 +376,26 @@ h2 {
   gap: 8px;
 }
 
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.card-move-button {
+  border: 1px solid rgba(92, 59, 35, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 250, 243, 0.9);
+  color: var(--text);
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.card-move-button:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
 .meta-chip {
   background: rgba(70, 109, 102, 0.12);
   color: #284c45;
