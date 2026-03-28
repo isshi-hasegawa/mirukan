@@ -1,5 +1,5 @@
-import { useState } from "react";
-import type { BacklogItem } from "../types.ts";
+import { useEffect, useState } from "react";
+import type { BacklogItem, WorkSummary } from "../types.ts";
 
 type ViewingMode = "focus" | "background" | "quick";
 
@@ -27,6 +27,36 @@ function filterByMode(items: BacklogItem[], mode: ViewingMode): BacklogItem[] {
     }
     return false;
   });
+}
+
+function RecommendCard({
+  item,
+  onOpenDetail,
+}: {
+  item: BacklogItem;
+  onOpenDetail: (itemId: string) => void;
+}) {
+  const [posterError, setPosterError] = useState(false);
+  const work = item.works as WorkSummary;
+  const title = item.display_title ?? work.title;
+  const posterUrl = work.poster_path ? `https://image.tmdb.org/t/p/w185${work.poster_path}` : null;
+
+  useEffect(() => {
+    setPosterError(false);
+  }, [posterUrl]);
+
+  return (
+    <button type="button" className="recommend-card" onClick={() => onOpenDetail(item.id)}>
+      <div className="recommend-card-thumb">
+        {posterUrl && !posterError ? (
+          <img src={posterUrl} alt={title} onError={() => setPosterError(true)} />
+        ) : (
+          <span className="recommend-card-thumb-fallback">{title}</span>
+        )}
+      </div>
+      <p className="recommend-card-title">{title}</p>
+    </button>
+  );
 }
 
 type Props = {
@@ -66,32 +96,11 @@ export function RecommendPanel({ items, onOpenDetail }: Props) {
             <p className="recommend-empty">積みの中に該当する作品がありません</p>
           ) : (
             <ul className="recommend-list" role="list">
-              {suggestions.map((item) => {
-                const work = item.works!;
-                const title = item.display_title ?? work.title;
-                const posterUrl = work.poster_path
-                  ? `https://image.tmdb.org/t/p/w185${work.poster_path}`
-                  : null;
-
-                return (
-                  <li key={item.id}>
-                    <button
-                      type="button"
-                      className="recommend-card"
-                      onClick={() => onOpenDetail(item.id)}
-                    >
-                      <div className="recommend-card-thumb">
-                        {posterUrl ? (
-                          <img src={posterUrl} alt={title} />
-                        ) : (
-                          <span className="recommend-card-thumb-fallback">{title}</span>
-                        )}
-                      </div>
-                      <p className="recommend-card-title">{title}</p>
-                    </button>
-                  </li>
-                );
-              })}
+              {suggestions.map((item) => (
+                <li key={item.id}>
+                  <RecommendCard item={item} onOpenDetail={onOpenDetail} />
+                </li>
+              ))}
             </ul>
           )}
         </div>

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { BacklogItem, BacklogStatus } from "../types.ts";
 import { platformLabels } from "../constants.ts";
 import { getDropSide } from "../helpers.ts";
@@ -35,14 +36,21 @@ export function BacklogCard({
   onDragOver,
   onDrop,
 }: Props) {
+  const [posterError, setPosterError] = useState(false);
+
   const work = item.works;
+
+  const posterUrl = work?.poster_path ? `https://image.tmdb.org/t/p/w185${work.poster_path}` : null;
+
+  useEffect(() => {
+    setPosterError(false);
+  }, [posterUrl]);
 
   if (!work) {
     return null;
   }
 
   const title = item.display_title ?? work.title;
-  const posterUrl = work.poster_path ? `https://image.tmdb.org/t/p/w185${work.poster_path}` : null;
   const metadata = [
     work.work_type === "movie" ? "映画" : work.work_type === "series" ? "シリーズ" : "シーズン",
     work.release_date ? work.release_date.slice(0, 4) : null,
@@ -140,8 +148,8 @@ export function BacklogCard({
       </div>
       <div className="card-body">
         <div className="card-thumb">
-          {posterUrl ? (
-            <img src={posterUrl} alt={`${title} のポスター`} />
+          {posterUrl && !posterError ? (
+            <img src={posterUrl} alt={`${title} のポスター`} onError={() => setPosterError(true)} />
           ) : (
             <div className="card-thumb-fallback">No Poster</div>
           )}
