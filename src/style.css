@@ -1392,7 +1392,7 @@ h3 {
 }
 
 .platform-picker-item[data-platform="disney_plus"] {
-  background: linear-gradient(135deg, #00d6e8 0%, #084f60 50%, #112638 100%);
+  background: #040405;
 }
 
 .platform-picker-item[data-platform="hulu"] {
