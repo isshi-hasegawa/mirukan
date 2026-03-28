@@ -153,13 +153,16 @@ export function BacklogCard({
           ) : (
             <div className="card-thumb-fallback">No Poster</div>
           )}
+          {item.primary_platform && (
+            <div className="card-platform-badge">
+              <PlatformIcon platform={item.primary_platform} />
+            </div>
+          )}
         </div>
         <div className="card-content">
           <p className="card-title">{title}</p>
           <p className="card-meta">{metadata.join(" · ")}</p>
-          <div className="card-footer">
-            {item.primary_platform && <PlatformIcon platform={item.primary_platform} />}
-          </div>
+          <div className="card-footer" />
           {item.note && <p className="card-note">{item.note}</p>}
         </div>
       </div>
