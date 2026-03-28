@@ -433,13 +433,22 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
                           </span>
                           {result.jpWatchPlatforms.length > 0 && (
                             <span className="search-result-platforms">
-                              {result.jpWatchPlatforms.map((key) => {
+                              {result.jpWatchPlatforms.map(({ key, logoPath }) => {
                                 const label = platformLabels[key as keyof typeof platformLabels];
-                                return label ? (
+                                if (!label) return null;
+                                return logoPath ? (
+                                  <img
+                                    key={key}
+                                    src={`https://image.tmdb.org/t/p/w45${logoPath}`}
+                                    alt={label}
+                                    title={label}
+                                    className="search-result-platform-logo"
+                                  />
+                                ) : (
                                   <span key={key} className="search-result-platform-badge">
                                     {label}
                                   </span>
-                                ) : null;
+                                );
                               })}
                             </span>
                           )}

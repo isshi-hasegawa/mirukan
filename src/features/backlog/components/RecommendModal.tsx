@@ -10,6 +10,7 @@ import {
 import { supabase } from "../../../lib/supabase.ts";
 import { fetchTmdbTrending } from "../../../lib/tmdb.ts";
 import type { TmdbSearchResult } from "../../../lib/tmdb.ts";
+import { platformLabels } from "../constants.ts";
 import type { BacklogItem, WorkSummary } from "../types.ts";
 
 type ViewingMode = "focus" | "thoughtful" | "quick" | "background";
@@ -101,13 +102,14 @@ function RecommendItem({
 }) {
   const [posterError, setPosterError] = useState(false);
 
-  const { title, posterPath, runtime, workType } = (() => {
+  const { title, posterPath, runtime, workType, jpWatchPlatforms } = (() => {
     if (item.source === "trending") {
       return {
         title: item.result.title,
         posterPath: item.result.posterPath,
         runtime: null,
         workType: item.result.workType,
+        jpWatchPlatforms: item.result.jpWatchPlatforms,
       };
     }
     const work = item.source === "backlog" ? (item.backlogItem.works as WorkSummary) : item.work;
@@ -116,6 +118,7 @@ function RecommendItem({
       posterPath: work.poster_path,
       runtime: work.work_type === "movie" ? (work.runtime_minutes ?? null) : null,
       workType: work.work_type as "movie" | "series",
+      jpWatchPlatforms: [],
     };
   })();
   const WorkTypeIcon = workType === "movie" ? FilmIcon : TvIcon;
@@ -139,6 +142,27 @@ function RecommendItem({
             {workType === "movie" ? "映画" : "シリーズ"}
             {runtime != null && ` · ${runtime}分`}
           </span>
+          {jpWatchPlatforms.length > 0 && (
+            <span className="recommend-item-platforms">
+              {jpWatchPlatforms.map(({ key, logoPath }) => {
+                const label = platformLabels[key as keyof typeof platformLabels];
+                if (!label) return null;
+                return logoPath ? (
+                  <img
+                    key={key}
+                    src={`https://image.tmdb.org/t/p/w45${logoPath}`}
+                    alt={label}
+                    title={label}
+                    className="search-result-platform-logo"
+                  />
+                ) : (
+                  <span key={key} className="search-result-platform-badge">
+                    {label}
+                  </span>
+                );
+              })}
+            </span>
+          )}
         </div>
       </div>
       <button type="button" className="recommend-item-move" title="見たい列に追加">

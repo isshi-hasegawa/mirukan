@@ -64,9 +64,15 @@ type TmdbWatchProvidersResponse = {
       flatrate?: Array<{
         provider_id: number;
         provider_name: string;
+        logo_path: string | null;
       }>;
     };
   };
+};
+
+export type TmdbWatchPlatform = {
+  key: string;
+  logoPath: string | null;
 };
 
 type TmdbTranslationsResponse = {
@@ -100,7 +106,7 @@ export type TmdbSearchResult = {
   overview: string | null;
   posterPath: string | null;
   releaseDate: string | null;
-  jpWatchPlatforms: string[];
+  jpWatchPlatforms: TmdbWatchPlatform[];
 };
 
 export type TmdbSeasonSelectionTarget = {
@@ -145,7 +151,10 @@ export type TmdbWorkDetails = {
   seasonNumber: number | null;
 };
 
-async function fetchWatchProvidersJP(tmdbId: number, mediaType: "movie" | "tv"): Promise<string[]> {
+async function fetchWatchProvidersJP(
+  tmdbId: number,
+  mediaType: "movie" | "tv",
+): Promise<TmdbWatchPlatform[]> {
   const url = new URL(`https://api.themoviedb.org/3/${mediaType}/${tmdbId}/watch/providers`);
   url.searchParams.set("api_key", env.tmdbApiKey);
 
@@ -156,12 +165,12 @@ async function fetchWatchProvidersJP(tmdbId: number, mediaType: "movie" | "tv"):
   const flatrate = json.results?.JP?.flatrate ?? [];
 
   const seen = new Set<string>();
-  const platforms: string[] = [];
+  const platforms: TmdbWatchPlatform[] = [];
   for (const provider of flatrate) {
     const key = TMDB_PROVIDER_ID_MAP[provider.provider_id];
     if (key && !seen.has(key)) {
       seen.add(key);
-      platforms.push(key);
+      platforms.push({ key, logoPath: provider.logo_path ?? null });
     }
   }
   return platforms;
