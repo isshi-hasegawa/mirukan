@@ -15,14 +15,14 @@ function filterItems(items: BacklogItem[], mode: ViewingMode): BacklogItem[] {
       const work = item.works;
       if (!work || work.source_type === "manual") return false;
 
-      const { focus_required_score, background_fit_score, completion_load_score } = work;
+      const duration =
+        work.work_type === "movie" ? work.runtime_minutes : work.typical_episode_runtime_minutes;
 
-      if (mode === "focus" && (focus_required_score === null || focus_required_score < 75))
-        return false;
-      if (mode === "thoughtful" && (background_fit_score === null || background_fit_score < 50))
-        return false;
-      if (mode === "quick" && (completion_load_score === null || completion_load_score >= 25))
-        return false;
+      if (duration === null) return false;
+
+      if (mode === "focus" && duration < 80) return false;
+      if (mode === "thoughtful" && (duration < 40 || duration >= 80)) return false;
+      if (mode === "quick" && duration >= 40) return false;
 
       return true;
     })
