@@ -1120,6 +1120,7 @@ h3 {
   width: 20px;
   height: 20px;
   flex-shrink: 0;
+  stroke-width: 1.5;
   color: var(--text-muted);
   margin-top: 2px;
 }
