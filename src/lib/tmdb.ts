@@ -192,7 +192,7 @@ export async function fetchTmdbSeasonOptions(
     .filter((season) => season.season_number > 0)
     .map((season) => ({
       seasonNumber: season.season_number,
-      title: season.name?.trim() || `${result.title} シーズン${season.season_number}`,
+      title: resolveSeasonTitle(result.title, season.season_number, season.name?.trim()),
       overview: season.overview ?? null,
       posterPath: season.poster_path ?? null,
       releaseDate: season.air_date ?? null,
@@ -367,13 +367,17 @@ export function resolveSeasonTitle(
   ...candidates: Array<string | null | undefined>
 ) {
   const fallback = `${seriesTitle} シーズン${seasonNumber}`;
-  const chosen = firstNonBlank(...candidates, fallback);
+  const chosen = firstNonBlank(...candidates);
 
-  if (isGenericSeasonLabel(chosen)) {
+  if (!chosen || isGenericSeasonLabel(chosen)) {
     return fallback;
   }
 
-  return chosen;
+  if (chosen.toLowerCase().includes(seriesTitle.toLowerCase())) {
+    return chosen;
+  }
+
+  return `${seriesTitle} ${chosen}`;
 }
 
 function isGenericSeasonLabel(value: string) {

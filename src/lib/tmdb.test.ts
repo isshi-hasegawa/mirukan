@@ -10,9 +10,21 @@ describe("resolveSeasonTitle", () => {
     expect(resolveSeasonTitle("Cobra Kai", 2, "Season 2")).toBe("Cobra Kai シーズン2");
   });
 
-  test("keeps a specific season title when TMDb provides one", () => {
+  test("specific season title gets series prefix when series name is absent", () => {
     expect(resolveSeasonTitle("ブラック・ミラー", 6, "ジョーンはひどい人")).toBe(
-      "ジョーンはひどい人",
+      "ブラック・ミラー ジョーンはひどい人",
+    );
+  });
+
+  test("season title already containing series name is kept as-is", () => {
+    expect(resolveSeasonTitle("進撃の巨人", 4, "進撃の巨人 ファイナルシーズン")).toBe(
+      "進撃の巨人 ファイナルシーズン",
+    );
+  });
+
+  test("final season label without series name gets prefix", () => {
+    expect(resolveSeasonTitle("進撃の巨人", 4, "ファイナルシーズン")).toBe(
+      "進撃の巨人 ファイナルシーズン",
     );
   });
 
