@@ -128,10 +128,7 @@ export function createBoardMarkup(
       <section class="board-header">
         <div>
           <p class="eyebrow">Mirukan Local Preview</p>
-          <h1>みるカン backlog</h1>
-          <p class="lead">
-            seed データをそのまま 5 列に並べています。次は追加モーダルや並び替えを載せていけます。
-          </p>
+          <h1>みるカン</h1>
         </div>
         <div class="header-actions">
           <button

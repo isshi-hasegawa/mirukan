@@ -72,6 +72,12 @@ code {
   padding: 32px 0 48px;
 }
 
+.shell:has(.board) {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 100svh;
+}
+
 .intro-card,
 .auth-card,
 .board-header,
@@ -259,8 +265,17 @@ h3 {
   justify-content: space-between;
   gap: 16px;
   align-items: start;
-  padding: 24px 26px;
+  padding: 18px 22px;
   border-radius: 28px;
+}
+
+.board-header h1 {
+  font-size: clamp(1.9rem, 3vw, 2.6rem);
+  line-height: 1;
+}
+
+.board-header .eyebrow {
+  margin-bottom: 6px;
 }
 
 .header-actions {
@@ -308,14 +323,20 @@ h3 {
   display: grid;
   grid-template-columns: repeat(5, minmax(240px, 1fr));
   gap: 18px;
-  margin-top: 22px;
+  margin-top: 16px;
   overflow-x: auto;
   padding-bottom: 10px;
+  min-height: 0;
+  align-items: start;
 }
 
 .board-column {
+  display: flex;
+  flex-direction: column;
   border-radius: 24px;
   padding: 18px;
+  max-height: min(72svh, calc(100svh - 176px));
+  min-height: 0;
 }
 
 .column-header {
@@ -377,6 +398,9 @@ h3 {
   display: grid;
   gap: 12px;
   margin-top: 14px;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 4px;
 }
 
 .card {
@@ -964,12 +988,20 @@ h3 {
     width: 100%;
     justify-content: space-between;
   }
+
+  .board-column {
+    max-height: min(68svh, calc(100svh - 200px));
+  }
 }
 
 @media (max-width: 720px) {
   .shell {
     width: min(100% - 20px, 1400px);
     padding: 20px 0 28px;
+  }
+
+  .shell:has(.board) {
+    min-height: auto;
   }
 
   .intro-card,
@@ -1000,6 +1032,10 @@ h3 {
   .modal-card {
     padding: 20px;
     border-radius: 22px;
+  }
+
+  .board-column {
+    max-height: min(62svh, calc(100svh - 180px));
   }
 
   .card-body {
