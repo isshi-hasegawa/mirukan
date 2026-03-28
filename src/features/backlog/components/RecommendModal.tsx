@@ -1,13 +1,13 @@
 import { useState } from "react";
 import type { BacklogItem, WorkSummary } from "../types.ts";
 
-type ViewingMode = "focus" | "background" | "quick";
+type ViewingMode = "focus" | "thoughtful" | "quick";
 type WorkTypeFilter = "movie" | "series_season" | null;
 
-const MODES: { id: ViewingMode; label: string; description: string }[] = [
-  { id: "focus", label: "がっつり", description: "集中して見たい" },
-  { id: "background", label: "ながら見", description: "作業しながら" },
-  { id: "quick", label: "サクッと", description: "短時間で終わる" },
+const MODES: { id: ViewingMode; label: string; icon: string }[] = [
+  { id: "focus", label: "ガッツリ", icon: "🎬" },
+  { id: "thoughtful", label: "じっくり", icon: "🤔" },
+  { id: "quick", label: "サクッと", icon: "⚡" },
 ];
 
 const WORK_TYPE_FILTERS: { id: NonNullable<WorkTypeFilter>; label: string }[] = [
@@ -29,9 +29,9 @@ function filterItems(
 
       if (mode === "focus" && (focus_required_score === null || focus_required_score < 75))
         return false;
-      if (mode === "background" && (background_fit_score === null || background_fit_score < 50))
+      if (mode === "thoughtful" && (background_fit_score === null || background_fit_score < 50))
         return false;
-      if (mode === "quick" && (completion_load_score === null || completion_load_score > 25))
+      if (mode === "quick" && (completion_load_score === null || completion_load_score >= 25))
         return false;
 
       if (workTypeFilter === "movie" && work.work_type !== "movie") return false;
@@ -140,8 +140,10 @@ export function RecommendModal({ items, onClose, onOpenDetail, onMoveToWantToWat
                   className={`recommend-mode-button${activeMode === mode.id ? " is-active" : ""}`}
                   onClick={() => handleModeClick(mode.id)}
                 >
+                  <span className="recommend-mode-icon" aria-hidden="true">
+                    {mode.icon}
+                  </span>
                   <span className="recommend-mode-label">{mode.label}</span>
-                  <span className="recommend-mode-desc">{mode.description}</span>
                 </button>
               ))}
             </div>
