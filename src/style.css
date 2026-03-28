@@ -253,13 +253,6 @@ h3 {
   font-weight: 700;
 }
 
-.auth-form button:hover,
-.primary-button:hover,
-.primary-icon-button:hover,
-.ghost-button:hover {
-  transform: translateY(-1px);
-}
-
 .form-message {
   color: var(--text-muted);
   font-size: 0.94rem;
