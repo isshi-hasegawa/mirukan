@@ -327,7 +327,7 @@ h3 {
   overflow-x: auto;
   padding-bottom: 6px;
   min-height: 0;
-  align-items: start;
+  align-items: stretch;
 }
 
 .board-column {
@@ -335,7 +335,7 @@ h3 {
   flex-direction: column;
   border-radius: 24px;
   padding: 14px;
-  max-height: min(78svh, calc(100svh - 138px));
+  height: 100%;
   min-height: 0;
 }
 
@@ -396,6 +396,8 @@ h3 {
 
 .card-list {
   display: grid;
+  flex: 1;
+  align-content: start;
   gap: 10px;
   margin-top: 10px;
   overflow-y: auto;
@@ -988,10 +990,6 @@ h3 {
     width: 100%;
     justify-content: space-between;
   }
-
-  .board-column {
-    max-height: min(72svh, calc(100svh - 160px));
-  }
 }
 
 @media (max-width: 720px) {
@@ -1032,10 +1030,6 @@ h3 {
   .modal-card {
     padding: 20px;
     border-radius: 22px;
-  }
-
-  .board-column {
-    max-height: min(68svh, calc(100svh - 144px));
   }
 
   .card-body {
