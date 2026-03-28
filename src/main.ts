@@ -60,6 +60,7 @@ let addModalSearchTimer: number | null = null;
 let addModalSearchRequestId = 0;
 let shouldRestoreAddModalSearchFocus = false;
 let addModalSearchSelection: { start: number; end: number } | null = null;
+let isAddModalSearchComposing = false;
 
 void bootstrap();
 
@@ -212,6 +213,7 @@ function bindAddModal() {
     addModalSearchRequestId += 1;
     shouldRestoreAddModalSearchFocus = false;
     addModalSearchSelection = null;
+    isAddModalSearchComposing = false;
     addModalState = { ...addModalState, isOpen: false };
     renderSignedInView();
   };
@@ -224,7 +226,46 @@ function bindAddModal() {
     }
   });
 
+  searchInput?.addEventListener("compositionstart", () => {
+    isAddModalSearchComposing = true;
+  });
+
+  searchInput?.addEventListener("compositionend", () => {
+    isAddModalSearchComposing = false;
+
+    const query = searchInput.value.trim();
+    shouldRestoreAddModalSearchFocus = true;
+    addModalSearchSelection = {
+      start: searchInput.selectionStart ?? query.length,
+      end: searchInput.selectionEnd ?? query.length,
+    };
+    addModalState = { ...addModalState, searchQuery: query };
+
+    if (!query) {
+      clearAddModalSearchTimer();
+      addModalSearchRequestId += 1;
+      addModalState = {
+        ...addModalState,
+        isSearching: false,
+        searchResults: [],
+        selectedTmdbResult: null,
+        selectedTmdbTarget: null,
+        seasonOptions: [],
+        isLoadingSeasons: false,
+        searchMessage: null,
+      };
+      renderSignedInView();
+      return;
+    }
+
+    queueAddModalSearch(query);
+  });
+
   searchInput?.addEventListener("input", () => {
+    if (isAddModalSearchComposing) {
+      return;
+    }
+
     const query = searchInput.value.trim();
     shouldRestoreAddModalSearchFocus = true;
     addModalSearchSelection = {
