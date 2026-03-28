@@ -320,10 +320,6 @@ export function BoardPage({ session }: Props) {
         <RecommendModal
           items={items}
           onClose={() => setIsRecommendOpen(false)}
-          onOpenDetail={(itemId) => {
-            setIsRecommendOpen(false);
-            handleOpenDetail(itemId);
-          }}
           onMoveToWantToWatch={(itemId) => void handleMoveToWantToWatch(itemId)}
           onAddWorkToWantToWatch={(workId) => void handleAddWorkToWantToWatch(workId)}
           onAddTmdbWorkToWantToWatch={(result) => handleAddTmdbWorkToWantToWatch(result)}
