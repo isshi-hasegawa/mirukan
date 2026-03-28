@@ -70,6 +70,17 @@ type TmdbWatchProvidersResponse = {
   };
 };
 
+type TmdbReleaseDatesResponse = {
+  results?: Array<{
+    iso_3166_1: string;
+    release_dates?: Array<{
+      certification?: string;
+      release_date: string;
+      type?: number;
+    }>;
+  }>;
+};
+
 export type TmdbWatchPlatform = {
   key: string;
   logoPath: string | null;
@@ -107,6 +118,7 @@ export type TmdbSearchResult = {
   posterPath: string | null;
   releaseDate: string | null;
   jpWatchPlatforms: TmdbWatchPlatform[];
+  hasJapaneseRelease: boolean;
 };
 
 export type TmdbSeasonSelectionTarget = {
@@ -176,14 +188,30 @@ async function fetchWatchProvidersJP(
   return platforms;
 }
 
+async function checkJapaneseRelease(tmdbId: number): Promise<boolean> {
+  const url = new URL(`https://api.themoviedb.org/3/movie/${tmdbId}/release_dates`);
+  url.searchParams.set("api_key", env.tmdbApiKey);
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return true; // API失敗時はデフォルト含める
+
+    const json = (await response.json()) as TmdbReleaseDatesResponse;
+    const jpRelease = json.results?.find((r) => r.iso_3166_1 === "JP");
+    return jpRelease !== undefined && (jpRelease.release_dates?.length ?? 0) > 0;
+  } catch {
+    return true;
+  }
+}
+
 async function enrichWithWatchProviders(results: TmdbSearchResult[]): Promise<TmdbSearchResult[]> {
   return Promise.all(
     results.map(async (result) => {
-      const jpWatchPlatforms = await fetchWatchProvidersJP(
-        result.tmdbId,
-        result.tmdbMediaType,
-      ).catch(() => []);
-      return { ...result, jpWatchPlatforms };
+      const [jpWatchPlatforms, hasJapaneseRelease] = await Promise.all([
+        fetchWatchProvidersJP(result.tmdbId, result.tmdbMediaType).catch(() => []),
+        result.workType === "movie" ? checkJapaneseRelease(result.tmdbId) : Promise.resolve(true),
+      ]);
+      return { ...result, jpWatchPlatforms, hasJapaneseRelease };
     }),
   );
 }
@@ -242,6 +270,7 @@ async function fetchTrendingPage(page: number): Promise<TmdbSearchResult[]> {
             ? (result.release_date ?? null)
             : (result.first_air_date ?? null),
         jpWatchPlatforms: [],
+        hasJapaneseRelease: true,
       },
     ];
   });
@@ -315,6 +344,7 @@ export async function searchTmdbWorks(query: string) {
             ? (result.release_date ?? null)
             : (result.first_air_date ?? null),
         jpWatchPlatforms: [],
+        hasJapaneseRelease: true,
       },
     ];
   });

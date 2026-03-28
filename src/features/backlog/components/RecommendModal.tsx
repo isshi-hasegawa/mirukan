@@ -204,7 +204,11 @@ export function RecommendModal({
     fetchTmdbTrending()
       .then((results) => {
         setTrendingResults(
-          results.filter((r) => !itemTmdbKeys.has(`${r.tmdbMediaType}-${r.tmdbId}`)),
+          results.filter(
+            (r) =>
+              !itemTmdbKeys.has(`${r.tmdbMediaType}-${r.tmdbId}`) &&
+              (r.workType === "series" || r.hasJapaneseRelease),
+          ),
         );
       })
       .catch(() => {
