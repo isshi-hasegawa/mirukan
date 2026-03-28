@@ -440,11 +440,15 @@ h3 {
 
 .modal-card {
   width: min(100%, 560px);
+  max-height: min(88svh, 920px);
   border: 1px solid var(--border);
   border-radius: 28px;
   background: var(--surface-strong);
   box-shadow: var(--shadow);
   padding: 24px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .modal-header {
@@ -468,6 +472,8 @@ h3 {
   display: grid;
   gap: 16px;
   margin-top: 20px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .search-panel {
@@ -494,6 +500,9 @@ h3 {
 .search-results {
   display: grid;
   gap: 10px;
+  max-height: min(32svh, 280px);
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .search-result-button {

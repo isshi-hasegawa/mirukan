@@ -356,9 +356,7 @@ function createCardMarkup(item: BacklogItem) {
   const title = item.display_title ?? work.title;
   const metadata = [
     work.work_type === "movie" ? "映画" : work.work_type === "series" ? "シリーズ" : "シーズン",
-    work.source_type === "tmdb" ? "TMDb" : "手動追加",
     work.release_date ? work.release_date.slice(0, 4) : null,
-    formatDurationBucket(work.duration_bucket),
   ].filter(Boolean);
 
   const noteMarkup = item.note ? `<p class="card-note">${escapeHtml(item.note)}</p>` : "";
@@ -920,21 +918,6 @@ function clearDropIndicators() {
     ".drop-before, .drop-after, .dropzone-active, .card-dragging",
   )) {
     element.classList.remove("drop-before", "drop-after", "dropzone-active", "card-dragging");
-  }
-}
-
-function formatDurationBucket(value: WorkSummary["duration_bucket"]) {
-  switch (value) {
-    case "short":
-      return "短め";
-    case "medium":
-      return "中くらい";
-    case "long":
-      return "長め";
-    case "very_long":
-      return "かなり長め";
-    default:
-      return null;
   }
 }
 
