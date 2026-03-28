@@ -885,15 +885,20 @@ h3 {
 .detail-modal-body {
   display: grid;
   grid-template-columns: minmax(200px, 260px) minmax(0, 1fr);
-  gap: 24px;
+  grid-template-rows: auto 1fr;
+  column-gap: 24px;
+  row-gap: 14px;
   overflow-y: auto;
   padding-right: 4px;
+  flex: 1;
+  min-height: 0;
 }
 
 .detail-poster {
   position: sticky;
   top: 0;
   align-self: start;
+  grid-row: 1 / -1;
   overflow: hidden;
   border-radius: 24px;
   background:
@@ -924,13 +929,19 @@ h3 {
   letter-spacing: 0.04em;
 }
 
-.detail-content {
+.detail-title-area {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+}
+
+.detail-fields {
   display: grid;
   gap: 14px;
   align-content: start;
 }
 
-.detail-content h2 {
+.detail-title-area h2 {
   font-size: clamp(1.6rem, 3vw, 2.4rem);
 }
 
@@ -1129,12 +1140,30 @@ h3 {
   }
 
   .detail-modal-body {
-    grid-template-columns: 1fr;
+    grid-template-columns: 72px 1fr;
+    grid-template-rows: auto auto;
+    row-gap: 16px;
   }
 
   .detail-poster {
     position: static;
-    max-width: 280px;
+    grid-column: 1;
+    grid-row: 1;
+    border-radius: 12px;
+  }
+
+  .detail-title-area {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .detail-title-area h2 {
+    font-size: 1.1rem;
+  }
+
+  .detail-fields {
+    grid-column: 1 / -1;
+    grid-row: 2;
   }
 
   .column-add-button {

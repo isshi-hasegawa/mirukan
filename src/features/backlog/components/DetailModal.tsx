@@ -252,12 +252,14 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
               <div className="detail-poster-fallback">No Poster</div>
             )}
           </div>
-          <div className="detail-content">
+          <div className="detail-title-area">
             <h2 id="detail-modal-title">{title}</h2>
             {work.original_title && work.original_title !== title && (
               <p className="detail-original-title">{work.original_title}</p>
             )}
             <p className="detail-meta">{metadata.join(" · ")}</p>
+          </div>
+          <div className="detail-fields">
             <div className="detail-chip-row">
               {work.genres.length > 0 ? (
                 work.genres.map((genre) => (
