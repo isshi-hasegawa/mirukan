@@ -22,7 +22,7 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
   const [selectedTmdbResult, setSelectedTmdbResult] = useState<TmdbSearchResult | null>(null);
   const [selectedTmdbTarget, setSelectedTmdbTarget] = useState<TmdbSelectionTarget | null>(null);
   const [seasonOptions, setSeasonOptions] = useState<TmdbSeasonOption[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
+
   const [isLoadingSeasons, setIsLoadingSeasons] = useState(false);
   const [searchMessage, setSearchMessage] = useState<string | null>(null);
   const [duplicateNotice, setDuplicateNotice] = useState<string | null>(null);
@@ -84,14 +84,12 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
       setSelectedTmdbResult(null);
       setSelectedTmdbTarget(null);
       setSeasonOptions([]);
-      setIsSearching(false);
       setSearchMessage(null);
       setDuplicateNotice(null);
       return;
     }
 
     const requestId = ++searchRequestIdRef.current;
-    setIsSearching(true);
     setSearchMessage(null);
     setSearchResults([]);
     setSelectedTmdbResult(null);
@@ -102,14 +100,12 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
     try {
       const results = await searchTmdbWorks(trimmed);
       if (requestId !== searchRequestIdRef.current) return;
-      setIsSearching(false);
       setSearchResults(results);
       setSearchMessage(
         results.length > 0 ? null : "候補が見つかりませんでした。このまま入力して追加できます。",
       );
     } catch (error) {
       if (requestId !== searchRequestIdRef.current) return;
-      setIsSearching(false);
       setSearchMessage(
         error instanceof Error ? `検索に失敗しました: ${error.message}` : "検索に失敗しました。",
       );
@@ -256,7 +252,6 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
                     setSelectedTmdbResult(null);
                     setSelectedTmdbTarget(null);
                     setSeasonOptions([]);
-                    setIsSearching(false);
                     setSearchMessage(null);
                   }
                 }}
@@ -272,18 +267,10 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
                     setSelectedTmdbResult(null);
                     setSelectedTmdbTarget(null);
                     setSeasonOptions([]);
-                    setIsSearching(false);
                     setSearchMessage(null);
                   }
                 }}
               />
-              <button
-                className="primary-button"
-                type="button"
-                onClick={() => void runSearch(searchQuery)}
-              >
-                {isSearching ? "検索中..." : "検索"}
-              </button>
             </div>
 
             {selectedTmdbResult && (
@@ -309,21 +296,6 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
 
             {selectedTmdbResult?.tmdbMediaType === "tv" && (
               <div className="season-picker">
-                <div className="season-picker-header">
-                  <div>
-                    <p className="selected-result-label">追加単位</p>
-                    <p className="season-picker-copy">
-                      シリーズ全体で積むか、シーズン単位で積むかを選べます。
-                    </p>
-                  </div>
-                  {selectedTmdbTarget?.workType === "season" ? (
-                    <span className="season-selection-badge">
-                      シーズン{selectedTmdbTarget.seasonNumber}を選択中
-                    </span>
-                  ) : (
-                    <span className="season-selection-badge">シリーズ全体を選択中</span>
-                  )}
-                </div>
                 <div className="season-option-list">
                   <button
                     className={`season-option-button${selectedTmdbTarget?.workType !== "season" ? " is-selected" : ""}`}
