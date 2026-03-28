@@ -12,18 +12,9 @@ type Props = {
   onStateChange: (state: DetailModalState) => void;
   onClose: () => void;
   onUpdate: (item: BacklogItem) => void;
-  onDelete: (itemId: string) => Promise<void>;
 };
 
-export function DetailModal({
-  item,
-  state,
-  items,
-  onStateChange,
-  onClose,
-  onUpdate,
-  onDelete,
-}: Props) {
+export function DetailModal({ item, state, items, onStateChange, onClose, onUpdate }: Props) {
   const inputRef = useRef<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
@@ -253,12 +244,6 @@ export function DetailModal({
         aria-modal="true"
         aria-labelledby="detail-modal-title"
       >
-        <div className="detail-modal-header">
-          <p className="eyebrow">Detail</p>
-          <button className="icon-button" type="button" aria-label="閉じる" onClick={onClose}>
-            ×
-          </button>
-        </div>
         <div className="detail-modal-body">
           <div className="detail-poster">
             {posterUrl ? (
@@ -314,16 +299,6 @@ export function DetailModal({
                 {state.message}
               </p>
             )}
-
-            <div className="detail-actions">
-              <button
-                className="danger-button"
-                type="button"
-                onClick={() => void onDelete(item.id)}
-              >
-                削除
-              </button>
-            </div>
           </div>
         </div>
       </section>

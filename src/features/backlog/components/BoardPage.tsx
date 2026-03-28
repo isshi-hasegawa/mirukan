@@ -232,7 +232,6 @@ export function BoardPage({ session }: Props) {
           onStateChange={setDetailModal}
           onClose={handleCloseDetail}
           onUpdate={handleUpdateItem}
-          onDelete={handleDeleteItem}
         />
       )}
     </main>
