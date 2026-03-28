@@ -1154,8 +1154,19 @@ h3 {
     gap: 12px;
   }
 
+  .board-header {
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+  }
+
   .header-actions {
-    display: none;
+    display: flex;
+    gap: 8px;
+  }
+
+  .header-actions .ghost-button {
+    padding: 8px 12px;
+    font-size: 0.9rem;
   }
 
   .session-chip,
