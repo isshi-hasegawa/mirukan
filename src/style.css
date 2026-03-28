@@ -272,6 +272,7 @@ h3 {
   align-items: center;
   padding: 14px 18px;
   border-radius: 28px;
+  overflow: visible;
 }
 
 .header-actions {
