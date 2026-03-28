@@ -26,6 +26,7 @@ export function PlatformIcon({ platform }: Props) {
   return (
     <img
       className="platform-icon"
+      data-platform={platform}
       src={PLATFORM_ICONS[platform]}
       alt={platformLabels[platform]}
       title={platformLabels[platform]}

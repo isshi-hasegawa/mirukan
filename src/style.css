@@ -1316,6 +1316,39 @@ h3 {
   width: 24px;
   height: 24px;
   object-fit: contain;
+  padding: 6px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-clip: padding-box;
+}
+
+.platform-icon[data-platform="netflix"] {
+  background-color: #000000;
+}
+
+.platform-icon[data-platform="prime_video"] {
+  background-color: #ffffff;
+}
+
+.platform-icon[data-platform="u_next"] {
+  background-color: #000000;
+}
+
+.platform-icon[data-platform="disney_plus"] {
+  background: linear-gradient(45deg, #00d6e8 0%, #084f60 50%, #112638 100%);
+}
+
+.platform-icon[data-platform="hulu"] {
+  background-color: #040405;
+}
+
+.platform-icon[data-platform="apple_tv_plus"] {
+  background-color: #000000;
+}
+
+.platform-icon[data-platform="apple_tv"] {
+  background-color: #1d1d1f;
 }
 
 .platform-picker {
