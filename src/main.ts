@@ -87,6 +87,13 @@ async function renderApp() {
   }
 
   currentItems = normalizeBacklogItems(data ?? []);
+  renderSignedInView();
+}
+
+function renderSignedInView() {
+  if (!currentSession) {
+    return;
+  }
 
   getAppRoot().innerHTML = createBoardMarkup(
     currentItems,
@@ -156,7 +163,7 @@ function bindAddButtons() {
 
   openButton?.addEventListener("click", () => {
     addModalState = createInitialAddModalState("stacked");
-    void renderApp();
+    renderSignedInView();
   });
 
   const columnButtons = document.querySelectorAll<HTMLButtonElement>("[data-add-status]");
@@ -170,7 +177,7 @@ function bindAddButtons() {
       }
 
       addModalState = createInitialAddModalState(status);
-      void renderApp();
+      renderSignedInView();
     });
   }
 }
@@ -186,7 +193,7 @@ function bindAddModal() {
 
   const close = () => {
     addModalState = { ...addModalState, isOpen: false };
-    void renderApp();
+    renderSignedInView();
   };
 
   closeButton?.addEventListener("click", close);
@@ -203,7 +210,7 @@ function bindAddModal() {
       manualMode: !addModalState.manualMode,
       selectedTmdbResult: addModalState.manualMode ? addModalState.selectedTmdbResult : null,
     };
-    void renderApp();
+    renderSignedInView();
   });
 
   searchButton?.addEventListener("click", async () => {
@@ -217,7 +224,7 @@ function bindAddModal() {
         searchResults: [],
         searchMessage: "検索キーワードを入力してください。",
       };
-      void renderApp();
+      renderSignedInView();
       return;
     }
 
@@ -230,7 +237,7 @@ function bindAddModal() {
       selectedTmdbResult: null,
       manualMode: false,
     };
-    await renderApp();
+    renderSignedInView();
 
     try {
       const results = await searchTmdbWorks(query);
@@ -257,7 +264,7 @@ function bindAddModal() {
       };
     }
 
-    await renderApp();
+    renderSignedInView();
   });
 
   bindSearchResultButtons();
@@ -375,7 +382,7 @@ function bindSearchResultButtons() {
         selectedTmdbResult: selectedResult,
         manualMode: false,
       };
-      void renderApp();
+      renderSignedInView();
     });
   }
 }
@@ -509,7 +516,7 @@ function bindCardMenus() {
       }
 
       openCardMenuId = openCardMenuId === nextId ? null : nextId;
-      void renderApp();
+      renderSignedInView();
     });
   }
 
@@ -551,7 +558,7 @@ function bindCardMenus() {
 
       if (openCardMenuId !== null) {
         openCardMenuId = null;
-        void renderApp();
+        renderSignedInView();
       }
     },
     { once: true },
