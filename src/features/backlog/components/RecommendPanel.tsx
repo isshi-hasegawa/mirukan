@@ -17,7 +17,7 @@ function filterByMode(items: BacklogItem[], mode: ViewingMode): BacklogItem[] {
     const { focus_required_score, background_fit_score, completion_load_score } = work;
 
     if (mode === "focus") {
-      return focus_required_score !== null && focus_required_score >= 50;
+      return focus_required_score !== null && focus_required_score >= 75;
     }
     if (mode === "background") {
       return background_fit_score !== null && background_fit_score >= 50;

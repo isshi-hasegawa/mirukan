@@ -246,36 +246,16 @@ function calcBackgroundFitScore(genres: string[]): number {
   return 25;
 }
 
-function calcCompletionLoadScore(details: TmdbWorkDetails): number {
-  if (details.workType === "movie") {
-    const bucket = getDurationBucket(details.runtimeMinutes);
-    if (bucket === "short") return 0;
-    if (bucket === "medium") return 25;
-    if (bucket === "long") return 50;
-    if (bucket === "very_long") return 75;
-    return 50;
-  }
+export function calcCompletionLoadScore(details: TmdbWorkDetails): number {
+  // movie は作品全体、series/season は1話がキリのいい単位
+  const minutes =
+    details.workType === "movie" ? details.runtimeMinutes : details.typicalEpisodeRuntimeMinutes;
 
-  if (details.workType === "season") {
-    const episodeCount = details.episodeCount;
-    const runtime = details.typicalEpisodeRuntimeMinutes;
-    if (episodeCount !== null && runtime !== null) {
-      const totalHours = (episodeCount * runtime) / 60;
-      if (totalHours < 3) return 25;
-      if (totalHours < 10) return 50;
-      if (totalHours < 20) return 75;
-      return 100;
-    }
-    return 50;
-  }
-
-  // series
-  const seasonCount = details.seasonCount;
-  if (seasonCount !== null) {
-    if (seasonCount <= 1) return 50;
-    if (seasonCount <= 4) return 75;
-    return 100;
-  }
+  const bucket = getDurationBucket(minutes);
+  if (bucket === "short") return 0;
+  if (bucket === "medium") return 25;
+  if (bucket === "long") return 50;
+  if (bucket === "very_long") return 75;
   return 50;
 }
 

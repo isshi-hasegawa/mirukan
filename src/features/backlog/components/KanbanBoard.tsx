@@ -1,6 +1,7 @@
 import type { BacklogItem, BacklogStatus } from "../types.ts";
 import { statusOrder } from "../constants.ts";
 import { KanbanColumn } from "./KanbanColumn.tsx";
+import { RecommendPanel } from "./RecommendPanel.tsx";
 
 type DropIndicator =
   | { type: "card"; itemId: string; side: "before" | "after" }
@@ -52,6 +53,11 @@ export function KanbanBoard({
           key={status}
           status={status}
           items={grouped.get(status) ?? []}
+          extra={
+            status === "want_to_watch" ? (
+              <RecommendPanel items={items} onOpenDetail={onOpenDetail} />
+            ) : undefined
+          }
           dropIndicator={dropIndicator}
           openMenuId={openMenuId}
           onOpenAddModal={onOpenAddModal}

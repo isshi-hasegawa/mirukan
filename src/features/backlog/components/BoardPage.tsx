@@ -7,7 +7,6 @@ import type { BacklogItem, BacklogStatus, DetailModalState } from "../types.ts";
 import { KanbanBoard } from "./KanbanBoard.tsx";
 import { AddModal } from "./AddModal.tsx";
 import { DetailModal } from "./DetailModal.tsx";
-import { RecommendPanel } from "./RecommendPanel.tsx";
 
 type DropIndicator =
   | { type: "card"; itemId: string; side: "before" | "after" }
@@ -197,8 +196,6 @@ export function BoardPage({ session }: Props) {
           </button>
         </div>
       </section>
-
-      <RecommendPanel items={items} onOpenDetail={handleOpenDetail} />
 
       <KanbanBoard
         items={items}

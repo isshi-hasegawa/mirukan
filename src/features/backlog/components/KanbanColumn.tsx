@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { BacklogItem, BacklogStatus } from "../types.ts";
 import { statusLabels } from "../constants.ts";
 import { BacklogCard } from "./BacklogCard.tsx";
@@ -9,6 +10,7 @@ type DropIndicator =
 type Props = {
   status: BacklogStatus;
   items: BacklogItem[];
+  extra?: ReactNode;
   dropIndicator: DropIndicator | null;
   openMenuId: string | null;
   onOpenAddModal: (status: BacklogStatus) => void;
@@ -29,6 +31,7 @@ type Props = {
 export function KanbanColumn({
   status,
   items,
+  extra,
   dropIndicator,
   openMenuId,
   onOpenAddModal,
@@ -49,6 +52,7 @@ export function KanbanColumn({
 
   return (
     <section className="board-column" data-column-status={status}>
+      {extra}
       <header className="column-header">
         <div className="column-title-group">
           <h2>{statusLabels[status]}</h2>
