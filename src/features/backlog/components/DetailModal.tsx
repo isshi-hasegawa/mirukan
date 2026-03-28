@@ -254,24 +254,9 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
           </div>
           <div className="detail-title-area">
             <h2 id="detail-modal-title">{title}</h2>
-            {work.original_title && work.original_title !== title && (
-              <p className="detail-original-title">{work.original_title}</p>
-            )}
             <p className="detail-meta">{metadata.join(" · ")}</p>
           </div>
           <div className="detail-fields">
-            <div className="detail-chip-row">
-              {work.genres.length > 0 ? (
-                work.genres.map((genre) => (
-                  <span key={genre} className="meta-chip">
-                    {genre}
-                  </span>
-                ))
-              ) : (
-                <span className="detail-empty">ジャンル未設定</span>
-              )}
-            </div>
-
             {renderEditableField(
               "displayTitle",
               "表示名",
@@ -288,13 +273,6 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
               platformOptions,
             )}
             {renderEditableField("note", "メモ", item.note ?? "未設定", undefined, true)}
-
-            {work.overview && (
-              <div className="detail-section">
-                <h3>あらすじ</h3>
-                <p>{work.overview}</p>
-              </div>
-            )}
 
             {state.message && (
               <p className="form-message" aria-live="polite">
