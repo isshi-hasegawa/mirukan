@@ -289,19 +289,6 @@ begin
       now() - interval '2 days'
     ),
     (
-      'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2',
-      user_akari,
-      work_tmdb_movie,
-      'want_to_watch',
-      'The Matrix (再見候補)',
-      'prime_video',
-      '久しぶりに観直したい。',
-      2000,
-      now() - interval '4 days',
-      now() - interval '1 day',
-      now() - interval '1 day'
-    ),
-    (
       'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3',
       user_akari,
       work_tmdb_movie,
@@ -326,19 +313,6 @@ begin
       now() - interval '10 days',
       now() - interval '12 hours',
       now() - interval '12 hours'
-    ),
-    (
-      'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb5',
-      user_akari,
-      work_tmdb_series,
-      'interrupted',
-      null,
-      'netflix',
-      '途中で止まっているシーズン単位のカード。',
-      1000,
-      now() - interval '14 days',
-      now() - interval '3 days',
-      now() - interval '3 days'
     ),
     (
       'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb7',
@@ -1882,19 +1856,6 @@ begin
     updated_at = excluded.updated_at,
     last_interacted_at = excluded.last_interacted_at;
 
-  INSERT INTO public.backlog_items (id, user_id, work_id, status, display_title, primary_platform, note, sort_order, created_at, updated_at, last_interacted_at) VALUES ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb4', '11111111-1111-1111-1111-111111111111', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3', 'stacked', NULL, 'netflix', NULL, 4000, '2026-03-18 07:33:25.657433+00', '2026-03-28 12:53:06.438872+00', '2026-03-28 12:53:06.438872+00')
-  on conflict (id) do update set
-    user_id = excluded.user_id,
-    work_id = excluded.work_id,
-    status = excluded.status,
-    display_title = excluded.display_title,
-    primary_platform = excluded.primary_platform,
-    note = excluded.note,
-    sort_order = excluded.sort_order,
-    created_at = excluded.created_at,
-    updated_at = excluded.updated_at,
-    last_interacted_at = excluded.last_interacted_at;
-
   INSERT INTO public.backlog_items (id, user_id, work_id, status, display_title, primary_platform, note, sort_order, created_at, updated_at, last_interacted_at) VALUES ('346734eb-4e8d-4550-9e38-0ebea009d0d9', '11111111-1111-1111-1111-111111111111', '92d6c262-9480-4086-b0b7-9b997499fced', 'stacked', NULL, 'u_next', NULL, 5000, '2026-03-28 07:48:38.244789+00', '2026-03-28 12:53:09.068588+00', '2026-03-28 12:53:09.068588+00')
   on conflict (id) do update set
     user_id = excluded.user_id,
@@ -2324,19 +2285,6 @@ begin
     updated_at = excluded.updated_at,
     last_interacted_at = excluded.last_interacted_at;
 
-  INSERT INTO public.backlog_items (id, user_id, work_id, status, display_title, primary_platform, note, sort_order, created_at, updated_at, last_interacted_at) VALUES ('c9a5a61e-9eba-462b-856e-b5060de89e9c', '11111111-1111-1111-1111-111111111111', '4dd4d70a-dde8-473a-918e-75e3a9db9fab', 'stacked', NULL, NULL, NULL, 39000, '2026-03-28 13:07:59.397317+00', '2026-03-28 13:07:59.397317+00', '2026-03-28 13:07:59.397317+00')
-  on conflict (id) do update set
-    user_id = excluded.user_id,
-    work_id = excluded.work_id,
-    status = excluded.status,
-    display_title = excluded.display_title,
-    primary_platform = excluded.primary_platform,
-    note = excluded.note,
-    sort_order = excluded.sort_order,
-    created_at = excluded.created_at,
-    updated_at = excluded.updated_at,
-    last_interacted_at = excluded.last_interacted_at;
-
   INSERT INTO public.backlog_items (id, user_id, work_id, status, display_title, primary_platform, note, sort_order, created_at, updated_at, last_interacted_at) VALUES ('588c86e4-5688-4dc2-a825-197a3bb2480f', '11111111-1111-1111-1111-111111111111', '4dd4d70a-dde8-473a-918e-75e3a9db9fab', 'stacked', NULL, NULL, NULL, 40000, '2026-03-28 13:08:06.580808+00', '2026-03-28 13:08:06.580808+00', '2026-03-28 13:08:06.580808+00')
   on conflict (id) do update set
     user_id = excluded.user_id,
@@ -2351,19 +2299,6 @@ begin
     last_interacted_at = excluded.last_interacted_at;
 
   INSERT INTO public.backlog_items (id, user_id, work_id, status, display_title, primary_platform, note, sort_order, created_at, updated_at, last_interacted_at) VALUES ('387633c8-4c79-4cee-86a7-a22ef4cda704', '11111111-1111-1111-1111-111111111111', 'f0641e14-c999-4dc5-951a-cecdd5507eb1', 'stacked', NULL, NULL, NULL, 41000, '2026-03-28 13:08:13.111908+00', '2026-03-28 13:08:13.111908+00', '2026-03-28 13:08:13.111908+00')
-  on conflict (id) do update set
-    user_id = excluded.user_id,
-    work_id = excluded.work_id,
-    status = excluded.status,
-    display_title = excluded.display_title,
-    primary_platform = excluded.primary_platform,
-    note = excluded.note,
-    sort_order = excluded.sort_order,
-    created_at = excluded.created_at,
-    updated_at = excluded.updated_at,
-    last_interacted_at = excluded.last_interacted_at;
-
-  INSERT INTO public.backlog_items (id, user_id, work_id, status, display_title, primary_platform, note, sort_order, created_at, updated_at, last_interacted_at) VALUES ('149ace48-ffab-42ff-a59e-71db2b06509d', '11111111-1111-1111-1111-111111111111', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3', 'stacked', NULL, NULL, NULL, 42000, '2026-03-28 13:08:35.138988+00', '2026-03-28 13:08:35.138988+00', '2026-03-28 13:08:35.138988+00')
   on conflict (id) do update set
     user_id = excluded.user_id,
     work_id = excluded.work_id,
