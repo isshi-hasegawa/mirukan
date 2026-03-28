@@ -1347,10 +1347,10 @@ h3 {
 
 .platform-picker-item img {
   display: block;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
-  padding: 2px;
+  padding: 3px;
 }
 
 .platform-picker-item.is-selected {
