@@ -1,6 +1,7 @@
 import type { Session } from "@supabase/supabase-js";
 import "./style.css";
 import { supabase } from "./lib/supabase.ts";
+import { searchTmdbWorks, type TmdbSearchResult } from "./lib/tmdb.ts";
 
 type BacklogStatus = "stacked" | "want_to_watch" | "watching" | "interrupted" | "watched";
 
@@ -77,9 +78,24 @@ const appRoot = document.querySelector<HTMLDivElement>("#app");
 
 let currentSession: Session | null = null;
 let currentItems: BacklogItem[] = [];
-let addModalState: { isOpen: boolean; defaultStatus: BacklogStatus } = {
+let addModalState: {
+  isOpen: boolean;
+  defaultStatus: BacklogStatus;
+  searchQuery: string;
+  searchResults: TmdbSearchResult[];
+  selectedTmdbResult: TmdbSearchResult | null;
+  isSearching: boolean;
+  searchMessage: string | null;
+  manualMode: boolean;
+} = {
   isOpen: false,
   defaultStatus: "stacked",
+  searchQuery: "",
+  searchResults: [],
+  selectedTmdbResult: null,
+  isSearching: false,
+  searchMessage: null,
+  manualMode: false,
 };
 let dragState: { itemId: string; sourceStatus: BacklogStatus } | null = null;
 
@@ -390,6 +406,55 @@ function createAddModalMarkup(defaultStatus: BacklogStatus) {
     )
     .join("");
 
+  const selectedSummary = addModalState.selectedTmdbResult
+    ? `
+      <div class="selected-result">
+        <p class="selected-result-label">選択中</p>
+        <p class="selected-result-title">${escapeHtml(addModalState.selectedTmdbResult.title)}</p>
+        <p class="selected-result-meta">
+          ${addModalState.selectedTmdbResult.workType === "movie" ? "映画" : "シリーズ"}
+          · TMDb
+          ${
+            addModalState.selectedTmdbResult.releaseDate
+              ? ` · ${escapeHtml(addModalState.selectedTmdbResult.releaseDate.slice(0, 4))}`
+              : ""
+          }
+        </p>
+      </div>
+    `
+    : "";
+
+  const searchResultsMarkup = addModalState.searchResults.length
+    ? addModalState.searchResults
+        .map(
+          (result) => `
+            <button
+              class="search-result-button ${addModalState.selectedTmdbResult?.tmdbId === result.tmdbId ? "is-selected" : ""}"
+              type="button"
+              data-tmdb-id="${result.tmdbId}"
+              data-tmdb-media-type="${result.tmdbMediaType}"
+            >
+              <span class="search-result-title">${escapeHtml(result.title)}</span>
+              <span class="search-result-meta">
+                ${result.workType === "movie" ? "映画" : "シリーズ"}
+                ${result.releaseDate ? ` · ${escapeHtml(result.releaseDate.slice(0, 4))}` : ""}
+              </span>
+              ${
+                result.overview
+                  ? `<span class="search-result-overview">${escapeHtml(result.overview)}</span>`
+                  : ""
+              }
+            </button>
+          `,
+        )
+        .join("")
+    : addModalState.searchMessage
+      ? `<p class="search-message">${escapeHtml(addModalState.searchMessage)}</p>`
+      : "";
+
+  const resolvedTitle = addModalState.selectedTmdbResult?.title ?? "";
+  const resolvedWorkType = addModalState.selectedTmdbResult?.workType ?? "movie";
+
   return `
     <div class="modal-backdrop" id="add-modal-backdrop">
       <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="add-modal-title">
@@ -401,16 +466,49 @@ function createAddModalMarkup(defaultStatus: BacklogStatus) {
           <button id="close-add-modal" class="icon-button" type="button" aria-label="閉じる">×</button>
         </div>
         <form id="add-item-form" class="modal-form">
+          <div class="search-panel">
+            <div class="search-panel-header">
+              <div>
+                <p class="eyebrow">Search First</p>
+                <h3>まず TMDb で探す</h3>
+              </div>
+              <button id="switch-manual-mode" class="ghost-button" type="button">
+                ${addModalState.manualMode ? "検索結果を使う" : "見つからなければ手動で追加"}
+              </button>
+            </div>
+            <div class="search-row">
+              <input
+                id="tmdb-search-query"
+                name="tmdbSearchQuery"
+                type="text"
+                placeholder="作品名で検索"
+                value="${escapeHtml(addModalState.searchQuery)}"
+              />
+              <button id="tmdb-search-button" class="primary-button" type="button">
+                ${addModalState.isSearching ? "検索中..." : "検索"}
+              </button>
+            </div>
+            ${selectedSummary}
+            <div class="search-results">${searchResultsMarkup}</div>
+          </div>
           <label>
             <span>タイトル</span>
-            <input name="title" type="text" maxlength="120" required />
+            <input
+              name="title"
+              type="text"
+              maxlength="120"
+              value="${escapeHtml(resolvedTitle)}"
+              ${addModalState.selectedTmdbResult ? "readonly" : ""}
+              required
+            />
           </label>
           <label>
             <span>種別</span>
-            <select name="workType">
-              <option value="movie">映画</option>
-              <option value="series">シリーズ</option>
+            <select name="workType" ${addModalState.selectedTmdbResult ? "disabled" : ""}>
+              <option value="movie" ${resolvedWorkType === "movie" ? "selected" : ""}>映画</option>
+              <option value="series" ${resolvedWorkType === "series" ? "selected" : ""}>シリーズ</option>
             </select>
+            ${addModalState.selectedTmdbResult ? `<input type="hidden" name="workType" value="${resolvedWorkType}" />` : ""}
           </label>
           <label>
             <span>保存先列</span>
@@ -439,7 +537,7 @@ function bindAddButtons() {
   const openButton = document.querySelector<HTMLButtonElement>("#open-add-button");
 
   openButton?.addEventListener("click", () => {
-    addModalState = { isOpen: true, defaultStatus: "stacked" };
+    addModalState = createInitialAddModalState("stacked");
     void renderApp();
   });
 
@@ -453,7 +551,7 @@ function bindAddButtons() {
         return;
       }
 
-      addModalState = { isOpen: true, defaultStatus: status };
+      addModalState = createInitialAddModalState(status);
       void renderApp();
     });
   }
@@ -470,6 +568,8 @@ function bindAddModal() {
     addModalState = { ...addModalState, isOpen: false };
     void renderApp();
   };
+  const switchModeButton = document.querySelector<HTMLButtonElement>("#switch-manual-mode");
+  const searchButton = document.querySelector<HTMLButtonElement>("#tmdb-search-button");
 
   closeButton?.addEventListener("click", close);
   cancelButton?.addEventListener("click", close);
@@ -478,6 +578,90 @@ function bindAddModal() {
       close();
     }
   });
+  switchModeButton?.addEventListener("click", () => {
+    addModalState = {
+      ...addModalState,
+      manualMode: !addModalState.manualMode,
+      selectedTmdbResult: addModalState.manualMode ? addModalState.selectedTmdbResult : null,
+    };
+    void renderApp();
+  });
+  searchButton?.addEventListener("click", async () => {
+    const queryInput = document.querySelector<HTMLInputElement>("#tmdb-search-query");
+    const query = queryInput?.value.trim() ?? "";
+
+    if (!query) {
+      addModalState = {
+        ...addModalState,
+        searchQuery: query,
+        searchResults: [],
+        searchMessage: "検索キーワードを入力してください。",
+      };
+      void renderApp();
+      return;
+    }
+
+    addModalState = {
+      ...addModalState,
+      searchQuery: query,
+      isSearching: true,
+      searchMessage: null,
+      searchResults: [],
+      selectedTmdbResult: null,
+      manualMode: false,
+    };
+    await renderApp();
+
+    try {
+      const results = await searchTmdbWorks(query);
+      addModalState = {
+        ...addModalState,
+        isSearching: false,
+        searchQuery: query,
+        searchResults: results,
+        searchMessage:
+          results.length > 0
+            ? null
+            : "TMDb で候補が見つかりませんでした。手動追加に切り替えられます。",
+      };
+    } catch (error) {
+      addModalState = {
+        ...addModalState,
+        isSearching: false,
+        searchQuery: query,
+        searchResults: [],
+        searchMessage:
+          error instanceof Error
+            ? `TMDb 検索に失敗しました: ${error.message}`
+            : "TMDb 検索に失敗しました。",
+      };
+    }
+
+    await renderApp();
+  });
+
+  const searchResultButtons = document.querySelectorAll<HTMLButtonElement>("[data-tmdb-id]");
+
+  for (const button of searchResultButtons) {
+    button.addEventListener("click", () => {
+      const tmdbId = Number(button.dataset.tmdbId);
+      const tmdbMediaType = button.dataset.tmdbMediaType;
+      const selectedResult = addModalState.searchResults.find(
+        (result) => result.tmdbId === tmdbId && result.tmdbMediaType === tmdbMediaType,
+      );
+
+      if (!selectedResult) {
+        return;
+      }
+
+      addModalState = {
+        ...addModalState,
+        selectedTmdbResult: selectedResult,
+        manualMode: false,
+      };
+      void renderApp();
+    });
+  }
 
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -492,6 +676,7 @@ function bindAddModal() {
     const status = getStringField(formData, "status") as BacklogStatus;
     const primaryPlatform = normalizePrimaryPlatform(getStringField(formData, "primaryPlatform"));
     const note = getNullableStringField(formData, "note");
+    const selectedTmdbResult = addModalState.manualMode ? null : addModalState.selectedTmdbResult;
 
     if (!title) {
       if (message) {
@@ -504,17 +689,19 @@ function bindAddModal() {
       message.textContent = "作品を追加しています...";
     }
 
-    const { data: work, error: workError } = await supabase
-      .from("works")
-      .insert({
-        created_by: currentSession.user.id,
-        source_type: "manual",
-        work_type: workType,
-        title,
-        search_text: buildSearchText(title),
-      })
-      .select("id")
-      .single();
+    const { data: work, error: workError } = selectedTmdbResult
+      ? await upsertTmdbWork(selectedTmdbResult, currentSession.user.id)
+      : await supabase
+          .from("works")
+          .insert({
+            created_by: currentSession.user.id,
+            source_type: "manual",
+            work_type: workType,
+            title,
+            search_text: buildSearchText(title),
+          })
+          .select("id")
+          .single();
 
     if (workError) {
       if (message) {
@@ -539,7 +726,7 @@ function bindAddModal() {
       return;
     }
 
-    addModalState = { ...addModalState, isOpen: false };
+    addModalState = { ...createInitialAddModalState(addModalState.defaultStatus), isOpen: false };
     await renderApp();
   });
 }
@@ -774,6 +961,58 @@ function getNextSortOrder(status: BacklogStatus) {
 
 function buildSearchText(title: string) {
   return title.trim().toLocaleLowerCase("ja-JP");
+}
+
+function createInitialAddModalState(defaultStatus: BacklogStatus) {
+  return {
+    isOpen: true,
+    defaultStatus,
+    searchQuery: "",
+    searchResults: [],
+    selectedTmdbResult: null,
+    isSearching: false,
+    searchMessage: null,
+    manualMode: false,
+  };
+}
+
+async function upsertTmdbWork(result: TmdbSearchResult, userId: string) {
+  const workType = result.workType;
+
+  const { data: existing, error: selectError } = await supabase
+    .from("works")
+    .select("id")
+    .eq("source_type", "tmdb")
+    .eq("tmdb_media_type", result.tmdbMediaType)
+    .eq("tmdb_id", result.tmdbId)
+    .eq("work_type", workType)
+    .maybeSingle();
+
+  if (selectError) {
+    return { data: null, error: selectError };
+  }
+
+  if (existing) {
+    return { data: existing, error: null };
+  }
+
+  return supabase
+    .from("works")
+    .insert({
+      created_by: userId,
+      source_type: "tmdb",
+      tmdb_media_type: result.tmdbMediaType,
+      tmdb_id: result.tmdbId,
+      work_type: workType,
+      title: result.title,
+      original_title: result.originalTitle,
+      search_text: buildSearchText([result.title, result.originalTitle].filter(Boolean).join(" ")),
+      overview: result.overview,
+      poster_path: result.posterPath,
+      release_date: result.releaseDate,
+    })
+    .select("id")
+    .single();
 }
 
 function escapeHtml(value: string) {
