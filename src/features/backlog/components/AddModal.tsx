@@ -274,9 +274,9 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
                   }
                 }}
                 onChange={(e) => {
-                  if (isComposingRef.current) return;
                   const query = e.target.value;
                   setSearchQuery(query);
+                  if (isComposingRef.current) return;
                   if (query.trim()) {
                     queueSearch(query);
                   } else {
