@@ -1433,6 +1433,24 @@ h3 {
     outline: 2px solid var(--accent);
     outline-offset: 3px;
   }
+
+  .recommend-mode-label {
+    display: none;
+  }
+
+  .recommend-modes {
+    gap: 4px;
+  }
+
+  .recommend-mode-button {
+    padding: 8px;
+    gap: 0;
+  }
+
+  .recommend-mode-icon {
+    width: 24px;
+    height: 24px;
+  }
 }
 
 .recommend-bar {
@@ -1573,7 +1591,7 @@ h3 {
 
 /* Recommend modal */
 .recommend-modal-card {
-  width: min(100% - 48px, 480px);
+  width: min(100% - 48px, 700px);
 }
 
 .recommend-modal-body {
