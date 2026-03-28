@@ -1055,8 +1055,7 @@ h3 {
   }
 
   .shell:has(.board) {
-    height: auto;
-    overflow: visible;
+    overflow: hidden;
   }
 
   .intro-card,
