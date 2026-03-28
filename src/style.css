@@ -1331,6 +1331,7 @@ h3 {
   overflow: hidden;
   border: 2px solid transparent;
   transition: border-color 0.2s;
+  background-clip: padding-box;
 
   &:hover {
     border-color: var(--accent-soft);
