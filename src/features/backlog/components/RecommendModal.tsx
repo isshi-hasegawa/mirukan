@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "../../../lib/supabase.ts";
 import type { BacklogItem, WorkSummary } from "../types.ts";
 
 type ViewingMode = "focus" | "thoughtful" | "quick" | "background";
@@ -10,39 +11,78 @@ const MODES: { id: ViewingMode; label: string; icon: string }[] = [
   { id: "background", label: "ながら見", icon: "👀" },
 ];
 
-function filterItems(items: BacklogItem[], mode: ViewingMode): BacklogItem[] {
+type SuggestionItem =
+  | { source: "backlog"; backlogItem: BacklogItem }
+  | { source: "global"; work: WorkSummary };
+
+function applyModeFilter(work: WorkSummary, mode: ViewingMode): boolean {
+  if (mode === "background") {
+    return work.background_fit_score !== null && work.background_fit_score >= 50;
+  }
+
+  const duration =
+    work.work_type === "movie" ? work.runtime_minutes : work.typical_episode_runtime_minutes;
+
+  if (duration === null) return false;
+  if (mode === "focus" && duration < 80) return false;
+  if (mode === "thoughtful" && (duration < 40 || duration >= 80)) return false;
+  if (mode === "quick" && duration >= 40) return false;
+
+  return true;
+}
+
+function filterBacklogItems(items: BacklogItem[], mode: ViewingMode): SuggestionItem[] {
   return items
     .filter((item) => {
       const work = item.works;
       if (!work || work.source_type === "manual") return false;
-
-      if (mode === "background") {
-        return work.background_fit_score !== null && work.background_fit_score >= 50;
-      }
-
-      const duration =
-        work.work_type === "movie" ? work.runtime_minutes : work.typical_episode_runtime_minutes;
-
-      if (duration === null) return false;
-
-      if (mode === "focus" && duration < 80) return false;
-      if (mode === "thoughtful" && (duration < 40 || duration >= 80)) return false;
-      if (mode === "quick" && duration >= 40) return false;
-
-      return true;
+      return applyModeFilter(work, mode);
     })
     .sort(() => Math.random() - 0.5)
-    .slice(0, 3);
+    .slice(0, 3)
+    .map((item) => ({ source: "backlog" as const, backlogItem: item }));
 }
 
-function RecommendItem({ item, onMove }: { item: BacklogItem; onMove: (itemId: string) => void }) {
+async function fetchGlobalSuggestions(
+  mode: ViewingMode,
+  excludeWorkIds: string[],
+): Promise<SuggestionItem[]> {
+  let query = supabase
+    .from("works")
+    .select(
+      "id, title, work_type, source_type, tmdb_id, tmdb_media_type, original_title, overview, poster_path, release_date, runtime_minutes, typical_episode_runtime_minutes, duration_bucket, genres, season_count, season_number, focus_required_score, background_fit_score, completion_load_score",
+    )
+    .eq("source_type", "tmdb");
+
+  if (excludeWorkIds.length > 0) {
+    query = query.not("id", "in", `(${excludeWorkIds.join(",")})`);
+  }
+
+  const { data, error } = await query;
+  if (error || !data) return [];
+
+  return (data as WorkSummary[])
+    .filter((work) => applyModeFilter(work, mode))
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 3)
+    .map((work) => ({ source: "global" as const, work }));
+}
+
+function RecommendItem({
+  item,
+  onMove,
+}: {
+  item: SuggestionItem;
+  onMove: (item: SuggestionItem) => void;
+}) {
   const [posterError, setPosterError] = useState(false);
-  const work = item.works as WorkSummary;
-  const title = item.display_title ?? work.title;
+  const work = item.source === "backlog" ? (item.backlogItem.works as WorkSummary) : item.work;
+  const title =
+    item.source === "backlog" ? (item.backlogItem.display_title ?? work.title) : work.title;
   const posterUrl = work.poster_path ? `https://image.tmdb.org/t/p/w92${work.poster_path}` : null;
 
   return (
-    <li className="recommend-item" onClick={() => onMove(item.id)}>
+    <li className="recommend-item" onClick={() => onMove(item)}>
       <div className="recommend-item-info">
         <div className="recommend-item-thumb">
           {posterUrl && !posterError ? (
@@ -69,16 +109,42 @@ type Props = {
   items: BacklogItem[];
   onClose: () => void;
   onMoveToWantToWatch: (itemId: string) => void;
+  onAddWorkToWantToWatch: (workId: string) => void;
 };
 
-export function RecommendModal({ items, onClose, onMoveToWantToWatch }: Props) {
+export function RecommendModal({
+  items,
+  onClose,
+  onMoveToWantToWatch,
+  onAddWorkToWantToWatch,
+}: Props) {
   const [activeMode, setActiveMode] = useState<ViewingMode>("thoughtful");
+  const [globalSuggestions, setGlobalSuggestions] = useState<SuggestionItem[]>([]);
 
   const stackedItems = items.filter((item) => item.status === "stacked");
-  const suggestions = activeMode ? filterItems(stackedItems, activeMode) : [];
+  const localSuggestions = filterBacklogItems(stackedItems, activeMode);
 
-  const handleModeClick = (mode: ViewingMode) => {
-    setActiveMode((prev) => (prev === mode ? null : mode));
+  useEffect(() => {
+    if (localSuggestions.length > 0) {
+      setGlobalSuggestions([]);
+      return;
+    }
+
+    const excludeWorkIds = items
+      .map((item) => item.works?.id)
+      .filter((id): id is string => id !== undefined && id !== null);
+
+    void fetchGlobalSuggestions(activeMode, excludeWorkIds).then(setGlobalSuggestions);
+  }, [activeMode, localSuggestions.length, items]);
+
+  const suggestions = localSuggestions.length > 0 ? localSuggestions : globalSuggestions;
+
+  const handleMove = (item: SuggestionItem) => {
+    if (item.source === "backlog") {
+      onMoveToWantToWatch(item.backlogItem.id);
+    } else {
+      onAddWorkToWantToWatch(item.work.id);
+    }
   };
 
   return (
@@ -102,7 +168,7 @@ export function RecommendModal({ items, onClose, onMoveToWantToWatch }: Props) {
                   key={mode.id}
                   type="button"
                   className={`recommend-mode-button${activeMode === mode.id ? " is-active" : ""}`}
-                  onClick={() => handleModeClick(mode.id)}
+                  onClick={() => setActiveMode(mode.id)}
                 >
                   <span className="recommend-mode-icon" aria-hidden="true">
                     {mode.icon}
@@ -119,7 +185,11 @@ export function RecommendModal({ items, onClose, onMoveToWantToWatch }: Props) {
             ) : (
               <ul className="recommend-item-list" role="list">
                 {suggestions.map((item) => (
-                  <RecommendItem key={item.id} item={item} onMove={onMoveToWantToWatch} />
+                  <RecommendItem
+                    key={item.source === "backlog" ? item.backlogItem.id : item.work.id}
+                    item={item}
+                    onMove={handleMove}
+                  />
                 ))}
               </ul>
             )}

@@ -170,6 +170,32 @@ export function BoardPage({ session }: Props) {
     }
   };
 
+  const handleAddWorkToWantToWatch = async (workId: string) => {
+    const sortOrder = getTopSortOrder(items, "want_to_watch");
+
+    const { error: insertError } = await supabase.from("backlog_items").insert({
+      user_id: session.user.id,
+      work_id: workId,
+      status: "want_to_watch",
+      sort_order: sortOrder,
+    });
+
+    if (insertError) {
+      window.alert(`追加に失敗しました: ${insertError.message}`);
+      return;
+    }
+
+    setIsRecommendOpen(false);
+    await loadItems();
+
+    if (isMobileLayout) {
+      setSelectedTabStatus("want_to_watch");
+    } else {
+      const col = columnRefs.current["want_to_watch"];
+      col?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    }
+  };
+
   const handleOpenDetail = (itemId: string) => {
     setOpenMenuId(null);
     setDetailModal({ openItemId: itemId, editingField: null, draftValue: "", message: null });
@@ -313,6 +339,7 @@ export function BoardPage({ session }: Props) {
             handleOpenDetail(itemId);
           }}
           onMoveToWantToWatch={(itemId) => void handleMoveToWantToWatch(itemId)}
+          onAddWorkToWantToWatch={(workId) => void handleAddWorkToWantToWatch(workId)}
         />
       )}
 
