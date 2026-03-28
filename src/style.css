@@ -69,7 +69,7 @@ code {
 .shell {
   width: min(1680px, calc(100% - 20px));
   margin: 0 auto;
-  padding: 18px 0 24px;
+  padding: 14px 0 12px;
 }
 
 .shell:has(.board) {
@@ -335,7 +335,7 @@ h3 {
   flex-direction: column;
   border-radius: 24px;
   padding: 14px;
-  max-height: min(72svh, calc(100svh - 176px));
+  max-height: min(78svh, calc(100svh - 138px));
   min-height: 0;
 }
 
@@ -990,14 +990,14 @@ h3 {
   }
 
   .board-column {
-    max-height: min(68svh, calc(100svh - 200px));
+    max-height: min(72svh, calc(100svh - 160px));
   }
 }
 
 @media (max-width: 720px) {
   .shell {
     width: min(100% - 12px, 1680px);
-    padding: 12px 0 20px;
+    padding: 10px 0 10px;
   }
 
   .shell:has(.board) {
@@ -1035,7 +1035,7 @@ h3 {
   }
 
   .board-column {
-    max-height: min(62svh, calc(100svh - 180px));
+    max-height: min(68svh, calc(100svh - 144px));
   }
 
   .card-body {
