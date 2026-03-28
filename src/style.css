@@ -1241,7 +1241,7 @@ h3 {
   .board-tab-content {
     flex: 1;
     width: 100%;
-    overflow: hidden;
+    overflow-y: auto;
   }
 
   .board-tab-content .board-column {

@@ -250,6 +250,7 @@ export function BoardPage({ session }: Props) {
         dropIndicator={dropIndicator}
         openMenuId={openMenuId}
         isMobileLayout={isMobileLayout}
+        isMobileDragging={isMobileLayout && dragItemId !== null}
         selectedTabStatus={selectedTabStatus}
         onTabChange={setSelectedTabStatus}
         onOpenAddModal={setAddModalStatus}

@@ -12,6 +12,7 @@ type Props = {
   dropIndicator: DropIndicator | null;
   openMenuId: string | null;
   isMobileLayout: boolean;
+  isMobileDragging: boolean;
   selectedTabStatus: BacklogStatus;
   onTabChange: (status: BacklogStatus) => void;
   onOpenAddModal: (status: BacklogStatus) => void;
@@ -35,6 +36,7 @@ export function KanbanBoard({
   dropIndicator,
   openMenuId,
   isMobileLayout,
+  isMobileDragging,
   selectedTabStatus,
   onTabChange,
   onOpenAddModal,
@@ -57,6 +59,7 @@ export function KanbanBoard({
   const tabsRef = useRef<HTMLElement>(null);
   const tabButtonRefs = useRef<Partial<Record<BacklogStatus, HTMLButtonElement | null>>>({});
   const touchStartX = useRef<number>(0);
+  const touchStartY = useRef<number>(0);
   const currentIndex = statusOrder.indexOf(selectedTabStatus);
 
   useEffect(() => {
@@ -71,11 +74,15 @@ export function KanbanBoard({
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
+    if (isMobileDragging) return;
     const dx = e.changedTouches[0].clientX - touchStartX.current;
+    const dy = e.changedTouches[0].clientY - touchStartY.current;
     if (Math.abs(dx) < 50) return;
+    if (Math.abs(dy) > Math.abs(dx)) return;
     if (dx < 0 && currentIndex < statusOrder.length - 1) {
       onTabChange(statusOrder[currentIndex + 1]);
     } else if (dx > 0 && currentIndex > 0) {

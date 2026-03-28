@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { BacklogItem, BacklogStatus } from "../types.ts";
 import { getDropSide } from "../helpers.ts";
 import { PlatformIcon } from "./PlatformIcon.tsx";
@@ -37,6 +37,97 @@ export function BacklogCard({
   onDrop,
 }: Props) {
   const [posterError, setPosterError] = useState(false);
+  const articleRef = useRef<HTMLElement>(null);
+  const callbackRef = useRef({ onDragStart, onDragEnd, onDragOver, onDrop });
+  const touchState = useRef<{
+    startX: number;
+    startY: number;
+    isDragging: boolean;
+    timer: ReturnType<typeof setTimeout> | null;
+  }>({ startX: 0, startY: 0, isDragging: false, timer: null });
+
+  useEffect(() => {
+    callbackRef.current = { onDragStart, onDragEnd, onDragOver, onDrop };
+  });
+
+  useEffect(() => {
+    const el = articleRef.current;
+    if (!el) return;
+
+    const onTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      touchState.current.startX = touch.clientX;
+      touchState.current.startY = touch.clientY;
+      touchState.current.isDragging = false;
+      touchState.current.timer = setTimeout(() => {
+        touchState.current.isDragging = true;
+        callbackRef.current.onDragStart(item.id, item.status);
+      }, 300);
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      const dx = touch.clientX - touchState.current.startX;
+      const dy = touch.clientY - touchState.current.startY;
+
+      if (!touchState.current.isDragging) {
+        if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+          if (touchState.current.timer) {
+            clearTimeout(touchState.current.timer);
+            touchState.current.timer = null;
+          }
+        }
+        return;
+      }
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const underEl = document.elementFromPoint(touch.clientX, touch.clientY);
+      const cardEl = underEl?.closest("[data-card-id]") as HTMLElement | null;
+      if (cardEl && cardEl !== el) {
+        callbackRef.current.onDragOver(cardEl.dataset.cardId!, touch.clientY);
+      }
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      if (touchState.current.timer) {
+        clearTimeout(touchState.current.timer);
+        touchState.current.timer = null;
+      }
+      if (!touchState.current.isDragging) return;
+      touchState.current.isDragging = false;
+      e.stopPropagation();
+
+      const touch = e.changedTouches[0];
+      const underEl = document.elementFromPoint(touch.clientX, touch.clientY);
+      const cardEl = underEl?.closest("[data-card-id]") as HTMLElement | null;
+      const colEl = underEl?.closest("[data-column-status]") as HTMLElement | null;
+
+      if (cardEl && cardEl !== el) {
+        const side = getDropSide(cardEl, touch.clientY);
+        callbackRef.current.onDrop(
+          cardEl.dataset.cardStatus as BacklogStatus,
+          cardEl.dataset.cardId!,
+          side,
+        );
+      } else if (colEl) {
+        callbackRef.current.onDrop(colEl.dataset.columnStatus as BacklogStatus, null, "after");
+      }
+
+      callbackRef.current.onDragEnd();
+    };
+
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd);
+
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [item.id, item.status]);
 
   const work = item.works;
 
@@ -87,6 +178,7 @@ export function BacklogCard({
 
   return (
     <article
+      ref={articleRef}
       className={cardClassName}
       draggable
       data-card-id={item.id}
