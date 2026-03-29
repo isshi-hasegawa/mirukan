@@ -2,10 +2,9 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
-@tailwind base;
+@import "tailwindcss/preflight";
 
 @custom-variant dark (&:is(.dark *));
-@tailwind components;
 @tailwind utilities;
 
 @utility login-cols {
