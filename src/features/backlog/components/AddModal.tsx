@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { DocumentTextIcon, FilmIcon, TvIcon } from "@heroicons/react/24/outline";
+import { TmdbWorkCard } from "./TmdbWorkCard.tsx";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../../../lib/supabase.ts";
 import { fetchTmdbSeasonOptions, fetchTmdbTrending, searchTmdbWorks } from "../../../lib/tmdb.ts";
 import type { TmdbSearchResult, TmdbSelectionTarget, TmdbSeasonOption } from "../../../lib/tmdb.ts";
 import { upsertTmdbWork, getNextSortOrder, addAllSeasons } from "../data.ts";
 import { buildSearchText, normalizePrimaryPlatform } from "../helpers.ts";
-import { platformLabels, statusLabels, statusOrder } from "../constants.ts";
+import { statusLabels, statusOrder } from "../constants.ts";
 import { PlatformPicker } from "./PlatformPicker.tsx";
 import type { BacklogItem, BacklogStatus, WorkType } from "../types.ts";
 
@@ -412,76 +413,21 @@ export function AddModal({
               {(() => {
                 const displayResults = searchQuery.trim() === "" ? trendingResults : searchResults;
                 if (displayResults.length > 0) {
-                  return displayResults.map((result) => {
-                    const posterUrl = result.posterPath
-                      ? `https://image.tmdb.org/t/p/w185${result.posterPath}`
-                      : null;
-                    return (
-                      <div
-                        key={`${result.tmdbMediaType}-${result.tmdbId}`}
-                        className="search-result-entry"
-                      >
-                        <button
-                          className={`search-result-button${selectedTmdbResult?.tmdbId === result.tmdbId ? " is-selected" : ""}`}
-                          type="button"
-                          onClick={() => void handleSelectResult(result)}
-                        >
-                          <span className="search-result-thumb">
-                            {posterUrl ? (
-                              <img src={posterUrl} alt={`${result.title} のポスター`} />
-                            ) : (
-                              <span className="search-result-thumb-fallback">No Poster</span>
-                            )}
-                          </span>
-                          <span className="search-result-content">
-                            <span className="search-result-title">{result.title}</span>
-                            <span className="search-result-meta">
-                              {result.workType === "movie" ? (
-                                <FilmIcon className="work-type-icon" aria-hidden="true" />
-                              ) : (
-                                <TvIcon className="work-type-icon" aria-hidden="true" />
-                              )}
-                              {result.workType === "movie" ? "映画" : "シリーズ"}
-                              {result.releaseDate && ` · ${result.releaseDate.slice(0, 4)}`}
-                            </span>
-                            {result.jpWatchPlatforms.length > 0 && (
-                              <span className="search-result-platforms">
-                                {result.jpWatchPlatforms.map(({ key, logoPath }) => {
-                                  const label = platformLabels[key as keyof typeof platformLabels];
-                                  if (!label) return null;
-                                  return logoPath ? (
-                                    <img
-                                      key={key}
-                                      src={`https://image.tmdb.org/t/p/w45${logoPath}`}
-                                      alt={label}
-                                      title={label}
-                                      className="search-result-platform-logo"
-                                    />
-                                  ) : (
-                                    <span key={key} className="search-result-platform-badge">
-                                      {label}
-                                    </span>
-                                  );
-                                })}
-                              </span>
-                            )}
-                            {result.overview && (
-                              <span className="search-result-overview">{result.overview}</span>
-                            )}
-                          </span>
-                        </button>
-                        {onAddToStacked && (
-                          <button
-                            type="button"
-                            className="recommend-item-action recommend-item-action-stack"
-                            onClick={() => void onAddToStacked(result)}
-                          >
-                            ストックに追加
-                          </button>
-                        )}
-                      </div>
-                    );
-                  });
+                  return displayResults.map((result) => (
+                    <div
+                      key={`${result.tmdbMediaType}-${result.tmdbId}`}
+                      className="search-result-entry"
+                    >
+                      <TmdbWorkCard
+                        result={result}
+                        isSelected={selectedTmdbResult?.tmdbId === result.tmdbId}
+                        onSelect={() => void handleSelectResult(result)}
+                        onAddToStacked={
+                          onAddToStacked ? () => void onAddToStacked(result) : undefined
+                        }
+                      />
+                    </div>
+                  ));
                 }
                 return searchMessage && <p className="search-message">{searchMessage}</p>;
               })()}
