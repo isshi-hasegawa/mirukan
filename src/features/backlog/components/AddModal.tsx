@@ -20,7 +20,7 @@ type Props = {
   session: Session;
   onClose: () => void;
   onAdded: () => Promise<void>;
-  onAddToStacked?: (result: TmdbSearchResult) => Promise<void>;
+  onAddToStacked?: (result: TmdbSearchResult) => Promise<string | null>;
 };
 
 export function AddModal({
