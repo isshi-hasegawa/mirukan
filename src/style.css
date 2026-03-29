@@ -108,7 +108,7 @@
   display: none; /* Chrome, Safari, Opera */
 }
 
-/* スクロールバーカスタマイズ */
+/* スクロールバーをホバー時のみ表示 */
 /* WebKit/Blink ブラウザ（Chrome, Safari, Edge） */
 ::-webkit-scrollbar {
   width: 8px;
@@ -116,11 +116,11 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent; /* トラック（白い枠）を透明に */
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: transparent; /* デフォルトは非表示 */
+  background: transparent;
   border-radius: 4px;
   transition: background 0.15s ease;
 }
@@ -140,7 +140,7 @@
   }
 }
 
-/* モバイル: スクロール中に自動表示（ネイティブ動作） */
+/* モバイル: スクロール中に自動表示 */
 @media (hover: none) {
   ::-webkit-scrollbar-thumb {
     background: rgba(255, 140, 66, 0.3);

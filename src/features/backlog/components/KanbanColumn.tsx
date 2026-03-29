@@ -46,11 +46,11 @@ export function KanbanColumn({
 
   return (
     <section
-      className="flex h-full min-h-0 w-full min-w-0 flex-col rounded-[24px] border border-[var(--border)] bg-[var(--surface)] p-[14px] shadow-[var(--shadow)] backdrop-blur-[20px] max-[500px]:rounded-[18px] max-[500px]:p-3 max-[400px]:rounded-[14px] max-[400px]:p-2"
+      className="flex h-full min-h-0 w-full min-w-0 flex-col rounded-[24px] border border-[var(--border)] bg-[var(--surface)] pl-[14px] pr-0 py-[14px] shadow-[var(--shadow)] backdrop-blur-[20px] max-[500px]:rounded-[18px] max-[500px]:pl-3 max-[500px]:pr-0 max-[500px]:py-3 max-[400px]:rounded-[14px] max-[400px]:pl-2 max-[400px]:pr-0 max-[400px]:py-2"
       data-column-status={status}
     >
       {extra}
-      <header className="flex items-center justify-between gap-[10px] border-b border-[rgba(92,59,35,0.08)] pb-[10px] min-w-0 max-[500px]:gap-2 max-[400px]:gap-1.5 max-[400px]:pb-2">
+      <header className="flex items-center justify-between gap-[10px] border-b border-[rgba(92,59,35,0.08)] pb-[10px] min-w-0 pr-[14px] max-[500px]:gap-2 max-[500px]:pr-3 max-[400px]:gap-1.5 max-[400px]:pb-2 max-[400px]:pr-2">
         <div className="flex items-center gap-2 max-[500px]:gap-1.5 max-[400px]:gap-1 min-w-0 flex-1">
           <h2 className="max-[500px]:text-[0.95rem] max-[400px]:text-[0.875rem] truncate">
             {statusLabels[status]}
