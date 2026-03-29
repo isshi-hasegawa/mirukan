@@ -79,7 +79,7 @@ export function KanbanColumn({
       </header>
       <div
         ref={setNodeRef}
-        className="mt-[10px] grid min-h-0 min-w-0 flex-1 content-start gap-[10px] overflow-y-auto pr-[14px] [scrollbar-gutter:stable] max-[500px]:pr-3 max-[400px]:pr-2"
+        className="mt-[10px] grid min-h-0 min-w-0 flex-1 content-start gap-[10px] overflow-y-auto pr-[6px] [scrollbar-gutter:stable] [@media(hover:none)]:pr-[14px] max-[500px]:pr-3 max-[400px]:pr-2"
         style={dropzoneStyle}
       >
         {items.length > 0 ? (
