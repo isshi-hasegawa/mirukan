@@ -99,30 +99,22 @@ export function RecommendModal({ items, onClose, onAddTmdbWorksToStacked }: Prop
                   const key = `${result.tmdbMediaType}-${result.tmdbId}`;
                   const isChecked = checkedKeys.has(key);
                   return (
-                    <li key={key} className="flex flex-col gap-2">
-                      {!isChecked && (
-                        <TmdbWorkCard
-                          result={result}
-                          onAddToStacked={() => {
-                            setCheckedKeys((prev) => new Set(prev).add(key));
-                          }}
-                        />
-                      )}
-                      {isChecked && (
-                        <button
-                          type="button"
-                          className="text-muted-foreground text-[0.85rem] hover:text-foreground transition-colors cursor-pointer text-center py-1"
-                          onClick={() => {
-                            setCheckedKeys((prev) => {
-                              const next = new Set(prev);
+                    <li key={key}>
+                      <TmdbWorkCard
+                        result={result}
+                        isChecked={isChecked}
+                        onAddToStacked={() => {
+                          setCheckedKeys((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(key)) {
                               next.delete(key);
-                              return next;
-                            });
-                          }}
-                        >
-                          もとに戻す
-                        </button>
-                      )}
+                            } else {
+                              next.add(key);
+                            }
+                            return next;
+                          });
+                        }}
+                      />
                     </li>
                   );
                 })}

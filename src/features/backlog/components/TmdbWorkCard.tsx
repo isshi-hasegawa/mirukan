@@ -8,9 +8,10 @@ type Props = {
   isSelected?: boolean;
   onSelect?: () => void;
   onAddToStacked?: () => void;
+  isChecked?: boolean;
 };
 
-export function TmdbWorkCard({ result, isSelected, onSelect, onAddToStacked }: Props) {
+export function TmdbWorkCard({ result, isSelected, onSelect, onAddToStacked, isChecked }: Props) {
   const posterUrl = result.posterPath
     ? `https://image.tmdb.org/t/p/w185${result.posterPath}`
     : null;
@@ -18,7 +19,11 @@ export function TmdbWorkCard({ result, isSelected, onSelect, onAddToStacked }: P
   const checkButton = onAddToStacked ? (
     <button
       type="button"
-      className="group shrink-0 w-6 h-6 rounded-full border-2 border-[rgba(255,255,255,0.3)] hover:border-[rgba(255,255,255,0.5)] flex items-center justify-center self-center transition-colors cursor-pointer"
+      className={`group shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center self-center transition-colors cursor-pointer ${
+        isChecked
+          ? "bg-[rgb(191,90,54)] border-[rgb(191,90,54)]"
+          : "border-[rgba(255,255,255,0.3)] hover:border-[rgba(255,255,255,0.5)]"
+      }`}
       aria-label="ストックに追加"
       title="ストックに追加"
       onClick={(e) => {
@@ -27,7 +32,9 @@ export function TmdbWorkCard({ result, isSelected, onSelect, onAddToStacked }: P
       }}
     >
       <CheckIcon
-        className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+        className={`w-4 h-4 text-white transition-opacity ${
+          isChecked ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+        }`}
         aria-hidden="true"
       />
     </button>
