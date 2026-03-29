@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useDroppable } from "@dnd-kit/core";
 import type { BacklogItem, BacklogStatus } from "../types.ts";
 import { statusLabels } from "../constants.ts";
 import { BacklogCard } from "./BacklogCard.tsx";
@@ -18,15 +19,6 @@ type Props = {
   onOpenDetail: (itemId: string) => void;
   onDeleteItem: (itemId: string) => void;
   onMarkAsWatched: (itemId: string) => void;
-  onDragStart: (itemId: string, status: BacklogStatus) => void;
-  onDragEnd: () => void;
-  onDragOver: (itemId: string, clientY: number) => void;
-  onDrop: (
-    targetStatus: BacklogStatus,
-    targetItemId: string | null,
-    side: "before" | "after",
-  ) => void;
-  onDropIndicatorChange: (indicator: DropIndicator | null) => void;
 };
 
 export function KanbanColumn({
@@ -39,12 +31,8 @@ export function KanbanColumn({
   onOpenDetail,
   onDeleteItem,
   onMarkAsWatched,
-  onDragStart,
-  onDragEnd,
-  onDragOver,
-  onDrop,
-  onDropIndicatorChange,
 }: Props) {
+  const { setNodeRef } = useDroppable({ id: `column:${status}` });
   const isColumnActive = dropIndicator?.type === "column" && dropIndicator.status === status;
 
   const dropzoneStyle: React.CSSProperties | undefined = isColumnActive
@@ -88,31 +76,9 @@ export function KanbanColumn({
         </Button>
       </header>
       <div
+        ref={setNodeRef}
         className="grid flex-1 content-start gap-[10px] mt-[10px] overflow-y-auto min-h-0"
         style={dropzoneStyle}
-        onDragOver={(e) => {
-          if (!(e.target instanceof HTMLElement) || e.target.closest("[data-card-id]")) {
-            return;
-          }
-          e.preventDefault();
-          onDropIndicatorChange({ type: "column", status });
-        }}
-        onDragLeave={(e) => {
-          const related = e.relatedTarget instanceof Node ? e.relatedTarget : null;
-          if (related && e.currentTarget.contains(related)) {
-            return;
-          }
-          if (dropIndicator?.type === "column" && dropIndicator.status === status) {
-            onDropIndicatorChange(null);
-          }
-        }}
-        onDrop={(e) => {
-          if (e.target instanceof HTMLElement && e.target.closest("[data-card-id]")) {
-            return;
-          }
-          e.preventDefault();
-          onDrop(status, null, "after");
-        }}
       >
         {items.length > 0 ? (
           items.map((item) => (
@@ -124,10 +90,6 @@ export function KanbanColumn({
               onOpenDetail={() => onOpenDetail(item.id)}
               onDeleteItem={onDeleteItem}
               onMarkAsWatched={onMarkAsWatched}
-              onDragStart={onDragStart}
-              onDragEnd={onDragEnd}
-              onDragOver={onDragOver}
-              onDrop={onDrop}
             />
           ))
         ) : (

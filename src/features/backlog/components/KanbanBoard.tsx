@@ -79,15 +79,6 @@ type Props = {
   onOpenDetail: (itemId: string) => void;
   onDeleteItem: (itemId: string) => void;
   onMarkAsWatched: (itemId: string) => void;
-  onDragStart: (itemId: string, status: BacklogStatus) => void;
-  onDragEnd: () => void;
-  onDragOver: (itemId: string, clientY: number) => void;
-  onDrop: (
-    targetStatus: BacklogStatus,
-    targetItemId: string | null,
-    side: "before" | "after",
-  ) => void;
-  onDropIndicatorChange: (indicator: DropIndicator | null) => void;
   columnRef: (status: BacklogStatus, el: HTMLElement | null) => void;
 };
 
@@ -102,11 +93,6 @@ export function KanbanBoard({
   onOpenDetail,
   onDeleteItem,
   onMarkAsWatched,
-  onDragStart,
-  onDragEnd,
-  onDragOver,
-  onDrop,
-  onDropIndicatorChange,
   columnRef,
 }: Props) {
   const grouped = new Map<BacklogStatus, BacklogItem[]>(statusOrder.map((status) => [status, []]));
@@ -184,11 +170,6 @@ export function KanbanBoard({
     onOpenDetail,
     onDeleteItem,
     onMarkAsWatched,
-    onDragStart,
-    onDragEnd,
-    onDragOver,
-    onDrop,
-    onDropIndicatorChange,
   });
 
   if (isMobileLayout) {

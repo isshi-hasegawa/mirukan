@@ -1,5 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import {
+  DndContext,
+  DragOverlay,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragOverEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
 import { Button } from "@/components/ui/button.tsx";
 import { supabase } from "../../../lib/supabase.ts";
 import {
@@ -9,7 +20,6 @@ import {
   upsertTmdbWork,
 } from "../data.ts";
 import type { TmdbSearchResult } from "../../../lib/tmdb.ts";
-import { getDropSide } from "../helpers.ts";
 import type { BacklogItem, BacklogStatus, DetailModalState } from "../types.ts";
 import { useWindowSize } from "../hooks/useWindowSize.ts";
 import { Header } from "./Header.tsx";
@@ -52,6 +62,14 @@ export function BoardPage({ session }: Props) {
 
   const columnRefs = useRef<Partial<Record<BacklogStatus, HTMLElement | null>>>({});
 
+  const mouseSensor = useSensor(MouseSensor, {
+    activationConstraint: { distance: 8 },
+  });
+  const touchSensor = useSensor(TouchSensor, {
+    activationConstraint: { delay: 300, tolerance: 8 },
+  });
+  const sensors = useSensors(mouseSensor, touchSensor);
+
   const handleColumnRef = (status: BacklogStatus, el: HTMLElement | null) => {
     columnRefs.current[status] = el;
   };
@@ -78,43 +96,77 @@ export function BoardPage({ session }: Props) {
     void loadItems();
   }, [loadItems]);
 
-  const handleDragStart = (itemId: string, _status: BacklogStatus) => {
-    setDragItemId(itemId);
+  const handleDragStart = (event: DragStartEvent) => {
+    setDragItemId(event.active.id as string);
   };
 
-  const handleDragEnd = () => {
+  const handleDragOver = (event: DragOverEvent) => {
+    const { over } = event;
+    if (!over) {
+      setDropIndicator(null);
+      return;
+    }
+
+    const overId = over.id as string;
+    if (overId.startsWith("column:")) {
+      const status = overId.replace("column:", "") as BacklogStatus;
+      setDropIndicator({ type: "column", status });
+    } else {
+      const rect = over.rect;
+      const clientY = event.activatorEvent
+        ? (event.activatorEvent as MouseEvent | TouchEvent).type.includes("touch")
+          ? ((event.activatorEvent as TouchEvent).touches?.[0]?.clientY ??
+            rect.top + rect.height / 2)
+          : ((event.activatorEvent as MouseEvent).clientY ?? rect.top + rect.height / 2)
+        : rect.top + rect.height / 2;
+      const side = clientY < rect.top + rect.height / 2 ? "before" : "after";
+      setDropIndicator({ type: "card", itemId: overId, side });
+    }
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
     setDragItemId(null);
     setDropIndicator(null);
-  };
 
-  const handleDragOver = (targetItemId: string, clientY: number) => {
-    const el = document.querySelector<HTMLElement>(`[data-card-id="${targetItemId}"]`);
-    if (!el) return;
-    const side = getDropSide(el, clientY);
-    setDropIndicator({ type: "card", itemId: targetItemId, side });
-  };
+    if (!over) return;
 
-  const handleDrop = async (
-    targetStatus: BacklogStatus,
-    targetItemId: string | null,
-    side: "before" | "after",
-  ) => {
-    if (!dragItemId) return;
+    const draggedId = active.id as string;
+    const overId = over.id as string;
+
+    let targetStatus: BacklogStatus;
+    let targetItemId: string | null = null;
+    let side: "before" | "after" = "after";
+
+    if (overId.startsWith("column:")) {
+      targetStatus = overId.replace("column:", "") as BacklogStatus;
+    } else {
+      const targetItem = items.find((i) => i.id === overId);
+      if (!targetItem) return;
+      targetStatus = targetItem.status;
+      targetItemId = overId;
+      const rect = over.rect;
+      const clientY = event.activatorEvent
+        ? (event.activatorEvent as MouseEvent | TouchEvent).type.includes("touch")
+          ? ((event.activatorEvent as TouchEvent).changedTouches?.[0]?.clientY ??
+            rect.top + rect.height / 2)
+          : ((event.activatorEvent as MouseEvent).clientY ?? rect.top + rect.height / 2)
+        : rect.top + rect.height / 2;
+      side = clientY < rect.top + rect.height / 2 ? "before" : "after";
+    }
 
     // モバイルレイアウトでは列間ドラッグを無効化
     if (isMobileLayout) {
-      const dragItem = items.find((i) => i.id === dragItemId);
+      const dragItem = items.find((i) => i.id === draggedId);
       if (dragItem && dragItem.status !== targetStatus) return;
     }
 
-    const sortOrder = getSortOrderForDrop(items, dragItemId, targetStatus, targetItemId, side);
-
-    setDropIndicator(null);
+    const sortOrder = getSortOrderForDrop(items, draggedId, targetStatus, targetItemId, side);
 
     const { error: updateError } = await supabase
       .from("backlog_items")
       .update({ status: targetStatus, sort_order: sortOrder })
-      .eq("id", dragItemId);
+      .eq("id", draggedId);
 
     if (updateError) {
       window.alert(`ドラッグ移動に失敗しました: ${updateError.message}`);
@@ -244,26 +296,54 @@ export function BoardPage({ session }: Props) {
     <main className={shellBoard}>
       <Header session={session} onOpenRecommend={() => setIsRecommendOpen(true)} />
 
-      <KanbanBoard
-        items={items}
-        dropIndicator={dropIndicator}
-        isMobileLayout={isMobileLayout}
-        isMobileDragging={isMobileLayout && dragItemId !== null}
-        selectedTabStatus={selectedTabStatus}
-        onTabChange={setSelectedTabStatus}
-        onOpenAddModal={setAddModalStatus}
-        onOpenDetail={handleOpenDetail}
-        onDeleteItem={(itemId) => void handleDeleteItem(itemId)}
-        onMarkAsWatched={(itemId) => void handleMarkAsWatched(itemId)}
+      <DndContext
+        sensors={sensors}
         onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
         onDragOver={handleDragOver}
-        onDrop={(targetStatus, targetItemId, side) =>
-          void handleDrop(targetStatus, targetItemId, side)
-        }
-        onDropIndicatorChange={setDropIndicator}
-        columnRef={handleColumnRef}
-      />
+        onDragEnd={(e) => void handleDragEnd(e)}
+      >
+        <KanbanBoard
+          items={items}
+          dropIndicator={dropIndicator}
+          isMobileLayout={isMobileLayout}
+          isMobileDragging={isMobileLayout && dragItemId !== null}
+          selectedTabStatus={selectedTabStatus}
+          onTabChange={setSelectedTabStatus}
+          onOpenAddModal={setAddModalStatus}
+          onOpenDetail={handleOpenDetail}
+          onDeleteItem={(itemId) => void handleDeleteItem(itemId)}
+          onMarkAsWatched={(itemId) => void handleMarkAsWatched(itemId)}
+          columnRef={handleColumnRef}
+        />
+        <DragOverlay dropAnimation={null}>
+          {dragItemId ? (
+            <div className="opacity-60">
+              {(() => {
+                const draggedItem = items.find((i) => i.id === dragItemId);
+                if (!draggedItem || !draggedItem.works) return null;
+                return (
+                  <div className="grid gap-[10px] pt-[18px] pr-11 pb-4 pl-4 rounded-[18px] bg-[var(--surface-strong)] border border-[rgba(92,59,35,0.08)] cursor-grabbing pointer-events-none">
+                    <div className="grid grid-cols-[64px_minmax(0,1fr)] gap-3 items-start">
+                      <div className="relative aspect-[2/3] overflow-hidden rounded-[14px] border border-[rgba(92,59,35,0.08)]">
+                        {draggedItem.works.poster_path && (
+                          <img
+                            src={`https://image.tmdb.org/t/p/w200${draggedItem.works.poster_path}`}
+                            alt=""
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                      </div>
+                      <div className="grid gap-2 min-w-0">
+                        <p className="text-[1rem] font-bold">{draggedItem.works.title}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
 
       {isMobileLayout && addModalStatus === null && (
         <button

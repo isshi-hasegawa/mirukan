@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
 import {
   BoltIcon,
   ClockIcon,
@@ -9,7 +9,6 @@ import {
 } from "@heroicons/react/24/outline";
 import type { BacklogItem, BacklogStatus } from "../types.ts";
 import { getViewingMode, type ViewingMode } from "../data.ts";
-import { getDropSide } from "../helpers.ts";
 import { PlatformIcon } from "./PlatformIcon.tsx";
 import { PosterImage } from "./PosterImage.tsx";
 import {
@@ -36,9 +35,6 @@ const ModeIcon: Record<
   background: SpeakerWaveIcon,
 };
 
-const TOUCH_HOLD_MS = 300;
-const TOUCH_MOVE_THRESHOLD_PX = 8;
-
 type DropIndicator =
   | { type: "card"; itemId: string; side: "before" | "after" }
   | { type: "column"; status: BacklogStatus };
@@ -50,14 +46,6 @@ type Props = {
   onOpenDetail: () => void;
   onDeleteItem: (itemId: string) => void;
   onMarkAsWatched: (itemId: string) => void;
-  onDragStart: (itemId: string, status: BacklogStatus) => void;
-  onDragEnd: () => void;
-  onDragOver: (itemId: string, clientY: number) => void;
-  onDrop: (
-    targetStatus: BacklogStatus,
-    targetItemId: string | null,
-    side: "before" | "after",
-  ) => void;
 };
 
 export function BacklogCard({
@@ -67,102 +55,14 @@ export function BacklogCard({
   onOpenDetail,
   onDeleteItem,
   onMarkAsWatched,
-  onDragStart,
-  onDragEnd,
-  onDragOver,
-  onDrop,
 }: Props) {
-  const articleRef = useRef<HTMLElement>(null);
-  const callbackRef = useRef({ onDragStart, onDragEnd, onDragOver, onDrop });
-  const touchState = useRef<{
-    startX: number;
-    startY: number;
-    isDragging: boolean;
-    timer: ReturnType<typeof setTimeout> | null;
-  }>({ startX: 0, startY: 0, isDragging: false, timer: null });
-
-  useEffect(() => {
-    callbackRef.current = { onDragStart, onDragEnd, onDragOver, onDrop };
-  });
-
-  useEffect(() => {
-    const el = articleRef.current;
-    if (!el) return;
-
-    const onTouchStart = (e: TouchEvent) => {
-      const touch = e.touches[0];
-      touchState.current.startX = touch.clientX;
-      touchState.current.startY = touch.clientY;
-      touchState.current.isDragging = false;
-      touchState.current.timer = setTimeout(() => {
-        touchState.current.isDragging = true;
-        callbackRef.current.onDragStart(item.id, item.status);
-      }, TOUCH_HOLD_MS);
-    };
-
-    const onTouchMove = (e: TouchEvent) => {
-      const touch = e.touches[0];
-      const dx = touch.clientX - touchState.current.startX;
-      const dy = touch.clientY - touchState.current.startY;
-
-      if (!touchState.current.isDragging) {
-        if (Math.abs(dx) > TOUCH_MOVE_THRESHOLD_PX || Math.abs(dy) > TOUCH_MOVE_THRESHOLD_PX) {
-          if (touchState.current.timer) {
-            clearTimeout(touchState.current.timer);
-            touchState.current.timer = null;
-          }
-        }
-        return;
-      }
-
-      e.preventDefault();
-      e.stopPropagation();
-
-      const underEl = document.elementFromPoint(touch.clientX, touch.clientY);
-      const cardEl = underEl?.closest("[data-card-id]") as HTMLElement | null;
-      if (cardEl && cardEl !== el) {
-        callbackRef.current.onDragOver(cardEl.dataset.cardId!, touch.clientY);
-      }
-    };
-
-    const onTouchEnd = (e: TouchEvent) => {
-      if (touchState.current.timer) {
-        clearTimeout(touchState.current.timer);
-        touchState.current.timer = null;
-      }
-      if (!touchState.current.isDragging) return;
-      touchState.current.isDragging = false;
-      e.stopPropagation();
-
-      const touch = e.changedTouches[0];
-      const underEl = document.elementFromPoint(touch.clientX, touch.clientY);
-      const cardEl = underEl?.closest("[data-card-id]") as HTMLElement | null;
-      const colEl = underEl?.closest("[data-column-status]") as HTMLElement | null;
-
-      if (cardEl && cardEl !== el) {
-        const side = getDropSide(cardEl, touch.clientY);
-        callbackRef.current.onDrop(
-          cardEl.dataset.cardStatus as BacklogStatus,
-          cardEl.dataset.cardId!,
-          side,
-        );
-      } else if (colEl) {
-        callbackRef.current.onDrop(colEl.dataset.columnStatus as BacklogStatus, null, "after");
-      }
-
-      callbackRef.current.onDragEnd();
-    };
-
-    el.addEventListener("touchstart", onTouchStart, { passive: true });
-    el.addEventListener("touchmove", onTouchMove, { passive: false });
-    el.addEventListener("touchend", onTouchEnd);
-
-    return () => {
-      el.removeEventListener("touchstart", onTouchStart);
-      el.removeEventListener("touchmove", onTouchMove);
-      el.removeEventListener("touchend", onTouchEnd);
-    };
-  }, [item.id, item.status]);
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDragRef,
+    isDragging,
+  } = useDraggable({ id: item.id });
+  const { setNodeRef: setDropRef } = useDroppable({ id: item.id });
 
   const work = item.works;
 
@@ -195,10 +95,15 @@ export function BacklogCard({
 
   return (
     <article
-      ref={articleRef}
+      ref={(node) => {
+        setDragRef(node);
+        setDropRef(node);
+      }}
       className="grid gap-[10px] pt-[18px] pr-11 pb-4 pl-4 rounded-[18px] bg-[var(--surface-strong)] border border-[rgba(92,59,35,0.08)] transition-[opacity,box-shadow,border-color] duration-[140ms] ease-[ease] relative cursor-grab active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-primary/45 focus-visible:border-primary/[0.18] focus-visible:shadow-[0_14px_32px_rgba(75,48,30,0.08)] hover:border-primary/[0.18] hover:shadow-[0_14px_32px_rgba(75,48,30,0.08)]"
-      style={dropStyle}
-      draggable
+      style={{
+        ...dropStyle,
+        opacity: isDragging ? 0.4 : 1,
+      }}
       data-card-id={item.id}
       data-card-status={item.status}
       tabIndex={0}
@@ -209,22 +114,8 @@ export function BacklogCard({
           onOpenDetail();
         }
       }}
-      onDragStart={(e) => {
-        onDragStart(item.id, item.status);
-        e.dataTransfer.setData("text/plain", item.id);
-        e.dataTransfer.effectAllowed = "move";
-      }}
-      onDragEnd={onDragEnd}
-      onDragOver={(e) => {
-        e.preventDefault();
-        onDragOver(item.id, e.clientY);
-      }}
-      onDrop={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const side = getDropSide(e.currentTarget, e.clientY);
-        onDrop(item.status, item.id, side);
-      }}
+      {...listeners}
+      {...attributes}
     >
       <div className="absolute top-[10px] right-[10px]">
         <DropdownMenu>
