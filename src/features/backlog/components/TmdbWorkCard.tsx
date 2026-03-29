@@ -1,4 +1,5 @@
 import { FilmIcon, TvIcon } from "@heroicons/react/24/outline";
+import { siThemoviedatabase } from "simple-icons";
 import type { TmdbSearchResult } from "../../../lib/tmdb.ts";
 import { platformLabels } from "../constants.ts";
 
@@ -60,18 +61,45 @@ export function TmdbWorkCard({ result, isSelected, onSelect, onAddToStacked }: P
     </>
   );
 
+  const tmdbHref = `https://www.themoviedb.org/${result.tmdbMediaType}/${result.tmdbId}`;
+
+  const tmdbLink = (
+    <a
+      href={tmdbHref}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="tmdb-work-card-link"
+      aria-label="TMDbで作品を開く"
+      title="TMDbで作品を開く"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <svg
+        className="tmdb-icon"
+        viewBox="0 0 24 24"
+        dangerouslySetInnerHTML={{ __html: siThemoviedatabase.svg }}
+        aria-hidden="true"
+      />
+    </a>
+  );
+
   return (
     <>
       {onSelect ? (
-        <button
-          className={`search-result-button${isSelected ? " is-selected" : ""}`}
-          type="button"
-          onClick={onSelect}
-        >
-          {cardContent}
-        </button>
+        <div className="tmdb-work-card-wrap">
+          <button
+            className={`search-result-button${isSelected ? " is-selected" : ""}`}
+            type="button"
+            onClick={onSelect}
+          >
+            {cardContent}
+          </button>
+          {tmdbLink}
+        </div>
       ) : (
-        <div className="search-result-button recommend-item-info-card">{cardContent}</div>
+        <div className="tmdb-work-card-wrap">
+          <div className="search-result-button recommend-item-info-card">{cardContent}</div>
+          {tmdbLink}
+        </div>
       )}
       {onAddToStacked && (
         <button

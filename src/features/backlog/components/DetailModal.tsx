@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { DocumentTextIcon, FilmIcon, TvIcon } from "@heroicons/react/24/outline";
+import { siThemoviedatabase } from "simple-icons";
 import { supabase } from "../../../lib/supabase.ts";
 import { getSortOrderForStatusChange } from "../data.ts";
 import { normalizePrimaryPlatform } from "../helpers.ts";
@@ -187,6 +188,23 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
         aria-modal="true"
         aria-labelledby="detail-modal-title"
       >
+        {work.tmdb_id && (
+          <a
+            href={`https://www.themoviedb.org/${work.tmdb_media_type === "movie" ? "movie" : "tv"}/${work.tmdb_id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="detail-tmdb-link"
+            aria-label="TMDbで作品を開く"
+            title="TMDbで作品を開く"
+          >
+            <svg
+              className="tmdb-icon"
+              viewBox="0 0 24 24"
+              dangerouslySetInnerHTML={{ __html: siThemoviedatabase.svg }}
+              aria-hidden="true"
+            />
+          </a>
+        )}
         <div className="detail-modal-body">
           <div className="detail-poster">
             <PosterImage
