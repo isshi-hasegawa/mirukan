@@ -8,19 +8,25 @@
 @tailwind components;
 @tailwind utilities;
 
+@utility login-cols {
+  @media (width >= 1024px) {
+    grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  }
+}
+
 :root {
-  --bg: #0f1d3d;
-  --bg-strong: #1a2a4d;
-  --surface: rgba(26, 42, 77, 0.95);
-  --surface-strong: #253850;
+  --bg: #111111;
+  --bg-strong: #1c1c1c;
+  --surface: rgba(28, 28, 28, 0.95);
+  --surface-strong: #2a2a2a;
   --surface-muted: rgba(255, 140, 66, 0.08);
   --text: #f5f5f5;
-  --text-muted: #a0afc0;
+  --text-muted: #9ca3af;
   --border: oklch(0.35 0 0);
   --accent: oklch(0.97 0 0);
   --accent-strong: #ff8c42;
   --accent-soft: rgba(255, 140, 66, 0.15);
-  --shadow: 0 24px 60px rgba(15, 29, 61, 0.4);
+  --shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
   --heading: "Avenir Next", "Hiragino Sans", "Noto Sans JP", sans-serif;
   --body: "Hiragino Sans", "Noto Sans JP", sans-serif;
   --mono: "SFMono-Regular", "SF Mono", Consolas, monospace;
@@ -30,21 +36,21 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --background: hsl(216, 24%, 10%);
-  --foreground: hsl(213, 32%, 93%);
-  --card: hsl(216, 28%, 16%);
-  --card-foreground: hsl(213, 32%, 93%);
-  --popover: hsl(216, 28%, 16%);
-  --popover-foreground: hsl(213, 32%, 93%);
+  --background: hsl(0, 0%, 8%);
+  --foreground: hsl(0, 0%, 93%);
+  --card: hsl(0, 0%, 13%);
+  --card-foreground: hsl(0, 0%, 93%);
+  --popover: hsl(0, 0%, 13%);
+  --popover-foreground: hsl(0, 0%, 93%);
   --primary: hsl(26, 100%, 55%);
-  --primary-foreground: hsl(216, 24%, 10%);
-  --secondary: hsl(216, 18%, 32%);
-  --secondary-foreground: hsl(213, 18%, 70%);
-  --muted: hsl(216, 18%, 32%);
-  --muted-foreground: hsl(213, 18%, 70%);
-  --accent-foreground: hsl(216, 28%, 20%);
+  --primary-foreground: hsl(0, 0%, 8%);
+  --secondary: hsl(0, 0%, 22%);
+  --secondary-foreground: hsl(0, 0%, 70%);
+  --muted: hsl(0, 0%, 22%);
+  --muted-foreground: hsl(0, 0%, 65%);
+  --accent-foreground: hsl(0, 0%, 8%);
   --destructive: hsl(0, 100%, 50%);
-  --input: hsl(216, 20%, 22%);
+  --input: hsl(0, 0%, 18%);
   --ring: hsl(26, 100%, 55%);
   --chart-1: hsl(26, 100%, 55%);
   --chart-2: hsl(213, 32%, 70%);
@@ -52,13 +58,13 @@
   --chart-4: hsl(216, 24%, 35%);
   --chart-5: 216 20% 25%;
   --radius: 0.625rem;
-  --sidebar: 216 28% 16%;
-  --sidebar-foreground: 213 32% 93%;
+  --sidebar: 0 0% 13%;
+  --sidebar-foreground: 0 0% 93%;
   --sidebar-primary: 26 100% 55%;
-  --sidebar-primary-foreground: 216 24% 10%;
+  --sidebar-primary-foreground: 0 0% 8%;
   --sidebar-accent: 26 100% 55%;
-  --sidebar-accent-foreground: 216 24% 10%;
-  --sidebar-border: 216 20% 22%;
+  --sidebar-accent-foreground: 0 0% 8%;
+  --sidebar-border: 0 0% 18%;
   --sidebar-ring: 26 100% 55%;
 }
 
@@ -68,9 +74,9 @@
 
 html {
   background:
-    radial-gradient(circle at top left, rgba(255, 140, 66, 0.2), transparent 35%),
-    radial-gradient(circle at right center, rgba(100, 150, 200, 0.15), transparent 28%),
-    linear-gradient(180deg, #1a2a4d 0%, #0f1d3d 50%, #081026 100%);
+    radial-gradient(circle at top left, rgba(255, 140, 66, 0.12), transparent 35%),
+    radial-gradient(circle at right center, rgba(180, 180, 180, 0.05), transparent 28%),
+    linear-gradient(180deg, #1c1c1c 0%, #111111 50%, #080808 100%);
 }
 
 body {
@@ -120,29 +126,12 @@ code {
   overflow: hidden;
 }
 
-.intro-card,
-.auth-card,
 .board-header,
 .board-column {
   border: 1px solid var(--border);
   background: var(--surface);
   backdrop-filter: blur(20px);
   box-shadow: var(--shadow);
-}
-
-.intro-card,
-.auth-card {
-  padding: 28px;
-  border-radius: 28px;
-}
-
-.shell:has(.auth-card) {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
-  gap: 18px;
-  align-items: start;
-  min-height: 100svh;
-  place-content: center;
 }
 
 .eyebrow {
@@ -195,64 +184,6 @@ h3 {
   font-size: 1.02rem;
 }
 
-.credentials {
-  margin-top: 28px;
-  display: grid;
-  gap: 14px;
-}
-
-.credentials div {
-  display: grid;
-  gap: 6px;
-  padding: 16px 18px;
-  border-radius: 18px;
-  background: var(--surface-muted);
-}
-
-.credentials dt {
-  color: var(--text-muted);
-  font-size: 0.82rem;
-}
-
-.credentials dd code {
-  display: inline-flex;
-  padding: 8px 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.7);
-}
-
-.auth-card {
-  align-self: center;
-}
-
-.auth-card h2 {
-  margin-bottom: 20px;
-}
-
-.auth-form {
-  display: grid;
-  gap: 16px;
-}
-
-.auth-form label {
-  display: grid;
-  gap: 8px;
-}
-
-.auth-form span {
-  font-size: 0.94rem;
-  color: var(--text-muted);
-}
-
-.auth-form input {
-  width: 100%;
-  padding: 14px 16px;
-  border: 1px solid rgba(90, 58, 36, 0.12);
-  border-radius: 16px;
-  background: var(--surface-strong);
-  color: var(--text);
-}
-
 .ghost-button:focus-visible,
 .primary-icon-button:focus-visible,
 .icon-button:focus-visible,
@@ -271,11 +202,6 @@ h3 {
     background-color 180ms ease,
     color 180ms ease,
     border-color 180ms ease;
-}
-
-.form-message {
-  color: var(--text-muted);
-  font-size: 0.94rem;
 }
 
 .board-header {
