@@ -12,6 +12,12 @@ import { getViewingMode, type ViewingMode } from "../data.ts";
 import { getDropSide } from "../helpers.ts";
 import { PlatformIcon } from "./PlatformIcon.tsx";
 import { PosterImage } from "./PosterImage.tsx";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu.tsx";
 
 const modeLabel: Record<ViewingMode, string> = {
   focus: "ガッツリ",
@@ -41,9 +47,7 @@ type Props = {
   item: BacklogItem;
   showModeBadge?: boolean;
   dropIndicator: DropIndicator | null;
-  openMenuId: string | null;
   onOpenDetail: () => void;
-  onToggleMenu: (itemId: string) => void;
   onDeleteItem: (itemId: string) => void;
   onMarkAsWatched: (itemId: string) => void;
   onDragStart: (itemId: string, status: BacklogStatus) => void;
@@ -60,9 +64,7 @@ export function BacklogCard({
   item,
   showModeBadge = false,
   dropIndicator,
-  openMenuId,
   onOpenDetail,
-  onToggleMenu,
   onDeleteItem,
   onMarkAsWatched,
   onDragStart,
@@ -175,45 +177,38 @@ export function BacklogCard({
     work.work_type === "movie" ? "映画" : work.work_type === "series" ? "シリーズ" : "シーズン";
   const metadataRest = [work.release_date ? work.release_date.slice(0, 4) : null].filter(Boolean);
 
-  const isMenuOpen = openMenuId === item.id;
   const cardDropIndicator =
     dropIndicator?.type === "card" && dropIndicator.itemId === item.id ? dropIndicator : null;
 
-  const cardClassName = [
-    "card",
-    cardDropIndicator?.side === "before" ? "drop-before" : "",
-    cardDropIndicator?.side === "after" ? "drop-after" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
-
-  const handleClick = (e: React.MouseEvent) => {
-    if (
-      (e.target as HTMLElement).closest("[data-card-menu-toggle]") ||
-      (e.target as HTMLElement).closest("[data-card-menu]")
-    ) {
-      return;
-    }
-    onOpenDetail();
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      onOpenDetail();
-    }
-  };
+  const dropStyle: React.CSSProperties | undefined =
+    cardDropIndicator?.side === "before"
+      ? {
+          borderTop: "3px solid var(--primary)",
+          boxShadow: "inset 0 8px 0 -5px rgba(191,90,54,0.18)",
+        }
+      : cardDropIndicator?.side === "after"
+        ? {
+            borderBottom: "3px solid var(--primary)",
+            boxShadow: "inset 0 -8px 0 -5px rgba(191,90,54,0.18)",
+          }
+        : undefined;
 
   return (
     <article
       ref={articleRef}
-      className={cardClassName}
+      className="grid gap-[10px] pt-[18px] pr-11 pb-4 pl-4 rounded-[18px] bg-[var(--surface-strong)] border border-[rgba(92,59,35,0.08)] transition-[opacity,box-shadow,border-color] duration-[140ms] ease-[ease] relative cursor-grab active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-primary/45 focus-visible:border-primary/[0.18] focus-visible:shadow-[0_14px_32px_rgba(75,48,30,0.08)] hover:border-primary/[0.18] hover:shadow-[0_14px_32px_rgba(75,48,30,0.08)]"
+      style={dropStyle}
       draggable
       data-card-id={item.id}
       data-card-status={item.status}
       tabIndex={0}
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
+      onClick={onOpenDetail}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpenDetail();
+        }
+      }}
       onDragStart={(e) => {
         onDragStart(item.id, item.status);
         e.dataTransfer.setData("text/plain", item.id);
@@ -231,53 +226,45 @@ export function BacklogCard({
         onDrop(item.status, item.id, side);
       }}
     >
-      <div className="card-topline">
-        <div className="card-menu-wrap">
-          <button
-            className="card-menu-button"
-            type="button"
-            data-card-menu-toggle={item.id}
+      <div className="absolute top-[10px] right-[10px]">
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-transparent text-[var(--text-muted)] cursor-pointer hover:bg-[rgba(92,59,35,0.08)] focus:outline-2 focus:outline-primary/45 focus:outline-offset-[2px]"
             aria-label="カードメニューを開く"
             title="カードメニューを開く"
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleMenu(item.id);
-            }}
+            onClick={(e) => e.stopPropagation()}
           >
-            <svg className="dots-icon" viewBox="0 0 20 20" aria-hidden="true">
+            <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20" aria-hidden="true">
               <circle cx="10" cy="4.25" r="1.4" />
               <circle cx="10" cy="10" r="1.4" />
               <circle cx="10" cy="15.75" r="1.4" />
             </svg>
-          </button>
-          {isMenuOpen && (
-            <div className="card-menu" data-card-menu={item.id}>
-              <button
-                className="card-menu-item"
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onMarkAsWatched(item.id);
-                }}
-              >
-                視聴済み
-              </button>
-              <button
-                className="card-menu-item danger"
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDeleteItem(item.id);
-                }}
-              >
-                削除
-              </button>
-            </div>
-          )}
-        </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            side="bottom"
+            sideOffset={6}
+            className="min-w-[132px] w-auto rounded-[14px] p-[6px] bg-[rgba(255,253,248,0.98)] border border-[rgba(92,59,35,0.12)] shadow-[0_16px_40px_rgba(75,48,30,0.18)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <DropdownMenuItem
+              className="rounded-[10px] px-3 py-[10px] text-[var(--text)] cursor-pointer"
+              onSelect={() => onMarkAsWatched(item.id)}
+            >
+              視聴済み
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              variant="destructive"
+              className="rounded-[10px] px-3 py-[10px] cursor-pointer"
+              onSelect={() => onDeleteItem(item.id)}
+            >
+              削除
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       {item.primary_platform && (
-        <div className="card-platform-badge">
+        <div className="absolute top-[10px] left-[10px] z-[2]">
           <PlatformIcon platform={item.primary_platform} />
         </div>
       )}
@@ -285,15 +272,17 @@ export function BacklogCard({
         (() => {
           const Icon = ModeIcon[viewingMode];
           return (
-            <div className="card-mode-badge">
-              <Icon className="card-mode-badge-icon" aria-hidden />
+            <div className="absolute bottom-[10px] right-[10px] flex items-center gap-[3px] bg-primary/15 border border-primary/25 rounded-[6px] px-[7px] py-[3px] text-primary text-[0.68rem] font-bold leading-none pointer-events-none">
+              <Icon className="w-[11px] h-[11px] shrink-0" aria-hidden />
               <span>{modeLabel[viewingMode]}</span>
             </div>
           );
         })()}
-      <div className="card-body">
-        <div className="card-thumb-wrap">
-          <div className="card-thumb">
+      <div
+        className={`grid grid-cols-[64px_minmax(0,1fr)] gap-3 items-start${viewingMode ? " pb-6" : ""}`}
+      >
+        <div className="relative aspect-[2/3]">
+          <div className="overflow-hidden rounded-[14px] w-full h-full border border-[rgba(92,59,35,0.08)] [background:radial-gradient(circle_at_top_left,rgba(255,208,143,0.42),transparent_36%),linear-gradient(180deg,rgba(191,90,54,0.14),rgba(92,59,35,0.08))]">
             <PosterImage
               posterPath={work.poster_path}
               alt={`${title} のポスター`}
@@ -301,10 +290,13 @@ export function BacklogCard({
             />
           </div>
         </div>
-        <div className="card-content">
-          <p className="card-title">{title}</p>
+        <div className="grid gap-2 min-w-0">
+          <p className="text-[1rem] font-bold">{title}</p>
           <p className="card-meta">
-            <WorkTypeIcon className="work-type-icon" aria-hidden="true" />
+            <WorkTypeIcon
+              className="w-[14px] h-[14px] inline-block align-[-2px] mr-[3px] shrink-0"
+              aria-hidden="true"
+            />
             {workTypeLabel}
             {metadataRest.length > 0 && ` · ${metadataRest.join(" · ")}`}
           </p>

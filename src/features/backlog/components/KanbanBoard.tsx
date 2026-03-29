@@ -71,14 +71,12 @@ type DropIndicator =
 type Props = {
   items: BacklogItem[];
   dropIndicator: DropIndicator | null;
-  openMenuId: string | null;
   isMobileLayout: boolean;
   isMobileDragging: boolean;
   selectedTabStatus: BacklogStatus;
   onTabChange: (status: BacklogStatus) => void;
   onOpenAddModal: (status: BacklogStatus) => void;
   onOpenDetail: (itemId: string) => void;
-  onToggleMenu: (itemId: string) => void;
   onDeleteItem: (itemId: string) => void;
   onMarkAsWatched: (itemId: string) => void;
   onDragStart: (itemId: string, status: BacklogStatus) => void;
@@ -96,14 +94,12 @@ type Props = {
 export function KanbanBoard({
   items,
   dropIndicator,
-  openMenuId,
   isMobileLayout,
   isMobileDragging,
   selectedTabStatus,
   onTabChange,
   onOpenAddModal,
   onOpenDetail,
-  onToggleMenu,
   onDeleteItem,
   onMarkAsWatched,
   onDragStart,
@@ -184,10 +180,8 @@ export function KanbanBoard({
     items: grouped.get(status) ?? [],
     featuredIds: status === "stacked" ? stackedFeaturedIds : undefined,
     dropIndicator,
-    openMenuId,
     onOpenAddModal,
     onOpenDetail,
-    onToggleMenu,
     onDeleteItem,
     onMarkAsWatched,
     onDragStart,
@@ -199,28 +193,47 @@ export function KanbanBoard({
 
   if (isMobileLayout) {
     return (
-      <section className="board board-mobile">
-        <nav className="board-tabs" role="tablist" ref={tabsRef}>
-          {statusOrder.map((status) => (
-            <button
-              key={status}
-              ref={(el) => {
-                tabButtonRefs.current[status] = el as HTMLButtonElement | null;
-              }}
-              type="button"
-              role="tab"
-              aria-selected={selectedTabStatus === status}
-              className={`board-tab${selectedTabStatus === status ? " is-active" : ""}`}
-              onClick={() => onTabChange(status)}
-            >
-              {statusLabels[status]}
-              <span className="board-tab-badge">{grouped.get(status)?.length ?? 0}</span>
-            </button>
-          ))}
+      <section className="flex flex-col gap-0 mt-3">
+        <nav
+          className="flex overflow-x-auto [scrollbar-width:none] gap-[6px] pb-[10px] [&::-webkit-scrollbar]:hidden"
+          role="tablist"
+          ref={tabsRef}
+        >
+          {statusOrder.map((status) => {
+            const isActive = selectedTabStatus === status;
+            return (
+              <button
+                key={status}
+                ref={(el) => {
+                  tabButtonRefs.current[status] = el as HTMLButtonElement | null;
+                }}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                className={[
+                  "inline-flex items-center gap-[6px] px-[14px] py-2 border rounded-full text-[0.875rem] font-medium cursor-pointer whitespace-nowrap shrink-0 transition-[background,color,border-color] duration-[150ms]",
+                  isActive
+                    ? "bg-primary text-white border-primary"
+                    : "bg-[var(--surface)] text-[var(--text-muted)] border-[var(--border)]",
+                ].join(" ")}
+                onClick={() => onTabChange(status)}
+              >
+                {statusLabels[status]}
+                <span
+                  className={[
+                    "inline-flex items-center justify-center min-w-[20px] px-[6px] py-[2px] rounded-full text-[0.75rem] font-bold",
+                    isActive ? "bg-white/30 text-inherit" : "bg-primary/15 text-primary",
+                  ].join(" ")}
+                >
+                  {grouped.get(status)?.length ?? 0}
+                </span>
+              </button>
+            );
+          })}
         </nav>
         <div
           ref={tabContentRef}
-          className="board-tab-content"
+          className="board-tab-content flex-1 w-full overflow-y-auto"
           onScroll={handleTabContentScroll}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
@@ -241,7 +254,7 @@ export function KanbanBoard({
   }
 
   return (
-    <section className="board">
+    <section className="grid grid-cols-[repeat(5,minmax(240px,1fr))] gap-2 mt-3 overflow-x-auto pb-[6px] min-h-0 items-stretch">
       {statusOrder.map((status) => (
         <KanbanColumn
           key={status}

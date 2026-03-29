@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { BacklogItem, BacklogStatus } from "../types.ts";
 import { statusLabels } from "../constants.ts";
 import { BacklogCard } from "./BacklogCard.tsx";
+import { Button } from "@/components/ui/button.tsx";
 
 type DropIndicator =
   | { type: "card"; itemId: string; side: "before" | "after" }
@@ -13,10 +14,8 @@ type Props = {
   extra?: ReactNode;
   featuredIds?: Set<string>;
   dropIndicator: DropIndicator | null;
-  openMenuId: string | null;
   onOpenAddModal: (status: BacklogStatus) => void;
   onOpenDetail: (itemId: string) => void;
-  onToggleMenu: (itemId: string) => void;
   onDeleteItem: (itemId: string) => void;
   onMarkAsWatched: (itemId: string) => void;
   onDragStart: (itemId: string, status: BacklogStatus) => void;
@@ -36,10 +35,8 @@ export function KanbanColumn({
   extra,
   featuredIds,
   dropIndicator,
-  openMenuId,
   onOpenAddModal,
   onOpenDetail,
-  onToggleMenu,
   onDeleteItem,
   onMarkAsWatched,
   onDragStart,
@@ -50,32 +47,49 @@ export function KanbanColumn({
 }: Props) {
   const isColumnActive = dropIndicator?.type === "column" && dropIndicator.status === status;
 
-  const dropzoneClassName = ["card-list", isColumnActive ? "dropzone-active" : ""]
-    .filter(Boolean)
-    .join(" ");
+  const dropzoneStyle: React.CSSProperties | undefined = isColumnActive
+    ? {
+        minHeight: "120px",
+        borderRadius: "20px",
+        outline: "2px dashed rgba(191, 90, 54, 0.45)",
+        outlineOffset: "6px",
+      }
+    : undefined;
 
   return (
-    <section className="board-column" data-column-status={status}>
+    <section
+      className="flex flex-col rounded-[24px] p-[14px] h-full min-h-0 border border-[var(--border)] bg-[var(--surface)] backdrop-blur-[20px] shadow-[var(--shadow)]"
+      data-column-status={status}
+    >
       {extra}
-      <header className="column-header">
-        <div className="column-title-group">
+      <header className="flex justify-between gap-[10px] items-center pb-[10px] border-b border-[rgba(92,59,35,0.08)]">
+        <div className="flex items-center gap-2">
           <h2>{statusLabels[status]}</h2>
-          <span className="count-pill">{items.length}</span>
+          <span className="inline-flex items-center justify-center min-w-[34px] px-[10px] py-[6px] rounded-full text-[0.82rem] font-bold bg-primary/15 text-primary">
+            {items.length}
+          </span>
         </div>
-        <button
-          className="column-add-button"
+        <Button
+          variant="ghost"
+          size="icon"
+          className="w-10 h-10 rounded-full border border-primary/[0.18] bg-primary/[0.08] text-primary hover:bg-primary/[0.15] hover:text-primary"
           type="button"
           aria-label={`${statusLabels[status]} に追加`}
           title={`${statusLabels[status]} に追加`}
           onClick={() => onOpenAddModal(status)}
         >
-          <svg className="plus-icon" viewBox="0 0 20 20" aria-hidden="true">
+          <svg
+            className="w-[18px] h-[18px] stroke-current fill-none [stroke-linecap:round] [stroke-width:1.75]"
+            viewBox="0 0 20 20"
+            aria-hidden="true"
+          >
             <path d="M10 4.25v11.5M4.25 10h11.5" />
           </svg>
-        </button>
+        </Button>
       </header>
       <div
-        className={dropzoneClassName}
+        className="grid flex-1 content-start gap-[10px] mt-[10px] overflow-y-auto min-h-0"
+        style={dropzoneStyle}
         onDragOver={(e) => {
           if (!(e.target instanceof HTMLElement) || e.target.closest("[data-card-id]")) {
             return;
@@ -107,9 +121,7 @@ export function KanbanColumn({
               item={item}
               showModeBadge={featuredIds?.has(item.id) ?? false}
               dropIndicator={dropIndicator}
-              openMenuId={openMenuId}
               onOpenDetail={() => onOpenDetail(item.id)}
-              onToggleMenu={onToggleMenu}
               onDeleteItem={onDeleteItem}
               onMarkAsWatched={onMarkAsWatched}
               onDragStart={onDragStart}
@@ -119,7 +131,9 @@ export function KanbanColumn({
             />
           ))
         ) : (
-          <p className="empty-state">この列にはまだカードがありません。</p>
+          <p className="text-[var(--text-muted)] pt-[18px] text-[0.92rem]">
+            この列にはまだカードがありません。
+          </p>
         )}
       </div>
     </section>

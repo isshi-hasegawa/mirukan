@@ -34,7 +34,6 @@ export function BoardPage({ session }: Props) {
     draftValue: "",
     message: null,
   });
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [dragItemId, setDragItemId] = useState<string | null>(null);
   const [dropIndicator, setDropIndicator] = useState<DropIndicator | null>(null);
   const [isRecommendOpen, setIsRecommendOpen] = useState(false);
@@ -115,10 +114,6 @@ export function BoardPage({ session }: Props) {
     }
 
     await loadItems();
-  };
-
-  const handleToggleMenu = (itemId: string) => {
-    setOpenMenuId((prev) => (prev === itemId ? null : itemId));
   };
 
   const handleDeleteItem = async (itemId: string) => {
@@ -238,28 +233,18 @@ export function BoardPage({ session }: Props) {
     : null;
 
   return (
-    <main
-      className="shell"
-      onClick={(e) => {
-        if (openMenuId === null) return;
-        if ((e.target as HTMLElement).closest("[data-card-menu]")) return;
-        if ((e.target as HTMLElement).closest("[data-card-menu-toggle]")) return;
-        setOpenMenuId(null);
-      }}
-    >
+    <main className="shell">
       <Header session={session} onOpenRecommend={() => setIsRecommendOpen(true)} />
 
       <KanbanBoard
         items={items}
         dropIndicator={dropIndicator}
-        openMenuId={openMenuId}
         isMobileLayout={isMobileLayout}
         isMobileDragging={isMobileLayout && dragItemId !== null}
         selectedTabStatus={selectedTabStatus}
         onTabChange={setSelectedTabStatus}
         onOpenAddModal={setAddModalStatus}
         onOpenDetail={handleOpenDetail}
-        onToggleMenu={handleToggleMenu}
         onDeleteItem={(itemId) => void handleDeleteItem(itemId)}
         onMarkAsWatched={(itemId) => void handleMarkAsWatched(itemId)}
         onDragStart={handleDragStart}
