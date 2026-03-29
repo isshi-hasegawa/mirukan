@@ -106,7 +106,6 @@ export function BacklogCard({
       }}
       data-card-id={item.id}
       data-card-status={item.status}
-      tabIndex={0}
       onClick={onOpenDetail}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
