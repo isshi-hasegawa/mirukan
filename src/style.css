@@ -527,7 +527,7 @@ h3 {
 }
 
 .card:has(.card-mode-badge) .card-body {
-  padding-bottom: 50px;
+  padding-bottom: 30px;
 }
 
 .card-thumb-wrap {
