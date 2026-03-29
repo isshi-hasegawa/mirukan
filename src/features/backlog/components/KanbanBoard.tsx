@@ -1,9 +1,68 @@
-import { useEffect, useRef } from "react";
+import { useMemo, useEffect, useRef } from "react";
 import type { BacklogItem, BacklogStatus } from "../types.ts";
 import { statusOrder, statusLabels } from "../constants.ts";
+import { getViewingMode, type ViewingMode } from "../data.ts";
 import { KanbanColumn } from "./KanbanColumn.tsx";
 
 const SWIPE_THRESHOLD_PX = 50;
+const ITEMS_PER_MODE = 3;
+const MODE_ORDER: ViewingMode[] = ["focus", "thoughtful", "quick", "background"];
+const CACHE_KEY = "stacked-mode-selection";
+const CACHE_TTL = 24 * 60 * 60 * 1000;
+
+type ModeSelection = {
+  timestamp: number;
+  itemIds: Record<ViewingMode, string[]>;
+};
+
+function getOrCreateModeSelection(stackedItems: BacklogItem[]): Record<ViewingMode, string[]> {
+  try {
+    const stored = localStorage.getItem(CACHE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored) as ModeSelection;
+      if (Date.now() - parsed.timestamp < CACHE_TTL) {
+        return parsed.itemIds;
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  const itemIds = Object.fromEntries(
+    MODE_ORDER.map((mode) => {
+      const modeItems = stackedItems.filter((i) => i.works && getViewingMode(i.works) === mode);
+      const shuffled = [...modeItems].sort(() => Math.random() - 0.5);
+      return [mode, shuffled.slice(0, ITEMS_PER_MODE).map((i) => i.id)];
+    }),
+  ) as Record<ViewingMode, string[]>;
+
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), itemIds }));
+  } catch {
+    // ignore
+  }
+
+  return itemIds;
+}
+
+function sortStackedItems(items: BacklogItem[]): {
+  sorted: BacklogItem[];
+  featuredIds: Set<string>;
+} {
+  const selection = getOrCreateModeSelection(items);
+  const featuredIds = new Set(Object.values(selection).flat());
+
+  const featured: BacklogItem[] = [];
+  for (const mode of MODE_ORDER) {
+    for (const id of selection[mode]) {
+      const item = items.find((i) => i.id === id);
+      if (item) featured.push(item);
+    }
+  }
+
+  const rest = items.filter((i) => !featuredIds.has(i.id));
+  return { sorted: [...featured, ...rest], featuredIds };
+}
 
 type DropIndicator =
   | { type: "card"; itemId: string; side: "before" | "after" }
@@ -60,6 +119,13 @@ export function KanbanBoard({
     grouped.get(item.status)?.push(item);
   }
 
+  const { sorted: stackedSorted, featuredIds: stackedFeaturedIds } = useMemo(
+    () => sortStackedItems(grouped.get("stacked") ?? []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [items],
+  );
+  grouped.set("stacked", stackedSorted);
+
   const tabsRef = useRef<HTMLElement>(null);
   const tabButtonRefs = useRef<Partial<Record<BacklogStatus, HTMLButtonElement | null>>>({});
   const touchStartX = useRef<number>(0);
@@ -97,6 +163,7 @@ export function KanbanBoard({
   const columnProps = (status: BacklogStatus) => ({
     status,
     items: grouped.get(status) ?? [],
+    featuredIds: status === "stacked" ? stackedFeaturedIds : undefined,
     dropIndicator,
     openMenuId,
     onOpenAddModal,

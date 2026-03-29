@@ -1,9 +1,34 @@
 import { useEffect, useRef } from "react";
-import { FilmIcon, TvIcon } from "@heroicons/react/24/outline";
+import {
+  BoltIcon,
+  ClockIcon,
+  FilmIcon,
+  FireIcon,
+  SpeakerWaveIcon,
+  TvIcon,
+} from "@heroicons/react/24/outline";
 import type { BacklogItem, BacklogStatus } from "../types.ts";
+import { getViewingMode, type ViewingMode } from "../data.ts";
 import { getDropSide } from "../helpers.ts";
 import { PlatformIcon } from "./PlatformIcon.tsx";
 import { PosterImage } from "./PosterImage.tsx";
+
+const modeLabel: Record<ViewingMode, string> = {
+  focus: "ガッツリ",
+  thoughtful: "じっくり",
+  quick: "サクッと",
+  background: "ながら見",
+};
+
+const ModeIcon: Record<
+  ViewingMode,
+  React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>
+> = {
+  focus: FireIcon,
+  thoughtful: ClockIcon,
+  quick: BoltIcon,
+  background: SpeakerWaveIcon,
+};
 
 const TOUCH_HOLD_MS = 300;
 const TOUCH_MOVE_THRESHOLD_PX = 8;
@@ -14,6 +39,7 @@ type DropIndicator =
 
 type Props = {
   item: BacklogItem;
+  showModeBadge?: boolean;
   dropIndicator: DropIndicator | null;
   openMenuId: string | null;
   onOpenDetail: () => void;
@@ -32,6 +58,7 @@ type Props = {
 
 export function BacklogCard({
   item,
+  showModeBadge = false,
   dropIndicator,
   openMenuId,
   onOpenDetail,
@@ -142,6 +169,7 @@ export function BacklogCard({
   }
 
   const title = work.title;
+  const viewingMode = showModeBadge ? getViewingMode(work) : null;
   const WorkTypeIcon = work.work_type === "movie" ? FilmIcon : TvIcon;
   const workTypeLabel =
     work.work_type === "movie" ? "映画" : work.work_type === "series" ? "シリーズ" : "シーズン";
@@ -253,6 +281,16 @@ export function BacklogCard({
           <PlatformIcon platform={item.primary_platform} />
         </div>
       )}
+      {viewingMode &&
+        (() => {
+          const Icon = ModeIcon[viewingMode];
+          return (
+            <div className="card-mode-badge">
+              <Icon className="card-mode-badge-icon" aria-hidden />
+              <span>{modeLabel[viewingMode]}</span>
+            </div>
+          );
+        })()}
       <div className="card-body">
         <div className="card-thumb-wrap">
           <div className="card-thumb">

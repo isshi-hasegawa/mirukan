@@ -11,6 +11,7 @@ type Props = {
   status: BacklogStatus;
   items: BacklogItem[];
   extra?: ReactNode;
+  featuredIds?: Set<string>;
   dropIndicator: DropIndicator | null;
   openMenuId: string | null;
   onOpenAddModal: (status: BacklogStatus) => void;
@@ -33,6 +34,7 @@ export function KanbanColumn({
   status,
   items,
   extra,
+  featuredIds,
   dropIndicator,
   openMenuId,
   onOpenAddModal,
@@ -103,6 +105,7 @@ export function KanbanColumn({
             <BacklogCard
               key={item.id}
               item={item}
+              showModeBadge={featuredIds?.has(item.id) ?? false}
               dropIndicator={dropIndicator}
               openMenuId={openMenuId}
               onOpenDetail={() => onOpenDetail(item.id)}

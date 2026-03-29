@@ -1493,6 +1493,30 @@ h3 {
   flex-shrink: 0;
 }
 
+.card-mode-badge {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--accent-soft);
+  border: 1px solid rgba(191, 90, 54, 0.25);
+  border-radius: 6px;
+  padding: 3px 7px;
+  color: var(--accent-strong);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.card-mode-badge-icon {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
+}
+
 .recommend-results {
   max-height: 60vh;
   overflow-y: auto;

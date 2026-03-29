@@ -414,6 +414,12 @@ export async function addAllSeasons(
 
 export type ViewingMode = "focus" | "thoughtful" | "quick" | "background";
 
+const VIEWING_MODE_ORDER: ViewingMode[] = ["focus", "thoughtful", "quick", "background"];
+
+export function getViewingMode(work: WorkSummary): ViewingMode | null {
+  return VIEWING_MODE_ORDER.find((mode) => applyModeFilter(work, mode)) ?? null;
+}
+
 export function applyModeFilter(work: WorkSummary, mode: ViewingMode): boolean {
   if (mode === "background") {
     return work.background_fit_score !== null && work.background_fit_score >= 50;
