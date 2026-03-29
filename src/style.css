@@ -526,6 +526,10 @@ h3 {
   align-items: start;
 }
 
+.card:has(.card-mode-badge) .card-body {
+  padding-bottom: 50px;
+}
+
 .card-thumb-wrap {
   position: relative;
   aspect-ratio: 2 / 3;
