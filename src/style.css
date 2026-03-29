@@ -9,18 +9,18 @@
 @tailwind utilities;
 
 :root {
-  --bg: #f7f1e8;
-  --bg-strong: #fffaf3;
-  --surface: rgba(255, 251, 245, 0.88);
-  --surface-strong: #fffdf8;
-  --surface-muted: rgba(115, 82, 44, 0.08);
-  --text: #30231a;
-  --text-muted: #6e5f54;
-  --border: oklch(0.922 0 0);
+  --bg: #0f1d3d;
+  --bg-strong: #1a2a4d;
+  --surface: rgba(26, 42, 77, 0.95);
+  --surface-strong: #253850;
+  --surface-muted: rgba(255, 140, 66, 0.08);
+  --text: #f5f5f5;
+  --text-muted: #a0afc0;
+  --border: oklch(0.35 0 0);
   --accent: oklch(0.97 0 0);
-  --accent-strong: #8c3415;
-  --accent-soft: rgba(191, 90, 54, 0.12);
-  --shadow: 0 24px 60px rgba(75, 48, 30, 0.12);
+  --accent-strong: #ff8c42;
+  --accent-soft: rgba(255, 140, 66, 0.15);
+  --shadow: 0 24px 60px rgba(15, 29, 61, 0.4);
   --heading: "Avenir Next", "Hiragino Sans", "Noto Sans JP", sans-serif;
   --body: "Hiragino Sans", "Noto Sans JP", sans-serif;
   --mono: "SFMono-Regular", "SF Mono", Consolas, monospace;
@@ -30,36 +30,36 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --background: 216 24% 10%;
+  --foreground: 213 32% 93%;
+  --card: 216 28% 16%;
+  --card-foreground: 213 32% 93%;
+  --popover: 216 28% 16%;
+  --popover-foreground: 213 32% 93%;
+  --primary: 216 28% 20%;
+  --primary-foreground: 26 100% 55%;
+  --secondary: 26 100% 55%;
+  --secondary-foreground: 216 24% 10%;
+  --muted: 216 18% 32%;
+  --muted-foreground: 213 18% 70%;
+  --accent-foreground: 216 28% 20%;
+  --destructive: 0 100% 50%;
+  --input: 216 20% 22%;
+  --ring: 26 100% 55%;
+  --chart-1: 26 100% 55%;
+  --chart-2: 213 32% 70%;
+  --chart-3: 216 28% 50%;
+  --chart-4: 216 24% 35%;
+  --chart-5: 216 20% 25%;
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: 216 28% 16%;
+  --sidebar-foreground: 213 32% 93%;
+  --sidebar-primary: 26 100% 55%;
+  --sidebar-primary-foreground: 216 24% 10%;
+  --sidebar-accent: 26 100% 55%;
+  --sidebar-accent-foreground: 216 24% 10%;
+  --sidebar-border: 216 20% 22%;
+  --sidebar-ring: 26 100% 55%;
 }
 
 * {
@@ -68,9 +68,9 @@
 
 html {
   background:
-    radial-gradient(circle at top left, rgba(255, 208, 143, 0.45), transparent 32%),
-    radial-gradient(circle at right center, rgba(228, 118, 75, 0.2), transparent 24%),
-    linear-gradient(180deg, #f5ecdf 0%, #f7f1e8 42%, #efe4d5 100%);
+    radial-gradient(circle at top left, rgba(255, 140, 66, 0.2), transparent 35%),
+    radial-gradient(circle at right center, rgba(100, 150, 200, 0.15), transparent 28%),
+    linear-gradient(180deg, #1a2a4d 0%, #0f1d3d 50%, #081026 100%);
 }
 
 body {
