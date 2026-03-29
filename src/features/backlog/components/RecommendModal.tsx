@@ -14,7 +14,6 @@ export function RecommendModal({ items, onClose, onAddTmdbWorksToStacked }: Prop
   const [recommendations, setRecommendations] = useState<TmdbSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [checkedKeys, setCheckedKeys] = useState<Set<string>>(new Set());
-  const [removedKeys, setRemovedKeys] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const itemTmdbKeys = new Set(
@@ -96,43 +95,37 @@ export function RecommendModal({ items, onClose, onAddTmdbWorksToStacked }: Prop
               </p>
             ) : (
               <ul className="flex flex-col gap-2 list-none p-0 m-0" role="list">
-                {recommendations
-                  .filter((r) => !removedKeys.has(`${r.tmdbMediaType}-${r.tmdbId}`))
-                  .map((result) => {
-                    const key = `${result.tmdbMediaType}-${result.tmdbId}`;
-                    const isChecked = checkedKeys.has(key);
-                    return (
-                      <li key={key} className="flex flex-col gap-2">
+                {recommendations.map((result) => {
+                  const key = `${result.tmdbMediaType}-${result.tmdbId}`;
+                  const isChecked = checkedKeys.has(key);
+                  return (
+                    <li key={key} className="flex flex-col gap-2">
+                      {!isChecked && (
                         <TmdbWorkCard
                           result={result}
                           onAddToStacked={() => {
                             setCheckedKeys((prev) => new Set(prev).add(key));
-                            setRemovedKeys((prev) => new Set(prev).add(key));
                           }}
                         />
-                        {isChecked && (
-                          <button
-                            type="button"
-                            className="text-muted-foreground text-[0.85rem] hover:text-foreground transition-colors cursor-pointer text-center py-1"
-                            onClick={() => {
-                              setCheckedKeys((prev) => {
-                                const next = new Set(prev);
-                                next.delete(key);
-                                return next;
-                              });
-                              setRemovedKeys((prev) => {
-                                const next = new Set(prev);
-                                next.delete(key);
-                                return next;
-                              });
-                            }}
-                          >
-                            もとに戻す
-                          </button>
-                        )}
-                      </li>
-                    );
-                  })}
+                      )}
+                      {isChecked && (
+                        <button
+                          type="button"
+                          className="text-muted-foreground text-[0.85rem] hover:text-foreground transition-colors cursor-pointer text-center py-1"
+                          onClick={() => {
+                            setCheckedKeys((prev) => {
+                              const next = new Set(prev);
+                              next.delete(key);
+                              return next;
+                            });
+                          }}
+                        >
+                          もとに戻す
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>
