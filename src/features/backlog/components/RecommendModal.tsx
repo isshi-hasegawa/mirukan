@@ -1,133 +1,45 @@
 import { useEffect, useState } from "react";
-import {
-  FilmIcon,
-  TvIcon,
-  LightBulbIcon,
-  BoltIcon,
-  EyeIcon,
-  SparklesIcon,
-} from "@heroicons/react/24/outline";
-import { supabase } from "../../../lib/supabase.ts";
-import { fetchTmdbTrending } from "../../../lib/tmdb.ts";
+import { FilmIcon, TvIcon } from "@heroicons/react/24/outline";
+import { fetchMergedRecommendations } from "../../../lib/tmdb.ts";
 import type { TmdbSearchResult } from "../../../lib/tmdb.ts";
-import { applyModeFilter, type ViewingMode } from "../data.ts";
 import { platformLabels } from "../constants.ts";
-import { PosterImage } from "./PosterImage.tsx";
-import type { BacklogItem, WorkSummary } from "../types.ts";
-
-type ActiveTab = "trending" | ViewingMode;
-
-const MODES: {
-  id: ViewingMode;
-  label: string;
-  Icon: React.ComponentType<{ className: string }>;
-}[] = [
-  { id: "focus", label: "ガッツリ", Icon: FilmIcon },
-  { id: "thoughtful", label: "じっくり", Icon: LightBulbIcon },
-  { id: "quick", label: "サクッと", Icon: BoltIcon },
-  { id: "background", label: "ながら見", Icon: EyeIcon },
-];
-
-type SuggestionItem =
-  | { source: "backlog"; backlogItem: BacklogItem }
-  | { source: "global"; work: WorkSummary }
-  | { source: "trending"; result: TmdbSearchResult };
-
-function getSuggestionKey(item: SuggestionItem): string {
-  if (item.source === "backlog") return item.backlogItem.id;
-  if (item.source === "global") return item.work.id;
-  return `${item.result.tmdbMediaType}-${item.result.tmdbId}`;
-}
-
-function filterBacklogItems(items: BacklogItem[], mode: ViewingMode): SuggestionItem[] {
-  return items
-    .filter((item) => {
-      const work = item.works;
-      if (!work || work.source_type === "manual" || work.work_type === "season") return false;
-      return applyModeFilter(work, mode);
-    })
-    .sort(() => Math.random() - 0.5)
-    .slice(0, 2)
-    .map((item) => ({ source: "backlog" as const, backlogItem: item }));
-}
-
-async function fetchGlobalSuggestions(
-  mode: ViewingMode,
-  excludeWorkIds: string[],
-  limit: number,
-): Promise<SuggestionItem[]> {
-  let query = supabase
-    .from("works")
-    .select(
-      "id, title, work_type, source_type, tmdb_id, tmdb_media_type, original_title, overview, poster_path, release_date, runtime_minutes, typical_episode_runtime_minutes, duration_bucket, genres, season_count, season_number, focus_required_score, background_fit_score, completion_load_score",
-    )
-    .eq("source_type", "tmdb")
-    .neq("work_type", "season");
-
-  if (excludeWorkIds.length > 0) {
-    query = query.not("id", "in", `(${excludeWorkIds.join(",")})`);
-  }
-
-  const { data, error } = await query;
-  if (error || !data) return [];
-
-  return (data as WorkSummary[])
-    .filter((work) => applyModeFilter(work, mode))
-    .sort(() => Math.random() - 0.5)
-    .slice(0, limit)
-    .map((work) => ({ source: "global" as const, work }));
-}
+import type { BacklogItem } from "../types.ts";
 
 function RecommendItem({
-  item,
-  onMove,
+  result,
+  onAddToStacked,
 }: {
-  item: SuggestionItem;
-  onMove: (item: SuggestionItem) => void;
+  result: TmdbSearchResult;
+  onAddToStacked: (result: TmdbSearchResult) => void;
 }) {
-  const { title, posterPath, runtime, workType, jpWatchPlatforms } = (() => {
-    if (item.source === "trending") {
-      return {
-        title: item.result.title,
-        posterPath: item.result.posterPath,
-        runtime: null,
-        workType: item.result.workType,
-        jpWatchPlatforms: item.result.jpWatchPlatforms,
-      };
-    }
-    const work = item.source === "backlog" ? (item.backlogItem.works as WorkSummary) : item.work;
-    return {
-      title: work.title,
-      posterPath: work.poster_path,
-      runtime: work.work_type === "movie" ? (work.runtime_minutes ?? null) : null,
-      workType: work.work_type as "movie" | "series",
-      jpWatchPlatforms: [],
-    };
-  })();
-  const WorkTypeIcon = workType === "movie" ? FilmIcon : TvIcon;
+  const posterUrl = result.posterPath
+    ? `https://image.tmdb.org/t/p/w185${result.posterPath}`
+    : null;
 
   return (
-    <li className="recommend-item" onClick={() => onMove(item)}>
-      <div className="recommend-item-info">
-        <div className="recommend-item-thumb">
-          <PosterImage
-            posterPath={posterPath}
-            alt={title}
-            size="w92"
-            fallback={title.slice(0, 2)}
-            fallbackClassName="recommend-item-thumb-fallback"
-          />
-        </div>
-        <div className="recommend-item-meta">
-          <span className="recommend-item-title">{title}</span>
-          <span className="recommend-item-runtime">
-            <WorkTypeIcon className="work-type-icon" aria-hidden="true" />
-            {workType === "movie" ? "映画" : "シリーズ"}
-            {runtime != null && ` · ${runtime}分`}
+    <li className="recommend-item">
+      <div className="search-result-button recommend-item-info-card">
+        <span className="search-result-thumb">
+          {posterUrl ? (
+            <img src={posterUrl} alt={`${result.title} のポスター`} />
+          ) : (
+            <span className="search-result-thumb-fallback">{result.title.slice(0, 2)}</span>
+          )}
+        </span>
+        <span className="search-result-content">
+          <span className="search-result-title">{result.title}</span>
+          <span className="search-result-meta">
+            {result.workType === "movie" ? (
+              <FilmIcon className="work-type-icon" aria-hidden="true" />
+            ) : (
+              <TvIcon className="work-type-icon" aria-hidden="true" />
+            )}
+            {result.workType === "movie" ? "映画" : "シリーズ"}
+            {result.releaseDate && ` · ${result.releaseDate.slice(0, 4)}`}
           </span>
-          {jpWatchPlatforms.length > 0 && (
-            <span className="recommend-item-platforms">
-              {jpWatchPlatforms.map(({ key, logoPath }) => {
+          {result.jpWatchPlatforms.length > 0 && (
+            <span className="search-result-platforms">
+              {result.jpWatchPlatforms.map(({ key, logoPath }) => {
                 const label = platformLabels[key as keyof typeof platformLabels];
                 if (!label) return null;
                 return logoPath ? (
@@ -146,10 +58,15 @@ function RecommendItem({
               })}
             </span>
           )}
-        </div>
+          {result.overview && <span className="search-result-overview">{result.overview}</span>}
+        </span>
       </div>
-      <button type="button" className="recommend-item-move" title="見たい列に追加">
-        見る
+      <button
+        type="button"
+        className="recommend-item-action recommend-item-action-stack"
+        onClick={() => onAddToStacked(result)}
+      >
+        ストックに追加
       </button>
     </li>
   );
@@ -158,25 +75,12 @@ function RecommendItem({
 type Props = {
   items: BacklogItem[];
   onClose: () => void;
-  onMoveToWantToWatch: (itemId: string) => void;
-  onAddWorkToWantToWatch: (workId: string) => void;
-  onAddTmdbWorkToWantToWatch: (result: TmdbSearchResult) => Promise<void>;
+  onAddTmdbWorkToStacked: (result: TmdbSearchResult) => Promise<void>;
 };
 
-export function RecommendModal({
-  items,
-  onClose,
-  onMoveToWantToWatch,
-  onAddWorkToWantToWatch,
-  onAddTmdbWorkToWantToWatch,
-}: Props) {
-  const [activeTab, setActiveTab] = useState<ActiveTab>("trending");
-  const [globalSuggestions, setGlobalSuggestions] = useState<SuggestionItem[]>([]);
-  const [trendingResults, setTrendingResults] = useState<TmdbSearchResult[]>([]);
-
-  const stackedItems = items.filter((item) => item.status === "stacked");
-  const localSuggestions =
-    activeTab !== "trending" ? filterBacklogItems(stackedItems, activeTab) : [];
+export function RecommendModal({ items, onClose, onAddTmdbWorkToStacked }: Props) {
+  const [recommendations, setRecommendations] = useState<TmdbSearchResult[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const itemTmdbKeys = new Set(
@@ -184,72 +88,43 @@ export function RecommendModal({
         .filter((item) => item.works?.tmdb_id && item.works?.tmdb_media_type)
         .map((item) => `${item.works!.tmdb_media_type}-${item.works!.tmdb_id}`),
     );
-    fetchTmdbTrending()
+
+    const sourceItems = items
+      .filter(
+        (item) =>
+          (item.status === "watched" || item.status === "watching") &&
+          item.works?.tmdb_id != null &&
+          item.works?.source_type === "tmdb" &&
+          item.works?.work_type !== "season",
+      )
+      .sort((a, b) => {
+        if (a.status === "watched" && b.status !== "watched") return -1;
+        if (a.status !== "watched" && b.status === "watched") return 1;
+        return Math.random() - 0.5;
+      })
+      .slice(0, 5)
+      .map((item) => ({
+        tmdbId: item.works!.tmdb_id!,
+        tmdbMediaType: item.works!.tmdb_media_type as "movie" | "tv",
+      }));
+
+    setIsLoading(true);
+    fetchMergedRecommendations(sourceItems)
       .then((results) => {
-        setTrendingResults(
-          results.filter(
+        const filtered = results
+          .filter(
             (r) =>
               !itemTmdbKeys.has(`${r.tmdbMediaType}-${r.tmdbId}`) &&
               (r.workType === "series" || r.hasJapaneseRelease),
-          ),
-        );
+          )
+          .slice(0, 30);
+        setRecommendations(filtered);
       })
       .catch(() => {
         /* non-critical */
-      });
+      })
+      .finally(() => setIsLoading(false));
   }, []);
-
-  useEffect(() => {
-    if (activeTab === "trending") return;
-    const globalLimit = 4 - localSuggestions.length;
-    const excludeWorkIds = items
-      .map((item) => item.works?.id)
-      .filter((id): id is string => id !== undefined && id !== null);
-
-    void fetchGlobalSuggestions(activeTab, excludeWorkIds, globalLimit).then(setGlobalSuggestions);
-  }, [activeTab, localSuggestions.length, items]);
-
-  const suggestions = [...localSuggestions, ...globalSuggestions];
-
-  const handleMove = (item: SuggestionItem) => {
-    if (item.source === "backlog") {
-      onMoveToWantToWatch(item.backlogItem.id);
-    } else if (item.source === "global") {
-      onAddWorkToWantToWatch(item.work.id);
-    } else {
-      void onAddTmdbWorkToWantToWatch(item.result);
-    }
-  };
-
-  const renderResults = () => {
-    if (activeTab === "trending") {
-      const trendingSuggestions: SuggestionItem[] = trendingResults
-        .slice(0, 4)
-        .map((result) => ({ source: "trending" as const, result }));
-
-      if (trendingSuggestions.length === 0) {
-        return <p className="recommend-empty">トレンド情報を読み込み中...</p>;
-      }
-
-      return (
-        <ul className="recommend-item-list" role="list">
-          {trendingSuggestions.map((item) => (
-            <RecommendItem key={getSuggestionKey(item)} item={item} onMove={handleMove} />
-          ))}
-        </ul>
-      );
-    }
-
-    return suggestions.length === 0 ? (
-      <p className="recommend-empty">積みの中に該当する作品がありません</p>
-    ) : (
-      <ul className="recommend-item-list" role="list">
-        {suggestions.map((item) => (
-          <RecommendItem key={getSuggestionKey(item)} item={item} onMove={handleMove} />
-        ))}
-      </ul>
-    );
-  };
 
   return (
     <div
@@ -265,31 +140,33 @@ export function RecommendModal({
         aria-label="次何見る？"
       >
         <div className="recommend-modal-body">
-          <div className="recommend-filters">
-            <div className="recommend-modes">
-              <button
-                type="button"
-                className={`recommend-mode-button${activeTab === "trending" ? " is-active" : ""}`}
-                onClick={() => setActiveTab("trending")}
-              >
-                <SparklesIcon className="recommend-mode-icon" aria-hidden="true" />
-                <span className="recommend-mode-label">トレンド</span>
-              </button>
-              {MODES.map((mode) => (
-                <button
-                  key={mode.id}
-                  type="button"
-                  className={`recommend-mode-button${activeTab === mode.id ? " is-active" : ""}`}
-                  onClick={() => setActiveTab(mode.id)}
-                >
-                  <mode.Icon className="recommend-mode-icon" aria-hidden="true" />
-                  <span className="recommend-mode-label">{mode.label}</span>
-                </button>
-              ))}
-            </div>
+          <div className="recommend-results">
+            {isLoading ? (
+              <p className="recommend-empty">おすすめを読み込み中...</p>
+            ) : recommendations.length === 0 ? (
+              <p className="recommend-empty">おすすめが見つかりませんでした</p>
+            ) : (
+              <ul className="recommend-item-list" role="list">
+                {recommendations.map((result) => {
+                  const key = `${result.tmdbMediaType}-${result.tmdbId}`;
+                  const removeItem = () =>
+                    setRecommendations((prev) =>
+                      prev.filter((r) => `${r.tmdbMediaType}-${r.tmdbId}` !== key),
+                    );
+                  return (
+                    <RecommendItem
+                      key={key}
+                      result={result}
+                      onAddToStacked={async (r) => {
+                        await onAddTmdbWorkToStacked(r);
+                        removeItem();
+                      }}
+                    />
+                  );
+                })}
+              </ul>
+            )}
           </div>
-
-          <div className="recommend-results">{renderResults()}</div>
         </div>
       </section>
     </div>

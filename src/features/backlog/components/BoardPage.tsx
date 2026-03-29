@@ -153,37 +153,13 @@ export function BoardPage({ session }: Props) {
     await loadItems();
   };
 
-  const handleMoveToWantToWatch = async (itemId: string) => {
-    const sortOrder = getTopSortOrder(items, "want_to_watch");
-
-    const { error: updateError } = await supabase
-      .from("backlog_items")
-      .update({ status: "want_to_watch", sort_order: sortOrder })
-      .eq("id", itemId);
-
-    if (updateError) {
-      window.alert(`移動に失敗しました: ${updateError.message}`);
-      return;
-    }
-
-    setIsRecommendOpen(false);
-    await loadItems();
-
-    if (isMobileLayout) {
-      setSelectedTabStatus("want_to_watch");
-    } else {
-      const col = columnRefs.current["want_to_watch"];
-      col?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-    }
-  };
-
-  const handleAddWorkToWantToWatch = async (workId: string) => {
-    const sortOrder = getTopSortOrder(items, "want_to_watch");
+  const handleAddWorkToStacked = async (workId: string) => {
+    const sortOrder = getTopSortOrder(items, "stacked");
 
     const { error: insertError } = await supabase.from("backlog_items").insert({
       user_id: session.user.id,
       work_id: workId,
-      status: "want_to_watch",
+      status: "stacked",
       sort_order: sortOrder,
     });
 
@@ -192,24 +168,23 @@ export function BoardPage({ session }: Props) {
       return;
     }
 
-    setIsRecommendOpen(false);
     await loadItems();
 
     if (isMobileLayout) {
-      setSelectedTabStatus("want_to_watch");
+      setSelectedTabStatus("stacked");
     } else {
-      const col = columnRefs.current["want_to_watch"];
+      const col = columnRefs.current["stacked"];
       col?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
     }
   };
 
-  const handleAddTmdbWorkToWantToWatch = async (result: TmdbSearchResult) => {
+  const handleAddTmdbWorkToStacked = async (result: TmdbSearchResult) => {
     const { data, error } = await upsertTmdbWork(result, session.user.id);
     if (error || !data) {
       window.alert(`追加に失敗しました: ${error?.message ?? "不明なエラー"}`);
       return;
     }
-    await handleAddWorkToWantToWatch(data.id);
+    await handleAddWorkToStacked(data.id);
   };
 
   const handleOpenDetail = (itemId: string) => {
@@ -320,9 +295,7 @@ export function BoardPage({ session }: Props) {
         <RecommendModal
           items={items}
           onClose={() => setIsRecommendOpen(false)}
-          onMoveToWantToWatch={(itemId) => void handleMoveToWantToWatch(itemId)}
-          onAddWorkToWantToWatch={(workId) => void handleAddWorkToWantToWatch(workId)}
-          onAddTmdbWorkToWantToWatch={(result) => handleAddTmdbWorkToWantToWatch(result)}
+          onAddTmdbWorkToStacked={(result) => handleAddTmdbWorkToStacked(result)}
         />
       )}
 
@@ -333,6 +306,7 @@ export function BoardPage({ session }: Props) {
           session={session}
           onClose={() => setAddModalStatus(null)}
           onAdded={loadItems}
+          onAddToStacked={(result) => handleAddTmdbWorkToStacked(result)}
         />
       )}
 

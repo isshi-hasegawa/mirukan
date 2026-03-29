@@ -218,6 +218,7 @@ async function enrichWithWatchProviders(results: TmdbSearchResult[]): Promise<Tm
 
 const TRENDING_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 let trendingCache: { results: TmdbSearchResult[]; fetchedAt: number } | null = null;
+let similarCache: { results: TmdbSearchResult[]; fetchedAt: number } | null = null;
 
 function shuffleArray<T>(arr: T[]): T[] {
   const shuffled = [...arr];
@@ -274,6 +275,93 @@ async function fetchTrendingPage(page: number): Promise<TmdbSearchResult[]> {
       },
     ];
   });
+}
+
+async function fetchSimilarPage(
+  tmdbId: number,
+  mediaType: "movie" | "tv",
+): Promise<TmdbSearchResult[]> {
+  const url = new URL(`https://api.themoviedb.org/3/${mediaType}/${tmdbId}/similar`);
+  url.searchParams.set("api_key", env.tmdbApiKey);
+  url.searchParams.set("language", "ja-JP");
+  url.searchParams.set("page", "1");
+
+  const response = await fetch(url);
+  if (!response.ok) return [];
+
+  const json = (await response.json()) as TmdbMultiSearchResponse;
+
+  return json.results.flatMap((result): TmdbSearchResult[] => {
+    const title = mediaType === "movie" ? result.title : result.name;
+    if (!title) return [];
+
+    return [
+      {
+        tmdbId: result.id,
+        tmdbMediaType: mediaType,
+        workType: mediaType === "movie" ? "movie" : "series",
+        title,
+        originalTitle:
+          mediaType === "movie" ? (result.original_title ?? null) : (result.original_name ?? null),
+        overview: result.overview ?? null,
+        posterPath: result.poster_path ?? null,
+        releaseDate:
+          mediaType === "movie" ? (result.release_date ?? null) : (result.first_air_date ?? null),
+        jpWatchPlatforms: [],
+        hasJapaneseRelease: true,
+      },
+    ];
+  });
+}
+
+export async function fetchTmdbSimilar(
+  sourceItems: Array<{ tmdbId: number; tmdbMediaType: "movie" | "tv" }>,
+): Promise<TmdbSearchResult[]> {
+  if (similarCache && Date.now() - similarCache.fetchedAt < TRENDING_CACHE_TTL_MS) {
+    return shuffleArray(similarCache.results);
+  }
+
+  if (sourceItems.length === 0) {
+    return [];
+  }
+
+  const pages = await Promise.all(
+    sourceItems.slice(0, 5).map((item) => fetchSimilarPage(item.tmdbId, item.tmdbMediaType)),
+  );
+
+  const combined = pages.flat();
+  const seen = new Set<string>();
+  const deduped = combined.filter((item) => {
+    const key = `${item.tmdbMediaType}-${item.tmdbId}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  const results = await enrichWithWatchProviders(deduped.slice(0, 40));
+
+  similarCache = { results, fetchedAt: Date.now() };
+  return shuffleArray(results);
+}
+
+export async function fetchMergedRecommendations(
+  sourceItems: Array<{ tmdbId: number; tmdbMediaType: "movie" | "tv" }>,
+): Promise<TmdbSearchResult[]> {
+  const [trending, similar] = await Promise.all([
+    fetchTmdbTrending(),
+    fetchTmdbSimilar(sourceItems),
+  ]);
+
+  const combined = [...trending, ...similar];
+  const seen = new Set<string>();
+  const deduped = combined.filter((item) => {
+    const key = `${item.tmdbMediaType}-${item.tmdbId}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  return shuffleArray(deduped);
 }
 
 export async function fetchTmdbTrending(): Promise<TmdbSearchResult[]> {

@@ -18,9 +18,17 @@ type Props = {
   session: Session;
   onClose: () => void;
   onAdded: () => Promise<void>;
+  onAddToStacked?: (result: TmdbSearchResult) => Promise<void>;
 };
 
-export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Props) {
+export function AddModal({
+  defaultStatus,
+  items,
+  session,
+  onClose,
+  onAdded,
+  onAddToStacked,
+}: Props) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<TmdbSearchResult[]>([]);
   const [selectedTmdbResult, setSelectedTmdbResult] = useState<TmdbSearchResult | null>(null);
@@ -409,56 +417,69 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
                       ? `https://image.tmdb.org/t/p/w185${result.posterPath}`
                       : null;
                     return (
-                      <button
+                      <div
                         key={`${result.tmdbMediaType}-${result.tmdbId}`}
-                        className={`search-result-button${selectedTmdbResult?.tmdbId === result.tmdbId ? " is-selected" : ""}`}
-                        type="button"
-                        onClick={() => void handleSelectResult(result)}
+                        className="search-result-entry"
                       >
-                        <span className="search-result-thumb">
-                          {posterUrl ? (
-                            <img src={posterUrl} alt={`${result.title} のポスター`} />
-                          ) : (
-                            <span className="search-result-thumb-fallback">No Poster</span>
-                          )}
-                        </span>
-                        <span className="search-result-content">
-                          <span className="search-result-title">{result.title}</span>
-                          <span className="search-result-meta">
-                            {result.workType === "movie" ? (
-                              <FilmIcon className="work-type-icon" aria-hidden="true" />
+                        <button
+                          className={`search-result-button${selectedTmdbResult?.tmdbId === result.tmdbId ? " is-selected" : ""}`}
+                          type="button"
+                          onClick={() => void handleSelectResult(result)}
+                        >
+                          <span className="search-result-thumb">
+                            {posterUrl ? (
+                              <img src={posterUrl} alt={`${result.title} のポスター`} />
                             ) : (
-                              <TvIcon className="work-type-icon" aria-hidden="true" />
+                              <span className="search-result-thumb-fallback">No Poster</span>
                             )}
-                            {result.workType === "movie" ? "映画" : "シリーズ"}
-                            {result.releaseDate && ` · ${result.releaseDate.slice(0, 4)}`}
                           </span>
-                          {result.jpWatchPlatforms.length > 0 && (
-                            <span className="search-result-platforms">
-                              {result.jpWatchPlatforms.map(({ key, logoPath }) => {
-                                const label = platformLabels[key as keyof typeof platformLabels];
-                                if (!label) return null;
-                                return logoPath ? (
-                                  <img
-                                    key={key}
-                                    src={`https://image.tmdb.org/t/p/w45${logoPath}`}
-                                    alt={label}
-                                    title={label}
-                                    className="search-result-platform-logo"
-                                  />
-                                ) : (
-                                  <span key={key} className="search-result-platform-badge">
-                                    {label}
-                                  </span>
-                                );
-                              })}
+                          <span className="search-result-content">
+                            <span className="search-result-title">{result.title}</span>
+                            <span className="search-result-meta">
+                              {result.workType === "movie" ? (
+                                <FilmIcon className="work-type-icon" aria-hidden="true" />
+                              ) : (
+                                <TvIcon className="work-type-icon" aria-hidden="true" />
+                              )}
+                              {result.workType === "movie" ? "映画" : "シリーズ"}
+                              {result.releaseDate && ` · ${result.releaseDate.slice(0, 4)}`}
                             </span>
-                          )}
-                          {result.overview && (
-                            <span className="search-result-overview">{result.overview}</span>
-                          )}
-                        </span>
-                      </button>
+                            {result.jpWatchPlatforms.length > 0 && (
+                              <span className="search-result-platforms">
+                                {result.jpWatchPlatforms.map(({ key, logoPath }) => {
+                                  const label = platformLabels[key as keyof typeof platformLabels];
+                                  if (!label) return null;
+                                  return logoPath ? (
+                                    <img
+                                      key={key}
+                                      src={`https://image.tmdb.org/t/p/w45${logoPath}`}
+                                      alt={label}
+                                      title={label}
+                                      className="search-result-platform-logo"
+                                    />
+                                  ) : (
+                                    <span key={key} className="search-result-platform-badge">
+                                      {label}
+                                    </span>
+                                  );
+                                })}
+                              </span>
+                            )}
+                            {result.overview && (
+                              <span className="search-result-overview">{result.overview}</span>
+                            )}
+                          </span>
+                        </button>
+                        {onAddToStacked && (
+                          <button
+                            type="button"
+                            className="recommend-item-action recommend-item-action-stack"
+                            onClick={() => void onAddToStacked(result)}
+                          >
+                            ストックに追加
+                          </button>
+                        )}
+                      </div>
                     );
                   });
                 }
