@@ -254,8 +254,6 @@ h3 {
 }
 
 .ghost-button:focus-visible,
-.auth-form button:focus-visible,
-.primary-button:focus-visible,
 .primary-icon-button:focus-visible,
 .icon-button:focus-visible,
 .column-add-button:focus-visible {
@@ -263,8 +261,6 @@ h3 {
   outline-offset: 3px;
 }
 
-.auth-form button,
-.primary-button,
 .primary-icon-button,
 .ghost-button {
   border: none;
@@ -275,18 +271,6 @@ h3 {
     background-color 180ms ease,
     color 180ms ease,
     border-color 180ms ease;
-}
-
-.auth-form button,
-.primary-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 14px 18px;
-  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
-  color: white;
-  font-weight: 700;
 }
 
 .form-message {
@@ -404,10 +388,6 @@ h3 {
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.5);
   color: var(--text);
-}
-
-.primary-button {
-  padding: 10px 16px;
 }
 
 .primary-icon-button,
@@ -1387,8 +1367,7 @@ h3 {
   }
 
   .session-chip,
-  .ghost-button,
-  .primary-button {
+  .ghost-button {
     text-align: center;
     min-width: 0;
     white-space: normal;

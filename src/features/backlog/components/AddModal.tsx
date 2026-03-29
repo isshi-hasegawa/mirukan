@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button.tsx";
 import { DocumentTextIcon, FilmIcon, TvIcon } from "@heroicons/react/24/outline";
 import { TmdbWorkCard } from "./TmdbWorkCard.tsx";
 import type { Session } from "@supabase/supabase-js";
@@ -503,9 +504,7 @@ export function AddModal({
                   {formMessage}
                 </p>
               )}
-              <button className="primary-button" type="submit">
-                追加する
-              </button>
+              <Button type="submit">追加する</Button>
             </div>
           </div>
         </form>

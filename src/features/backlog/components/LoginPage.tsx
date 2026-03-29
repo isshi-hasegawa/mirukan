@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Button } from "@/components/ui/button.tsx";
 import { supabase } from "../../../lib/supabase.ts";
 
 export function LoginPage() {
@@ -70,7 +71,9 @@ export function LoginPage() {
               required
             />
           </label>
-          <button type="submit">ログインして backlog を見る</button>
+          <Button type="submit" className="w-full">
+            ログインして backlog を見る
+          </Button>
           <p className="form-message" aria-live="polite">
             {message}
           </p>
