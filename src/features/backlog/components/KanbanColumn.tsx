@@ -82,7 +82,7 @@ export function KanbanColumn({
         className="grid min-h-0 min-w-0 flex-1 content-start gap-[10px] overflow-y-auto [scrollbar-gutter:stable]"
         style={dropzoneStyle}
       >
-        <div className="grid content-start gap-[10px] pl-[14px] pr-[6px] max-[500px]:px-3 max-[400px]:px-2">
+        <div className="grid content-start gap-[10px] pl-[14px] pr-[4px] max-[500px]:px-3 max-[400px]:px-2">
           {items.length > 0 ? (
             items.map((item) => (
               <BacklogCard
