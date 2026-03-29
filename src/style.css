@@ -98,6 +98,16 @@
   box-sizing: border-box;
 }
 
+/* モバイルタブのスクロールバーを非表示 */
+.hide-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
 /* スクロールバーカスタマイズ */
 /* WebKit/Blink ブラウザ（Chrome, Safari, Edge） */
 ::-webkit-scrollbar {
