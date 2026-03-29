@@ -131,6 +131,8 @@ export function KanbanBoard({
   const touchStartX = useRef<number>(0);
   const touchStartY = useRef<number>(0);
   const currentIndex = statusOrder.indexOf(selectedTabStatus);
+  const tabContentRef = useRef<HTMLDivElement>(null);
+  const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (isMobileLayout && tabButtonRefs.current[selectedTabStatus]) {
@@ -141,6 +143,23 @@ export function KanbanBoard({
       });
     }
   }, [selectedTabStatus, isMobileLayout]);
+
+  useEffect(() => {
+    return () => {
+      if (scrollTimerRef.current !== null) clearTimeout(scrollTimerRef.current);
+    };
+  }, []);
+
+  const handleTabContentScroll = () => {
+    const el = tabContentRef.current;
+    if (!el) return;
+    el.classList.add("is-scrolling");
+    if (scrollTimerRef.current !== null) clearTimeout(scrollTimerRef.current);
+    scrollTimerRef.current = setTimeout(() => {
+      el.classList.remove("is-scrolling");
+      scrollTimerRef.current = null;
+    }, 1000);
+  };
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
@@ -200,7 +219,9 @@ export function KanbanBoard({
           ))}
         </nav>
         <div
+          ref={tabContentRef}
           className="board-tab-content"
+          onScroll={handleTabContentScroll}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >

@@ -1753,3 +1753,42 @@ h3 {
 .platform-picker-item[data-platform="apple_tv"] {
   background: #1d1d1f;
 }
+
+/* === スクロールバー (Google Tasks 風) === */
+/* scrollbar-width / scrollbar-color のみ使用。
+   ::-webkit-scrollbar を使うとカスタムモードに入りスペースが確保されてしまうため使わない。
+   macOS の Chrome / Safari 18+ はオーバーレイスクロールバーとして表示される。 */
+
+/* デスクトップ: ホバー時にバーを表示 */
+@media (hover: hover) {
+  .card-list,
+  .board,
+  .modal-form,
+  .search-results,
+  .recommend-modal-body,
+  .recommend-results {
+    scrollbar-gutter: stable;
+    scrollbar-color: transparent transparent;
+  }
+
+  .card-list:hover,
+  .board:hover,
+  .modal-form:hover,
+  .search-results:hover,
+  .recommend-modal-body:hover,
+  .recommend-results:hover {
+    scrollbar-color: rgba(92, 59, 35, 0.3) transparent;
+  }
+}
+
+/* モバイル: スクロール中にバーを表示 (is-scrolling クラスは JS で付与) */
+@media (hover: none) {
+  .board-tab-content {
+    scrollbar-gutter: stable;
+    scrollbar-color: transparent transparent;
+  }
+
+  .board-tab-content.is-scrolling {
+    scrollbar-color: rgba(92, 59, 35, 0.3) transparent;
+  }
+}
