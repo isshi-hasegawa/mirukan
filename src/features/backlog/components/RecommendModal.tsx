@@ -66,13 +66,16 @@ export function RecommendModal({ items, onClose, onAddTmdbWorkToStacked }: Props
       }}
     >
       <section
-        className="w-[min(calc(100%-48px),700px)] max-h-[min(88svh,920px)] border border-border rounded-[28px] bg-[#2a2a2a] shadow-[0_24px_60px_rgba(0,0,0,0.5)] p-6 flex flex-col overflow-hidden max-[720px]:p-5 max-[720px]:rounded-[22px]"
+        className="w-[min(calc(100%-48px),700px)] max-h-[min(92svh,1100px)] border border-border rounded-[28px] bg-[#2a2a2a] shadow-[0_24px_60px_rgba(0,0,0,0.5)] p-6 flex flex-col overflow-hidden max-[720px]:p-5 max-[720px]:rounded-[22px]"
         role="dialog"
         aria-modal="true"
         aria-label="次何見る？"
       >
-        <div className="flex flex-col gap-5 overflow-y-auto">
-          <div className="max-h-[60vh] overflow-y-auto">
+        <div className="flex flex-col gap-5 overflow-hidden">
+          <h2 className="text-xl font-semibold text-foreground">
+            あなたにおすすめの作品を追加しよう
+          </h2>
+          <div className="max-h-[80vh] overflow-y-auto">
             {isLoading ? (
               <p className="text-muted-foreground text-[0.9rem] p-0.5">おすすめを読み込み中...</p>
             ) : recommendations.length === 0 ? (
@@ -88,7 +91,7 @@ export function RecommendModal({ items, onClose, onAddTmdbWorkToStacked }: Props
                       prev.filter((r) => `${r.tmdbMediaType}-${r.tmdbId}` !== key),
                     );
                   return (
-                    <li key={key} className="flex items-center gap-3">
+                    <li key={key}>
                       <TmdbWorkCard
                         result={result}
                         onAddToStacked={async () => {

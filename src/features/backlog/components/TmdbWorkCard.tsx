@@ -1,8 +1,7 @@
-import { FilmIcon, TvIcon } from "@heroicons/react/24/outline";
+import { FilmIcon, TvIcon, CheckIcon } from "@heroicons/react/24/outline";
 import { siThemoviedatabase } from "simple-icons";
 import type { TmdbSearchResult } from "../../../lib/tmdb.ts";
 import { platformLabels } from "../constants.ts";
-import { Button } from "@/components/ui/button.tsx";
 
 type Props = {
   result: TmdbSearchResult;
@@ -16,8 +15,27 @@ export function TmdbWorkCard({ result, isSelected, onSelect, onAddToStacked }: P
     ? `https://image.tmdb.org/t/p/w185${result.posterPath}`
     : null;
 
+  const checkButton = onAddToStacked ? (
+    <button
+      type="button"
+      className="group shrink-0 w-6 h-6 rounded-full border-2 border-[rgba(255,255,255,0.3)] hover:border-[rgba(255,255,255,0.5)] flex items-center justify-center self-center transition-colors cursor-pointer"
+      aria-label="ストックに追加"
+      title="ストックに追加"
+      onClick={(e) => {
+        e.stopPropagation();
+        onAddToStacked();
+      }}
+    >
+      <CheckIcon
+        className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+        aria-hidden="true"
+      />
+    </button>
+  ) : null;
+
   const cardContent = (
     <>
+      {checkButton}
       <div
         className="overflow-hidden rounded-xl aspect-[2/3] border border-[rgba(92,59,35,0.08)] shrink-0 w-14"
         style={{
@@ -88,7 +106,7 @@ export function TmdbWorkCard({ result, isSelected, onSelect, onAddToStacked }: P
       href={tmdbHref}
       target="_blank"
       rel="noopener noreferrer"
-      className="absolute top-2 right-2 inline-flex items-center gap-[3px] px-1.5 py-[3px] rounded-full bg-white/90 text-muted-foreground no-underline z-10 hover:bg-[rgba(92,59,35,0.1)] focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-0.5"
+      className="absolute top-2 right-2 inline-flex items-center gap-[3px] px-1.5 py-[3px] rounded-full bg-white/90 text-[#5c3b23] no-underline z-10 hover:bg-white focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-0.5"
       aria-label="TMDbで作品を開く"
       title="TMDbで作品を開く"
       onClick={(e) => e.stopPropagation()}
@@ -102,42 +120,33 @@ export function TmdbWorkCard({ result, isSelected, onSelect, onAddToStacked }: P
     </a>
   );
 
-  return (
-    <>
-      {onSelect ? (
-        <div className="relative">
-          <button
-            className={`grid grid-cols-[56px_minmax(0,1fr)] gap-3 items-start w-full px-4 py-3.5 border rounded-2xl bg-[rgba(255,255,255,0.84)] text-foreground text-left cursor-pointer transition-[border-color,box-shadow] duration-150${
-              isSelected
-                ? " border-[rgba(191,90,54,0.45)] shadow-[inset_0_0_0_1px_rgba(191,90,54,0.2)]"
-                : " border-[rgba(92,59,35,0.1)]"
-            }`}
-            type="button"
-            onClick={onSelect}
-          >
-            {cardContent}
-          </button>
-          {tmdbLink}
-        </div>
-      ) : (
-        <div className="relative flex-1 min-w-0">
-          <div className="grid grid-cols-[56px_minmax(0,1fr)] gap-3 items-start w-full px-4 py-3.5 border border-[rgba(92,59,35,0.1)] rounded-2xl bg-[rgba(255,255,255,0.84)] text-foreground cursor-default">
-            {cardContent}
-          </div>
-          {tmdbLink}
-        </div>
-      )}
-      {onAddToStacked && (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="shrink-0 rounded-full text-[0.82rem] text-muted-foreground"
-          onClick={onAddToStacked}
-        >
-          ストックに追加
-        </Button>
-      )}
-    </>
+  const gridCols = onAddToStacked
+    ? "grid-cols-[24px_56px_minmax(0,1fr)]"
+    : "grid-cols-[56px_minmax(0,1fr)]";
+
+  return onSelect ? (
+    <div className="relative">
+      <button
+        className={`grid ${gridCols} gap-3 items-start w-full px-4 py-3.5 border rounded-2xl bg-[#353535] text-foreground text-left cursor-pointer transition-[border-color,box-shadow] duration-150${
+          isSelected
+            ? " border-[rgba(191,90,54,0.45)] shadow-[inset_0_0_0_1px_rgba(191,90,54,0.2)]"
+            : " border-[rgba(92,59,35,0.2)]"
+        }`}
+        type="button"
+        onClick={onSelect}
+      >
+        {cardContent}
+      </button>
+      {tmdbLink}
+    </div>
+  ) : (
+    <div className="relative w-full">
+      <div
+        className={`grid ${gridCols} gap-3 items-start w-full px-4 py-3.5 border border-[rgba(92,59,35,0.2)] rounded-2xl bg-[#353535] text-foreground cursor-default`}
+      >
+        {cardContent}
+      </div>
+      {tmdbLink}
+    </div>
   );
 }
