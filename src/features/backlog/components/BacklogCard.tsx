@@ -99,7 +99,7 @@ export function BacklogCard({
         setDragRef(node);
         setDropRef(node);
       }}
-      className="grid gap-[10px] pt-[18px] pr-11 pb-4 pl-4 rounded-[18px] bg-[var(--surface-strong)] border border-[rgba(92,59,35,0.08)] transition-[opacity,box-shadow,border-color] duration-[140ms] ease-[ease] relative cursor-grab active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-primary/45 focus-visible:border-primary/[0.18] focus-visible:shadow-[0_14px_32px_rgba(75,48,30,0.08)] hover:border-primary/[0.18] hover:shadow-[0_14px_32px_rgba(75,48,30,0.08)]"
+      className="relative grid w-full min-w-0 cursor-grab gap-[10px] rounded-[18px] border border-[rgba(92,59,35,0.08)] bg-[var(--surface-strong)] pt-[18px] pr-11 pb-4 pl-4 transition-[opacity,box-shadow,border-color] duration-[140ms] ease-[ease] active:cursor-grabbing hover:border-primary/[0.18] hover:shadow-[0_14px_32px_rgba(75,48,30,0.08)] focus-visible:outline-2 focus-visible:outline-primary/45 focus-visible:border-primary/[0.18] focus-visible:shadow-[0_14px_32px_rgba(75,48,30,0.08)]"
       style={{
         ...dropStyle,
         opacity: isDragging ? 0.4 : 1,

@@ -174,9 +174,9 @@ export function KanbanBoard({
 
   if (isMobileLayout) {
     return (
-      <section className="flex flex-col gap-0 mt-3 max-[500px]:mt-2 max-[400px]:mt-1.5 max-w-full">
+      <section className="mt-3 flex w-full min-w-0 flex-col gap-0 overflow-hidden max-w-full max-[500px]:mt-2 max-[400px]:mt-1.5">
         <nav
-          className="flex overflow-x-auto [scrollbar-width:none] gap-[6px] pb-[10px] [&::-webkit-scrollbar]:hidden max-[500px]:gap-1 max-[500px]:pb-2 max-[400px]:gap-0.5 max-[400px]:pb-1.5"
+          className="flex w-full min-w-0 max-w-full gap-[6px] overflow-x-auto pb-[10px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[500px]:gap-1 max-[500px]:pb-2 max-[400px]:gap-0.5 max-[400px]:pb-1.5"
           role="tablist"
           ref={tabsRef}
         >
@@ -214,7 +214,7 @@ export function KanbanBoard({
         </nav>
         <div
           ref={tabContentRef}
-          className="board-tab-content flex-1 w-full overflow-y-auto"
+          className="board-tab-content flex-1 w-full min-w-0 overflow-y-auto"
           onScroll={handleTabContentScroll}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
@@ -235,7 +235,7 @@ export function KanbanBoard({
   }
 
   return (
-    <section className="grid grid-cols-[repeat(5,minmax(240px,1fr))] gap-2 mt-3 overflow-x-auto pb-[6px] min-h-0 items-stretch max-w-full">
+    <section className="mt-3 grid min-w-0 max-w-full min-h-0 grid-cols-[repeat(5,minmax(240px,1fr))] items-stretch gap-2 overflow-x-auto pb-[6px]">
       {statusOrder.map((status) => (
         <KanbanColumn
           key={status}

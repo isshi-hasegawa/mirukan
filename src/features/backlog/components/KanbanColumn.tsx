@@ -46,11 +46,11 @@ export function KanbanColumn({
 
   return (
     <section
-      className="flex flex-col rounded-[24px] p-[14px] h-full min-h-0 border border-[var(--border)] bg-[var(--surface)] backdrop-blur-[20px] shadow-[var(--shadow)] max-[500px]:p-3 max-[500px]:rounded-[18px] max-[400px]:p-2 max-[400px]:rounded-[14px]"
+      className="flex h-full min-h-0 w-full min-w-0 flex-col rounded-[24px] border border-[var(--border)] bg-[var(--surface)] p-[14px] shadow-[var(--shadow)] backdrop-blur-[20px] max-[500px]:rounded-[18px] max-[500px]:p-3 max-[400px]:rounded-[14px] max-[400px]:p-2"
       data-column-status={status}
     >
       {extra}
-      <header className="flex justify-between gap-[10px] items-center pb-[10px] border-b border-[rgba(92,59,35,0.08)] max-[500px]:gap-2 max-[400px]:gap-1.5 max-[400px]:pb-2">
+      <header className="flex items-center justify-between gap-[10px] border-b border-[rgba(92,59,35,0.08)] pb-[10px] min-w-0 max-[500px]:gap-2 max-[400px]:gap-1.5 max-[400px]:pb-2">
         <div className="flex items-center gap-2 max-[500px]:gap-1.5 max-[400px]:gap-1 min-w-0 flex-1">
           <h2 className="max-[500px]:text-[0.95rem] max-[400px]:text-[0.875rem] truncate">
             {statusLabels[status]}
@@ -79,7 +79,7 @@ export function KanbanColumn({
       </header>
       <div
         ref={setNodeRef}
-        className="grid flex-1 content-start gap-[10px] mt-[10px] overflow-y-auto min-h-0"
+        className="mt-[10px] grid min-h-0 min-w-0 flex-1 content-start gap-[10px] overflow-y-auto"
         style={dropzoneStyle}
       >
         {items.length > 0 ? (
