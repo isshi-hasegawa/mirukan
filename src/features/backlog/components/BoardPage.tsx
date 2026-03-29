@@ -35,9 +35,9 @@ type DropIndicator =
 type Props = { session: Session };
 
 const shellBase =
-  "w-[min(1680px,calc(100%-20px))] mx-auto max-[720px]:w-[min(calc(100%-12px),1680px)]";
-const shellBoard = `${shellBase} grid grid-rows-[auto_minmax(0,1fr)] h-svh overflow-hidden pt-[14px] pb-3 max-[720px]:py-[10px]`;
-const shellSimple = `${shellBase} pt-[14px] pb-3 max-[720px]:py-[10px]`;
+  "w-full max-w-[1680px] mx-auto px-[10px] max-[720px]:px-[6px] max-[500px]:px-[4px] max-[400px]:px-[2px]";
+const shellBoard = `${shellBase} grid grid-rows-[auto_minmax(0,1fr)] h-svh overflow-hidden pt-[14px] pb-3 max-[720px]:py-[10px] max-[500px]:py-2 max-[400px]:py-1.5`;
+const shellSimple = `${shellBase} pt-[14px] pb-3 max-[720px]:py-[10px] max-[500px]:py-2 max-[400px]:py-1.5`;
 const headerCard =
   "border border-border bg-[rgba(28,28,28,0.95)] backdrop-blur-xl shadow-[0_24px_60px_rgba(0,0,0,0.5)] grid grid-cols-[1fr_auto] gap-4 items-center px-[18px] py-[14px] rounded-[28px] relative z-10 max-[720px]:rounded-[22px] max-[720px]:p-4";
 

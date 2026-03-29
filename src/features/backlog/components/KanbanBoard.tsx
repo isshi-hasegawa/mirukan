@@ -174,9 +174,9 @@ export function KanbanBoard({
 
   if (isMobileLayout) {
     return (
-      <section className="flex flex-col gap-0 mt-3">
+      <section className="flex flex-col gap-0 mt-3 max-[500px]:mt-2 max-[400px]:mt-1.5 max-w-full">
         <nav
-          className="flex overflow-x-auto [scrollbar-width:none] gap-[6px] pb-[10px] [&::-webkit-scrollbar]:hidden"
+          className="flex overflow-x-auto [scrollbar-width:none] gap-[6px] pb-[10px] [&::-webkit-scrollbar]:hidden max-[500px]:gap-1 max-[500px]:pb-2 max-[400px]:gap-0.5 max-[400px]:pb-1.5"
           role="tablist"
           ref={tabsRef}
         >
@@ -192,7 +192,7 @@ export function KanbanBoard({
                 role="tab"
                 aria-selected={isActive}
                 className={[
-                  "inline-flex items-center gap-[6px] px-[14px] py-2 border rounded-full text-[0.875rem] font-medium cursor-pointer whitespace-nowrap shrink-0 transition-[background,color,border-color] duration-[150ms]",
+                  "inline-flex items-center gap-[6px] px-[14px] py-2 border rounded-full text-[0.875rem] font-medium cursor-pointer whitespace-nowrap shrink-0 transition-[background,color,border-color] duration-[150ms] max-[500px]:px-3 max-[500px]:py-1.5 max-[500px]:text-[0.8rem] max-[500px]:gap-1.5 max-[400px]:px-2 max-[400px]:py-1 max-[400px]:text-[0.75rem] max-[400px]:gap-1",
                   isActive
                     ? "bg-primary text-white border-primary"
                     : "bg-[var(--surface)] text-[var(--text-muted)] border-[var(--border)]",
@@ -202,7 +202,7 @@ export function KanbanBoard({
                 {statusLabels[status]}
                 <span
                   className={[
-                    "inline-flex items-center justify-center min-w-[20px] px-[6px] py-[2px] rounded-full text-[0.75rem] font-bold",
+                    "inline-flex items-center justify-center min-w-[20px] px-[6px] py-[2px] rounded-full text-[0.75rem] font-bold max-[500px]:min-w-[18px] max-[500px]:px-1.5 max-[500px]:py-0.5 max-[500px]:text-[0.7rem] max-[400px]:min-w-[16px] max-[400px]:px-1 max-[400px]:py-0 max-[400px]:text-[0.65rem]",
                     isActive ? "bg-white/30 text-inherit" : "bg-primary/15 text-primary",
                   ].join(" ")}
                 >
@@ -235,7 +235,7 @@ export function KanbanBoard({
   }
 
   return (
-    <section className="grid grid-cols-[repeat(5,minmax(240px,1fr))] gap-2 mt-3 overflow-x-auto pb-[6px] min-h-0 items-stretch">
+    <section className="grid grid-cols-[repeat(5,minmax(240px,1fr))] gap-2 mt-3 overflow-x-auto pb-[6px] min-h-0 items-stretch max-w-full">
       {statusOrder.map((status) => (
         <KanbanColumn
           key={status}

@@ -98,6 +98,63 @@
   box-sizing: border-box;
 }
 
+/* スクロールバーカスタマイズ */
+/* WebKit/Blink ブラウザ（Chrome, Safari, Edge） */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent; /* トラック（白い枠）を透明に */
+}
+
+::-webkit-scrollbar-thumb {
+  background: transparent; /* デフォルトは非表示 */
+  border-radius: 4px;
+  transition: background 0.15s ease;
+}
+
+/* デスクトップ: ホバー時のみ表示 */
+@media (hover: hover) {
+  *:hover::-webkit-scrollbar-thumb {
+    background: rgba(255, 140, 66, 0.25);
+  }
+
+  *:hover::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 140, 66, 0.45);
+  }
+
+  *:hover::-webkit-scrollbar-thumb:active {
+    background: rgba(255, 140, 66, 0.6);
+  }
+}
+
+/* モバイル: スクロール中に自動表示（ネイティブ動作） */
+@media (hover: none) {
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 140, 66, 0.3);
+  }
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+@media (hover: hover) {
+  *:hover {
+    scrollbar-color: rgba(255, 140, 66, 0.25) transparent;
+  }
+}
+
+@media (hover: none) {
+  * {
+    scrollbar-color: rgba(255, 140, 66, 0.3) transparent;
+  }
+}
+
 html {
   background:
     radial-gradient(circle at top left, rgba(255, 140, 66, 0.12), transparent 35%),
