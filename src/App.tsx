@@ -23,13 +23,11 @@ export function App() {
 
   if (session === undefined) {
     return (
-      <main className="shell">
-        <section className="board-header">
-          <div>
-            <h1>読み込み中</h1>
-          </div>
-        </section>
-      </main>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-foreground">読み込み中</h1>
+        </div>
+      </div>
     );
   }
 
