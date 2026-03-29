@@ -60,25 +60,27 @@ export function RecommendModal({ items, onClose, onAddTmdbWorkToStacked }: Props
 
   return (
     <div
-      className="modal-backdrop"
+      className="fixed inset-0 z-10 grid place-items-center p-5 bg-[rgba(51,34,23,0.4)] backdrop-blur-[10px]"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <section
-        className="modal-card recommend-modal-card"
+        className="w-[min(calc(100%-48px),700px)] max-h-[min(88svh,920px)] border border-border rounded-[28px] bg-[#2a2a2a] shadow-[0_24px_60px_rgba(0,0,0,0.5)] p-6 flex flex-col overflow-hidden max-[720px]:p-5 max-[720px]:rounded-[22px]"
         role="dialog"
         aria-modal="true"
         aria-label="次何見る？"
       >
-        <div className="recommend-modal-body">
-          <div className="recommend-results">
+        <div className="flex flex-col gap-5 overflow-y-auto">
+          <div className="max-h-[60vh] overflow-y-auto">
             {isLoading ? (
-              <p className="recommend-empty">おすすめを読み込み中...</p>
+              <p className="text-muted-foreground text-[0.9rem] p-0.5">おすすめを読み込み中...</p>
             ) : recommendations.length === 0 ? (
-              <p className="recommend-empty">おすすめが見つかりませんでした</p>
+              <p className="text-muted-foreground text-[0.9rem] p-0.5">
+                おすすめが見つかりませんでした
+              </p>
             ) : (
-              <ul className="recommend-item-list" role="list">
+              <ul className="flex flex-col gap-2 list-none p-0 m-0" role="list">
                 {recommendations.map((result) => {
                   const key = `${result.tmdbMediaType}-${result.tmdbId}`;
                   const removeItem = () =>
@@ -86,7 +88,7 @@ export function RecommendModal({ items, onClose, onAddTmdbWorkToStacked }: Props
                       prev.filter((r) => `${r.tmdbMediaType}-${r.tmdbId}` !== key),
                     );
                   return (
-                    <li key={key} className="recommend-item">
+                    <li key={key} className="flex items-center gap-3">
                       <TmdbWorkCard
                         result={result}
                         onAddToStacked={async () => {

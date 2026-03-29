@@ -117,14 +117,34 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
     onStateChange({ ...state, editingField: null, draftValue: "", message: null });
   };
 
+  const handlePlatformSelect = async (value: string) => {
+    const platform = normalizePrimaryPlatform(value);
+    const { error } = await supabase
+      .from("backlog_items")
+      .update({ primary_platform: platform })
+      .eq("id", item.id);
+    if (error) {
+      onStateChange({ ...state, message: `更新に失敗しました: ${error.message}` });
+      return;
+    }
+    onUpdate({ ...item, primary_platform: platform });
+    onStateChange({ openItemId: item.id, editingField: null, draftValue: "", message: null });
+  };
+
   const renderNote = () => {
     const isEditing = state.editingField === "note";
 
     if (!isEditing) {
       return (
-        <button className="detail-note-field" type="button" onClick={() => startEditing("note")}>
-          <DocumentTextIcon className="detail-note-icon" />
-          <span className={`detail-note-text${item.note ? "" : " is-placeholder"}`}>
+        <button
+          className="flex items-start gap-2 w-full p-0 border-none bg-transparent text-foreground text-left cursor-pointer"
+          type="button"
+          onClick={() => startEditing("note")}
+        >
+          <DocumentTextIcon className="w-5 h-5 shrink-0 stroke-[1.5] text-muted-foreground mt-0.5" />
+          <span
+            className={`flex-1 leading-[1.6] whitespace-pre-wrap${item.note ? "" : " text-muted-foreground"}`}
+          >
             {item.note || "メモを追加"}
           </span>
         </button>
@@ -132,13 +152,13 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
     }
 
     return (
-      <div className="detail-note-editing">
-        <DocumentTextIcon className="detail-note-icon" />
+      <div className="flex items-start gap-2 w-full">
+        <DocumentTextIcon className="w-5 h-5 shrink-0 stroke-[1.5] text-muted-foreground mt-0.5" />
         <textarea
           ref={(el) => {
             inputRef.current = el;
           }}
-          className="detail-inline-control detail-inline-textarea"
+          className="w-full p-0 border-none bg-transparent text-foreground leading-[1.6] outline-none resize-none min-h-[108px] flex-1 placeholder:text-muted-foreground"
           placeholder="メモを追加"
           rows={5}
           maxLength={500}
@@ -160,30 +180,16 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
     );
   };
 
-  const handlePlatformSelect = async (value: string) => {
-    const platform = normalizePrimaryPlatform(value);
-    const { error } = await supabase
-      .from("backlog_items")
-      .update({ primary_platform: platform })
-      .eq("id", item.id);
-    if (error) {
-      onStateChange({ ...state, message: `更新に失敗しました: ${error.message}` });
-      return;
-    }
-    onUpdate({ ...item, primary_platform: platform });
-    onStateChange({ openItemId: item.id, editingField: null, draftValue: "", message: null });
-  };
-
   return (
     <div
-      className="modal-backdrop"
+      className="fixed inset-0 z-10 grid place-items-center p-5 bg-[rgba(51,34,23,0.4)] backdrop-blur-[10px]"
       id="detail-modal-backdrop"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <section
-        className="detail-modal-card"
+        className="relative w-full max-w-[860px] max-h-[min(88svh,920px)] border border-border rounded-[28px] bg-[#2a2a2a] shadow-[0_24px_60px_rgba(0,0,0,0.5)] p-6 flex flex-col overflow-hidden max-[720px]:p-5 max-[720px]:rounded-[22px]"
         role="dialog"
         aria-modal="true"
         aria-labelledby="detail-modal-title"
@@ -193,42 +199,58 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
             href={`https://www.themoviedb.org/${work.tmdb_media_type === "movie" ? "movie" : "tv"}/${work.tmdb_id}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="detail-tmdb-link"
+            className="absolute top-3.5 right-3.5 inline-flex items-center justify-center w-9 h-9 rounded-full text-muted-foreground no-underline hover:bg-[rgba(92,59,35,0.08)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             aria-label="TMDbで作品を開く"
             title="TMDbで作品を開く"
           >
             <svg
-              className="tmdb-icon"
+              className="w-[22px] h-[22px]"
               viewBox="0 0 24 24"
               dangerouslySetInnerHTML={{ __html: siThemoviedatabase.svg }}
               aria-hidden="true"
             />
           </a>
         )}
-        <div className="detail-modal-body">
-          <div className="detail-poster">
+        <div className="grid grid-cols-[minmax(200px,260px)_minmax(0,1fr)] grid-rows-[auto_1fr] gap-x-6 gap-y-3.5 overflow-y-auto pr-1 flex-1 min-h-0 max-[720px]:grid-cols-[72px_1fr] max-[720px]:grid-rows-[auto_auto] max-[720px]:gap-y-4">
+          <div
+            className="sticky top-0 self-start row-span-full overflow-hidden rounded-3xl aspect-[2/3] border border-[rgba(92,59,35,0.08)] max-[720px]:static max-[720px]:col-[1] max-[720px]:row-[1] max-[720px]:rounded-xl"
+            style={{
+              background:
+                "radial-gradient(circle at top left, rgba(255,208,143,0.42), transparent 36%), linear-gradient(180deg, rgba(191,90,54,0.14), rgba(92,59,35,0.08))",
+            }}
+          >
             <PosterImage
               posterPath={work.poster_path}
               alt={`${title} のポスター`}
               size="w500"
-              fallbackClassName="detail-poster-fallback"
+              className="block w-full h-full object-cover"
+              fallbackClassName="w-full h-full grid place-items-center p-6 text-muted-foreground text-[1.1rem] tracking-[0.04em]"
             />
           </div>
-          <div className="detail-title-area">
-            <h2 id="detail-modal-title">{title}</h2>
-            <p className="detail-meta">
-              <WorkTypeIcon className="work-type-icon" aria-hidden="true" />
+          <div className="grid gap-1.5 content-start max-[720px]:col-[2] max-[720px]:row-[1]">
+            <h2
+              id="detail-modal-title"
+              className="text-[clamp(1.6rem,3vw,2.4rem)] max-[720px]:text-[1.1rem]"
+            >
+              {title}
+            </h2>
+            <p className="flex items-center gap-1 text-muted-foreground text-[0.95rem]">
+              <WorkTypeIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
               {workTypeLabel}
               {metadataRest.length > 0 && ` · ${metadataRest.join(" · ")}`}
             </p>
           </div>
-          <div className="detail-fields">
-            <div className="detail-status-picker">
+          <div className="grid gap-3.5 content-start max-[720px]:col-[1/-1] max-[720px]:row-[2]">
+            <div className="flex flex-wrap gap-1.5 mb-3">
               {statusOrder.map((s) => (
                 <button
                   key={s}
                   type="button"
-                  className={`detail-status-btn${item.status === s ? " is-active" : ""}`}
+                  className={`px-3 py-1 border rounded-[20px] text-[0.88rem] cursor-pointer transition-[background,color,border-color] duration-150${
+                    item.status === s
+                      ? " bg-primary border-primary text-primary-foreground font-semibold"
+                      : " border-[rgba(92,59,35,0.2)] bg-transparent text-muted-foreground hover:bg-[rgba(92,59,35,0.08)] hover:text-foreground"
+                  }`}
                   onClick={() => void handleStatusSelect(s)}
                 >
                   {statusLabels[s]}
@@ -242,7 +264,7 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
             {renderNote()}
 
             {state.message && (
-              <p className="form-message" aria-live="polite">
+              <p className="text-muted-foreground text-sm" aria-live="polite">
                 {state.message}
               </p>
             )}

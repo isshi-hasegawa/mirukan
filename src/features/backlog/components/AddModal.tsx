@@ -262,28 +262,48 @@ export function AddModal({
     await onAdded();
   };
 
+  const statusBtnClass = (active: boolean) =>
+    `px-3 py-1 border rounded-[20px] text-[0.88rem] cursor-pointer transition-[background,color,border-color] duration-150${
+      active
+        ? " bg-primary border-primary text-primary-foreground font-semibold"
+        : " border-[rgba(92,59,35,0.2)] bg-transparent text-muted-foreground hover:bg-[rgba(92,59,35,0.08)] hover:text-foreground"
+    }`;
+
+  const seasonBtnClass = (active: boolean) =>
+    `inline-flex items-center gap-1.5 px-3.5 py-2.5 border rounded-full text-[0.88rem] cursor-pointer transition-[background,color,border-color,box-shadow] duration-150${
+      active
+        ? " border-[rgba(191,90,54,0.45)] shadow-[inset_0_0_0_1px_rgba(191,90,54,0.2)] bg-transparent text-foreground"
+        : " border-[rgba(92,59,35,0.12)] bg-[rgba(255,255,255,0.84)] text-foreground"
+    }`;
+
   return (
     <div
-      className="modal-backdrop"
+      className="fixed inset-0 z-10 grid place-items-center p-5 bg-[rgba(51,34,23,0.4)] backdrop-blur-[10px]"
       id="add-modal-backdrop"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <section className="modal-card" role="dialog" aria-modal="true" aria-label="作品を追加">
+      <section
+        className="w-[min(calc(100%-48px),960px)] min-h-[520px] max-h-[min(88svh,920px)] border border-border rounded-[28px] bg-[#2a2a2a] shadow-[0_24px_60px_rgba(0,0,0,0.5)] p-6 flex flex-col overflow-hidden max-[720px]:w-[min(100%,560px)] max-[720px]:p-5 max-[720px]:rounded-[22px]"
+        role="dialog"
+        aria-modal="true"
+        aria-label="作品を追加"
+      >
         <form
-          className="modal-form"
+          className="grid grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] gap-x-6 flex-1 min-h-0 overflow-hidden overflow-y-auto pr-1 max-[720px]:grid-cols-1 max-[720px]:overflow-x-hidden"
           onSubmit={(e) => {
             void handleSubmit(e);
           }}
         >
-          <div className="search-panel">
-            <div className="search-row">
+          <div className="grid gap-3.5 p-4 overflow-y-auto content-start rounded-[20px] bg-[rgba(191,90,54,0.06)] max-[720px]:overflow-y-visible">
+            <div>
               <input
                 ref={searchInputRef}
                 type="text"
                 placeholder="作品名で検索"
                 value={searchQuery}
+                className="w-full border-0 border-b border-[rgba(90,58,36,0.12)] bg-transparent py-3 outline-none"
                 onCompositionStart={() => {
                   isComposingRef.current = true;
                 }}
@@ -311,25 +331,23 @@ export function AddModal({
             </div>
 
             {selectedTmdbResult && (
-              <div className="selected-result">
-                <p className="selected-result-label">選択中</p>
-                <p className="selected-result-title">
-                  {selectedTmdbTarget?.title ?? selectedTmdbResult.title}
-                </p>
-                <p className="selected-result-meta">
+              <div className="grid gap-1 p-3 rounded-2xl bg-[rgba(255,255,255,0.68)]">
+                <p className="text-muted-foreground text-[0.88rem]">選択中</p>
+                <p className="font-bold">{selectedTmdbTarget?.title ?? selectedTmdbResult.title}</p>
+                <p className="flex items-center gap-1 text-muted-foreground text-[0.88rem]">
                   {selectedTmdbTarget?.workType === "season" ? (
                     <>
-                      <TvIcon className="work-type-icon" aria-hidden="true" />
+                      <TvIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
                       シーズン
                     </>
                   ) : selectedTmdbResult.workType === "movie" ? (
                     <>
-                      <FilmIcon className="work-type-icon" aria-hidden="true" />
+                      <FilmIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
                       映画
                     </>
                   ) : (
                     <>
-                      <TvIcon className="work-type-icon" aria-hidden="true" />
+                      <TvIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
                       シリーズ
                     </>
                   )}
@@ -338,15 +356,19 @@ export function AddModal({
                   {(selectedTmdbTarget?.releaseDate ?? selectedTmdbResult.releaseDate) &&
                     ` · ${(selectedTmdbTarget?.releaseDate ?? selectedTmdbResult.releaseDate)!.slice(0, 4)}`}
                 </p>
-                {duplicateNotice && <p className="duplicate-notice">{duplicateNotice}</p>}
+                {duplicateNotice && (
+                  <p className="text-[0.82rem] text-muted-foreground px-2 py-1 rounded-lg bg-[rgba(0,0,0,0.08)]">
+                    {duplicateNotice}
+                  </p>
+                )}
               </div>
             )}
 
             {selectedTmdbResult?.tmdbMediaType === "tv" && (
-              <div className="season-picker">
-                <div className="season-option-list">
+              <div className="grid gap-2.5">
+                <div className="flex flex-wrap gap-2.5">
                   <button
-                    className={`season-option-button${selectedTmdbTarget?.workType !== "season" ? " is-selected" : ""}`}
+                    className={seasonBtnClass(selectedTmdbTarget?.workType !== "season")}
                     type="button"
                     onClick={() => {
                       if (selectedTmdbResult) {
@@ -361,12 +383,10 @@ export function AddModal({
                     ? seasonOptions.map((season) => (
                         <button
                           key={season.seasonNumber}
-                          className={`season-option-button${
+                          className={seasonBtnClass(
                             selectedTmdbTarget?.workType === "season" &&
-                            selectedTmdbTarget.seasonNumber === season.seasonNumber
-                              ? " is-selected"
-                              : ""
-                          }`}
+                              selectedTmdbTarget.seasonNumber === season.seasonNumber,
+                          )}
                           type="button"
                           onClick={() => {
                             if (selectedTmdbResult?.tmdbMediaType !== "tv") return;
@@ -388,15 +408,21 @@ export function AddModal({
                           }}
                         >
                           シーズン{season.seasonNumber}
-                          {season.episodeCount && <span>{season.episodeCount}話</span>}
+                          {season.episodeCount && (
+                            <span className="text-muted-foreground text-[0.8rem]">
+                              {season.episodeCount}話
+                            </span>
+                          )}
                         </button>
                       ))
                     : isLoadingSeasons && (
-                        <p className="search-message">シーズン一覧を読み込んでいます...</p>
+                        <p className="text-muted-foreground text-[0.88rem]">
+                          シーズン一覧を読み込んでいます...
+                        </p>
                       )}
                   {seasonOptions.length > 0 && (
                     <button
-                      className="season-option-button season-option-button--all"
+                      className={seasonBtnClass(false)}
                       type="button"
                       onClick={() => {
                         if (!selectedTmdbResult) return;
@@ -410,14 +436,14 @@ export function AddModal({
               </div>
             )}
 
-            <div className="search-results">
+            <div className="grid gap-2.5 overflow-y-auto pr-1 max-[720px]:max-h-[min(32svh,280px)]">
               {(() => {
                 const displayResults = searchQuery.trim() === "" ? trendingResults : searchResults;
                 if (displayResults.length > 0) {
                   return displayResults.map((result) => (
                     <div
                       key={`${result.tmdbMediaType}-${result.tmdbId}`}
-                      className="search-result-entry"
+                      className="flex items-center gap-2 [&>*:first-child]:flex-1"
                     >
                       <TmdbWorkCard
                         result={result}
@@ -430,12 +456,16 @@ export function AddModal({
                     </div>
                   ));
                 }
-                return searchMessage && <p className="search-message">{searchMessage}</p>;
+                return (
+                  searchMessage && (
+                    <p className="text-muted-foreground text-[0.88rem]">{searchMessage}</p>
+                  )
+                );
               })()}
             </div>
           </div>
 
-          <div className="modal-detail-fields">
+          <div className="flex flex-col gap-4 overflow-y-auto pr-1 max-[720px]:overflow-y-visible">
             <input
               name="title"
               type="text"
@@ -444,6 +474,7 @@ export function AddModal({
               maxLength={120}
               value={resolvedTitle}
               readOnly={!!selectedTmdbResult}
+              className="w-full border-0 border-b border-[rgba(90,58,36,0.12)] bg-transparent py-3 outline-none"
               onChange={(e) => {
                 if (!selectedTmdbResult) {
                   setManualTitle(e.target.value);
@@ -451,35 +482,41 @@ export function AddModal({
               }}
               required
             />
-            <div className="detail-status-picker" role="group" aria-label="種別">
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label="種別">
               {(["movie", "series"] as const).map((t) => (
                 <button
                   key={t}
                   type="button"
-                  className={`detail-status-btn${resolvedWorkType === t ? " is-active" : ""}`}
+                  className={statusBtnClass(resolvedWorkType === t)}
                   disabled={!!selectedTmdbResult}
                   onClick={() => setWorkType(t)}
                 >
                   {t === "movie" ? (
                     <>
-                      <FilmIcon className="work-type-icon" aria-hidden="true" />
+                      <FilmIcon
+                        className="w-4 h-4 inline-block align-middle mr-1 shrink-0"
+                        aria-hidden="true"
+                      />
                       映画
                     </>
                   ) : (
                     <>
-                      <TvIcon className="work-type-icon" aria-hidden="true" />
+                      <TvIcon
+                        className="w-4 h-4 inline-block align-middle mr-1 shrink-0"
+                        aria-hidden="true"
+                      />
                       シリーズ
                     </>
                   )}
                 </button>
               ))}
             </div>
-            <div className="detail-status-picker" role="group" aria-label="保存先列">
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label="保存先列">
               {statusOrder.map((s) => (
                 <button
                   key={s}
                   type="button"
-                  className={`detail-status-btn${status === s ? " is-active" : ""}`}
+                  className={statusBtnClass(status === s)}
                   onClick={() => setStatus(s)}
                 >
                   {statusLabels[s]}
@@ -487,20 +524,20 @@ export function AddModal({
               ))}
             </div>
             <PlatformPicker value={primaryPlatform} onChange={setPrimaryPlatform} />
-            <div className="detail-note-editing">
-              <DocumentTextIcon className="detail-note-icon" />
+            <div className="flex items-start gap-2 w-full">
+              <DocumentTextIcon className="w-5 h-5 shrink-0 stroke-[1.5] text-muted-foreground mt-0.5" />
               <textarea
                 name="note"
-                className="detail-inline-control detail-inline-textarea"
+                className="w-full p-0 border-none bg-transparent text-foreground leading-[1.6] outline-none resize-none min-h-[60px] flex-1 placeholder:text-muted-foreground"
                 placeholder="メモを追加"
                 maxLength={500}
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
               />
             </div>
-            <div className="modal-detail-submit">
+            <div className="flex justify-end items-center gap-3 mt-auto pt-2 max-[720px]:mt-0">
               {formMessage && (
-                <p className="form-message" aria-live="polite">
+                <p className="text-muted-foreground text-sm" aria-live="polite">
                   {formMessage}
                 </p>
               )}

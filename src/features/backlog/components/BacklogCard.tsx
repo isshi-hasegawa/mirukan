@@ -286,13 +286,13 @@ export function BacklogCard({
             <PosterImage
               posterPath={work.poster_path}
               alt={`${title} のポスター`}
-              fallbackClassName="card-thumb-fallback"
+              fallbackClassName="w-full h-full grid place-items-center p-2 text-muted-foreground text-[0.68rem] text-center leading-[1.3]"
             />
           </div>
         </div>
         <div className="grid gap-2 min-w-0">
           <p className="text-[1rem] font-bold">{title}</p>
-          <p className="card-meta">
+          <p className="text-muted-foreground text-[0.9rem]">
             <WorkTypeIcon
               className="w-[14px] h-[14px] inline-block align-[-2px] mr-[3px] shrink-0"
               aria-hidden="true"
@@ -300,7 +300,7 @@ export function BacklogCard({
             {workTypeLabel}
             {metadataRest.length > 0 && ` · ${metadataRest.join(" · ")}`}
           </p>
-          {item.note && <p className="card-note">{item.note}</p>}
+          {item.note && <p className="text-muted-foreground text-[0.9rem]">{item.note}</p>}
         </div>
       </div>
     </article>

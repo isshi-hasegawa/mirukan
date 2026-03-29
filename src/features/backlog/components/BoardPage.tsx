@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { Button } from "@/components/ui/button.tsx";
 import { supabase } from "../../../lib/supabase.ts";
 import {
   getSortOrderForDrop,
@@ -22,6 +23,13 @@ type DropIndicator =
   | { type: "column"; status: BacklogStatus };
 
 type Props = { session: Session };
+
+const shellBase =
+  "w-[min(1680px,calc(100%-20px))] mx-auto max-[720px]:w-[min(calc(100%-12px),1680px)]";
+const shellBoard = `${shellBase} grid grid-rows-[auto_minmax(0,1fr)] h-svh overflow-hidden pt-[14px] pb-3 max-[720px]:py-[10px]`;
+const shellSimple = `${shellBase} pt-[14px] pb-3 max-[720px]:py-[10px]`;
+const headerCard =
+  "border border-border bg-[rgba(28,28,28,0.95)] backdrop-blur-xl shadow-[0_24px_60px_rgba(0,0,0,0.5)] grid grid-cols-[1fr_auto] gap-4 items-center px-[18px] py-[14px] rounded-[28px] relative z-10 max-[720px]:rounded-[22px] max-[720px]:p-4";
 
 export function BoardPage({ session }: Props) {
   const [items, setItems] = useState<BacklogItem[]>([]);
@@ -124,7 +132,6 @@ export function BoardPage({ session }: Props) {
       return;
     }
 
-    setOpenMenuId(null);
     if (detailModal.openItemId === itemId) {
       setDetailModal({ openItemId: null, editingField: null, draftValue: "", message: null });
     }
@@ -144,7 +151,6 @@ export function BoardPage({ session }: Props) {
       return;
     }
 
-    setOpenMenuId(null);
     await loadItems();
   };
 
@@ -183,7 +189,6 @@ export function BoardPage({ session }: Props) {
   };
 
   const handleOpenDetail = (itemId: string) => {
-    setOpenMenuId(null);
     setDetailModal({ openItemId: itemId, editingField: null, draftValue: "", message: null });
   };
 
@@ -197,11 +202,13 @@ export function BoardPage({ session }: Props) {
 
   if (isLoading) {
     return (
-      <main className="shell">
-        <section className="board-header">
+      <main className={shellSimple}>
+        <section className={headerCard}>
           <div>
             <h1>backlog を読み込んでいます。</h1>
-            <p className="lead">ローカル Supabase の seed データを取得中です。</p>
+            <p className="mt-[18px] max-w-[58ch] text-muted-foreground text-[1.02rem]">
+              ローカル Supabase の seed データを取得中です。
+            </p>
           </div>
         </section>
       </main>
@@ -210,19 +217,20 @@ export function BoardPage({ session }: Props) {
 
   if (error) {
     return (
-      <main className="shell">
-        <section className="board-header">
+      <main className={shellSimple}>
+        <section className={headerCard}>
           <div>
             <h1>backlog の取得でつまずいています。</h1>
-            <p className="lead">{error}</p>
+            <p className="mt-[18px] max-w-[58ch] text-muted-foreground text-[1.02rem]">{error}</p>
           </div>
-          <button
-            className="ghost-button"
+          <Button
+            variant="outline"
+            className="rounded-full"
             type="button"
             onClick={() => void supabase.auth.signOut()}
           >
             ログアウト
-          </button>
+          </Button>
         </section>
       </main>
     );
@@ -233,7 +241,7 @@ export function BoardPage({ session }: Props) {
     : null;
 
   return (
-    <main className="shell">
+    <main className={shellBoard}>
       <Header session={session} onOpenRecommend={() => setIsRecommendOpen(true)} />
 
       <KanbanBoard
@@ -260,7 +268,7 @@ export function BoardPage({ session }: Props) {
       {isMobileLayout && addModalStatus === null && (
         <button
           type="button"
-          className="fab"
+          className="fixed bottom-6 right-5 w-14 h-14 rounded-full bg-primary text-primary-foreground border-none shadow-[0_4px_16px_rgba(191,90,54,0.45)] cursor-pointer flex items-center justify-center z-[100] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 transition-[background,box-shadow] duration-150"
           aria-label="作品を追加"
           onClick={() => setAddModalStatus(selectedTabStatus)}
         >

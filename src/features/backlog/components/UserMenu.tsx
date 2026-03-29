@@ -1,56 +1,32 @@
-import { useEffect, useRef, useState } from "react";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { supabase } from "../../../lib/supabase.ts";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu.tsx";
 
 type Props = {
   email: string | null | undefined;
 };
 
 export function UserMenu({ email }: Props) {
-  const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener("click", handleClickOutside);
-      return () => document.removeEventListener("click", handleClickOutside);
-    }
-  }, [isOpen]);
-
   return (
-    <div className="user-menu-wrapper" ref={menuRef}>
-      <button
-        className="user-menu-trigger"
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        aria-expanded={isOpen}
-        aria-haspopup="menu"
-      >
-        <span className="user-email">{email ?? "signed-in user"}</span>
-        <ChevronDownIcon className="chevron-icon" />
-      </button>
-
-      {isOpen && (
-        <div className="user-menu-dropdown" role="menu">
-          <button
-            className="user-menu-item"
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              setIsOpen(false);
-              void supabase.auth.signOut();
-            }}
-          >
-            ログアウト
-          </button>
-        </div>
-      )}
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-primary/[0.08] text-foreground border-none cursor-pointer hover:bg-[#2a2a2a] transition-colors focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2">
+        <span className="text-sm whitespace-nowrap">{email ?? "signed-in user"}</span>
+        <ChevronDownIcon className="w-4 h-4 transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem
+          onClick={() => {
+            void supabase.auth.signOut();
+          }}
+        >
+          ログアウト
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

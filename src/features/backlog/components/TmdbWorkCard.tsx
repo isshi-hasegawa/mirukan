@@ -2,6 +2,7 @@ import { FilmIcon, TvIcon } from "@heroicons/react/24/outline";
 import { siThemoviedatabase } from "simple-icons";
 import type { TmdbSearchResult } from "../../../lib/tmdb.ts";
 import { platformLabels } from "../constants.ts";
+import { Button } from "@/components/ui/button.tsx";
 
 type Props = {
   result: TmdbSearchResult;
@@ -17,26 +18,38 @@ export function TmdbWorkCard({ result, isSelected, onSelect, onAddToStacked }: P
 
   const cardContent = (
     <>
-      <span className="search-result-thumb">
+      <div
+        className="overflow-hidden rounded-xl aspect-[2/3] border border-[rgba(92,59,35,0.08)] shrink-0 w-14"
+        style={{
+          background:
+            "radial-gradient(circle at top left, rgba(255,208,143,0.42), transparent 36%), linear-gradient(180deg, rgba(191,90,54,0.14), rgba(92,59,35,0.08))",
+        }}
+      >
         {posterUrl ? (
-          <img src={posterUrl} alt={`${result.title} のポスター`} />
+          <img
+            src={posterUrl}
+            alt={`${result.title} のポスター`}
+            className="w-full h-full object-cover block"
+          />
         ) : (
-          <span className="search-result-thumb-fallback">No Poster</span>
+          <div className="w-full h-full grid place-items-center p-1.5 text-muted-foreground text-[0.62rem] text-center leading-[1.3]">
+            No Poster
+          </div>
         )}
-      </span>
-      <span className="search-result-content">
-        <span className="search-result-title">{result.title}</span>
-        <span className="search-result-meta">
+      </div>
+      <div className="grid gap-1 min-w-0">
+        <span className="font-bold">{result.title}</span>
+        <span className="flex items-center gap-1 text-muted-foreground text-[0.88rem]">
           {result.workType === "movie" ? (
-            <FilmIcon className="work-type-icon" aria-hidden="true" />
+            <FilmIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
           ) : (
-            <TvIcon className="work-type-icon" aria-hidden="true" />
+            <TvIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
           )}
           {result.workType === "movie" ? "映画" : "シリーズ"}
           {result.releaseDate && ` · ${result.releaseDate.slice(0, 4)}`}
         </span>
         {result.jpWatchPlatforms.length > 0 && (
-          <span className="search-result-platforms">
+          <span className="flex flex-wrap gap-1">
             {result.jpWatchPlatforms.map(({ key, logoPath }) => {
               const label = platformLabels[key as keyof typeof platformLabels];
               if (!label) return null;
@@ -46,18 +59,25 @@ export function TmdbWorkCard({ result, isSelected, onSelect, onAddToStacked }: P
                   src={`https://image.tmdb.org/t/p/w45${logoPath}`}
                   alt={label}
                   title={label}
-                  className="search-result-platform-logo"
+                  className="w-5 h-5 rounded-[4px] object-cover shrink-0"
                 />
               ) : (
-                <span key={key} className="search-result-platform-badge">
+                <span
+                  key={key}
+                  className="inline-block px-[7px] py-[1px] rounded-full text-[0.78rem] bg-black/[0.07] text-muted-foreground whitespace-nowrap"
+                >
                   {label}
                 </span>
               );
             })}
           </span>
         )}
-        {result.overview && <span className="search-result-overview">{result.overview}</span>}
-      </span>
+        {result.overview && (
+          <span className="text-muted-foreground text-[0.88rem] [-webkit-box-orient:vertical] [-webkit-line-clamp:3] [display:-webkit-box] overflow-hidden">
+            {result.overview}
+          </span>
+        )}
+      </div>
     </>
   );
 
@@ -68,13 +88,13 @@ export function TmdbWorkCard({ result, isSelected, onSelect, onAddToStacked }: P
       href={tmdbHref}
       target="_blank"
       rel="noopener noreferrer"
-      className="tmdb-work-card-link"
+      className="absolute top-2 right-2 inline-flex items-center gap-[3px] px-1.5 py-[3px] rounded-full bg-white/90 text-muted-foreground no-underline z-10 hover:bg-[rgba(92,59,35,0.1)] focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-0.5"
       aria-label="TMDbで作品を開く"
       title="TMDbで作品を開く"
       onClick={(e) => e.stopPropagation()}
     >
       <svg
-        className="tmdb-icon"
+        className="w-[22px] h-[22px]"
         viewBox="0 0 24 24"
         dangerouslySetInnerHTML={{ __html: siThemoviedatabase.svg }}
         aria-hidden="true"
@@ -85,9 +105,13 @@ export function TmdbWorkCard({ result, isSelected, onSelect, onAddToStacked }: P
   return (
     <>
       {onSelect ? (
-        <div className="tmdb-work-card-wrap">
+        <div className="relative">
           <button
-            className={`search-result-button${isSelected ? " is-selected" : ""}`}
+            className={`grid grid-cols-[56px_minmax(0,1fr)] gap-3 items-start w-full px-4 py-3.5 border rounded-2xl bg-[rgba(255,255,255,0.84)] text-foreground text-left cursor-pointer transition-[border-color,box-shadow] duration-150${
+              isSelected
+                ? " border-[rgba(191,90,54,0.45)] shadow-[inset_0_0_0_1px_rgba(191,90,54,0.2)]"
+                : " border-[rgba(92,59,35,0.1)]"
+            }`}
             type="button"
             onClick={onSelect}
           >
@@ -96,19 +120,23 @@ export function TmdbWorkCard({ result, isSelected, onSelect, onAddToStacked }: P
           {tmdbLink}
         </div>
       ) : (
-        <div className="tmdb-work-card-wrap">
-          <div className="search-result-button recommend-item-info-card">{cardContent}</div>
+        <div className="relative flex-1 min-w-0">
+          <div className="grid grid-cols-[56px_minmax(0,1fr)] gap-3 items-start w-full px-4 py-3.5 border border-[rgba(92,59,35,0.1)] rounded-2xl bg-[rgba(255,255,255,0.84)] text-foreground cursor-default">
+            {cardContent}
+          </div>
           {tmdbLink}
         </div>
       )}
       {onAddToStacked && (
-        <button
+        <Button
           type="button"
-          className="recommend-item-action recommend-item-action-stack"
+          variant="outline"
+          size="sm"
+          className="shrink-0 rounded-full text-[0.82rem] text-muted-foreground"
           onClick={onAddToStacked}
         >
           ストックに追加
-        </button>
+        </Button>
       )}
     </>
   );
