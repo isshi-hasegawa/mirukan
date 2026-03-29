@@ -246,6 +246,49 @@ export function BoardPage({ session }: Props) {
     return await handleAddWorkToStacked(data.id);
   };
 
+  const handleAddTmdbWorksToStacked = async (results: TmdbSearchResult[]) => {
+    if (results.length === 0) return;
+
+    const workIds: string[] = [];
+    for (const result of results) {
+      const { data, error } = await upsertTmdbWork(result, session.user.id);
+      if (error || !data) {
+        console.error(`追加に失敗: ${result.title}`, error);
+        continue;
+      }
+      workIds.push(data.id);
+    }
+
+    if (workIds.length === 0) {
+      window.alert("作品の追加に失敗しました");
+      return;
+    }
+
+    const sortOrders = workIds.map((_, i) => getTopSortOrder(items, "stacked") + i);
+    const { error: insertError } = await supabase.from("backlog_items").insert(
+      workIds.map((workId, i) => ({
+        user_id: session.user.id,
+        work_id: workId,
+        status: "stacked",
+        sort_order: sortOrders[i],
+      })),
+    );
+
+    if (insertError) {
+      window.alert(`追加に失敗しました: ${insertError.message}`);
+      return;
+    }
+
+    await loadItems();
+
+    if (isMobileLayout) {
+      setSelectedTabStatus("stacked");
+    } else {
+      const col = columnRefs.current["stacked"];
+      col?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    }
+  };
+
   const handleOpenDetail = (itemId: string) => {
     setDetailModal({ openItemId: itemId, editingField: null, draftValue: "", message: null });
   };
@@ -374,8 +417,7 @@ export function BoardPage({ session }: Props) {
         <RecommendModal
           items={items}
           onClose={() => setIsRecommendOpen(false)}
-          onAddTmdbWorkToStacked={(result) => handleAddTmdbWorkToStacked(result)}
-          onRemoveItem={(itemId) => handleDeleteItem(itemId)}
+          onAddTmdbWorksToStacked={(results) => handleAddTmdbWorksToStacked(results)}
         />
       )}
 

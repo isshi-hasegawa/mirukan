@@ -7,17 +7,14 @@ import { TmdbWorkCard } from "./TmdbWorkCard.tsx";
 type Props = {
   items: BacklogItem[];
   onClose: () => void;
-  onAddTmdbWorkToStacked: (result: TmdbSearchResult) => Promise<string | null>;
-  onRemoveItem: (itemId: string) => Promise<void>;
+  onAddTmdbWorksToStacked: (results: TmdbSearchResult[]) => Promise<void>;
 };
 
-export function RecommendModal({ items, onClose, onAddTmdbWorkToStacked, onRemoveItem }: Props) {
+export function RecommendModal({ items, onClose, onAddTmdbWorksToStacked }: Props) {
   const [recommendations, setRecommendations] = useState<TmdbSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [lastAddedItem, setLastAddedItem] = useState<{
-    key: string;
-    itemId: string;
-  } | null>(null);
+  const [checkedKeys, setCheckedKeys] = useState<Set<string>>(new Set());
+  const [removedKeys, setRemovedKeys] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const itemTmdbKeys = new Set(
@@ -63,11 +60,21 @@ export function RecommendModal({ items, onClose, onAddTmdbWorkToStacked, onRemov
       .finally(() => setIsLoading(false));
   }, []);
 
+  const handleClose = async () => {
+    const checked = recommendations.filter((r) =>
+      checkedKeys.has(`${r.tmdbMediaType}-${r.tmdbId}`),
+    );
+    if (checked.length > 0) {
+      await onAddTmdbWorksToStacked(checked);
+    }
+    onClose();
+  };
+
   return (
     <div
       className="fixed inset-0 z-10 grid place-items-center p-5 bg-[rgba(51,34,23,0.4)] backdrop-blur-[10px]"
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) void handleClose();
       }}
     >
       <section
@@ -89,37 +96,43 @@ export function RecommendModal({ items, onClose, onAddTmdbWorkToStacked, onRemov
               </p>
             ) : (
               <ul className="flex flex-col gap-2 list-none p-0 m-0" role="list">
-                {recommendations.map((result) => {
-                  const key = `${result.tmdbMediaType}-${result.tmdbId}`;
-                  const isJustAdded = lastAddedItem?.key === key;
-                  return (
-                    <li key={key}>
-                      <TmdbWorkCard
-                        result={result}
-                        isJustAdded={isJustAdded}
-                        onAddToStacked={async () => {
-                          if (lastAddedItem && lastAddedItem.key !== key) {
-                            setRecommendations((prev) =>
-                              prev.filter(
-                                (r) => `${r.tmdbMediaType}-${r.tmdbId}` !== lastAddedItem.key,
-                              ),
-                            );
-                          }
-                          const itemId = await onAddTmdbWorkToStacked(result);
-                          if (itemId) {
-                            setLastAddedItem({ key, itemId });
-                          }
-                        }}
-                        onUndo={async () => {
-                          if (lastAddedItem) {
-                            await onRemoveItem(lastAddedItem.itemId);
-                            setLastAddedItem(null);
-                          }
-                        }}
-                      />
-                    </li>
-                  );
-                })}
+                {recommendations
+                  .filter((r) => !removedKeys.has(`${r.tmdbMediaType}-${r.tmdbId}`))
+                  .map((result) => {
+                    const key = `${result.tmdbMediaType}-${result.tmdbId}`;
+                    const isChecked = checkedKeys.has(key);
+                    return (
+                      <li key={key} className="flex flex-col gap-2">
+                        <TmdbWorkCard
+                          result={result}
+                          onAddToStacked={() => {
+                            setCheckedKeys((prev) => new Set(prev).add(key));
+                            setRemovedKeys((prev) => new Set(prev).add(key));
+                          }}
+                        />
+                        {isChecked && (
+                          <button
+                            type="button"
+                            className="text-muted-foreground text-[0.85rem] hover:text-foreground transition-colors cursor-pointer text-center py-1"
+                            onClick={() => {
+                              setCheckedKeys((prev) => {
+                                const next = new Set(prev);
+                                next.delete(key);
+                                return next;
+                              });
+                              setRemovedKeys((prev) => {
+                                const next = new Set(prev);
+                                next.delete(key);
+                                return next;
+                              });
+                            }}
+                          >
+                            もとに戻す
+                          </button>
+                        )}
+                      </li>
+                    );
+                  })}
               </ul>
             )}
           </div>
