@@ -8,29 +8,53 @@ type Props = {
   isSelected?: boolean;
   onSelect?: () => void;
   onAddToStacked?: () => void;
+  isJustAdded?: boolean;
+  onUndo?: () => void;
 };
 
-export function TmdbWorkCard({ result, isSelected, onSelect, onAddToStacked }: Props) {
+export function TmdbWorkCard({
+  result,
+  isSelected,
+  onSelect,
+  onAddToStacked,
+  isJustAdded,
+  onUndo,
+}: Props) {
   const posterUrl = result.posterPath
     ? `https://image.tmdb.org/t/p/w185${result.posterPath}`
     : null;
 
   const checkButton = onAddToStacked ? (
-    <button
-      type="button"
-      className="group shrink-0 w-6 h-6 rounded-full border-2 border-[rgba(255,255,255,0.3)] hover:border-[rgba(255,255,255,0.5)] flex items-center justify-center self-center transition-colors cursor-pointer"
-      aria-label="ストックに追加"
-      title="ストックに追加"
-      onClick={(e) => {
-        e.stopPropagation();
-        onAddToStacked();
-      }}
-    >
-      <CheckIcon
-        className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-        aria-hidden="true"
-      />
-    </button>
+    isJustAdded && onUndo ? (
+      <button
+        type="button"
+        className="shrink-0 px-2 py-1 rounded-md bg-[rgba(255,255,255,0.15)] hover:bg-[rgba(255,255,255,0.25)] text-white text-[0.75rem] self-center transition-colors cursor-pointer"
+        aria-label="もとに戻す"
+        title="もとに戻す"
+        onClick={(e) => {
+          e.stopPropagation();
+          onUndo();
+        }}
+      >
+        もとに戻す
+      </button>
+    ) : (
+      <button
+        type="button"
+        className="group shrink-0 w-6 h-6 rounded-full border-2 border-[rgba(255,255,255,0.3)] hover:border-[rgba(255,255,255,0.5)] flex items-center justify-center self-center transition-colors cursor-pointer"
+        aria-label="ストックに追加"
+        title="ストックに追加"
+        onClick={(e) => {
+          e.stopPropagation();
+          onAddToStacked();
+        }}
+      >
+        <CheckIcon
+          className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+          aria-hidden="true"
+        />
+      </button>
+    )
   ) : null;
 
   const cardContent = (

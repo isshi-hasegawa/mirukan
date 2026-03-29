@@ -206,19 +206,23 @@ export function BoardPage({ session }: Props) {
     await loadItems();
   };
 
-  const handleAddWorkToStacked = async (workId: string) => {
+  const handleAddWorkToStacked = async (workId: string): Promise<string | null> => {
     const sortOrder = getTopSortOrder(items, "stacked");
 
-    const { error: insertError } = await supabase.from("backlog_items").insert({
-      user_id: session.user.id,
-      work_id: workId,
-      status: "stacked",
-      sort_order: sortOrder,
-    });
+    const { data, error: insertError } = await supabase
+      .from("backlog_items")
+      .insert({
+        user_id: session.user.id,
+        work_id: workId,
+        status: "stacked",
+        sort_order: sortOrder,
+      })
+      .select("id")
+      .single();
 
-    if (insertError) {
-      window.alert(`追加に失敗しました: ${insertError.message}`);
-      return;
+    if (insertError || !data) {
+      window.alert(`追加に失敗しました: ${insertError?.message ?? "不明なエラー"}`);
+      return null;
     }
 
     await loadItems();
@@ -229,15 +233,17 @@ export function BoardPage({ session }: Props) {
       const col = columnRefs.current["stacked"];
       col?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
     }
+
+    return data.id;
   };
 
-  const handleAddTmdbWorkToStacked = async (result: TmdbSearchResult) => {
+  const handleAddTmdbWorkToStacked = async (result: TmdbSearchResult): Promise<string | null> => {
     const { data, error } = await upsertTmdbWork(result, session.user.id);
     if (error || !data) {
       window.alert(`追加に失敗しました: ${error?.message ?? "不明なエラー"}`);
-      return;
+      return null;
     }
-    await handleAddWorkToStacked(data.id);
+    return await handleAddWorkToStacked(data.id);
   };
 
   const handleOpenDetail = (itemId: string) => {
@@ -369,6 +375,7 @@ export function BoardPage({ session }: Props) {
           items={items}
           onClose={() => setIsRecommendOpen(false)}
           onAddTmdbWorkToStacked={(result) => handleAddTmdbWorkToStacked(result)}
+          onRemoveItem={(itemId) => handleDeleteItem(itemId)}
         />
       )}
 

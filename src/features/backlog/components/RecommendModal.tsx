@@ -7,12 +7,17 @@ import { TmdbWorkCard } from "./TmdbWorkCard.tsx";
 type Props = {
   items: BacklogItem[];
   onClose: () => void;
-  onAddTmdbWorkToStacked: (result: TmdbSearchResult) => Promise<void>;
+  onAddTmdbWorkToStacked: (result: TmdbSearchResult) => Promise<string | null>;
+  onRemoveItem: (itemId: string) => Promise<void>;
 };
 
-export function RecommendModal({ items, onClose, onAddTmdbWorkToStacked }: Props) {
+export function RecommendModal({ items, onClose, onAddTmdbWorkToStacked, onRemoveItem }: Props) {
   const [recommendations, setRecommendations] = useState<TmdbSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [lastAddedItem, setLastAddedItem] = useState<{
+    key: string;
+    itemId: string;
+  } | null>(null);
 
   useEffect(() => {
     const itemTmdbKeys = new Set(
@@ -86,17 +91,30 @@ export function RecommendModal({ items, onClose, onAddTmdbWorkToStacked }: Props
               <ul className="flex flex-col gap-2 list-none p-0 m-0" role="list">
                 {recommendations.map((result) => {
                   const key = `${result.tmdbMediaType}-${result.tmdbId}`;
-                  const removeItem = () =>
-                    setRecommendations((prev) =>
-                      prev.filter((r) => `${r.tmdbMediaType}-${r.tmdbId}` !== key),
-                    );
+                  const isJustAdded = lastAddedItem?.key === key;
                   return (
                     <li key={key}>
                       <TmdbWorkCard
                         result={result}
+                        isJustAdded={isJustAdded}
                         onAddToStacked={async () => {
-                          await onAddTmdbWorkToStacked(result);
-                          removeItem();
+                          if (lastAddedItem && lastAddedItem.key !== key) {
+                            setRecommendations((prev) =>
+                              prev.filter(
+                                (r) => `${r.tmdbMediaType}-${r.tmdbId}` !== lastAddedItem.key,
+                              ),
+                            );
+                          }
+                          const itemId = await onAddTmdbWorkToStacked(result);
+                          if (itemId) {
+                            setLastAddedItem({ key, itemId });
+                          }
+                        }}
+                        onUndo={async () => {
+                          if (lastAddedItem) {
+                            await onRemoveItem(lastAddedItem.itemId);
+                            setLastAddedItem(null);
+                          }
                         }}
                       />
                     </li>
