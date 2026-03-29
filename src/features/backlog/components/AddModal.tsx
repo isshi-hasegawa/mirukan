@@ -353,7 +353,7 @@ export function AddModal({
                       }
                     }}
                   >
-                    シリーズ全体
+                    シリーズ1
                   </button>
                   {seasonOptions.length > 0
                     ? seasonOptions.map((season) => (
