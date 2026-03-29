@@ -46,11 +46,11 @@ export function KanbanColumn({
 
   return (
     <section
-      className="flex h-full min-h-0 w-full min-w-0 flex-col rounded-[24px] border border-[var(--border)] bg-[var(--surface)] px-[14px] py-[14px] shadow-[var(--shadow)] backdrop-blur-[20px] max-[500px]:rounded-[18px] max-[500px]:px-3 max-[500px]:py-3 max-[400px]:rounded-[14px] max-[400px]:px-2 max-[400px]:py-2"
+      className="flex h-full min-h-0 w-full min-w-0 flex-col rounded-[24px] border border-[var(--border)] bg-[var(--surface)] py-[14px] shadow-[var(--shadow)] backdrop-blur-[20px] max-[500px]:rounded-[18px] max-[500px]:py-3 max-[400px]:rounded-[14px] max-[400px]:py-2"
       data-column-status={status}
     >
       {extra}
-      <header className="flex items-center justify-between gap-[10px] border-b border-[rgba(92,59,35,0.08)] pb-[10px] min-w-0 max-[500px]:gap-2 max-[400px]:gap-1.5 max-[400px]:pb-2">
+      <header className="flex items-center justify-between gap-[10px] border-b border-[rgba(92,59,35,0.08)] px-[14px] pb-[10px] min-w-0 max-[500px]:gap-2 max-[500px]:px-3 max-[400px]:gap-1.5 max-[400px]:px-2 max-[400px]:pb-2">
         <div className="flex items-center gap-2 max-[500px]:gap-1.5 max-[400px]:gap-1 min-w-0 flex-1">
           <h2 className="max-[500px]:text-[0.95rem] max-[400px]:text-[0.875rem] truncate">
             {statusLabels[status]}
@@ -82,23 +82,25 @@ export function KanbanColumn({
         className="grid min-h-0 min-w-0 flex-1 content-start gap-[10px] overflow-y-auto [scrollbar-gutter:stable]"
         style={dropzoneStyle}
       >
-        {items.length > 0 ? (
-          items.map((item) => (
-            <BacklogCard
-              key={item.id}
-              item={item}
-              showModeBadge={featuredIds?.has(item.id) ?? false}
-              dropIndicator={dropIndicator}
-              onOpenDetail={() => onOpenDetail(item.id)}
-              onDeleteItem={onDeleteItem}
-              onMarkAsWatched={onMarkAsWatched}
-            />
-          ))
-        ) : (
-          <p className="text-[var(--text-muted)] pt-[18px] text-[0.92rem]">
-            この列にはまだカードがありません。
-          </p>
-        )}
+        <div className="grid content-start gap-[10px] px-[14px] max-[500px]:px-3 max-[400px]:px-2">
+          {items.length > 0 ? (
+            items.map((item) => (
+              <BacklogCard
+                key={item.id}
+                item={item}
+                showModeBadge={featuredIds?.has(item.id) ?? false}
+                dropIndicator={dropIndicator}
+                onOpenDetail={() => onOpenDetail(item.id)}
+                onDeleteItem={onDeleteItem}
+                onMarkAsWatched={onMarkAsWatched}
+              />
+            ))
+          ) : (
+            <p className="text-[var(--text-muted)] pt-[18px] text-[0.92rem]">
+              この列にはまだカードがありません。
+            </p>
+          )}
+        </div>
       </div>
     </section>
   );
