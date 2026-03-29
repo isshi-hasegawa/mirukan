@@ -119,9 +119,10 @@ export function BacklogCard({
       <div className="absolute top-[10px] right-[10px]">
         <DropdownMenu>
           <DropdownMenuTrigger
-            className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-transparent text-[var(--text-muted)] cursor-pointer hover:bg-[rgba(92,59,35,0.08)] focus:outline-2 focus:outline-primary/45 focus:outline-offset-[2px]"
+            className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-transparent text-muted-foreground cursor-pointer hover:bg-accent hover:text-accent-foreground focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-1"
             aria-label="カードメニューを開く"
             title="カードメニューを開く"
+            onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
           >
             <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20" aria-hidden="true">
@@ -134,19 +135,23 @@ export function BacklogCard({
             align="end"
             side="bottom"
             sideOffset={6}
-            className="min-w-[132px] w-auto rounded-[14px] p-[6px] bg-[rgba(255,253,248,0.98)] border border-[rgba(92,59,35,0.12)] shadow-[0_16px_40px_rgba(75,48,30,0.18)]"
+            onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
           >
             <DropdownMenuItem
-              className="rounded-[10px] px-3 py-[10px] text-[var(--text)] cursor-pointer"
-              onSelect={() => onMarkAsWatched(item.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onMarkAsWatched(item.id);
+              }}
             >
               視聴済み
             </DropdownMenuItem>
             <DropdownMenuItem
               variant="destructive"
-              className="rounded-[10px] px-3 py-[10px] cursor-pointer"
-              onSelect={() => onDeleteItem(item.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDeleteItem(item.id);
+              }}
             >
               削除
             </DropdownMenuItem>
