@@ -500,9 +500,6 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
                     </button>
                   )}
                 </div>
-                <p className="text-[0.82rem] text-muted-foreground">
-                  追加したいシーズンを複数選択できます。
-                </p>
               </div>
             )}
 
