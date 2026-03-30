@@ -1,4 +1,4 @@
-import type { PrimaryPlatform } from "./types.ts";
+import type { PrimaryPlatform, WorkType } from "./types.ts";
 
 export function getStringField(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -34,4 +34,8 @@ export function escapeHtml(value: string) {
 export function getDropSide(card: HTMLElement, clientY: number) {
   const rect = card.getBoundingClientRect();
   return clientY < rect.top + rect.height / 2 ? "before" : "after";
+}
+
+export function getWorkTypeLabel(workType: WorkType) {
+  return workType === "movie" ? "映画" : "シリーズ";
 }

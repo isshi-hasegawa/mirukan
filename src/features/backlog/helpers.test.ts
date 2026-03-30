@@ -6,6 +6,7 @@ import {
   buildSearchText,
   escapeHtml,
   getDropSide,
+  getWorkTypeLabel,
 } from "./helpers.ts";
 
 describe("getStringField", () => {
@@ -87,5 +88,19 @@ describe("getDropSide", () => {
   test("returns 'after' when clientY is exactly at the midpoint", () => {
     const el = { getBoundingClientRect: () => ({ top: 100, height: 80 }) } as HTMLElement;
     expect(getDropSide(el, 140)).toBe("after");
+  });
+});
+
+describe("getWorkTypeLabel", () => {
+  test("returns movie for movie works", () => {
+    expect(getWorkTypeLabel("movie")).toBe("映画");
+  });
+
+  test("returns series for series works", () => {
+    expect(getWorkTypeLabel("series")).toBe("シリーズ");
+  });
+
+  test("returns series for season works", () => {
+    expect(getWorkTypeLabel("season")).toBe("シリーズ");
   });
 });

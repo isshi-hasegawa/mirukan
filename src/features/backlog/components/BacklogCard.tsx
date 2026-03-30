@@ -17,6 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.tsx";
+import { getWorkTypeLabel } from "../helpers.ts";
 
 const modeLabel: Record<ViewingMode, string> = {
   focus: "ガッツリ",
@@ -73,8 +74,7 @@ export function BacklogCard({
   const title = work.title;
   const viewingMode = showModeBadge ? getViewingMode(work) : null;
   const WorkTypeIcon = work.work_type === "movie" ? FilmIcon : TvIcon;
-  const workTypeLabel =
-    work.work_type === "movie" ? "映画" : work.work_type === "series" ? "シリーズ" : "シーズン";
+  const workTypeLabel = getWorkTypeLabel(work.work_type);
   const metadataRest = [work.release_date ? work.release_date.slice(0, 4) : null].filter(Boolean);
 
   const cardDropIndicator =

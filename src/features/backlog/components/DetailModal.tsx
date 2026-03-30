@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { DocumentTextIcon, FilmIcon, TvIcon } from "@heroicons/react/24/outline";
 import { supabase } from "../../../lib/supabase.ts";
 import { getSortOrderForStatusChange } from "../data.ts";
-import { normalizePrimaryPlatform } from "../helpers.ts";
+import { getWorkTypeLabel, normalizePrimaryPlatform } from "../helpers.ts";
 import { statusLabels, statusOrder } from "../constants.ts";
 import { PlatformPicker } from "./PlatformPicker.tsx";
 import { PosterImage } from "./PosterImage.tsx";
@@ -52,8 +52,7 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
   const work = item.works;
   const title = work.title;
   const WorkTypeIcon = work.work_type === "movie" ? FilmIcon : TvIcon;
-  const workTypeLabel =
-    work.work_type === "movie" ? "映画" : work.work_type === "series" ? "シリーズ" : "シーズン";
+  const workTypeLabel = getWorkTypeLabel(work.work_type);
   const metadataRest = [
     work.release_date ? work.release_date.slice(0, 4) : null,
     work.runtime_minutes ? `${work.runtime_minutes}分` : null,
