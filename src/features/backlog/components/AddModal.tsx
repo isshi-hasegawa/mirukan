@@ -297,7 +297,7 @@ export function AddModal({
             void handleSubmit(e);
           }}
         >
-          <div className="grid gap-3.5 p-4 overflow-y-auto content-start rounded-[20px] bg-[rgba(191,90,54,0.06)] max-[720px]:overflow-y-visible">
+          <div className="grid gap-3.5 p-4 overflow-y-auto content-start rounded-[20px] bg-[rgba(191,90,54,0.06)] max-[720px]:p-3 max-[720px]:overflow-y-visible">
             <Input
               ref={searchInputRef}
               type="text"
