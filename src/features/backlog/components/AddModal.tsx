@@ -292,7 +292,7 @@ export function AddModal({
         aria-label="作品を追加"
       >
         <form
-          className="grid grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] gap-x-6 flex-1 min-h-0 overflow-hidden overflow-y-auto pr-1 max-[720px]:grid-cols-1 max-[720px]:overflow-x-hidden"
+          className="grid grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] gap-x-6 flex-1 min-h-0 overflow-hidden overflow-y-auto pr-1 max-[720px]:grid-cols-1 max-[720px]:gap-y-5 max-[720px]:overflow-x-hidden"
           onSubmit={(e) => {
             void handleSubmit(e);
           }}
@@ -434,7 +434,7 @@ export function AddModal({
               </div>
             )}
 
-            <div className="grid gap-2.5 overflow-y-auto pr-1 max-[720px]:max-h-[min(32svh,280px)]">
+            <div className="grid gap-2.5 overflow-y-auto pr-1 max-[720px]:h-[min(32svh,280px)]">
               {(() => {
                 const displayResults = searchQuery.trim() === "" ? trendingResults : searchResults;
                 if (displayResults.length > 0) {
