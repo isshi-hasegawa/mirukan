@@ -23,7 +23,7 @@ const modeLabel: Record<ViewingMode, string> = {
   focus: "ガッツリ",
   thoughtful: "じっくり",
   quick: "サクッと",
-  background: "ながら見",
+  background: "のんびり",
 };
 
 const ModeIcon: Record<
