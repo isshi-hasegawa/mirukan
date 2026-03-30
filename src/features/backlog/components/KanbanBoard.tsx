@@ -204,7 +204,9 @@ export function KanbanBoard({
                 <span
                   className={[
                     "inline-flex items-center justify-center min-w-[20px] px-[6px] py-[2px] rounded-full text-[0.75rem] font-bold max-[500px]:min-w-[18px] max-[500px]:px-1.5 max-[500px]:py-0.5 max-[500px]:text-[0.7rem] max-[400px]:min-w-[16px] max-[400px]:px-1 max-[400px]:py-0 max-[400px]:text-[0.65rem]",
-                    isActive ? "bg-white/30 text-inherit" : "bg-primary/15 text-primary",
+                    isActive
+                      ? "bg-white/30 text-inherit"
+                      : "border border-[var(--border)] bg-[rgba(92,59,35,0.04)] text-[var(--text-muted)]",
                   ].join(" ")}
                 >
                   {grouped.get(status)?.length ?? 0}

@@ -57,7 +57,7 @@ export function KanbanColumn({
           <h2 className="max-[500px]:text-[0.95rem] max-[400px]:text-[0.875rem] truncate">
             {statusLabels[status]}
           </h2>
-          <span className="inline-flex items-center justify-center min-w-[34px] px-[10px] py-[6px] rounded-full text-[0.82rem] font-bold bg-primary/15 text-primary max-[500px]:min-w-[28px] max-[500px]:px-2 max-[500px]:py-1 max-[500px]:text-[0.75rem] max-[400px]:min-w-[24px] max-[400px]:px-1.5 max-[400px]:py-0.5 max-[400px]:text-[0.7rem] shrink-0">
+          <span className="inline-flex items-center justify-center min-w-[34px] px-[10px] py-[6px] rounded-full border border-[var(--border)] bg-[rgba(92,59,35,0.04)] text-[0.82rem] font-bold text-[var(--text-muted)] max-[500px]:min-w-[28px] max-[500px]:px-2 max-[500px]:py-1 max-[500px]:text-[0.75rem] max-[400px]:min-w-[24px] max-[400px]:px-1.5 max-[400px]:py-0.5 max-[400px]:text-[0.7rem] shrink-0">
             {items.length}
           </span>
         </div>
