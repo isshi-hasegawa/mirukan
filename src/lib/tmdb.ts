@@ -216,9 +216,17 @@ async function enrichWithWatchProviders(results: TmdbSearchResult[]): Promise<Tm
   );
 }
 
-const TRENDING_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-let trendingCache: { results: TmdbSearchResult[]; fetchedAt: number } | null = null;
-let similarCache: { results: TmdbSearchResult[]; fetchedAt: number } | null = null;
+const RECOMMENDATIONS_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+
+type RecommendationCacheEntry = {
+  results: TmdbSearchResult[];
+  fetchedAt: number;
+};
+
+let trendingCache: RecommendationCacheEntry | null = null;
+let trendingCachePromise: Promise<TmdbSearchResult[]> | null = null;
+const similarCache = new Map<string, RecommendationCacheEntry>();
+const similarCachePromises = new Map<string, Promise<TmdbSearchResult[]>>();
 
 function shuffleArray<T>(arr: T[]): T[] {
   const shuffled = [...arr];
@@ -314,34 +322,83 @@ async function fetchSimilarPage(
   });
 }
 
+function normalizeRecommendationSources(
+  sourceItems: Array<{ tmdbId: number; tmdbMediaType: "movie" | "tv" }>,
+): Array<{ tmdbId: number; tmdbMediaType: "movie" | "tv" }> {
+  const seen = new Set<string>();
+  const uniqueItems: Array<{ tmdbId: number; tmdbMediaType: "movie" | "tv" }> = [];
+
+  for (const item of sourceItems) {
+    const key = `${item.tmdbMediaType}-${item.tmdbId}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    uniqueItems.push(item);
+  }
+
+  return uniqueItems.slice(0, 5);
+}
+
+function buildRecommendationSourceCacheKey(
+  sourceItems: Array<{ tmdbId: number; tmdbMediaType: "movie" | "tv" }>,
+): string {
+  return [...sourceItems]
+    .sort((a, b) =>
+      a.tmdbMediaType === b.tmdbMediaType
+        ? a.tmdbId - b.tmdbId
+        : a.tmdbMediaType.localeCompare(b.tmdbMediaType),
+    )
+    .map((item) => `${item.tmdbMediaType}-${item.tmdbId}`)
+    .join("|");
+}
+
 export async function fetchTmdbSimilar(
   sourceItems: Array<{ tmdbId: number; tmdbMediaType: "movie" | "tv" }>,
 ): Promise<TmdbSearchResult[]> {
-  if (similarCache && Date.now() - similarCache.fetchedAt < TRENDING_CACHE_TTL_MS) {
-    return shuffleArray(similarCache.results);
-  }
+  const normalizedSourceItems = normalizeRecommendationSources(sourceItems);
 
-  if (sourceItems.length === 0) {
+  if (normalizedSourceItems.length === 0) {
     return [];
   }
 
-  const pages = await Promise.all(
-    sourceItems.slice(0, 5).map((item) => fetchSimilarPage(item.tmdbId, item.tmdbMediaType)),
+  const cacheKey = buildRecommendationSourceCacheKey(normalizedSourceItems);
+  const cached = similarCache.get(cacheKey);
+  if (cached && Date.now() - cached.fetchedAt < RECOMMENDATIONS_CACHE_TTL_MS) {
+    return shuffleArray(cached.results);
+  }
+
+  const inFlight = similarCachePromises.get(cacheKey);
+  if (inFlight) {
+    return shuffleArray(await inFlight);
+  }
+
+  const request = (async () => {
+    const pages = await Promise.all(
+      normalizedSourceItems.map((item) => fetchSimilarPage(item.tmdbId, item.tmdbMediaType)),
+    );
+
+    const combined = pages.flat();
+    const seen = new Set<string>();
+    const deduped = combined.filter((item) => {
+      const key = `${item.tmdbMediaType}-${item.tmdbId}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    const results = await enrichWithWatchProviders(deduped.slice(0, 40));
+
+    similarCache.set(cacheKey, { results, fetchedAt: Date.now() });
+    return results;
+  })();
+
+  similarCachePromises.set(
+    cacheKey,
+    request.finally(() => {
+      similarCachePromises.delete(cacheKey);
+    }),
   );
 
-  const combined = pages.flat();
-  const seen = new Set<string>();
-  const deduped = combined.filter((item) => {
-    const key = `${item.tmdbMediaType}-${item.tmdbId}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-
-  const results = await enrichWithWatchProviders(deduped.slice(0, 40));
-
-  similarCache = { results, fetchedAt: Date.now() };
-  return shuffleArray(results);
+  return shuffleArray(await request);
 }
 
 export async function fetchMergedRecommendations(
@@ -365,28 +422,48 @@ export async function fetchMergedRecommendations(
 }
 
 export async function fetchTmdbTrending(): Promise<TmdbSearchResult[]> {
-  if (trendingCache && Date.now() - trendingCache.fetchedAt < TRENDING_CACHE_TTL_MS) {
+  if (trendingCache && Date.now() - trendingCache.fetchedAt < RECOMMENDATIONS_CACHE_TTL_MS) {
     return shuffleArray(trendingCache.results);
   }
 
-  const pages = await Promise.all([
-    fetchTrendingPage(1),
-    fetchTrendingPage(2),
-    fetchTrendingPage(3),
-  ]);
+  if (trendingCachePromise) {
+    return shuffleArray(await trendingCachePromise);
+  }
 
-  const combined = pages.flat();
-  const seen = new Set<number>();
-  const deduped = combined.filter((item) => {
-    if (seen.has(item.tmdbId)) return false;
-    seen.add(item.tmdbId);
-    return true;
+  const request = (async () => {
+    const pages = await Promise.all([
+      fetchTrendingPage(1),
+      fetchTrendingPage(2),
+      fetchTrendingPage(3),
+    ]);
+
+    const combined = pages.flat();
+    const seen = new Set<string>();
+    const deduped = combined.filter((item) => {
+      const key = `${item.tmdbMediaType}-${item.tmdbId}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    const results = await enrichWithWatchProviders(deduped);
+
+    trendingCache = { results, fetchedAt: Date.now() };
+    return results;
+  })();
+
+  trendingCachePromise = request.finally(() => {
+    trendingCachePromise = null;
   });
 
-  const results = await enrichWithWatchProviders(deduped);
+  return shuffleArray(await request);
+}
 
-  trendingCache = { results, fetchedAt: Date.now() };
-  return shuffleArray(results);
+export function resetTmdbRecommendationCachesForTest() {
+  trendingCache = null;
+  trendingCachePromise = null;
+  similarCache.clear();
+  similarCachePromises.clear();
 }
 
 export async function searchTmdbWorks(query: string) {
