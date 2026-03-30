@@ -266,7 +266,7 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
     `inline-flex items-center gap-1.5 px-3.5 py-2.5 border rounded-full text-[0.88rem] cursor-pointer transition-[background,color,border-color,box-shadow] duration-150${
       active
         ? " border-[rgba(191,90,54,0.45)] shadow-[inset_0_0_0_1px_rgba(191,90,54,0.2)] bg-transparent text-foreground"
-        : " border-[rgba(92,59,35,0.12)] bg-[rgba(255,255,255,0.84)] text-foreground"
+        : " border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.06)] text-foreground"
     }`;
 
   return (
@@ -321,7 +321,7 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
             />
 
             {selectedTmdbResult && (
-              <div className="grid gap-1 p-3 rounded-2xl bg-[rgba(255,255,255,0.68)]">
+              <div className="grid gap-1 p-3 rounded-2xl bg-[rgba(255,255,255,0.07)]">
                 <p className="text-muted-foreground text-[0.88rem]">選択中</p>
                 <p className="font-bold">{selectedTmdbTarget?.title ?? selectedTmdbResult.title}</p>
                 <p className="flex items-center gap-1 text-muted-foreground text-[0.88rem]">
