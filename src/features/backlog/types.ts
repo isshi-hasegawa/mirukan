@@ -57,11 +57,6 @@ export type DetailModalState = {
   message: string | null;
 };
 
-export type DragState = {
-  itemId: string;
-  sourceStatus: BacklogStatus;
-};
-
 export type DropIndicator =
   | { type: "card"; itemId: string; side: "before" | "after" }
   | { type: "column"; status: BacklogStatus };

@@ -54,17 +54,12 @@
 ### 未使用コードの整理
 
 - 候補
-  - `src/components/ui/badge.tsx`
-  - `src/components/ui/tabs.tsx`
-  - `src/features/backlog/constants.ts` の `statusDescriptions`
-  - `src/features/backlog/types.ts` の `DragState`
   - `src/features/backlog/helpers.ts` の一部関数
 - TODO
   - 本番コードから未使用のものを確認して削除する
   - 将来使う予定があるなら意図が分かる置き方へ変える
 - 着手判断メモ
   - 小さく安全に進めやすい
-  - ただし shadcn 生成物は今後使う可能性もあるので即削除は要判断
 
 ### 依存の棚卸し
 

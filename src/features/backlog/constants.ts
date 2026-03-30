@@ -23,14 +23,6 @@ export const statusLabels: Record<BacklogStatus, string> = {
   watched: "視聴済み",
 };
 
-export const statusDescriptions: Record<BacklogStatus, string> = {
-  stacked: "あとで見る候補をストックしておく列",
-  want_to_watch: "近いうちに見る候補を寄せる列",
-  watching: "いま進行中として扱う列",
-  interrupted: "止まっているけれど終えていない列",
-  watched: "見終わったものを残しておく列",
-};
-
 export const platformLabels: Record<Exclude<PrimaryPlatform, null>, string> = {
   netflix: "Netflix",
   prime_video: "Prime Video",

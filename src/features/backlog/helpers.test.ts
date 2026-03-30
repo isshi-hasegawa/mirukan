@@ -9,7 +9,6 @@ import {
   escapeHtml,
   getClientYFromPointerEvent,
   getDropIndicator,
-  getDropSide,
   getDropSideFromRect,
   getWorkTypeLabel,
   resolveDropTarget,
@@ -121,27 +120,11 @@ describe("escapeHtml", () => {
   });
 });
 
-describe("getDropSide", () => {
-  test("returns 'before' when clientY is in the upper half", () => {
-    const el = { getBoundingClientRect: () => ({ top: 100, height: 80 }) } as HTMLElement;
-    expect(getDropSide(el, 130)).toBe("before");
-  });
-
-  test("returns 'after' when clientY is in the lower half", () => {
-    const el = { getBoundingClientRect: () => ({ top: 100, height: 80 }) } as HTMLElement;
-    expect(getDropSide(el, 150)).toBe("after");
-  });
-
-  test("returns 'after' when clientY is exactly at the midpoint", () => {
-    const el = { getBoundingClientRect: () => ({ top: 100, height: 80 }) } as HTMLElement;
-    expect(getDropSide(el, 140)).toBe("after");
-  });
-});
-
 describe("getDropSideFromRect", () => {
   test("returns the same side judgment without DOM access", () => {
     expect(getDropSideFromRect({ top: 100, height: 80 }, 130)).toBe("before");
     expect(getDropSideFromRect({ top: 100, height: 80 }, 150)).toBe("after");
+    expect(getDropSideFromRect({ top: 100, height: 80 }, 140)).toBe("after");
   });
 });
 

@@ -65,11 +65,6 @@ export function escapeHtml(value: string) {
     .replaceAll("'", "&#39;");
 }
 
-export function getDropSide(card: HTMLElement, clientY: number) {
-  const rect = card.getBoundingClientRect();
-  return clientY < rect.top + rect.height / 2 ? "before" : "after";
-}
-
 export function getDropSideFromRect(rect: RectLike, clientY: number) {
   return clientY < rect.top + rect.height / 2 ? "before" : "after";
 }
