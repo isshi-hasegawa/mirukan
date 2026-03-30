@@ -206,46 +206,6 @@ export function BoardPage({ session }: Props) {
     await loadItems();
   };
 
-  const handleAddWorkToStacked = async (workId: string): Promise<string | null> => {
-    const sortOrder = getTopSortOrder(items, "stacked");
-
-    const { data, error: insertError } = await supabase
-      .from("backlog_items")
-      .insert({
-        user_id: session.user.id,
-        work_id: workId,
-        status: "stacked",
-        sort_order: sortOrder,
-      })
-      .select("id")
-      .single();
-
-    if (insertError || !data) {
-      window.alert(`追加に失敗しました: ${insertError?.message ?? "不明なエラー"}`);
-      return null;
-    }
-
-    await loadItems();
-
-    if (isMobileLayout) {
-      setSelectedTabStatus("stacked");
-    } else {
-      const col = columnRefs.current["stacked"];
-      col?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-    }
-
-    return data.id;
-  };
-
-  const handleAddTmdbWorkToStacked = async (result: TmdbSearchResult): Promise<string | null> => {
-    const { data, error } = await upsertTmdbWork(result, session.user.id);
-    if (error || !data) {
-      window.alert(`追加に失敗しました: ${error?.message ?? "不明なエラー"}`);
-      return null;
-    }
-    return await handleAddWorkToStacked(data.id);
-  };
-
   const handleAddTmdbWorksToStacked = async (results: TmdbSearchResult[]) => {
     if (results.length === 0) return;
 
@@ -428,7 +388,6 @@ export function BoardPage({ session }: Props) {
           session={session}
           onClose={() => setAddModalStatus(null)}
           onAdded={loadItems}
-          onAddToStacked={(result) => handleAddTmdbWorkToStacked(result)}
         />
       )}
 

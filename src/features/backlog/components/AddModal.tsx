@@ -21,17 +21,9 @@ type Props = {
   session: Session;
   onClose: () => void;
   onAdded: () => Promise<void>;
-  onAddToStacked?: (result: TmdbSearchResult) => Promise<string | null>;
 };
 
-export function AddModal({
-  defaultStatus,
-  items,
-  session,
-  onClose,
-  onAdded,
-  onAddToStacked,
-}: Props) {
+export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<TmdbSearchResult[]>([]);
   const [selectedTmdbResult, setSelectedTmdbResult] = useState<TmdbSearchResult | null>(null);
@@ -434,24 +426,28 @@ export function AddModal({
               </div>
             )}
 
+            {selectedTmdbResult && (
+              <div className="flex justify-end items-center gap-3">
+                {formMessage && (
+                  <p className="text-muted-foreground text-sm" aria-live="polite">
+                    {formMessage}
+                  </p>
+                )}
+                <Button type="submit">追加する</Button>
+              </div>
+            )}
+
             <div className="modal-scrollable grid gap-2.5 overflow-y-auto max-[720px]:h-[min(40svh,320px)]">
               {(() => {
                 const displayResults = searchQuery.trim() === "" ? trendingResults : searchResults;
                 if (displayResults.length > 0) {
                   return displayResults.map((result) => (
-                    <div
+                    <TmdbWorkCard
                       key={`${result.tmdbMediaType}-${result.tmdbId}`}
-                      className="flex items-center gap-2 [&>*:first-child]:flex-1"
-                    >
-                      <TmdbWorkCard
-                        result={result}
-                        isSelected={selectedTmdbResult?.tmdbId === result.tmdbId}
-                        onSelect={() => void handleSelectResult(result)}
-                        onAddToStacked={
-                          onAddToStacked ? () => void onAddToStacked(result) : undefined
-                        }
-                      />
-                    </div>
+                      result={result}
+                      isSelected={selectedTmdbResult?.tmdbId === result.tmdbId}
+                      onSelect={() => void handleSelectResult(result)}
+                    />
                   ));
                 }
                 return (
@@ -532,14 +528,16 @@ export function AddModal({
                 onChange={(e) => setNote(e.target.value)}
               />
             </div>
-            <div className="flex justify-end items-center gap-3 mt-auto pt-2 max-[720px]:mt-0">
-              {formMessage && (
-                <p className="text-muted-foreground text-sm" aria-live="polite">
-                  {formMessage}
-                </p>
-              )}
-              <Button type="submit">追加する</Button>
-            </div>
+            {!selectedTmdbResult && (
+              <div className="flex justify-end items-center gap-3 mt-auto pt-2 max-[720px]:mt-0">
+                {formMessage && (
+                  <p className="text-muted-foreground text-sm" aria-live="polite">
+                    {formMessage}
+                  </p>
+                )}
+                <Button type="submit">追加する</Button>
+              </div>
+            )}
           </div>
         </form>
       </section>
