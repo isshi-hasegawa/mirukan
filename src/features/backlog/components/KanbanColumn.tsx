@@ -14,6 +14,7 @@ type Props = {
   items: BacklogItem[];
   extra?: ReactNode;
   featuredIds?: Set<string>;
+  isMobileLayout?: boolean;
   dropIndicator: DropIndicator | null;
   onOpenAddModal: () => void;
   onOpenDetail: (itemId: string) => void;
@@ -26,6 +27,7 @@ export function KanbanColumn({
   items,
   extra,
   featuredIds,
+  isMobileLayout = false,
   dropIndicator,
   onOpenAddModal,
   onOpenDetail,
@@ -59,7 +61,7 @@ export function KanbanColumn({
             {items.length}
           </span>
         </div>
-        {status === "stacked" && (
+        {status === "stacked" && !isMobileLayout && (
           <Button
             variant="ghost"
             size="icon"

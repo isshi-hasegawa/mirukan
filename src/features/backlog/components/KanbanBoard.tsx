@@ -165,6 +165,7 @@ export function KanbanBoard({
     status,
     items: grouped.get(status) ?? [],
     featuredIds: status === "stacked" ? stackedFeaturedIds : undefined,
+    isMobileLayout,
     dropIndicator,
     onOpenAddModal,
     onOpenDetail,
