@@ -35,10 +35,10 @@
 }
 
 :root {
-  --bg: #111111;
-  --bg-strong: #1c1c1c;
-  --surface: rgba(28, 28, 28, 0.95);
-  --surface-strong: #2a2a2a;
+  --bg: #242424;
+  --bg-strong: #2d2d2d;
+  --surface: rgba(45, 45, 45, 0.95);
+  --surface-strong: #373737;
   --surface-muted: rgba(255, 140, 66, 0.08);
   --text: #f5f5f5;
   --text-muted: #9ca3af;
@@ -169,7 +169,7 @@ html {
   background:
     radial-gradient(circle at top left, rgba(255, 140, 66, 0.12), transparent 35%),
     radial-gradient(circle at right center, rgba(180, 180, 180, 0.05), transparent 28%),
-    linear-gradient(180deg, #1c1c1c 0%, #111111 50%, #080808 100%);
+    linear-gradient(180deg, #2d2d2d 0%, #242424 50%, #1a1a1a 100%);
 }
 
 body {
