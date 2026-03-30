@@ -288,6 +288,17 @@ h3 {
   }
 }
 
+@media (hover: none) {
+  [role="dialog"] .modal-scrollable {
+    scrollbar-color: rgba(255, 140, 66, 0.3) transparent;
+  }
+
+  [role="dialog"] .modal-scrollable::-webkit-scrollbar-thumb {
+    background: rgba(255, 140, 66, 0.3);
+    border-radius: 4px;
+  }
+}
+
 /* カスタムユーティリティ */
 @layer utilities {
   .login-cols {
