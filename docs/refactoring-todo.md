@@ -22,7 +22,6 @@
   - 上記が 1 コンポーネントに集中している
 - TODO
   - backlog 操作を hook / action 群へ分離する
-  - DnD 判定ロジックを helper 化する
   - UI と Supabase 更新処理の境界を明確にする
 - 着手判断メモ
   - 今後さらに機能追加するなら効果が大きい
@@ -83,19 +82,6 @@
 - 着手判断メモ
   - 小さく安全に進めやすい
   - ただし shadcn 生成物は今後使う可能性もあるので即削除は要判断
-
-### プラットフォーム表示ロジックの共通化
-
-- 対象
-  - `src/features/backlog/components/PlatformPicker.tsx`
-  - `src/features/backlog/components/PlatformIcon.tsx`
-- 現状
-  - `platformBg` が重複している
-- TODO
-  - 共通定数へ移動する
-  - アイコン表示コンポーネントの責務を整理する
-- 着手判断メモ
-  - 影響範囲が小さく、先にやってもよい
 
 ### 依存の棚卸し
 
