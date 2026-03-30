@@ -48,9 +48,11 @@ export type BacklogItemRow = Omit<BacklogItem, "works"> & {
   works: WorkSummary | WorkSummary[] | null;
 };
 
+export type DetailModalEditableField = "primaryPlatform" | "note";
+
 export type DetailModalState = {
   openItemId: string | null;
-  editingField: "primaryPlatform" | "note" | null;
+  editingField: DetailModalEditableField | null;
   draftValue: string;
   message: string | null;
 };

@@ -1,5 +1,7 @@
 import { describe, expect, test } from "vite-plus/test";
 import {
+  createDetailEditingState,
+  createDetailModalState,
   getStringField,
   getNullableStringField,
   normalizePrimaryPlatform,
@@ -54,6 +56,46 @@ describe("normalizePrimaryPlatform", () => {
 
   test("returns the platform value as-is for non-empty string", () => {
     expect(normalizePrimaryPlatform("netflix")).toBe("netflix");
+  });
+});
+
+describe("createDetailModalState", () => {
+  test("returns the default modal state", () => {
+    expect(createDetailModalState("item-1")).toEqual({
+      openItemId: "item-1",
+      editingField: null,
+      draftValue: "",
+      message: null,
+    });
+  });
+});
+
+describe("createDetailEditingState", () => {
+  const item: BacklogItem = {
+    id: "item-1",
+    status: "watching",
+    primary_platform: "netflix",
+    note: "既存メモ",
+    sort_order: 100,
+    works: null,
+  };
+
+  test("builds the draft state for platform editing", () => {
+    expect(createDetailEditingState(item, "primaryPlatform")).toEqual({
+      openItemId: "item-1",
+      editingField: "primaryPlatform",
+      draftValue: "netflix",
+      message: null,
+    });
+  });
+
+  test("builds the draft state for note editing", () => {
+    expect(createDetailEditingState(item, "note")).toEqual({
+      openItemId: "item-1",
+      editingField: "note",
+      draftValue: "既存メモ",
+      message: null,
+    });
   });
 });
 

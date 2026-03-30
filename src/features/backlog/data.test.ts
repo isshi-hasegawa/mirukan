@@ -1,6 +1,8 @@
 import { describe, expect, test } from "vite-plus/test";
 import {
+  applyBacklogItemUpdate,
   applyModeFilter,
+  buildDetailFieldUpdate,
   buildMoveToStatusConfirmMessage,
   buildSelectedSeasonTargets,
   calcCompletionLoadScore,
@@ -253,6 +255,47 @@ describe("getSortOrderForStatusChange", () => {
     ];
 
     expect(getSortOrderForStatusChange(items, "a", "watched")).toBe(3000);
+  });
+});
+
+describe("buildDetailFieldUpdate", () => {
+  test("platform 編集では正規化した primary_platform を返す", () => {
+    expect(buildDetailFieldUpdate("primaryPlatform", "netflix")).toEqual({
+      primary_platform: "netflix",
+    });
+  });
+
+  test("note 編集では trim 後の文字列を返す", () => {
+    expect(buildDetailFieldUpdate("note", "  メモ  ")).toEqual({
+      note: "メモ",
+    });
+  });
+
+  test("空 note は null を返す", () => {
+    expect(buildDetailFieldUpdate("note", "   ")).toEqual({
+      note: null,
+    });
+  });
+});
+
+describe("applyBacklogItemUpdate", () => {
+  test("BacklogItem へ部分更新を反映する", () => {
+    const item = createItem("a", "stacked", 1000);
+
+    expect(
+      applyBacklogItemUpdate(item, {
+        status: "watched",
+        sort_order: 2000,
+        primary_platform: "netflix",
+        note: "メモ",
+      }),
+    ).toMatchObject({
+      id: "a",
+      status: "watched",
+      sort_order: 2000,
+      primary_platform: "netflix",
+      note: "メモ",
+    });
   });
 });
 

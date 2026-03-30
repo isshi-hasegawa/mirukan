@@ -24,7 +24,12 @@ import {
 } from "../data.ts";
 import type { TmdbSearchResult } from "../../../lib/tmdb.ts";
 import type { BacklogItem, BacklogStatus, DetailModalState, DropIndicator } from "../types.ts";
-import { getClientYFromPointerEvent, getDropIndicator, resolveDropTarget } from "../helpers.ts";
+import {
+  createDetailModalState,
+  getClientYFromPointerEvent,
+  getDropIndicator,
+  resolveDropTarget,
+} from "../helpers.ts";
 import { useWindowSize } from "../hooks/useWindowSize.ts";
 import { Header } from "./Header.tsx";
 import { KanbanBoard } from "./KanbanBoard.tsx";
@@ -46,12 +51,7 @@ export function BoardPage({ session }: Props) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [detailModal, setDetailModal] = useState<DetailModalState>({
-    openItemId: null,
-    editingField: null,
-    draftValue: "",
-    message: null,
-  });
+  const [detailModal, setDetailModal] = useState<DetailModalState>(createDetailModalState(null));
   const [dragItemId, setDragItemId] = useState<string | null>(null);
   const [dropIndicator, setDropIndicator] = useState<DropIndicator | null>(null);
   const [isRecommendOpen, setIsRecommendOpen] = useState(false);
@@ -170,7 +170,7 @@ export function BoardPage({ session }: Props) {
     }
 
     if (detailModal.openItemId === itemId) {
-      setDetailModal({ openItemId: null, editingField: null, draftValue: "", message: null });
+      setDetailModal(createDetailModalState(null));
     }
     await loadItems();
   };
@@ -248,11 +248,11 @@ export function BoardPage({ session }: Props) {
   };
 
   const handleOpenDetail = (itemId: string) => {
-    setDetailModal({ openItemId: itemId, editingField: null, draftValue: "", message: null });
+    setDetailModal(createDetailModalState(itemId));
   };
 
   const handleCloseDetail = () => {
-    setDetailModal({ openItemId: null, editingField: null, draftValue: "", message: null });
+    setDetailModal(createDetailModalState(null));
   };
 
   const handleAdded = async () => {

@@ -1,6 +1,8 @@
 import type {
   BacklogItem,
   BacklogStatus,
+  DetailModalEditableField,
+  DetailModalState,
   DropIndicator,
   PrimaryPlatform,
   ResolvedDropTarget,
@@ -25,6 +27,29 @@ export function normalizePrimaryPlatform(value: string): PrimaryPlatform {
   }
 
   return value as Exclude<PrimaryPlatform, null>;
+}
+
+export function createDetailModalState(
+  openItemId: string | null,
+  overrides: Partial<Omit<DetailModalState, "openItemId">> = {},
+): DetailModalState {
+  return {
+    openItemId,
+    editingField: null,
+    draftValue: "",
+    message: null,
+    ...overrides,
+  };
+}
+
+export function createDetailEditingState(
+  item: BacklogItem,
+  field: DetailModalEditableField,
+): DetailModalState {
+  return createDetailModalState(item.id, {
+    editingField: field,
+    draftValue: field === "primaryPlatform" ? (item.primary_platform ?? "") : (item.note ?? ""),
+  });
 }
 
 export function buildSearchText(title: string) {

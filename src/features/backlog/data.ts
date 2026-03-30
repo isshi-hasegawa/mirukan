@@ -9,11 +9,12 @@ import {
   type TmdbWorkDetails,
 } from "../../lib/tmdb.ts";
 import { statusLabels, viewingModeOrder } from "./constants.ts";
-import { buildSearchText } from "./helpers.ts";
+import { buildSearchText, normalizePrimaryPlatform } from "./helpers.ts";
 import type {
   BacklogItem,
   BacklogItemRow,
   BacklogStatus,
+  DetailModalEditableField,
   ViewingMode,
   WorkSummary,
   WorkType,
@@ -121,6 +122,45 @@ export function getSortOrderForStatusChange(
     items.filter((item) => item.id !== itemId),
     targetStatus,
   );
+}
+
+type BacklogItemUpdate = Partial<
+  Pick<BacklogItem, "status" | "sort_order" | "primary_platform" | "note">
+>;
+
+export async function updateBacklogItem(
+  itemId: string,
+  update: BacklogItemUpdate,
+): Promise<{ error: string | null }> {
+  const { error } = await supabase.from("backlog_items").update(update).eq("id", itemId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { error: null };
+}
+
+export function buildDetailFieldUpdate(
+  field: DetailModalEditableField,
+  draftValue: string,
+): BacklogItemUpdate {
+  if (field === "primaryPlatform") {
+    return {
+      primary_platform: normalizePrimaryPlatform(draftValue),
+    };
+  }
+
+  return {
+    note: draftValue.trim() || null,
+  };
+}
+
+export function applyBacklogItemUpdate(item: BacklogItem, update: BacklogItemUpdate): BacklogItem {
+  return {
+    ...item,
+    ...update,
+  };
 }
 
 export function getSortOrderForDrop(
