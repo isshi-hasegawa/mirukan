@@ -252,6 +252,16 @@ h3 {
   }
 }
 
+/* モーダル内スクロールバー非表示 */
+[role="dialog"] * {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+[role="dialog"] *::-webkit-scrollbar {
+  display: none;
+}
+
 /* カスタムユーティリティ */
 @layer utilities {
   .login-cols {
