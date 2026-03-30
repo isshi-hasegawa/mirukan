@@ -434,7 +434,7 @@ export function AddModal({
               </div>
             )}
 
-            <div className="grid gap-2.5 overflow-y-auto pr-1 max-[720px]:h-[min(32svh,280px)]">
+            <div className="grid gap-2.5 overflow-y-auto pr-1 max-[720px]:h-[min(40svh,320px)]">
               {(() => {
                 const displayResults = searchQuery.trim() === "" ? trendingResults : searchResults;
                 if (displayResults.length > 0) {
