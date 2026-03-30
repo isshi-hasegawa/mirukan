@@ -380,25 +380,6 @@ export function BoardPage({ session }: Props) {
         </DragOverlay>
       </DndContext>
 
-      {isMobileLayout && selectedTabStatus === "stacked" && !isAddModalOpen && (
-        <button
-          type="button"
-          className="fixed bottom-6 right-5 w-14 h-14 rounded-full bg-primary text-primary-foreground border-none shadow-[0_4px_16px_rgba(191,90,54,0.45)] cursor-pointer flex items-center justify-center z-[100] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 transition-[background,box-shadow] duration-150"
-          aria-label="作品を追加"
-          onClick={() => setIsAddModalOpen(true)}
-        >
-          <svg viewBox="0 0 20 20" aria-hidden="true" width="24" height="24">
-            <path
-              d="M10 4.25v11.5M4.25 10h11.5"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              fill="none"
-            />
-          </svg>
-        </button>
-      )}
-
       {isRecommendOpen && (
         <RecommendModal
           items={items}

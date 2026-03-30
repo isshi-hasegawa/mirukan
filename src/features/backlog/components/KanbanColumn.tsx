@@ -61,23 +61,24 @@ export function KanbanColumn({
             {items.length}
           </span>
         </div>
-        {status === "stacked" && !isMobileLayout && (
+        {status === "stacked" && (
           <Button
             variant="ghost"
-            size="icon"
-            className="w-10 h-10 rounded-full border border-primary/[0.18] bg-primary/[0.08] text-primary hover:bg-primary/[0.15] hover:text-primary max-[500px]:w-8 max-[500px]:h-8 max-[400px]:w-7 max-[400px]:h-7 shrink-0"
+            className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-primary/[0.2] bg-primary/[0.1] px-3 text-[0.82rem] font-semibold text-primary hover:bg-primary/[0.16] hover:text-primary max-[500px]:h-8 max-[500px]:gap-1.5 max-[500px]:px-2.5 max-[500px]:text-[0.74rem] max-[400px]:h-7 max-[400px]:gap-1 max-[400px]:px-2 max-[400px]:text-[0.7rem]"
             type="button"
-            aria-label="ストックに追加"
-            title="ストックに追加"
+            aria-label="作品を検索してストックに追加"
+            title="作品を検索してストックに追加"
             onClick={onOpenAddModal}
           >
             <svg
-              className="w-[18px] h-[18px] stroke-current fill-none [stroke-linecap:round] [stroke-width:1.75] max-[500px]:w-4 max-[500px]:h-4 max-[400px]:w-3.5 max-[400px]:h-3.5"
+              className="h-[16px] w-[16px] stroke-current fill-none [stroke-linecap:round] [stroke-linejoin:round] [stroke-width:1.8] max-[500px]:h-[14px] max-[500px]:w-[14px] max-[400px]:h-3 max-[400px]:w-3"
               viewBox="0 0 20 20"
               aria-hidden="true"
             >
-              <path d="M10 4.25v11.5M4.25 10h11.5" />
+              <circle cx="8.5" cy="8.5" r="4.75" />
+              <path d="M12 12l4.25 4.25" />
             </svg>
+            <span>{isMobileLayout ? "検索" : "作品を検索"}</span>
           </Button>
         )}
       </header>
