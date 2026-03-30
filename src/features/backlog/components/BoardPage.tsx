@@ -23,17 +23,14 @@ import {
   upsertTmdbWork,
 } from "../data.ts";
 import type { TmdbSearchResult } from "../../../lib/tmdb.ts";
-import type { BacklogItem, BacklogStatus, DetailModalState } from "../types.ts";
+import type { BacklogItem, BacklogStatus, DetailModalState, DropIndicator } from "../types.ts";
+import { getClientYFromPointerEvent, getDropIndicator, resolveDropTarget } from "../helpers.ts";
 import { useWindowSize } from "../hooks/useWindowSize.ts";
 import { Header } from "./Header.tsx";
 import { KanbanBoard } from "./KanbanBoard.tsx";
 import { AddModal } from "./AddModal.tsx";
 import { DetailModal } from "./DetailModal.tsx";
 import { RecommendModal } from "./RecommendModal.tsx";
-
-type DropIndicator =
-  | { type: "card"; itemId: string; side: "before" | "after" }
-  | { type: "column"; status: BacklogStatus };
 
 type Props = { session: Session };
 
@@ -111,20 +108,12 @@ export function BoardPage({ session }: Props) {
     }
 
     const overId = over.id as string;
-    if (overId.startsWith("column:")) {
-      const status = overId.replace("column:", "") as BacklogStatus;
-      setDropIndicator({ type: "column", status });
-    } else {
-      const rect = over.rect;
-      const clientY = event.activatorEvent
-        ? (event.activatorEvent as MouseEvent | TouchEvent).type.includes("touch")
-          ? ((event.activatorEvent as TouchEvent).touches?.[0]?.clientY ??
-            rect.top + rect.height / 2)
-          : ((event.activatorEvent as MouseEvent).clientY ?? rect.top + rect.height / 2)
-        : rect.top + rect.height / 2;
-      const side = clientY < rect.top + rect.height / 2 ? "before" : "after";
-      setDropIndicator({ type: "card", itemId: overId, side });
-    }
+    const rect = over.rect;
+    const clientY = getClientYFromPointerEvent(
+      event.activatorEvent as MouseEvent | TouchEvent | null | undefined,
+      rect,
+    );
+    setDropIndicator(getDropIndicator(overId, rect, clientY));
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -137,26 +126,19 @@ export function BoardPage({ session }: Props) {
     const draggedId = active.id as string;
     const overId = over.id as string;
 
-    let targetStatus: BacklogStatus;
-    let targetItemId: string | null = null;
-    let side: "before" | "after" = "after";
+    const target = resolveDropTarget(
+      items,
+      overId,
+      over.rect,
+      getClientYFromPointerEvent(
+        event.activatorEvent as MouseEvent | TouchEvent | null | undefined,
+        over.rect,
+        "changedTouches",
+      ),
+    );
+    if (!target) return;
 
-    if (overId.startsWith("column:")) {
-      targetStatus = overId.replace("column:", "") as BacklogStatus;
-    } else {
-      const targetItem = items.find((i) => i.id === overId);
-      if (!targetItem) return;
-      targetStatus = targetItem.status;
-      targetItemId = overId;
-      const rect = over.rect;
-      const clientY = event.activatorEvent
-        ? (event.activatorEvent as MouseEvent | TouchEvent).type.includes("touch")
-          ? ((event.activatorEvent as TouchEvent).changedTouches?.[0]?.clientY ??
-            rect.top + rect.height / 2)
-          : ((event.activatorEvent as MouseEvent).clientY ?? rect.top + rect.height / 2)
-        : rect.top + rect.height / 2;
-      side = clientY < rect.top + rect.height / 2 ? "before" : "after";
-    }
+    const { status: targetStatus, targetItemId, side } = target;
 
     // モバイルレイアウトでは列間ドラッグを無効化
     if (isMobileLayout) {

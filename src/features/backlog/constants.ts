@@ -53,6 +53,16 @@ export const platformIcons: Record<Exclude<PrimaryPlatform, null>, string> = {
 
 export const platformKeys = Object.keys(platformIcons) as Exclude<PrimaryPlatform, null>[];
 
+export const platformBackgrounds: Record<Exclude<PrimaryPlatform, null>, string> = {
+  netflix: "#000",
+  prime_video: "#fff",
+  u_next: "#000",
+  disney_plus: "linear-gradient(45deg, #00d6e8 0%, #084f60 50%, #112638 100%)",
+  hulu: "#040405",
+  apple_tv_plus: "#000",
+  apple_tv: "#1d1d1f",
+};
+
 export const viewingModeOrder: ViewingMode[] = ["focus", "thoughtful", "quick", "background"];
 
 export const viewingModeLabels: Record<ViewingMode, string> = {

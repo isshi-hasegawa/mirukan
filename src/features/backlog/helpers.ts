@@ -1,4 +1,13 @@
-import type { PrimaryPlatform, WorkType } from "./types.ts";
+import type {
+  BacklogItem,
+  BacklogStatus,
+  DropIndicator,
+  PrimaryPlatform,
+  ResolvedDropTarget,
+  WorkType,
+} from "./types.ts";
+
+type RectLike = Pick<DOMRect, "top" | "height">;
 
 export function getStringField(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -34,6 +43,70 @@ export function escapeHtml(value: string) {
 export function getDropSide(card: HTMLElement, clientY: number) {
   const rect = card.getBoundingClientRect();
   return clientY < rect.top + rect.height / 2 ? "before" : "after";
+}
+
+export function getDropSideFromRect(rect: RectLike, clientY: number) {
+  return clientY < rect.top + rect.height / 2 ? "before" : "after";
+}
+
+export function getClientYFromPointerEvent(
+  event: MouseEvent | TouchEvent | null | undefined,
+  rect: RectLike,
+  touchListKey: "touches" | "changedTouches" = "touches",
+) {
+  const fallbackY = rect.top + rect.height / 2;
+
+  if (!event) {
+    return fallbackY;
+  }
+
+  if ("touches" in event && event.type.includes("touch")) {
+    const touchList = touchListKey === "changedTouches" ? event.changedTouches : event.touches;
+    return touchList?.[0]?.clientY ?? fallbackY;
+  }
+
+  return "clientY" in event ? (event.clientY ?? fallbackY) : fallbackY;
+}
+
+export function getDropIndicator(overId: string, rect: RectLike, clientY: number): DropIndicator {
+  if (overId.startsWith("column:")) {
+    return {
+      type: "column",
+      status: overId.replace("column:", "") as BacklogStatus,
+    };
+  }
+
+  return {
+    type: "card",
+    itemId: overId,
+    side: getDropSideFromRect(rect, clientY),
+  };
+}
+
+export function resolveDropTarget(
+  items: BacklogItem[],
+  overId: string,
+  rect: RectLike,
+  clientY: number,
+): ResolvedDropTarget | null {
+  if (overId.startsWith("column:")) {
+    return {
+      status: overId.replace("column:", "") as BacklogStatus,
+      targetItemId: null,
+      side: "after",
+    };
+  }
+
+  const targetItem = items.find((item) => item.id === overId);
+  if (!targetItem) {
+    return null;
+  }
+
+  return {
+    status: targetItem.status,
+    targetItemId: overId,
+    side: getDropSideFromRect(rect, clientY),
+  };
 }
 
 export function getWorkTypeLabel(workType: WorkType) {

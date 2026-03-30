@@ -59,3 +59,13 @@ export type DragState = {
   itemId: string;
   sourceStatus: BacklogStatus;
 };
+
+export type DropIndicator =
+  | { type: "card"; itemId: string; side: "before" | "after" }
+  | { type: "column"; status: BacklogStatus };
+
+export type ResolvedDropTarget = {
+  status: BacklogStatus;
+  targetItemId: string | null;
+  side: "before" | "after";
+};
