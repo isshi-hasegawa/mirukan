@@ -8,6 +8,7 @@ import {
   type TmdbSelectionTarget,
   type TmdbWorkDetails,
 } from "../../lib/tmdb.ts";
+import { statusLabels } from "./constants.ts";
 import { buildSearchText } from "./helpers.ts";
 import type { BacklogItem, BacklogItemRow, BacklogStatus, WorkSummary, WorkType } from "./types.ts";
 
@@ -36,6 +37,62 @@ export function getTopSortOrder(items: BacklogItem[], status: BacklogStatus): nu
   const statusItems = items.filter((item) => item.status === status);
   if (statusItems.length === 0) return 1000;
   return Math.min(...statusItems.map((i) => i.sort_order)) - 1000;
+}
+
+type BacklogUpsertAction = { type: "insert"; workId: string } | { type: "move"; item: BacklogItem };
+
+export function planBacklogItemUpserts(
+  items: BacklogItem[],
+  workIds: string[],
+  targetStatus: BacklogStatus,
+): {
+  actions: BacklogUpsertAction[];
+  existingTargetItems: BacklogItem[];
+  existingOtherItems: BacklogItem[];
+} {
+  const seen = new Set<string>();
+  const actions: BacklogUpsertAction[] = [];
+  const existingTargetItems: BacklogItem[] = [];
+  const existingOtherItems: BacklogItem[] = [];
+  const itemsByWorkId = new Map(
+    items
+      .filter(
+        (item): item is BacklogItem & { works: NonNullable<BacklogItem["works"]> } => !!item.works,
+      )
+      .map((item) => [item.works.id, item] as const),
+  );
+
+  for (const workId of workIds) {
+    if (seen.has(workId)) continue;
+    seen.add(workId);
+
+    const existingItem = itemsByWorkId.get(workId);
+    if (!existingItem) {
+      actions.push({ type: "insert", workId });
+      continue;
+    }
+
+    if (existingItem.status === targetStatus) {
+      existingTargetItems.push(existingItem);
+      continue;
+    }
+
+    existingOtherItems.push(existingItem);
+    actions.push({ type: "move", item: existingItem });
+  }
+
+  return { actions, existingTargetItems, existingOtherItems };
+}
+
+export function buildMoveToStatusConfirmMessage(
+  items: BacklogItem[],
+  targetStatus: BacklogStatus,
+  subject: string,
+): string | null {
+  if (items.length === 0) return null;
+
+  const labels = [...new Set(items.map((item) => statusLabels[item.status]))];
+  return `${subject}はすでに「${labels.join("・")}」にあります。${statusLabels[targetStatus]}に戻しますか？`;
 }
 
 export function getSortOrderForStatusChange(
@@ -147,6 +204,73 @@ export async function upsertTmdbWork(
     .insert(buildTmdbWorkInsert(details, userId, workType))
     .select("id")
     .single();
+}
+
+export async function upsertManualWork(
+  title: string,
+  workType: Extract<WorkType, "movie" | "series">,
+  userId: string,
+): Promise<PostgrestSingleResponse<{ id: string }>> {
+  const searchText = buildSearchText(title);
+  const { data: existing, error: selectError } = await supabase
+    .from("works")
+    .select("id")
+    .eq("created_by", userId)
+    .eq("source_type", "manual")
+    .eq("work_type", workType)
+    .eq("search_text", searchText)
+    .maybeSingle();
+
+  if (selectError) {
+    return { data: null, error: selectError, count: null, status: 400, statusText: "Bad Request" };
+  }
+
+  if (existing) {
+    return { data: existing, error: null, count: null, status: 200, statusText: "OK" };
+  }
+
+  const insertResult = await supabase
+    .from("works")
+    .insert({
+      created_by: userId,
+      source_type: "manual",
+      work_type: workType,
+      title,
+      search_text: searchText,
+    })
+    .select("id")
+    .single();
+
+  if (insertResult.error?.code !== "23505") {
+    return insertResult;
+  }
+
+  const { data: conflicted, error: conflictError } = await supabase
+    .from("works")
+    .select("id")
+    .eq("created_by", userId)
+    .eq("source_type", "manual")
+    .eq("work_type", workType)
+    .eq("search_text", searchText)
+    .maybeSingle();
+
+  if (conflictError) {
+    return {
+      data: null,
+      error: conflictError,
+      count: null,
+      status: 409,
+      statusText: "Conflict",
+    };
+  }
+
+  return {
+    data: conflicted,
+    error: conflicted ? null : insertResult.error,
+    count: null,
+    status: conflicted ? 200 : 409,
+    statusText: conflicted ? "OK" : "Conflict",
+  };
 }
 
 function buildTmdbWorkInsert(
@@ -381,22 +505,18 @@ export function buildSelectedSeasonTargets(
   });
 }
 
-type AddSelectedSeasonsOptions = {
-  note: string | null;
-  primaryPlatform: string | null;
+type ResolveSelectedSeasonWorkIdsOptions = {
   seasonOptions: TmdbSeasonOption[];
 };
 
-export async function addSelectedSeasons(
+export async function resolveSelectedSeasonWorkIds(
   seriesResult: TmdbSearchResult,
   userId: string,
-  status: BacklogStatus,
-  existingItems: BacklogItem[],
   seasonNumbers: number[],
-  options: AddSelectedSeasonsOptions,
-): Promise<{ error: string | null }> {
+  options: ResolveSelectedSeasonWorkIdsOptions,
+): Promise<{ error: string | null; workIds: string[] }> {
   if (seasonNumbers.length === 0) {
-    return { error: "追加するシーズンを1つ以上選択してください" };
+    return { error: "追加するシーズンを1つ以上選択してください", workIds: [] };
   }
 
   let targets: TmdbSelectionTarget[] = [];
@@ -405,6 +525,7 @@ export async function addSelectedSeasons(
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : "シーズン情報の組み立てに失敗しました",
+      workIds: [],
     };
   }
 
@@ -415,35 +536,62 @@ export async function addSelectedSeasons(
       const label = target.workType === "season" ? `シーズン${target.seasonNumber}` : "シーズン1";
       return {
         error: seasonWork.error?.message ?? `${label}の保存に失敗しました`,
+        workIds: [],
       };
     }
     workIds.push(seasonWork.data.id);
   }
 
-  const existingWorkIds = new Set(existingItems.map((item) => item.works?.id).filter(Boolean));
-  const newWorkIds = workIds.filter((id) => !existingWorkIds.has(id));
+  return { error: null, workIds };
+}
 
-  if (newWorkIds.length === 0) {
+type UpsertBacklogItemsToStatusOptions = {
+  note: string | null;
+  primaryPlatform: string | null;
+};
+
+export async function upsertBacklogItemsToStatus(
+  userId: string,
+  items: BacklogItem[],
+  workIds: string[],
+  targetStatus: BacklogStatus,
+  options: UpsertBacklogItemsToStatusOptions,
+): Promise<{ error: string | null }> {
+  const plan = planBacklogItemUpserts(items, workIds, targetStatus);
+  if (plan.actions.length === 0) {
     return { error: null };
   }
 
-  let sortOrder = getNextSortOrder(existingItems, status);
-  const rows = newWorkIds.map((workId) => {
-    const row = {
-      user_id: userId,
-      work_id: workId,
-      status,
-      primary_platform: options.primaryPlatform,
-      note: options.note,
-      sort_order: sortOrder,
-    };
+  let sortOrder = getTopSortOrder(items, targetStatus);
+  const rows = plan.actions.map((action) => {
+    const row =
+      action.type === "move"
+        ? {
+            user_id: userId,
+            work_id: action.item.works!.id,
+            status: targetStatus,
+            primary_platform: action.item.primary_platform,
+            note: action.item.note,
+            sort_order: sortOrder,
+          }
+        : {
+            user_id: userId,
+            work_id: action.workId,
+            status: targetStatus,
+            primary_platform: options.primaryPlatform,
+            note: options.note,
+            sort_order: sortOrder,
+          };
     sortOrder += 1000;
     return row;
   });
 
-  const { error: insertError } = await supabase.from("backlog_items").insert(rows);
-  if (insertError) {
-    return { error: insertError.message };
+  const { error } = await supabase
+    .from("backlog_items")
+    .upsert(rows, { onConflict: "user_id,work_id" });
+
+  if (error) {
+    return { error: error.message };
   }
 
   return { error: null };

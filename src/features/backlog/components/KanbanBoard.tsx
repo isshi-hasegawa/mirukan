@@ -75,7 +75,7 @@ type Props = {
   isMobileDragging: boolean;
   selectedTabStatus: BacklogStatus;
   onTabChange: (status: BacklogStatus) => void;
-  onOpenAddModal: (status: BacklogStatus) => void;
+  onOpenAddModal: () => void;
   onOpenDetail: (itemId: string) => void;
   onDeleteItem: (itemId: string) => void;
   onMarkAsWatched: (itemId: string) => void;

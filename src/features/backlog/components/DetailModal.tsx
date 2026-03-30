@@ -1,12 +1,12 @@
 import { useEffect, useRef } from "react";
 import { DocumentTextIcon, FilmIcon, TvIcon } from "@heroicons/react/24/outline";
-import { siThemoviedatabase } from "simple-icons";
 import { supabase } from "../../../lib/supabase.ts";
 import { getSortOrderForStatusChange } from "../data.ts";
 import { normalizePrimaryPlatform } from "../helpers.ts";
 import { statusLabels, statusOrder } from "../constants.ts";
 import { PlatformPicker } from "./PlatformPicker.tsx";
 import { PosterImage } from "./PosterImage.tsx";
+import { TmdbLink } from "./TmdbLink.tsx";
 import type { BacklogItem, BacklogStatus, DetailModalState } from "../types.ts";
 
 type Props = {
@@ -194,23 +194,6 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
         aria-modal="true"
         aria-labelledby="detail-modal-title"
       >
-        {work.tmdb_id && (
-          <a
-            href={`https://www.themoviedb.org/${work.tmdb_media_type === "movie" ? "movie" : "tv"}/${work.tmdb_id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="absolute top-3.5 right-3.5 inline-flex items-center justify-center w-9 h-9 rounded-full text-muted-foreground no-underline hover:bg-[rgba(92,59,35,0.08)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-            aria-label="TMDbで作品を開く"
-            title="TMDbで作品を開く"
-          >
-            <svg
-              className="w-[22px] h-[22px]"
-              viewBox="0 0 24 24"
-              dangerouslySetInnerHTML={{ __html: siThemoviedatabase.svg }}
-              aria-hidden="true"
-            />
-          </a>
-        )}
         <div className="grid grid-cols-[minmax(200px,260px)_minmax(0,1fr)] grid-rows-[auto_1fr] gap-x-6 gap-y-3.5 overflow-y-auto pr-1 flex-1 min-h-0 max-[720px]:grid-cols-[72px_1fr] max-[720px]:grid-rows-[auto_auto] max-[720px]:gap-y-4">
           <div
             className="sticky top-0 self-start row-span-full overflow-hidden rounded-3xl aspect-[2/3] border border-[rgba(92,59,35,0.08)] max-[720px]:static max-[720px]:col-[1] max-[720px]:row-[1] max-[720px]:rounded-xl"
@@ -227,13 +210,22 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
               fallbackClassName="w-full h-full grid place-items-center p-6 text-muted-foreground text-[1.1rem] tracking-[0.04em]"
             />
           </div>
-          <div className="grid gap-1.5 content-start max-[720px]:col-[2] max-[720px]:row-[1]">
-            <h2
-              id="detail-modal-title"
-              className="text-[clamp(1.6rem,3vw,2.4rem)] max-[720px]:text-[1.1rem]"
-            >
-              {title}
-            </h2>
+          <div className="grid gap-1.5 content-start min-w-0 max-[720px]:col-[2] max-[720px]:row-[1]">
+            <div className="flex items-start gap-3 min-w-0">
+              <h2
+                id="detail-modal-title"
+                className="min-w-0 flex-1 text-[clamp(1.6rem,3vw,2.4rem)] max-[720px]:text-[1.1rem]"
+              >
+                {title}
+              </h2>
+              {work.tmdb_id && (
+                <TmdbLink
+                  href={`https://www.themoviedb.org/${work.tmdb_media_type === "movie" ? "movie" : "tv"}/${work.tmdb_id}`}
+                  className="h-10 w-10 shrink-0"
+                  iconClassName="h-6 w-6"
+                />
+              )}
+            </div>
             <p className="flex items-center gap-1 text-muted-foreground text-[0.95rem]">
               <WorkTypeIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
               {workTypeLabel}

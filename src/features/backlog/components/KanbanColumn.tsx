@@ -15,7 +15,7 @@ type Props = {
   extra?: ReactNode;
   featuredIds?: Set<string>;
   dropIndicator: DropIndicator | null;
-  onOpenAddModal: (status: BacklogStatus) => void;
+  onOpenAddModal: () => void;
   onOpenDetail: (itemId: string) => void;
   onDeleteItem: (itemId: string) => void;
   onMarkAsWatched: (itemId: string) => void;
@@ -59,23 +59,25 @@ export function KanbanColumn({
             {items.length}
           </span>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="w-10 h-10 rounded-full border border-primary/[0.18] bg-primary/[0.08] text-primary hover:bg-primary/[0.15] hover:text-primary max-[500px]:w-8 max-[500px]:h-8 max-[400px]:w-7 max-[400px]:h-7 shrink-0"
-          type="button"
-          aria-label={`${statusLabels[status]} に追加`}
-          title={`${statusLabels[status]} に追加`}
-          onClick={() => onOpenAddModal(status)}
-        >
-          <svg
-            className="w-[18px] h-[18px] stroke-current fill-none [stroke-linecap:round] [stroke-width:1.75] max-[500px]:w-4 max-[500px]:h-4 max-[400px]:w-3.5 max-[400px]:h-3.5"
-            viewBox="0 0 20 20"
-            aria-hidden="true"
+        {status === "stacked" && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="w-10 h-10 rounded-full border border-primary/[0.18] bg-primary/[0.08] text-primary hover:bg-primary/[0.15] hover:text-primary max-[500px]:w-8 max-[500px]:h-8 max-[400px]:w-7 max-[400px]:h-7 shrink-0"
+            type="button"
+            aria-label="ストックに追加"
+            title="ストックに追加"
+            onClick={onOpenAddModal}
           >
-            <path d="M10 4.25v11.5M4.25 10h11.5" />
-          </svg>
-        </Button>
+            <svg
+              className="w-[18px] h-[18px] stroke-current fill-none [stroke-linecap:round] [stroke-width:1.75] max-[500px]:w-4 max-[500px]:h-4 max-[400px]:w-3.5 max-[400px]:h-3.5"
+              viewBox="0 0 20 20"
+              aria-hidden="true"
+            >
+              <path d="M10 4.25v11.5M4.25 10h11.5" />
+            </svg>
+          </Button>
+        )}
       </header>
       <div
         ref={setNodeRef}

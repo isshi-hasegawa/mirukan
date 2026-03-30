@@ -14,9 +14,12 @@ import {
 import { Button } from "@/components/ui/button.tsx";
 import { supabase } from "../../../lib/supabase.ts";
 import {
+  buildMoveToStatusConfirmMessage,
   getSortOrderForDrop,
   getTopSortOrder,
   normalizeBacklogItems,
+  planBacklogItemUpserts,
+  upsertBacklogItemsToStatus,
   upsertTmdbWork,
 } from "../data.ts";
 import type { TmdbSearchResult } from "../../../lib/tmdb.ts";
@@ -45,7 +48,7 @@ export function BoardPage({ session }: Props) {
   const [items, setItems] = useState<BacklogItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [addModalStatus, setAddModalStatus] = useState<BacklogStatus | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [detailModal, setDetailModal] = useState<DetailModalState>({
     openItemId: null,
     editingField: null,
@@ -224,18 +227,31 @@ export function BoardPage({ session }: Props) {
       return;
     }
 
-    const sortOrders = workIds.map((_, i) => getTopSortOrder(items, "stacked") + i);
-    const { error: insertError } = await supabase.from("backlog_items").insert(
-      workIds.map((workId, i) => ({
-        user_id: session.user.id,
-        work_id: workId,
-        status: "stacked",
-        sort_order: sortOrders[i],
-      })),
+    const plan = planBacklogItemUpserts(items, workIds, "stacked");
+    const confirmMessage = buildMoveToStatusConfirmMessage(
+      plan.existingOtherItems,
+      "stacked",
+      `${results.length}件の作品`,
+    );
+    if (confirmMessage && !window.confirm(confirmMessage)) {
+      return;
+    }
+
+    if (plan.actions.length === 0) {
+      window.alert("選択した作品はすでにストックにあります");
+      return;
+    }
+
+    const { error: insertError } = await upsertBacklogItemsToStatus(
+      session.user.id,
+      items,
+      workIds,
+      "stacked",
+      { primaryPlatform: null, note: null },
     );
 
     if (insertError) {
-      window.alert(`追加に失敗しました: ${insertError.message}`);
+      window.alert(`追加に失敗しました: ${insertError}`);
       return;
     }
 
@@ -255,6 +271,16 @@ export function BoardPage({ session }: Props) {
 
   const handleCloseDetail = () => {
     setDetailModal({ openItemId: null, editingField: null, draftValue: "", message: null });
+  };
+
+  const handleAdded = async () => {
+    await loadItems();
+    if (isMobileLayout) {
+      setSelectedTabStatus("stacked");
+      return;
+    }
+    const col = columnRefs.current.stacked;
+    col?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
   };
 
   const handleUpdateItem = (updated: BacklogItem) => {
@@ -318,7 +344,7 @@ export function BoardPage({ session }: Props) {
           isMobileDragging={isMobileLayout && dragItemId !== null}
           selectedTabStatus={selectedTabStatus}
           onTabChange={setSelectedTabStatus}
-          onOpenAddModal={setAddModalStatus}
+          onOpenAddModal={() => setIsAddModalOpen(true)}
           onOpenDetail={handleOpenDetail}
           onDeleteItem={(itemId) => void handleDeleteItem(itemId)}
           onMarkAsWatched={(itemId) => void handleMarkAsWatched(itemId)}
@@ -354,12 +380,12 @@ export function BoardPage({ session }: Props) {
         </DragOverlay>
       </DndContext>
 
-      {isMobileLayout && addModalStatus === null && (
+      {isMobileLayout && !isAddModalOpen && (
         <button
           type="button"
           className="fixed bottom-6 right-5 w-14 h-14 rounded-full bg-primary text-primary-foreground border-none shadow-[0_4px_16px_rgba(191,90,54,0.45)] cursor-pointer flex items-center justify-center z-[100] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 transition-[background,box-shadow] duration-150"
           aria-label="作品を追加"
-          onClick={() => setAddModalStatus(selectedTabStatus)}
+          onClick={() => setIsAddModalOpen(true)}
         >
           <svg viewBox="0 0 20 20" aria-hidden="true" width="24" height="24">
             <path
@@ -381,13 +407,12 @@ export function BoardPage({ session }: Props) {
         />
       )}
 
-      {addModalStatus !== null && (
+      {isAddModalOpen && (
         <AddModal
-          defaultStatus={addModalStatus}
           items={items}
           session={session}
-          onClose={() => setAddModalStatus(null)}
-          onAdded={loadItems}
+          onClose={() => setIsAddModalOpen(false)}
+          onAdded={handleAdded}
         />
       )}
 

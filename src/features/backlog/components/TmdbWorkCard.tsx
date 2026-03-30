@@ -1,7 +1,8 @@
 import { FilmIcon, TvIcon, CheckIcon } from "@heroicons/react/24/outline";
-import { siThemoviedatabase } from "simple-icons";
+import type { ReactNode } from "react";
 import type { TmdbSearchResult } from "../../../lib/tmdb.ts";
 import { platformLabels } from "../constants.ts";
+import { TmdbLink } from "./TmdbLink.tsx";
 
 type Props = {
   result: TmdbSearchResult;
@@ -9,9 +10,17 @@ type Props = {
   onSelect?: () => void;
   onAddToStacked?: () => void;
   isChecked?: boolean;
+  footer?: ReactNode;
 };
 
-export function TmdbWorkCard({ result, isSelected, onSelect, onAddToStacked, isChecked }: Props) {
+export function TmdbWorkCard({
+  result,
+  isSelected,
+  onSelect,
+  onAddToStacked,
+  isChecked,
+  footer,
+}: Props) {
   const posterUrl = result.posterPath
     ? `https://image.tmdb.org/t/p/w185${result.posterPath}`
     : null;
@@ -62,7 +71,7 @@ export function TmdbWorkCard({ result, isSelected, onSelect, onAddToStacked, isC
           </div>
         )}
       </div>
-      <div className="grid gap-1 min-w-0">
+      <div className="grid gap-1 min-w-0 pr-8">
         <span className="font-bold">{result.title}</span>
         <span className="flex items-center gap-1 text-muted-foreground text-[0.88rem]">
           {result.workType === "movie" ? (
@@ -109,22 +118,12 @@ export function TmdbWorkCard({ result, isSelected, onSelect, onAddToStacked, isC
   const tmdbHref = `https://www.themoviedb.org/${result.tmdbMediaType}/${result.tmdbId}`;
 
   const tmdbLink = (
-    <a
+    <TmdbLink
       href={tmdbHref}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="absolute top-2 right-2 inline-flex items-center gap-[3px] px-1.5 py-[3px] rounded-full bg-white/90 text-[#5c3b23] no-underline z-10 hover:bg-white focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-0.5"
-      aria-label="TMDbで作品を開く"
-      title="TMDbで作品を開く"
+      className="absolute top-2 right-2 z-10 h-8 w-8 focus-visible:outline-offset-0.5"
+      iconClassName="h-[22px] w-[22px]"
       onClick={(e) => e.stopPropagation()}
-    >
-      <svg
-        className="w-[22px] h-[22px]"
-        viewBox="0 0 24 24"
-        dangerouslySetInnerHTML={{ __html: siThemoviedatabase.svg }}
-        aria-hidden="true"
-      />
-    </a>
+    />
   );
 
   const gridCols = onAddToStacked
@@ -144,6 +143,11 @@ export function TmdbWorkCard({ result, isSelected, onSelect, onAddToStacked, isC
       >
         {cardContent}
       </button>
+      {footer && (
+        <div className="mt-2 rounded-2xl border border-[rgba(92,59,35,0.16)] bg-[rgba(255,255,255,0.05)] px-4 py-3">
+          {footer}
+        </div>
+      )}
       {tmdbLink}
     </div>
   ) : (
@@ -153,6 +157,11 @@ export function TmdbWorkCard({ result, isSelected, onSelect, onAddToStacked, isC
       >
         {cardContent}
       </div>
+      {footer && (
+        <div className="mt-2 rounded-2xl border border-[rgba(92,59,35,0.16)] bg-[rgba(255,255,255,0.05)] px-4 py-3">
+          {footer}
+        </div>
+      )}
       {tmdbLink}
     </div>
   );

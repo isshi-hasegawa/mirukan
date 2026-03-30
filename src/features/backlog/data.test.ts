@@ -1,17 +1,24 @@
 import { describe, expect, test } from "vite-plus/test";
 import {
   applyModeFilter,
+  buildMoveToStatusConfirmMessage,
   buildSelectedSeasonTargets,
   calcCompletionLoadScore,
   getNextSortOrder,
   getSortOrderForDrop,
   getSortOrderForStatusChange,
   normalizeBacklogItems,
+  planBacklogItemUpserts,
 } from "./data.ts";
 import type { BacklogItem, WorkSummary } from "./types.ts";
 import type { TmdbSearchResult, TmdbSeasonOption, TmdbWorkDetails } from "../../lib/tmdb.ts";
 
-function createItem(id: string, status: BacklogItem["status"], sortOrder: number): BacklogItem {
+function createItem(
+  id: string,
+  status: BacklogItem["status"],
+  sortOrder: number,
+  workId = `work-${id}`,
+): BacklogItem {
   return {
     id,
     status,
@@ -19,7 +26,7 @@ function createItem(id: string, status: BacklogItem["status"], sortOrder: number
     note: null,
     sort_order: sortOrder,
     works: {
-      id: `work-${id}`,
+      id: workId,
       title: `Title ${id}`,
       work_type: "movie",
       source_type: "manual",
@@ -110,6 +117,38 @@ describe("getNextSortOrder", () => {
 
     expect(getNextSortOrder(items, "stacked")).toBe(3000);
     expect(getNextSortOrder(items, "watching")).toBe(1000);
+  });
+});
+
+describe("planBacklogItemUpserts", () => {
+  test("新規追加と既存カード移動と既存ストックを振り分ける", () => {
+    const items = [
+      createItem("a", "stacked", 1000, "work-1"),
+      createItem("b", "watched", 2000, "work-2"),
+    ];
+
+    const result = planBacklogItemUpserts(items, ["work-1", "work-2", "work-3"], "stacked");
+
+    expect(result.actions).toEqual([
+      { type: "move", item: items[1] },
+      { type: "insert", workId: "work-3" },
+    ]);
+    expect(result.existingTargetItems).toEqual([items[0]]);
+    expect(result.existingOtherItems).toEqual([items[1]]);
+  });
+});
+
+describe("buildMoveToStatusConfirmMessage", () => {
+  test("重複カードの状態をまとめて確認文を作る", () => {
+    const items = [
+      createItem("a", "watched", 1000),
+      createItem("b", "interrupted", 2000),
+      createItem("c", "watched", 3000),
+    ];
+
+    expect(buildMoveToStatusConfirmMessage(items, "stacked", "シーズン1・シーズン2")).toBe(
+      "シーズン1・シーズン2はすでに「視聴済み・中断」にあります。ストックに戻しますか？",
+    );
   });
 });
 
