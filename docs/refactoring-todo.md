@@ -49,37 +49,13 @@
   - UI 仕様変更が多そうなら早めに整理したい
   - 追加フローが安定しているならテスト先行でもよい
 
-## 優先度中
-
-### 未使用コードの整理
-
-- 候補
-  - `src/features/backlog/helpers.ts` の一部関数
-- TODO
-  - 本番コードから未使用のものを確認して削除する
-  - 将来使う予定があるなら意図が分かる置き方へ変える
-- 着手判断メモ
-  - 小さく安全に進めやすい
-
-### 依存の棚卸し
-
-- 候補
-  - `@dnd-kit/sortable`
-  - `@dnd-kit/utilities`
-  - `shadcn`
-- TODO
-  - 実際に未使用か再確認する
-  - 未使用なら削除、CLI 用なら `devDependencies` へ移す
-- 着手判断メモ
-  - すぐ効果は小さいが、依存の見通しはよくなる
-
-## 明確に足りていないテスト
+## 追加でほしいテスト
 
 ### `AddModal` の統合テスト
 
 - 対象
   - `src/features/backlog/components/AddModal.tsx`
-- 足りていない観点
+- 追加で確認したい観点
   - 検索結果選択時の分岐
   - TV 選択時のシーズン初期選択
   - 重複通知
@@ -90,7 +66,7 @@
 
 - 対象
   - `src/features/backlog/components/DetailModal.tsx`
-- 足りていない観点
+- 追加で確認したい観点
   - ステータス変更
   - note 保存
   - platform 保存
@@ -101,7 +77,7 @@
 - 対象
   - `src/features/backlog/components/RecommendModal.tsx`
   - `src/features/backlog/components/BoardPage.tsx`
-- 足りていない観点
+- 追加で確認したい観点
   - 推薦候補の除外条件
   - checked した作品の追加
   - 初回ロード
@@ -112,17 +88,21 @@
 
 - 対象
   - `src/features/backlog/data.ts`
-- 足りていない観点
+- 現状
+  - pure function まわりのユニットテストは追加済み
+- 追加で確認したい観点
   - `resolveSelectedSeasonWorkIds`
   - `upsertBacklogItemsToStatus`
   - `upsertManualWork`
   - 競合時、途中失敗時、空入力時の扱い
 
-### `tmdb.ts` の API 境界テスト
+### `tmdb.ts` の API 境界テスト追加
 
 - 対象
   - `src/lib/tmdb.ts`
-- 足りていない観点
+- 現状
+  - `resolveSeasonTitle` と recommendation cache 周辺はテスト追加済み
+- 追加で確認したい観点
   - `searchTmdbWorks`
   - `fetchTmdbSeasonOptions`
   - `fetchTmdbWorkDetails`
