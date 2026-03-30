@@ -1,8 +1,8 @@
 import type { PostgrestSingleResponse } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase.ts";
 import {
-  fetchTmdbSeasonOptions,
   fetchTmdbWorkDetails,
+  type TmdbSeasonOption,
   type TmdbSeasonSelectionTarget,
   type TmdbSearchResult,
   type TmdbSelectionTarget,
@@ -345,24 +345,27 @@ async function upsertTmdbSeasonWork(
     .single();
 }
 
-export async function addAllSeasons(
+export function buildSelectedSeasonTargets(
   seriesResult: TmdbSearchResult,
-  userId: string,
-  status: BacklogStatus,
-  existingItems: BacklogItem[],
-): Promise<{ error: string | null }> {
-  // シリーズ(=S1)を upsert
-  const seriesWork = await upsertTmdbWork(seriesResult, userId);
-  if (seriesWork.error || !seriesWork.data) {
-    return { error: seriesWork.error?.message ?? "シリーズの保存に失敗しました" };
-  }
+  seasonOptions: TmdbSeasonOption[],
+  seasonNumbers: number[],
+): TmdbSelectionTarget[] {
+  const normalizedSeasonNumbers = [...new Set(seasonNumbers)].sort((left, right) => left - right);
+  const seasonOptionsByNumber = new Map(
+    seasonOptions.map((season) => [season.seasonNumber, season] as const),
+  );
 
-  const workIds = [seriesWork.data.id];
+  return normalizedSeasonNumbers.map((seasonNumber) => {
+    if (seasonNumber === 1) {
+      return seriesResult;
+    }
 
-  // S2 以降のシーズンを取得・upsert
-  const seasonOptions = await fetchTmdbSeasonOptions(seriesResult);
-  for (const season of seasonOptions) {
-    const target: TmdbSeasonSelectionTarget = {
+    const season = seasonOptionsByNumber.get(seasonNumber);
+    if (!season) {
+      throw new Error(`シーズン${seasonNumber}の情報が見つかりません`);
+    }
+
+    return {
       tmdbId: seriesResult.tmdbId,
       tmdbMediaType: "tv",
       workType: "season",
@@ -371,20 +374,52 @@ export async function addAllSeasons(
       overview: season.overview,
       posterPath: season.posterPath,
       releaseDate: season.releaseDate,
-      seasonNumber: season.seasonNumber,
+      seasonNumber,
       episodeCount: season.episodeCount,
       seriesTitle: seriesResult.title,
     };
-    const seasonWork = await upsertTmdbSeasonWork(target, userId);
+  });
+}
+
+type AddSelectedSeasonsOptions = {
+  note: string | null;
+  primaryPlatform: string | null;
+  seasonOptions: TmdbSeasonOption[];
+};
+
+export async function addSelectedSeasons(
+  seriesResult: TmdbSearchResult,
+  userId: string,
+  status: BacklogStatus,
+  existingItems: BacklogItem[],
+  seasonNumbers: number[],
+  options: AddSelectedSeasonsOptions,
+): Promise<{ error: string | null }> {
+  if (seasonNumbers.length === 0) {
+    return { error: "追加するシーズンを1つ以上選択してください" };
+  }
+
+  let targets: TmdbSelectionTarget[] = [];
+  try {
+    targets = buildSelectedSeasonTargets(seriesResult, options.seasonOptions, seasonNumbers);
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "シーズン情報の組み立てに失敗しました",
+    };
+  }
+
+  const workIds: string[] = [];
+  for (const target of targets) {
+    const seasonWork = await upsertTmdbWork(target, userId);
     if (seasonWork.error || !seasonWork.data) {
+      const label = target.workType === "season" ? `シーズン${target.seasonNumber}` : "シーズン1";
       return {
-        error: seasonWork.error?.message ?? `シーズン${season.seasonNumber}の保存に失敗しました`,
+        error: seasonWork.error?.message ?? `${label}の保存に失敗しました`,
       };
     }
     workIds.push(seasonWork.data.id);
   }
 
-  // 既存の backlog_items に含まれる work_id は除外
   const existingWorkIds = new Set(existingItems.map((item) => item.works?.id).filter(Boolean));
   const newWorkIds = workIds.filter((id) => !existingWorkIds.has(id));
 
@@ -398,6 +433,8 @@ export async function addAllSeasons(
       user_id: userId,
       work_id: workId,
       status,
+      primary_platform: options.primaryPlatform,
+      note: options.note,
       sort_order: sortOrder,
     };
     sortOrder += 1000;

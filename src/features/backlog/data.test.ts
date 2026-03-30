@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vite-plus/test";
 import {
   applyModeFilter,
+  buildSelectedSeasonTargets,
   calcCompletionLoadScore,
   getNextSortOrder,
   getSortOrderForDrop,
@@ -8,7 +9,7 @@ import {
   normalizeBacklogItems,
 } from "./data.ts";
 import type { BacklogItem, WorkSummary } from "./types.ts";
-import type { TmdbWorkDetails } from "../../lib/tmdb.ts";
+import type { TmdbSearchResult, TmdbSeasonOption, TmdbWorkDetails } from "../../lib/tmdb.ts";
 
 function createItem(id: string, status: BacklogItem["status"], sortOrder: number): BacklogItem {
   return {
@@ -109,6 +110,63 @@ describe("getNextSortOrder", () => {
 
     expect(getNextSortOrder(items, "stacked")).toBe(3000);
     expect(getNextSortOrder(items, "watching")).toBe(1000);
+  });
+});
+
+describe("buildSelectedSeasonTargets", () => {
+  const seriesResult: TmdbSearchResult = {
+    tmdbId: 100,
+    tmdbMediaType: "tv",
+    workType: "series",
+    title: "テストシリーズ",
+    originalTitle: "Test Series",
+    overview: "overview",
+    posterPath: "/poster.jpg",
+    releaseDate: "2024-01-01",
+    jpWatchPlatforms: [],
+    hasJapaneseRelease: true,
+  };
+
+  const seasonOptions: TmdbSeasonOption[] = [
+    {
+      seasonNumber: 2,
+      title: "テストシリーズ シーズン2",
+      overview: "season 2",
+      posterPath: "/season2.jpg",
+      releaseDate: "2025-01-01",
+      episodeCount: 8,
+    },
+    {
+      seasonNumber: 3,
+      title: "テストシリーズ シーズン3",
+      overview: "season 3",
+      posterPath: "/season3.jpg",
+      releaseDate: "2026-01-01",
+      episodeCount: 10,
+    },
+  ];
+
+  test("シーズン1はシリーズとして扱い、重複を除いて昇順で返す", () => {
+    const targets = buildSelectedSeasonTargets(seriesResult, seasonOptions, [3, 1, 3, 2]);
+
+    expect(targets).toHaveLength(3);
+    expect(targets[0]).toEqual(seriesResult);
+    expect(targets[1]).toMatchObject({
+      workType: "season",
+      seasonNumber: 2,
+      title: "テストシリーズ シーズン2",
+    });
+    expect(targets[2]).toMatchObject({
+      workType: "season",
+      seasonNumber: 3,
+      title: "テストシリーズ シーズン3",
+    });
+  });
+
+  test("不足しているシーズン情報を選ぶと例外を投げる", () => {
+    expect(() => buildSelectedSeasonTargets(seriesResult, seasonOptions, [4])).toThrow(
+      "シーズン4の情報が見つかりません",
+    );
   });
 });
 

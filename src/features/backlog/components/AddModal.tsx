@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
-import { DocumentTextIcon, FilmIcon, TvIcon } from "@heroicons/react/24/outline";
+import { CheckIcon, DocumentTextIcon, FilmIcon, TvIcon } from "@heroicons/react/24/outline";
 import { TmdbWorkCard } from "./TmdbWorkCard.tsx";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../../../lib/supabase.ts";
 import { fetchTmdbSeasonOptions, fetchTmdbTrending, searchTmdbWorks } from "../../../lib/tmdb.ts";
-import type { TmdbSearchResult, TmdbSelectionTarget, TmdbSeasonOption } from "../../../lib/tmdb.ts";
-import { upsertTmdbWork, getNextSortOrder, addAllSeasons } from "../data.ts";
+import type { TmdbSearchResult, TmdbSeasonOption } from "../../../lib/tmdb.ts";
+import { addSelectedSeasons, getNextSortOrder, upsertTmdbWork } from "../data.ts";
 import { buildSearchText, normalizePrimaryPlatform } from "../helpers.ts";
 import { statusLabels, statusOrder } from "../constants.ts";
 import { PlatformPicker } from "./PlatformPicker.tsx";
@@ -27,8 +27,8 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<TmdbSearchResult[]>([]);
   const [selectedTmdbResult, setSelectedTmdbResult] = useState<TmdbSearchResult | null>(null);
-  const [selectedTmdbTarget, setSelectedTmdbTarget] = useState<TmdbSelectionTarget | null>(null);
   const [seasonOptions, setSeasonOptions] = useState<TmdbSeasonOption[]>([]);
+  const [selectedSeasonNumbers, setSelectedSeasonNumbers] = useState<number[]>([]);
 
   const [trendingResults, setTrendingResults] = useState<TmdbSearchResult[]>([]);
 
@@ -47,11 +47,20 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
   const searchRequestIdRef = useRef(0);
   const isComposingRef = useRef(false);
 
-  const resolvedTitle = selectedTmdbTarget?.title ?? manualTitle;
-  const resolvedWorkType =
-    selectedTmdbTarget?.workType === "season"
-      ? "series"
-      : (selectedTmdbTarget?.workType ?? workType);
+  const isTvSelection = selectedTmdbResult?.tmdbMediaType === "tv";
+  const allSeasonNumbers = [1, ...seasonOptions.map((season) => season.seasonNumber)];
+  const hasAllSeasonsSelected =
+    isTvSelection &&
+    selectedSeasonNumbers.length > 0 &&
+    selectedSeasonNumbers.length === allSeasonNumbers.length;
+  const selectedSeasonSummary =
+    selectedSeasonNumbers.length === 0
+      ? "シーズン未選択"
+      : selectedSeasonNumbers.length <= 3
+        ? selectedSeasonNumbers.map((seasonNumber) => `シーズン${seasonNumber}`).join("・")
+        : `${selectedSeasonNumbers.length}シーズン選択`;
+  const resolvedTitle = selectedTmdbResult?.title ?? manualTitle;
+  const resolvedWorkType = selectedTmdbResult?.workType ?? workType;
 
   useEffect(() => {
     searchInputRef.current?.focus();
@@ -90,8 +99,9 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
     searchRequestIdRef.current += 1;
     setSearchResults([]);
     setSelectedTmdbResult(null);
-    setSelectedTmdbTarget(null);
     setSeasonOptions([]);
+    setSelectedSeasonNumbers([]);
+    setIsLoadingSeasons(false);
     setSearchMessage(null);
     setDuplicateNotice(null);
   };
@@ -135,33 +145,67 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
     }
   };
 
-  const checkDuplicates = (target: TmdbSelectionTarget) => {
+  const updateDuplicateNotice = (result: TmdbSearchResult, seasonNumbers: number[] = []) => {
     const activeStatuses: BacklogItem["status"][] = ["watching", "interrupted", "watched"];
     const matches = items.filter((item) => {
       const w = item.works;
       if (!activeStatuses.includes(item.status)) return false;
-      if (w?.tmdb_id !== target.tmdbId || w?.tmdb_media_type !== target.tmdbMediaType) return false;
-      if (target.workType === "season") {
-        return w?.work_type === "season" && w?.season_number === target.seasonNumber;
+      if (w?.tmdb_id !== result.tmdbId || w?.tmdb_media_type !== result.tmdbMediaType) return false;
+      if (result.tmdbMediaType === "tv") {
+        return seasonNumbers.some((seasonNumber) =>
+          seasonNumber === 1
+            ? w?.work_type === "series"
+            : w?.work_type === "season" && w?.season_number === seasonNumber,
+        );
       }
-      return w?.work_type === target.workType;
+      return w?.work_type === result.workType;
     });
+
     if (matches.length === 0) {
       setDuplicateNotice(null);
       return;
     }
+
     const labels = matches.map((item) => statusLabels[item.status]);
     const unique = [...new Set(labels)];
+    if (result.tmdbMediaType === "tv") {
+      const duplicatedSeasons = seasonNumbers.filter((seasonNumber) =>
+        items.some((item) => {
+          const work = item.works;
+          if (!activeStatuses.includes(item.status)) return false;
+          if (work?.tmdb_id !== result.tmdbId || work.tmdb_media_type !== result.tmdbMediaType) {
+            return false;
+          }
+          return seasonNumber === 1
+            ? work.work_type === "series"
+            : work.work_type === "season" && work.season_number === seasonNumber;
+        }),
+      );
+      const seasonLabel = duplicatedSeasons
+        .map((seasonNumber) => `シーズン${seasonNumber}`)
+        .join("・");
+      setDuplicateNotice(`${seasonLabel}は「${unique.join("・")}」にすでにカードがあります`);
+      return;
+    }
+
     setDuplicateNotice(`「${unique.join("・")}」にすでにカードがあります`);
   };
 
   const handleSelectResult = async (result: TmdbSearchResult) => {
     setSelectedTmdbResult(result);
-    setSelectedTmdbTarget(result);
     setSeasonOptions([]);
-    checkDuplicates(result);
+    setFormMessage("");
+    setSearchMessage(null);
 
-    if (result.tmdbMediaType !== "tv") return;
+    if (result.tmdbMediaType !== "tv") {
+      setIsLoadingSeasons(false);
+      setSelectedSeasonNumbers([]);
+      updateDuplicateNotice(result);
+      return;
+    }
+
+    setSelectedSeasonNumbers([1]);
+    updateDuplicateNotice(result, [1]);
 
     setIsLoadingSeasons(true);
     try {
@@ -178,19 +222,25 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
     }
   };
 
-  const handleAddAllSeasons = async () => {
-    if (!selectedTmdbResult) return;
+  const toggleSeasonSelection = (seasonNumber: number) => {
+    if (!selectedTmdbResult || selectedTmdbResult.tmdbMediaType !== "tv") return;
 
-    setFormMessage("全シーズンを追加しています...");
-    const result = await addAllSeasons(selectedTmdbResult, session.user.id, status, items);
+    setSelectedSeasonNumbers((current) => {
+      const next = current.includes(seasonNumber)
+        ? current.filter((value) => value !== seasonNumber)
+        : [...current, seasonNumber].sort((left, right) => left - right);
+      updateDuplicateNotice(selectedTmdbResult, next);
+      return next;
+    });
+  };
 
-    if (result.error) {
-      setFormMessage(`全シーズンの追加に失敗しました: ${result.error}`);
-      return;
-    }
+  const toggleAllSeasons = () => {
+    if (!selectedTmdbResult || selectedTmdbResult.tmdbMediaType !== "tv") return;
 
-    onClose();
-    await onAdded();
+    const next =
+      selectedSeasonNumbers.length === allSeasonNumbers.length ? [] : [...allSeasonNumbers];
+    setSelectedSeasonNumbers(next);
+    updateDuplicateNotice(selectedTmdbResult, next);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -203,14 +253,44 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
       return;
     }
 
+    if (isTvSelection) {
+      if (selectedSeasonNumbers.length === 0 || !selectedTmdbResult) {
+        setFormMessage("追加するシーズンを1つ以上選択してください。");
+        return;
+      }
+
+      setFormMessage("シーズンを追加しています...");
+      const result = await addSelectedSeasons(
+        selectedTmdbResult,
+        session.user.id,
+        status,
+        items,
+        selectedSeasonNumbers,
+        {
+          seasonOptions,
+          primaryPlatform: normalizePrimaryPlatform(primaryPlatform),
+          note: note.trim() || null,
+        },
+      );
+
+      if (result.error) {
+        setFormMessage(`シーズンの追加に失敗しました: ${result.error}`);
+        return;
+      }
+
+      onClose();
+      await onAdded();
+      return;
+    }
+
     setFormMessage("作品を追加しています...");
 
     let work: { id: string } | null = null;
     let workError: { message: string } | null = null;
 
     try {
-      const result = selectedTmdbTarget
-        ? await upsertTmdbWork(selectedTmdbTarget, session.user.id)
+      const result = selectedTmdbResult
+        ? await upsertTmdbWork(selectedTmdbResult, session.user.id)
         : await supabase
             .from("works")
             .insert({
@@ -263,10 +343,10 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
     }`;
 
   const seasonBtnClass = (active: boolean) =>
-    `inline-flex items-center gap-1.5 px-3.5 py-2.5 border rounded-full text-[0.88rem] cursor-pointer transition-[background,color,border-color,box-shadow] duration-150${
+    `inline-flex items-center gap-2 px-3.5 py-2.5 border rounded-full text-[0.88rem] cursor-pointer transition-[background,color,border-color,box-shadow] duration-150${
       active
-        ? " border-[rgba(191,90,54,0.45)] shadow-[inset_0_0_0_1px_rgba(191,90,54,0.2)] bg-transparent text-foreground"
-        : " border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.06)] text-foreground"
+        ? " border-[rgba(191,90,54,0.45)] shadow-[inset_0_0_0_1px_rgba(191,90,54,0.2)] bg-[rgba(191,90,54,0.08)] text-foreground"
+        : " border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.06)] text-foreground hover:bg-[rgba(255,255,255,0.1)]"
     }`;
 
   return (
@@ -323,14 +403,9 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
             {selectedTmdbResult && (
               <div className="grid gap-1 p-3 rounded-2xl bg-[rgba(255,255,255,0.07)]">
                 <p className="text-muted-foreground text-[0.88rem]">選択中</p>
-                <p className="font-bold">{selectedTmdbTarget?.title ?? selectedTmdbResult.title}</p>
+                <p className="font-bold">{selectedTmdbResult.title}</p>
                 <p className="flex items-center gap-1 text-muted-foreground text-[0.88rem]">
-                  {selectedTmdbTarget?.workType === "season" ? (
-                    <>
-                      <TvIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
-                      シーズン
-                    </>
-                  ) : selectedTmdbResult.workType === "movie" ? (
+                  {selectedTmdbResult.workType === "movie" ? (
                     <>
                       <FilmIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
                       映画
@@ -338,13 +413,11 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
                   ) : (
                     <>
                       <TvIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
-                      シリーズ
+                      {selectedSeasonSummary}
                     </>
                   )}
-                  {selectedTmdbTarget?.workType === "season" &&
-                    ` · シーズン${selectedTmdbTarget.seasonNumber}`}
-                  {(selectedTmdbTarget?.releaseDate ?? selectedTmdbResult.releaseDate) &&
-                    ` · ${(selectedTmdbTarget?.releaseDate ?? selectedTmdbResult.releaseDate)!.slice(0, 4)}`}
+                  {selectedTmdbResult.releaseDate &&
+                    ` · ${selectedTmdbResult.releaseDate.slice(0, 4)}`}
                 </p>
                 {duplicateNotice && (
                   <p className="text-[0.82rem] text-muted-foreground px-2 py-1 rounded-lg bg-[rgba(0,0,0,0.08)]">
@@ -358,46 +431,43 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
               <div className="grid gap-2.5">
                 <div className="flex flex-wrap gap-2.5">
                   <button
-                    className={seasonBtnClass(selectedTmdbTarget?.workType !== "season")}
+                    className={seasonBtnClass(selectedSeasonNumbers.includes(1))}
                     type="button"
-                    onClick={() => {
-                      if (selectedTmdbResult) {
-                        setSelectedTmdbTarget(selectedTmdbResult);
-                        checkDuplicates(selectedTmdbResult);
-                      }
-                    }}
+                    aria-pressed={selectedSeasonNumbers.includes(1)}
+                    onClick={() => toggleSeasonSelection(1)}
                   >
-                    シーズン1
+                    <span
+                      className={`grid w-4 h-4 place-items-center rounded-full border ${
+                        selectedSeasonNumbers.includes(1)
+                          ? "border-[rgb(191,90,54)] bg-[rgb(191,90,54)] text-white"
+                          : "border-[rgba(255,255,255,0.3)] text-transparent"
+                      }`}
+                    >
+                      <CheckIcon className="w-3 h-3" aria-hidden="true" />
+                    </span>
+                    <span>シーズン1</span>
                   </button>
                   {seasonOptions.length > 0
                     ? seasonOptions.map((season) => (
                         <button
                           key={season.seasonNumber}
                           className={seasonBtnClass(
-                            selectedTmdbTarget?.workType === "season" &&
-                              selectedTmdbTarget.seasonNumber === season.seasonNumber,
+                            selectedSeasonNumbers.includes(season.seasonNumber),
                           )}
                           type="button"
-                          onClick={() => {
-                            if (selectedTmdbResult?.tmdbMediaType !== "tv") return;
-                            const target = {
-                              tmdbId: selectedTmdbResult.tmdbId,
-                              tmdbMediaType: "tv" as const,
-                              workType: "season" as const,
-                              title: season.title,
-                              originalTitle: selectedTmdbResult.originalTitle,
-                              overview: season.overview,
-                              posterPath: season.posterPath,
-                              releaseDate: season.releaseDate,
-                              seasonNumber: season.seasonNumber,
-                              episodeCount: season.episodeCount,
-                              seriesTitle: selectedTmdbResult.title,
-                            };
-                            setSelectedTmdbTarget(target);
-                            checkDuplicates(target);
-                          }}
+                          aria-pressed={selectedSeasonNumbers.includes(season.seasonNumber)}
+                          onClick={() => toggleSeasonSelection(season.seasonNumber)}
                         >
-                          シーズン{season.seasonNumber}
+                          <span
+                            className={`grid w-4 h-4 place-items-center rounded-full border ${
+                              selectedSeasonNumbers.includes(season.seasonNumber)
+                                ? "border-[rgb(191,90,54)] bg-[rgb(191,90,54)] text-white"
+                                : "border-[rgba(255,255,255,0.3)] text-transparent"
+                            }`}
+                          >
+                            <CheckIcon className="w-3 h-3" aria-hidden="true" />
+                          </span>
+                          <span>シーズン{season.seasonNumber}</span>
                           {season.episodeCount && (
                             <span className="text-muted-foreground text-[0.8rem]">
                               {season.episodeCount}話
@@ -412,17 +482,27 @@ export function AddModal({ defaultStatus, items, session, onClose, onAdded }: Pr
                       )}
                   {seasonOptions.length > 0 && (
                     <button
-                      className={seasonBtnClass(false)}
+                      className={seasonBtnClass(hasAllSeasonsSelected)}
                       type="button"
-                      onClick={() => {
-                        if (!selectedTmdbResult) return;
-                        void handleAddAllSeasons();
-                      }}
+                      aria-pressed={hasAllSeasonsSelected}
+                      onClick={toggleAllSeasons}
                     >
-                      全シーズン追加
+                      <span
+                        className={`grid w-4 h-4 place-items-center rounded-full border ${
+                          hasAllSeasonsSelected
+                            ? "border-[rgb(191,90,54)] bg-[rgb(191,90,54)] text-white"
+                            : "border-[rgba(255,255,255,0.3)] text-transparent"
+                        }`}
+                      >
+                        <CheckIcon className="w-3 h-3" aria-hidden="true" />
+                      </span>
+                      <span>{hasAllSeasonsSelected ? "すべて解除" : "すべて選択"}</span>
                     </button>
                   )}
                 </div>
+                <p className="text-[0.82rem] text-muted-foreground">
+                  追加したいシーズンを複数選択できます。
+                </p>
               </div>
             )}
 
