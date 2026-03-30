@@ -228,7 +228,7 @@ export function KanbanBoard({
   }
 
   return (
-    <section className="mt-3 grid min-w-0 max-w-full min-h-0 grid-cols-[repeat(5,minmax(240px,1fr))] items-stretch gap-2 overflow-x-auto pb-[6px]">
+    <section className="mt-3 grid min-w-0 max-w-full min-h-0 grid-cols-[minmax(280px,1.35fr)_repeat(4,minmax(220px,1fr))] items-stretch gap-2 overflow-x-auto pb-[6px]">
       {statusOrder.map((status) => (
         <KanbanColumn
           key={status}
