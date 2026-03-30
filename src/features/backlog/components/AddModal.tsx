@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button.tsx";
+import { Input } from "@/components/ui/input.tsx";
 import { DocumentTextIcon, FilmIcon, TvIcon } from "@heroicons/react/24/outline";
 import { TmdbWorkCard } from "./TmdbWorkCard.tsx";
 import type { Session } from "@supabase/supabase-js";
@@ -297,38 +298,35 @@ export function AddModal({
           }}
         >
           <div className="grid gap-3.5 p-4 overflow-y-auto content-start rounded-[20px] bg-[rgba(191,90,54,0.06)] max-[720px]:overflow-y-visible">
-            <div>
-              <input
-                ref={searchInputRef}
-                type="text"
-                placeholder="作品名で検索"
-                value={searchQuery}
-                className="w-full border-0 border-b border-[rgba(90,58,36,0.12)] bg-transparent py-3 outline-none"
-                onCompositionStart={() => {
-                  isComposingRef.current = true;
-                }}
-                onCompositionEnd={(e) => {
-                  isComposingRef.current = false;
-                  const query = e.currentTarget.value;
-                  setSearchQuery(query);
-                  if (query.trim()) {
-                    queueSearch(query);
-                  } else {
-                    resetSearchState();
-                  }
-                }}
-                onChange={(e) => {
-                  const query = e.target.value;
-                  setSearchQuery(query);
-                  if (isComposingRef.current) return;
-                  if (query.trim()) {
-                    queueSearch(query);
-                  } else {
-                    resetSearchState();
-                  }
-                }}
-              />
-            </div>
+            <Input
+              ref={searchInputRef}
+              type="text"
+              placeholder="作品名で検索"
+              value={searchQuery}
+              onCompositionStart={() => {
+                isComposingRef.current = true;
+              }}
+              onCompositionEnd={(e) => {
+                isComposingRef.current = false;
+                const query = e.currentTarget.value;
+                setSearchQuery(query);
+                if (query.trim()) {
+                  queueSearch(query);
+                } else {
+                  resetSearchState();
+                }
+              }}
+              onChange={(e) => {
+                const query = e.target.value;
+                setSearchQuery(query);
+                if (isComposingRef.current) return;
+                if (query.trim()) {
+                  queueSearch(query);
+                } else {
+                  resetSearchState();
+                }
+              }}
+            />
 
             {selectedTmdbResult && (
               <div className="grid gap-1 p-3 rounded-2xl bg-[rgba(255,255,255,0.68)]">
@@ -466,7 +464,7 @@ export function AddModal({
           </div>
 
           <div className="flex flex-col gap-4 overflow-y-auto pr-1 max-[720px]:overflow-y-visible">
-            <input
+            <Input
               name="title"
               type="text"
               placeholder="タイトル"
@@ -474,7 +472,6 @@ export function AddModal({
               maxLength={120}
               value={resolvedTitle}
               readOnly={!!selectedTmdbResult}
-              className="w-full border-0 border-b border-[rgba(90,58,36,0.12)] bg-transparent py-3 outline-none"
               onChange={(e) => {
                 if (!selectedTmdbResult) {
                   setManualTitle(e.target.value);
