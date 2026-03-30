@@ -1,4 +1,4 @@
-import type { BacklogStatus, PrimaryPlatform } from "./types.ts";
+import type { BacklogStatus, PrimaryPlatform, ViewingMode } from "./types.ts";
 import netflixUrl from "../../assets/icons/netflix.svg?url";
 import primeVideoUrl from "../../assets/icons/prime_video.svg?url";
 import unextUrl from "../../assets/icons/unext.svg?url";
@@ -52,3 +52,12 @@ export const platformIcons: Record<Exclude<PrimaryPlatform, null>, string> = {
 };
 
 export const platformKeys = Object.keys(platformIcons) as Exclude<PrimaryPlatform, null>[];
+
+export const viewingModeOrder: ViewingMode[] = ["focus", "thoughtful", "quick", "background"];
+
+export const viewingModeLabels: Record<ViewingMode, string> = {
+  focus: "ガッツリ",
+  thoughtful: "じっくり",
+  quick: "サクッと",
+  background: "のんびり",
+};

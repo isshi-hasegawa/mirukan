@@ -9,6 +9,7 @@ import {
   getSortOrderForStatusChange,
   normalizeBacklogItems,
   planBacklogItemUpserts,
+  sortStackedItemsByViewingMode,
 } from "./data.ts";
 import type { BacklogItem, WorkSummary } from "./types.ts";
 import type { TmdbSearchResult, TmdbSeasonOption, TmdbWorkDetails } from "../../lib/tmdb.ts";
@@ -335,6 +336,43 @@ describe("applyModeFilter", () => {
     test("スコア null → false", () => {
       expect(applyModeFilter(createWork({ background_fit_score: null }), "background")).toBe(false);
     });
+  });
+});
+
+describe("sortStackedItemsByViewingMode", () => {
+  test("選択中ラベルのカードだけ先頭に寄せて、それ以外は元の順番を保つ", () => {
+    const items = [
+      createItem("a", "stacked", 1000),
+      createItem("b", "stacked", 2000),
+      createItem("c", "stacked", 3000),
+      createItem("d", "stacked", 4000),
+    ];
+
+    items[0].works = createWork({ id: "wa", runtime_minutes: 95 });
+    items[1].works = createWork({ id: "wb", runtime_minutes: 25 });
+    items[2].works = createWork({ id: "wc", runtime_minutes: 110 });
+    items[3].works = createWork({ id: "wd", runtime_minutes: 55 });
+
+    expect(sortStackedItemsByViewingMode(items, "focus").map((item) => item.id)).toEqual([
+      "a",
+      "c",
+      "b",
+      "d",
+    ]);
+  });
+
+  test("未選択なら既存の順番をそのまま返す", () => {
+    const items = [
+      createItem("a", "stacked", 1000),
+      createItem("b", "stacked", 2000),
+      createItem("c", "stacked", 3000),
+    ];
+
+    expect(sortStackedItemsByViewingMode(items, null).map((item) => item.id)).toEqual([
+      "a",
+      "b",
+      "c",
+    ]);
   });
 });
 

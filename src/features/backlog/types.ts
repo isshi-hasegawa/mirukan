@@ -1,4 +1,5 @@
 export type BacklogStatus = "stacked" | "want_to_watch" | "watching" | "interrupted" | "watched";
+export type ViewingMode = "focus" | "thoughtful" | "quick" | "background";
 
 export type WorkType = "movie" | "series" | "season";
 export type SourceType = "tmdb" | "manual";

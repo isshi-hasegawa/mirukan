@@ -8,9 +8,16 @@ import {
   type TmdbSelectionTarget,
   type TmdbWorkDetails,
 } from "../../lib/tmdb.ts";
-import { statusLabels } from "./constants.ts";
+import { statusLabels, viewingModeOrder } from "./constants.ts";
 import { buildSearchText } from "./helpers.ts";
-import type { BacklogItem, BacklogItemRow, BacklogStatus, WorkSummary, WorkType } from "./types.ts";
+import type {
+  BacklogItem,
+  BacklogItemRow,
+  BacklogStatus,
+  ViewingMode,
+  WorkSummary,
+  WorkType,
+} from "./types.ts";
 
 export function normalizeBacklogItems(rows: unknown[]): BacklogItem[] {
   return rows.flatMap((row) => {
@@ -597,12 +604,30 @@ export async function upsertBacklogItemsToStatus(
   return { error: null };
 }
 
-export type ViewingMode = "focus" | "thoughtful" | "quick" | "background";
-
-const VIEWING_MODE_ORDER: ViewingMode[] = ["focus", "thoughtful", "quick", "background"];
-
 export function getViewingMode(work: WorkSummary): ViewingMode | null {
-  return VIEWING_MODE_ORDER.find((mode) => applyModeFilter(work, mode)) ?? null;
+  return viewingModeOrder.find((mode) => applyModeFilter(work, mode)) ?? null;
+}
+
+export function sortStackedItemsByViewingMode(
+  items: BacklogItem[],
+  activeMode: ViewingMode | null,
+): BacklogItem[] {
+  if (!activeMode) {
+    return items;
+  }
+
+  const prioritized: BacklogItem[] = [];
+  const rest: BacklogItem[] = [];
+
+  for (const item of items) {
+    if (item.works && getViewingMode(item.works) === activeMode) {
+      prioritized.push(item);
+    } else {
+      rest.push(item);
+    }
+  }
+
+  return [...prioritized, ...rest];
 }
 
 export function applyModeFilter(work: WorkSummary, mode: ViewingMode): boolean {

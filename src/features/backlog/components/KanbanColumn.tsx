@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useDroppable } from "@dnd-kit/core";
-import type { BacklogItem, BacklogStatus } from "../types.ts";
-import { statusLabels } from "../constants.ts";
+import type { BacklogItem, BacklogStatus, ViewingMode } from "../types.ts";
+import { statusLabels, viewingModeLabels, viewingModeOrder } from "../constants.ts";
 import { BacklogCard } from "./BacklogCard.tsx";
 import { Button } from "@/components/ui/button.tsx";
 
@@ -13,26 +13,28 @@ type Props = {
   status: BacklogStatus;
   items: BacklogItem[];
   extra?: ReactNode;
-  featuredIds?: Set<string>;
+  activeViewingMode?: ViewingMode | null;
   isMobileLayout?: boolean;
   dropIndicator: DropIndicator | null;
   onOpenAddModal: () => void;
   onOpenDetail: (itemId: string) => void;
   onDeleteItem: (itemId: string) => void;
   onMarkAsWatched: (itemId: string) => void;
+  onViewingModeToggle?: (mode: ViewingMode) => void;
 };
 
 export function KanbanColumn({
   status,
   items,
   extra,
-  featuredIds,
+  activeViewingMode = null,
   isMobileLayout = false,
   dropIndicator,
   onOpenAddModal,
   onOpenDetail,
   onDeleteItem,
   onMarkAsWatched,
+  onViewingModeToggle,
 }: Props) {
   const { setNodeRef } = useDroppable({ id: `column:${status}` });
   const isColumnActive = dropIndicator?.type === "column" && dropIndicator.status === status;
@@ -82,9 +84,31 @@ export function KanbanColumn({
           </Button>
         )}
       </header>
+      {status === "stacked" && (
+        <div className="flex flex-wrap gap-1.5 px-[14px] pt-[10px] max-[500px]:px-3 max-[400px]:px-2">
+          {viewingModeOrder.map((mode) => {
+            const isActive = activeViewingMode === mode;
+            return (
+              <button
+                key={mode}
+                type="button"
+                className={`rounded-full border px-3 py-1 text-[0.78rem] font-medium transition-[background,color,border-color] duration-150 ${
+                  isActive
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-[rgba(92,59,35,0.18)] bg-transparent text-muted-foreground hover:border-primary/[0.26] hover:bg-primary/[0.08] hover:text-foreground"
+                }`}
+                aria-pressed={isActive}
+                onClick={() => onViewingModeToggle?.(mode)}
+              >
+                {viewingModeLabels[mode]}
+              </button>
+            );
+          })}
+        </div>
+      )}
       <div
         ref={setNodeRef}
-        className="grid min-h-0 min-w-0 flex-1 content-start gap-[10px] overflow-y-auto [scrollbar-gutter:stable]"
+        className="grid min-h-0 min-w-0 flex-1 content-start gap-[10px] overflow-y-auto pt-[10px] [scrollbar-gutter:stable]"
         style={dropzoneStyle}
       >
         <div className="grid content-start gap-[10px] pl-[14px] pr-[4px] max-[500px]:px-3 max-[400px]:px-2">
@@ -93,7 +117,7 @@ export function KanbanColumn({
               <BacklogCard
                 key={item.id}
                 item={item}
-                showModeBadge={featuredIds?.has(item.id) ?? false}
+                showModeBadge={status === "stacked"}
                 dropIndicator={dropIndicator}
                 onOpenDetail={() => onOpenDetail(item.id)}
                 onDeleteItem={onDeleteItem}

@@ -7,8 +7,8 @@ import {
   SpeakerWaveIcon,
   TvIcon,
 } from "@heroicons/react/24/outline";
-import type { BacklogItem, BacklogStatus } from "../types.ts";
-import { getViewingMode, type ViewingMode } from "../data.ts";
+import type { BacklogItem, BacklogStatus, ViewingMode } from "../types.ts";
+import { getViewingMode } from "../data.ts";
 import { PlatformIcon } from "./PlatformIcon.tsx";
 import { PosterImage } from "./PosterImage.tsx";
 import {
@@ -18,13 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.tsx";
 import { getWorkTypeLabel } from "../helpers.ts";
-
-const modeLabel: Record<ViewingMode, string> = {
-  focus: "ガッツリ",
-  thoughtful: "じっくり",
-  quick: "サクッと",
-  background: "のんびり",
-};
+import { viewingModeLabels } from "../constants.ts";
 
 const ModeIcon: Record<
   ViewingMode,
@@ -169,7 +163,7 @@ export function BacklogCard({
           return (
             <div className="absolute bottom-[10px] right-[10px] flex items-center gap-[3px] bg-primary/15 border border-primary/25 rounded-[6px] px-[7px] py-[3px] text-primary text-[0.68rem] font-bold leading-none pointer-events-none">
               <Icon className="w-[11px] h-[11px] shrink-0" aria-hidden />
-              <span>{modeLabel[viewingMode]}</span>
+              <span>{viewingModeLabels[viewingMode]}</span>
             </div>
           );
         })()}
