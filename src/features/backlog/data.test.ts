@@ -1,4 +1,3 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vite-plus/test";
 const supabaseMocks = vi.hoisted(() => ({
   from: vi.fn(),
 }));
@@ -41,6 +40,9 @@ import {
 } from "./data.ts";
 import type { BacklogItem, WorkSummary } from "./types.ts";
 import type { TmdbSearchResult, TmdbSeasonOption, TmdbWorkDetails } from "../../lib/tmdb.ts";
+import { setupTestLifecycle } from "../../test/test-lifecycle.ts";
+
+setupTestLifecycle();
 
 type MaybeSingleResult = {
   data: { id: string; last_tmdb_synced_at?: string | null } | null;

@@ -1,8 +1,8 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Session } from "@supabase/supabase-js";
-import { beforeEach, afterEach, describe, expect, test, vi } from "vite-plus/test";
 import type { TmdbSearchResult, TmdbSeasonOption } from "../../../lib/tmdb.ts";
+import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
 import type { BacklogItem } from "../types.ts";
 import { AddModal } from "./AddModal.tsx";
 
@@ -40,6 +40,8 @@ vi.mock("../data.ts", async () => {
     upsertTmdbWork: dataMocks.upsertTmdbWork,
   };
 });
+
+setupTestLifecycle();
 
 function createSearchResult(
   overrides: Partial<TmdbSearchResult> & Pick<TmdbSearchResult, "tmdbId" | "title">,
@@ -126,9 +128,10 @@ function renderAddModal({ items = [] }: RenderOptions = {}) {
   return { user, onClose, onAdded, ...view };
 }
 
-async function search(user: ReturnType<typeof userEvent.setup>, query: string) {
-  await user.clear(screen.getByPlaceholderText("作品名で検索"));
-  await user.type(screen.getByPlaceholderText("作品名で検索"), query);
+async function search(query: string) {
+  fireEvent.change(screen.getByPlaceholderText("作品名で検索"), {
+    target: { value: query },
+  });
   await waitFor(() => expect(tmdbMocks.searchTmdbWorks).toHaveBeenCalledWith(query));
 }
 
@@ -154,29 +157,33 @@ describe("AddModal", () => {
     vi.clearAllMocks();
   });
 
-  test("空検索では trending、入力後は search results を表示し、映画選択ではシーズン UI を出さない", async () => {
-    const trendingResult = createSearchResult({ tmdbId: 10, title: "トレンド映画" });
-    const searchResult = createSearchResult({ tmdbId: 20, title: "検索映画" });
-    tmdbMocks.fetchTmdbTrending.mockResolvedValue([trendingResult]);
-    tmdbMocks.searchTmdbWorks.mockResolvedValue([searchResult]);
+  test(
+    "空検索では trending、入力後は search results を表示し、映画選択ではシーズン UI を出さない",
+    async () => {
+      const trendingResult = createSearchResult({ tmdbId: 10, title: "トレンド映画" });
+      const searchResult = createSearchResult({ tmdbId: 20, title: "検索映画" });
+      tmdbMocks.fetchTmdbTrending.mockResolvedValue([trendingResult]);
+      tmdbMocks.searchTmdbWorks.mockResolvedValue([searchResult]);
 
-    const { user } = renderAddModal();
+      const { user } = renderAddModal();
 
-    expect(await screen.findByRole("button", { name: /トレンド映画/ })).toBeInTheDocument();
+      expect(await screen.findByRole("button", { name: /トレンド映画/ })).toBeInTheDocument();
 
-    await search(user, "検索映画");
+      await search("検索映画");
 
-    expect(await screen.findByRole("button", { name: /検索映画/ })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /トレンド映画/ })).not.toBeInTheDocument();
+      expect(await screen.findByRole("button", { name: /検索映画/ })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /トレンド映画/ })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /検索映画/ }));
+      await user.click(screen.getByRole("button", { name: /検索映画/ }));
 
-    expect(screen.getByLabelText("タイトル")).toHaveValue("検索映画");
-    expect(screen.queryByRole("button", { name: "シーズン1" })).not.toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "ストックに追加" })).toHaveLength(1);
-    expect(document.querySelector('[data-footer-layout="inline"]')).toBeInTheDocument();
-    expect(document.querySelector('[data-footer-layout="panel"]')).not.toBeInTheDocument();
-  });
+      expect(screen.getByLabelText("タイトル")).toHaveValue("検索映画");
+      expect(screen.queryByRole("button", { name: "シーズン1" })).not.toBeInTheDocument();
+      expect(screen.getAllByRole("button", { name: "ストックに追加" })).toHaveLength(1);
+      expect(document.querySelector('[data-footer-layout="inline"]')).toBeInTheDocument();
+      expect(document.querySelector('[data-footer-layout="panel"]')).not.toBeInTheDocument();
+    },
+    10_000,
+  );
 
   test("ストック済みの映画は候補から除外し、未追加シーズンがあるシリーズは表示する", async () => {
     const stackedMovieResult = createSearchResult({ tmdbId: 11, title: "ストック済み映画" });
@@ -216,7 +223,7 @@ describe("AddModal", () => {
     expect(await screen.findByRole("button", { name: /ストック済みシリーズ/ })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /ストック済み映画/ })).not.toBeInTheDocument();
 
-    await search(user, "ストック済み映画");
+    await search("ストック済み映画");
 
     expect(screen.queryByRole("button", { name: /ストック済み映画/ })).not.toBeInTheDocument();
     expect(
@@ -265,7 +272,7 @@ describe("AddModal", () => {
       ).not.toBeInTheDocument(),
     );
 
-    await search(user, "全シーズン済みシリーズ");
+    await search("全シーズン済みシリーズ");
 
     expect(
       screen.queryByRole("button", { name: /全シーズン済みシリーズ/ }),

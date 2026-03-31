@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, test, vi } from "vite-plus/test";
+import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
 import { LoginPage } from "./LoginPage.tsx";
 
 const supabaseMock = vi.hoisted(() => ({
@@ -12,6 +12,8 @@ const supabaseMock = vi.hoisted(() => ({
 vi.mock("../../../lib/supabase.ts", () => ({
   supabase: supabaseMock,
 }));
+
+setupTestLifecycle();
 
 describe("LoginPage", () => {
   beforeEach(() => {

@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vite-plus/test";
 import type { TmdbSearchResult } from "../../../lib/tmdb.ts";
+import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
 import type { BacklogItem } from "../types.ts";
 import { RecommendModal } from "./RecommendModal.tsx";
 
@@ -17,6 +17,8 @@ vi.mock("../../../lib/tmdb.ts", async () => {
     fetchMergedRecommendations: tmdbMocks.fetchMergedRecommendations,
   };
 });
+
+setupTestLifecycle();
 
 function createRecommendation(
   overrides: Partial<TmdbSearchResult> & Pick<TmdbSearchResult, "tmdbId" | "title">,

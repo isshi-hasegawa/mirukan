@@ -11,11 +11,14 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
+    globals: true,
+    include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+    exclude: ["node_modules/", "e2e/**"],
     setupFiles: ["./src/test/setup.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
-      exclude: ["node_modules/", "src/test/", "**/*.test.ts", "**/*.test.tsx"],
+      exclude: ["node_modules/", "src/test/", "e2e/**", "**/*.test.ts", "**/*.test.tsx"],
     },
   },
   staged: {

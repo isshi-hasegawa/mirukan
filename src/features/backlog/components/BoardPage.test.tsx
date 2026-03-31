@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vite-plus/test";
+import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
 import type { BacklogItem, BacklogStatus } from "../types.ts";
 import { BoardPage } from "./BoardPage.tsx";
 
@@ -22,6 +22,8 @@ const hookMocks = vi.hoisted(() => ({
   }),
   signOut: vi.fn().mockResolvedValue({ error: null }),
 }));
+
+setupTestLifecycle();
 
 vi.mock("@dnd-kit/core", () => ({
   DndContext: ({ children }: { children: React.ReactNode }) => <>{children}</>,

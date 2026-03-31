@@ -1,4 +1,3 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vite-plus/test";
 const supabaseMocks = vi.hoisted(() => ({
   invoke: vi.fn(),
 }));
@@ -20,6 +19,9 @@ import {
   resolveSeasonTitle,
   searchTmdbWorks,
 } from "./tmdb.ts";
+import { setupTestLifecycle } from "../test/test-lifecycle.ts";
+
+setupTestLifecycle();
 
 beforeEach(() => {
   resetTmdbRecommendationCachesForTest();

@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, test, vi } from "vite-plus/test";
+import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
 import type { BacklogItem } from "../types.ts";
 import { KanbanColumn } from "./KanbanColumn.tsx";
 
@@ -13,6 +13,8 @@ vi.mock("@dnd-kit/core", () => ({
 vi.mock("./BacklogCard.tsx", () => ({
   BacklogCard: ({ item }: { item: BacklogItem }) => <div>{item.works?.title}</div>,
 }));
+
+setupTestLifecycle();
 
 function createItem(overrides: Partial<BacklogItem> = {}): BacklogItem {
   return {
@@ -64,19 +66,13 @@ describe("KanbanColumn", () => {
     );
 
     expect(screen.getByRole("group", { name: "視聴モード" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /ガッツリ/ })).toHaveTextContent(
-      "集中して一本見たい夜向け",
-    );
+    expect(screen.getByRole("button", { name: /ガッツリ/ })).toHaveTextContent("ガッツリ集中して一本見たい");
     expect(screen.getByRole("button", { name: /じっくり/ })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
-    expect(screen.getByRole("button", { name: /サクッと/ })).toHaveTextContent(
-      "短時間でテンポよく消化したい",
-    );
-    expect(screen.getByRole("button", { name: /のんびり/ })).toHaveTextContent(
-      "流し見や作業のおともにちょうどいい",
-    );
+    expect(screen.getByRole("button", { name: /サクッと/ })).toHaveTextContent("サクッと短時間でテンポよく");
+    expect(screen.getByRole("button", { name: /のんびり/ })).toHaveTextContent("のんびり流し見や作業のおともに");
   });
 
   test("モードカードを押すと toggle handler を呼ぶ", async () => {

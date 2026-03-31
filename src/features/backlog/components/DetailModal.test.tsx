@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vite-plus/test";
+import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
 import { createDetailModalState } from "../helpers.ts";
 import type { BacklogItem, DetailModalState } from "../types.ts";
 import { DetailModal } from "./DetailModal.tsx";
@@ -9,6 +9,8 @@ import { DetailModal } from "./DetailModal.tsx";
 const dataMocks = vi.hoisted(() => ({
   updateBacklogItem: vi.fn(),
 }));
+
+setupTestLifecycle();
 
 vi.mock("../data.ts", async () => {
   const actual = await vi.importActual<typeof import("../data.ts")>("../data.ts");

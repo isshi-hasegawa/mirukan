@@ -208,7 +208,12 @@ export const supabaseRestHandlers = [
    * UPSERT /rest/v1/backlog_items
    * Insert or update backlog items
    */
-  http.post(`${SUPABASE_URL}/rest/v1/backlog_items?on_conflict=id`, async ({ request }) => {
+  http.post(`${SUPABASE_URL}/rest/v1/backlog_items`, async ({ request }) => {
+    const url = new URL(request.url);
+    if (url.searchParams.get("on_conflict") !== "id") {
+      return;
+    }
+
     const body = (await request.json()) as BacklogItem | BacklogItem[];
     const items = Array.isArray(body) ? body : [body];
 
@@ -228,7 +233,12 @@ export const supabaseRestHandlers = [
    * UPSERT /rest/v1/works
    * Insert or update works
    */
-  http.post(`${SUPABASE_URL}/rest/v1/works?on_conflict=id`, async ({ request }) => {
+  http.post(`${SUPABASE_URL}/rest/v1/works`, async ({ request }) => {
+    const url = new URL(request.url);
+    if (url.searchParams.get("on_conflict") !== "id") {
+      return;
+    }
+
     const body = (await request.json()) as Work | Work[];
     const works = Array.isArray(body) ? body : [body];
 

@@ -1,4 +1,3 @@
-import { describe, expect, test } from "vite-plus/test";
 import {
   createDetailEditingState,
   createDetailModalState,
@@ -14,6 +13,9 @@ import {
   resolveDropTarget,
 } from "./helpers.ts";
 import type { BacklogItem } from "./types.ts";
+import { setupTestLifecycle } from "../../test/test-lifecycle.ts";
+
+setupTestLifecycle();
 
 describe("getStringField", () => {
   test("returns the string value for a given key", () => {
