@@ -4,8 +4,8 @@ import {
   applyBacklogItemUpdate,
   buildDetailFieldUpdate,
   getSortOrderForStatusChange,
-  updateBacklogItem,
-} from "../data.ts";
+} from "../backlog-item-utils.ts";
+import { updateBacklogItem } from "../backlog-repository.ts";
 import {
   createDetailEditingState,
   createDetailModalState,

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { BacklogItem, BacklogStatus, ViewingMode } from "../types.ts";
 import { statusOrder, statusLabels } from "../constants.ts";
-import { sortStackedItemsByViewingMode } from "../data.ts";
+import { sortStackedItemsByViewingMode } from "../viewing-mode.ts";
 import { KanbanColumn } from "./KanbanColumn.tsx";
 
 const SWIPE_THRESHOLD_PX = 50;

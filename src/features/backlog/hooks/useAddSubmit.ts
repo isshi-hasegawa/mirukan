@@ -4,11 +4,13 @@ import type { TmdbSearchResult, TmdbSeasonOption } from "../../../lib/tmdb.ts";
 import {
   buildMoveToStatusConfirmMessage,
   planBacklogItemUpserts,
+} from "../backlog-item-utils.ts";
+import { upsertBacklogItemsToStatus } from "../backlog-repository.ts";
+import {
   resolveSelectedSeasonWorkIds,
-  upsertBacklogItemsToStatus,
   upsertManualWork,
   upsertTmdbWork,
-} from "../data.ts";
+} from "../work-repository.ts";
 import { normalizePrimaryPlatform } from "../helpers.ts";
 import type { BacklogItem, WorkType } from "../types.ts";
 

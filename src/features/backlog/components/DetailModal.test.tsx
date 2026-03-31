@@ -12,8 +12,9 @@ const dataMocks = vi.hoisted(() => ({
 
 setupTestLifecycle();
 
-vi.mock("../data.ts", async () => {
-  const actual = await vi.importActual<typeof import("../data.ts")>("../data.ts");
+vi.mock("../backlog-repository.ts", async () => {
+  const actual =
+    await vi.importActual<typeof import("../backlog-repository.ts")>("../backlog-repository.ts");
   return {
     ...actual,
     updateBacklogItem: dataMocks.updateBacklogItem,

@@ -30,12 +30,21 @@ vi.mock("../../../lib/tmdb.ts", async () => {
   };
 });
 
-vi.mock("../data.ts", async () => {
-  const actual = await vi.importActual<typeof import("../data.ts")>("../data.ts");
+vi.mock("../backlog-repository.ts", async () => {
+  const actual =
+    await vi.importActual<typeof import("../backlog-repository.ts")>("../backlog-repository.ts");
+  return {
+    ...actual,
+    upsertBacklogItemsToStatus: dataMocks.upsertBacklogItemsToStatus,
+  };
+});
+
+vi.mock("../work-repository.ts", async () => {
+  const actual =
+    await vi.importActual<typeof import("../work-repository.ts")>("../work-repository.ts");
   return {
     ...actual,
     resolveSelectedSeasonWorkIds: dataMocks.resolveSelectedSeasonWorkIds,
-    upsertBacklogItemsToStatus: dataMocks.upsertBacklogItemsToStatus,
     upsertManualWork: dataMocks.upsertManualWork,
     upsertTmdbWork: dataMocks.upsertTmdbWork,
   };

@@ -5,9 +5,9 @@ import {
   buildMoveToStatusConfirmMessage,
   getTopSortOrder,
   planBacklogItemUpserts,
-  upsertBacklogItemsToStatus,
-  upsertTmdbWork,
-} from "../data.ts";
+} from "../backlog-item-utils.ts";
+import { upsertBacklogItemsToStatus } from "../backlog-repository.ts";
+import { upsertTmdbWork } from "../work-repository.ts";
 import type { BacklogItem } from "../types.ts";
 
 type Props = {
