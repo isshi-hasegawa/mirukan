@@ -38,5 +38,6 @@ describe("UserMenu", () => {
     expect(
       screen.getByText("This product uses the TMDB API but is not endorsed or certified by TMDB."),
     ).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "TMDB" })).toBeInTheDocument();
   });
 });

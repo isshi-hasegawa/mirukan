@@ -1,6 +1,7 @@
 import { ArrowTopRightOnSquareIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
+import tmdbLogoUrl from "../../../assets/logos/tmdb.svg";
 
 type Props = {
   onClose: () => void;
@@ -64,8 +65,11 @@ export function AboutDialog({ onClose }: Props) {
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
               Data Source
             </p>
+            <div className="inline-flex w-fit items-center rounded-2xl bg-white px-4 py-3 shadow-[inset_0_0_0_1px_rgba(15,23,42,0.06)]">
+              <img src={tmdbLogoUrl} alt="TMDB" className="h-5 w-auto sm:h-6" />
+            </div>
             <p className="text-sm leading-6 text-foreground">
-              TMDB のデータおよび画像を利用しています。
+              TMDB のデータおよび画像を利用しています。作品情報の参照元は TMDB です。
             </p>
             <p className="text-sm leading-6">
               This product uses the TMDB API but is not endorsed or certified by TMDB.

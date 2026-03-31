@@ -35,20 +35,6 @@
 
 ## 開発運用・可視化
 
-### TMDb の帰属表示・ロゴ掲載対応
-
-- 背景
-  - TMDb の `Logos & Attribution` と FAQ では、データや画像を利用するアプリは TMDb を出典として適切に帰属表示する必要がある
-  - FAQ では `You shall use the TMDB logo` とされ、`About` または `Credits` 相当の画面に帰属表示を置くよう求めている
-  - 現状、`About` ダイアログに注意文言と TMDb への導線はあるが、TMDb ロゴ掲載は未対応
-- 確認・対応項目
-  - TMDb 承認済みロゴのどれを使うか決める
-  - 既存の `About` ダイアログへロゴを置くか、別の `Credits` 導線を用意するか決める
-  - ロゴの見せ方が自アプリの主ブランドより強くならないことを確認する
-- 参照
-  - https://www.themoviedb.org/about/logos-attribution
-  - https://developer.themoviedb.org/docs/faq
-
 ### Renovate 導入検討
 
 - 目的
