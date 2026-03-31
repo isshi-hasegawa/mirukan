@@ -141,7 +141,7 @@ export function AddModal({ items, session, onClose, onAdded }: Props) {
                                     event.stopPropagation();
                                   }}
                                 >
-                                  追加する
+                                  ストックに追加
                                 </Button>
                               ) : (
                                 <div className="grid gap-2.5">
@@ -176,7 +176,7 @@ export function AddModal({ items, session, onClose, onAdded }: Props) {
                                         event.stopPropagation();
                                       }}
                                     >
-                                      追加する
+                                      ストックに追加
                                     </Button>
                                   </div>
                                 </div>
@@ -246,7 +246,6 @@ export function AddModal({ items, session, onClose, onAdded }: Props) {
                 </button>
               ))}
             </div>
-            <p className="text-[0.88rem] text-muted-foreground">追加先はストックです。</p>
             <PlatformPicker value={primaryPlatform} onChange={setPrimaryPlatform} />
             <div className="flex items-start gap-2 w-full">
               <DocumentTextIcon className="w-5 h-5 shrink-0 stroke-[1.5] text-muted-foreground mt-0.5" />
@@ -266,7 +265,7 @@ export function AddModal({ items, session, onClose, onAdded }: Props) {
                     {formMessage}
                   </p>
                 )}
-                <Button type="submit">追加する</Button>
+                <Button type="submit">ストックに追加</Button>
               </div>
             )}
           </div>

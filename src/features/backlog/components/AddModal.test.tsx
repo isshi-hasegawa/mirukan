@@ -173,7 +173,7 @@ describe("AddModal", () => {
 
     expect(screen.getByLabelText("タイトル")).toHaveValue("検索映画");
     expect(screen.queryByRole("button", { name: "シーズン1" })).not.toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "追加する" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "ストックに追加" })).toHaveLength(1);
     expect(document.querySelector('[data-footer-layout="inline"]')).toBeInTheDocument();
     expect(document.querySelector('[data-footer-layout="panel"]')).not.toBeInTheDocument();
   });
@@ -240,7 +240,7 @@ describe("AddModal", () => {
     const { user, onAdded, onClose } = renderAddModal({ items: [duplicateItem] });
 
     await user.click(await screen.findByRole("button", { name: /既存映画/ }));
-    await user.click(screen.getByRole("button", { name: "追加する" }));
+    await user.click(screen.getByRole("button", { name: "ストックに追加" }));
 
     expect(confirmSpy).toHaveBeenCalledWith(
       "「既存映画」はすでに「視聴済み」にあります。ストックに戻しますか？",
@@ -255,7 +255,7 @@ describe("AddModal", () => {
     const { user, onAdded, onClose } = renderAddModal();
 
     await user.type(screen.getByLabelText("タイトル"), "手動作品");
-    await user.click(screen.getByRole("button", { name: "追加する" }));
+    await user.click(screen.getByRole("button", { name: "ストックに追加" }));
 
     expect(dataMocks.upsertManualWork).toHaveBeenCalledWith("手動作品", "movie", "user-1");
     expect(dataMocks.upsertTmdbWork).not.toHaveBeenCalled();
@@ -277,7 +277,7 @@ describe("AddModal", () => {
     const { user, onAdded, onClose } = renderAddModal();
 
     await user.click(await screen.findByRole("button", { name: /TMDb映画/ }));
-    await user.click(screen.getByRole("button", { name: "追加する" }));
+    await user.click(screen.getByRole("button", { name: "ストックに追加" }));
 
     expect(dataMocks.upsertTmdbWork).toHaveBeenCalledWith(movieResult, "user-1");
     expect(dataMocks.upsertManualWork).not.toHaveBeenCalled();
