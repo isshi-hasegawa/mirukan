@@ -15,10 +15,7 @@
   - `src/features/backlog/components/BoardPage.tsx`
 - 追加で確認したい観点
   - 現状メモ
-    - `RecommendModal` の主要分岐と `BoardPage` のロード / エラー / モバイル復帰 / 削除時モーダル close は追加済み
-  - `BoardPage`
-    - recommendation modal 自体の open / close 導線
-    - desktop 時に追加完了後 / recommendation 追加後に `stacked` 列へ scroll する
+    - `RecommendModal` の主要分岐と `BoardPage` のロード / エラー / モバイル復帰 / recommendation modal open-close / 削除時モーダル close / desktop scroll は追加済み
 
 ## 優先度中: `data.ts` の非同期テスト
 

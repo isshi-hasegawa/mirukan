@@ -95,15 +95,18 @@ vi.mock("./KanbanBoard.tsx", () => ({
     onOpenAddModal,
     onOpenDetail,
     onDeleteItem,
+    columnRef,
   }: {
     selectedTabStatus: BacklogStatus;
     onTabChange: (status: BacklogStatus) => void;
     onOpenAddModal: () => void;
     onOpenDetail: (itemId: string) => void;
     onDeleteItem: (itemId: string) => void;
+    columnRef: (status: BacklogStatus, el: HTMLElement | null) => void;
   }) => (
     <div>
       <p>selected-tab:{selectedTabStatus}</p>
+      <div ref={(el) => columnRef("stacked", el)}>stacked-column-anchor</div>
       <button type="button" onClick={() => onTabChange("watching")}>
         watching に切り替え
       </button>
@@ -121,11 +124,14 @@ vi.mock("./KanbanBoard.tsx", () => ({
 }));
 
 vi.mock("./AddModal.tsx", () => ({
-  AddModal: ({ onAdded }: { onAdded: () => Promise<void> }) => (
+  AddModal: ({ onAdded, onClose }: { onAdded: () => Promise<void>; onClose: () => void }) => (
     <div>
       <p>add-modal</p>
       <button type="button" onClick={() => void onAdded()}>
         追加完了
+      </button>
+      <button type="button" onClick={onClose}>
+        追加モーダルを閉じる
       </button>
     </div>
   ),
@@ -134,13 +140,18 @@ vi.mock("./AddModal.tsx", () => ({
 vi.mock("./RecommendModal.tsx", () => ({
   RecommendModal: ({
     onAddTmdbWorksToStacked,
+    onClose,
   }: {
     onAddTmdbWorksToStacked: (results: Array<{ tmdbId: number }>) => Promise<void>;
+    onClose: () => void;
   }) => (
     <div>
       <p>recommend-modal</p>
       <button type="button" onClick={() => void onAddTmdbWorksToStacked([{ tmdbId: 1 }])}>
         おすすめ追加完了
+      </button>
+      <button type="button" onClick={onClose}>
+        おすすめを閉じる
       </button>
     </div>
   ),
@@ -204,6 +215,7 @@ describe("BoardPage", () => {
     hookMocks.signOut.mockClear();
     hookMocks.onItemDeleted = null;
     hookMocks.onWorksAdded = null;
+    Element.prototype.scrollIntoView = vi.fn();
   });
 
   afterEach(() => {
@@ -247,6 +259,51 @@ describe("BoardPage", () => {
     await user.click(screen.getByRole("button", { name: "おすすめを開く" }));
     await user.click(screen.getByRole("button", { name: "おすすめ追加完了" }));
     await waitFor(() => expect(screen.getByText("selected-tab:stacked")).toBeInTheDocument());
+  });
+
+  test("recommendation modal の open / close 導線が機能する", async () => {
+    const user = userEvent.setup();
+
+    renderBoardPage();
+
+    expect(screen.queryByText("recommend-modal")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "おすすめを開く" }));
+    expect(screen.getByText("recommend-modal")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "おすすめを閉じる" }));
+    await waitFor(() => expect(screen.queryByText("recommend-modal")).not.toBeInTheDocument());
+  });
+
+  test("desktop 時は追加完了後と recommendation 追加後に stacked 列へ scroll する", async () => {
+    const user = userEvent.setup();
+    const scrollIntoViewSpy = vi.spyOn(Element.prototype, "scrollIntoView");
+
+    renderBoardPage();
+
+    await user.click(screen.getByRole("button", { name: "追加モーダルを開く" }));
+    await user.click(screen.getByRole("button", { name: "追加完了" }));
+
+    await waitFor(() =>
+      expect(scrollIntoViewSpy).toHaveBeenCalledWith({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      }),
+    );
+
+    scrollIntoViewSpy.mockClear();
+
+    await user.click(screen.getByRole("button", { name: "おすすめを開く" }));
+    await user.click(screen.getByRole("button", { name: "おすすめ追加完了" }));
+
+    await waitFor(() =>
+      expect(scrollIntoViewSpy).toHaveBeenCalledWith({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      }),
+    );
   });
 
   test("詳細モーダルを開いている item が削除されたらモーダルを閉じる", async () => {
