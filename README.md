@@ -29,6 +29,12 @@ cp supabase/functions/.env.example supabase/functions/.env
 
 `supabase/functions/.env` にはローカル開発用の `TMDB_API_KEY` を設定してください。リモート環境は `supabase secrets set TMDB_API_KEY=...` で管理します。
 
+## TMDB Attribution
+
+This product uses the TMDB API but is not endorsed or certified by TMDB.
+
+TMDB のデータおよび画像を利用しています。公開時は、アプリ内の `About` / `Credits` / フッター等のユーザーが辿れる場所にも、TMDB ロゴと上記免責文を表示してください。
+
 ## Supabase Edge Functions
 
 TMDb 検索系の API は Supabase Edge Functions 経由で実行します。
