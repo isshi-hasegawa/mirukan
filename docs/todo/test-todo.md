@@ -55,3 +55,39 @@
 - メモ
   - watch provider の正規化や日本公開判定のような整形ロジックは、現在の `src/lib/tmdb.ts` には見当たらない
   - それらが Supabase Edge Function 側にあるなら、クライアントではなく Function 側のテスト対象として切り分ける
+
+## テスト基盤の拡張検討
+
+### Playwright 活用範囲の拡張
+
+- 目的
+  - ログイン、作品追加、詳細編集、ドラッグ操作を含む主要フローの E2E 回帰を拾えるようにする
+- まず見たい対象
+  - ログイン後にボードが表示される
+  - 作品追加モーダルから作品を追加できる
+  - カード詳細を編集できる
+  - カードを別カラムへ移動できる
+- 関連 idea
+  - `docs/ideas/tooling-ideas.md` の「Playwright」
+
+### MSW 活用範囲の整理
+
+- 目的
+  - TMDb / Supabase まわりの API モックを共通化する
+- まず見たい対象
+  - TMDb 検索結果
+  - シーズン一覧取得
+  - backlog CRUD の成功系 / 失敗系
+- 関連 idea
+  - `docs/ideas/tooling-ideas.md` の「MSW」
+
+### Vitest Coverage の運用整理
+
+- 目的
+  - 現在のテストの穴を見える化する
+- 見たい観点
+  - statements / branches の不足
+  - 条件分岐の多い処理の穴
+  - UI イベントの主要分岐が通っているか
+- 関連 idea
+  - `docs/ideas/tooling-ideas.md` の「Vitest Coverage」
