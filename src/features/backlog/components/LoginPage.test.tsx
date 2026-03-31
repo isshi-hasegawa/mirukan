@@ -24,6 +24,9 @@ describe("LoginPage", () => {
 
     render(<LoginPage />);
 
+    expect(screen.getByText("みるカン")).toBeInTheDocument();
+    expect(screen.getByText("watch / kanban")).toBeInTheDocument();
+    expect(screen.getByText("次に見る作品を決めるためのカンバン。")).toBeInTheDocument();
     expect(screen.queryByText("akari@example.com")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "ローカル開発用アカウントを表示" }));
@@ -78,6 +81,7 @@ describe("LoginPage", () => {
   test("セッション確認中はログイン画面と同系統のローディング表示を出す", () => {
     render(<LoginPage isSessionLoading />);
 
+    expect(screen.getByText("みるカン")).toBeInTheDocument();
     expect(screen.getByText("セッション確認中")).toBeInTheDocument();
     expect(screen.getByText("セッションを確認しています...")).toBeInTheDocument();
     expect(

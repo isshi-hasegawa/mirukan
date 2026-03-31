@@ -58,7 +58,7 @@ export function LoginPage({ isSessionLoading = false }: Props) {
   return (
     <AuthScreen
       badge={isSessionLoading ? "AUTH" : "LOCAL AUTH"}
-      title="次に見る 1 本を、迷わず選べる backlog にする。"
+      title="みるカン"
       description={
         isSessionLoading
           ? "ローカル Supabase のセッションを確認しています。画面の準備ができるまで、このままお待ちください。"
@@ -71,48 +71,69 @@ export function LoginPage({ isSessionLoading = false }: Props) {
             <div className="h-24 rounded-[20px] border border-border/70 bg-muted/30" />
           </div>
         ) : (
-          <div className="rounded-[22px] border border-border/70 bg-orange-500/8 px-5 py-4">
-            <button
-              type="button"
-              className="text-left text-sm font-medium text-foreground"
-              onClick={() => setIsDevAccountVisible((current) => !current)}
-              aria-expanded={isDevAccountVisible}
-            >
-              {isDevAccountVisible
-                ? "ローカル開発用アカウントを隠す"
-                : "ローカル開発用アカウントを表示"}
-            </button>
-            {isDevAccountVisible ? (
-              <dl className="mt-4 grid gap-3.5">
-                <div className="grid gap-1.5">
-                  <dt className="text-muted-foreground text-[0.82rem]">メール</dt>
-                  <dd>
-                    <code className="inline-flex px-2.5 py-2 rounded-full bg-white/10 text-foreground font-mono text-[0.95rem]">
-                      {DEV_EMAIL}
-                    </code>
-                  </dd>
+          <div className="grid gap-5">
+            <div className="grid gap-4">
+              <div className="flex h-20 w-20 items-center justify-center rounded-[24px] border border-orange-400/40 bg-linear-to-br from-orange-400/20 via-orange-500/10 to-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+                <div
+                  className="flex h-14 w-14 items-center justify-center rounded-[18px] bg-card text-[1.45rem] font-bold tracking-[-0.06em] text-foreground"
+                  aria-label="みるカンのロゴプレースホルダー"
+                >
+                  み
                 </div>
-                <div className="grid gap-1.5">
-                  <dt className="text-muted-foreground text-[0.82rem]">パスワード</dt>
-                  <dd>
-                    <code className="inline-flex px-2.5 py-2 rounded-full bg-white/10 text-foreground font-mono text-[0.95rem]">
-                      {DEV_PASSWORD}
-                    </code>
-                  </dd>
-                </div>
-              </dl>
-            ) : null}
+              </div>
+              <div className="grid gap-2">
+                <p className="text-[0.78rem] font-bold tracking-[0.2em] uppercase text-orange-300">
+                  watch / kanban
+                </p>
+                <p className="max-w-[20ch] text-[clamp(1.6rem,2.2vw,2.2rem)] leading-[1.08] tracking-[-0.04em] text-foreground">
+                  次に見る作品を決めるためのカンバン。
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-[22px] border border-border/70 bg-black/15 px-5 py-4">
+              <button
+                type="button"
+                className="text-left text-sm font-medium text-foreground"
+                onClick={() => setIsDevAccountVisible((current) => !current)}
+                aria-expanded={isDevAccountVisible}
+              >
+                {isDevAccountVisible
+                  ? "ローカル開発用アカウントを隠す"
+                  : "ローカル開発用アカウントを表示"}
+              </button>
+              {isDevAccountVisible ? (
+                <dl className="mt-4 grid gap-3.5">
+                  <div className="grid gap-1.5">
+                    <dt className="text-muted-foreground text-[0.82rem]">メール</dt>
+                    <dd>
+                      <code className="inline-flex px-2.5 py-2 rounded-full bg-white/10 text-foreground font-mono text-[0.95rem]">
+                        {DEV_EMAIL}
+                      </code>
+                    </dd>
+                  </div>
+                  <div className="grid gap-1.5">
+                    <dt className="text-muted-foreground text-[0.82rem]">パスワード</dt>
+                    <dd>
+                      <code className="inline-flex px-2.5 py-2 rounded-full bg-white/10 text-foreground font-mono text-[0.95rem]">
+                        {DEV_PASSWORD}
+                      </code>
+                    </dd>
+                  </div>
+                </dl>
+              ) : null}
+            </div>
           </div>
         )
       }
     >
       <h2 className="mb-2 text-[1.15rem] leading-[1.1] font-[var(--heading)] text-foreground">
-        {isSessionLoading ? "セッション確認中" : "開発環境へログイン"}
+        {isSessionLoading ? "セッション確認中" : "ログイン"}
       </h2>
       <p className="mb-5 text-sm text-muted-foreground">
         {isSessionLoading
           ? "認証状態の復元後に backlog 画面へ移動します。"
-          : "メールアドレスとパスワードでローカル環境へ入ります。"}
+          : "ローカル開発環境に接続します。"}
       </p>
       {isSessionLoading ? (
         <div className="grid gap-4" aria-live="polite">
