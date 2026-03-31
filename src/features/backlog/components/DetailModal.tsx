@@ -1,25 +1,17 @@
 import { useEffect, useRef } from "react";
 import { DocumentTextIcon, FilmIcon, TvIcon } from "@heroicons/react/24/outline";
 import {
-  applyBacklogItemUpdate,
-  buildDetailFieldUpdate,
-  getSortOrderForStatusChange,
-} from "../backlog-item-utils.ts";
-import { updateBacklogItem } from "../backlog-repository.ts";
-import {
-  createDetailEditingState,
   createDetailModalState,
   getWorkTypeLabel,
-  normalizePrimaryPlatform,
 } from "../helpers.ts";
 import { statusLabels, statusOrder } from "../constants.ts";
 import { PlatformPicker } from "./PlatformPicker.tsx";
 import { PosterImage } from "./PosterImage.tsx";
 import { TmdbLink } from "./TmdbLink.tsx";
+import { useDetailModalActions } from "../hooks/useDetailModalActions.ts";
 import type {
   BacklogItem,
   BacklogStatus,
-  DetailModalEditableField,
   DetailModalState,
 } from "../types.ts";
 
@@ -34,6 +26,19 @@ type Props = {
 
 export function DetailModal({ item, state, items, onStateChange, onClose, onUpdate }: Props) {
   const inputRef = useRef<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null>(null);
+  const {
+    cancelEditing,
+    handlePlatformSelect,
+    handleStatusSelect,
+    saveField,
+    startEditing,
+  } = useDetailModalActions({
+    item,
+    items,
+    state,
+    onStateChange,
+    onUpdate,
+  });
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -73,51 +78,6 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
     work.typical_episode_runtime_minutes ? `1話 ${work.typical_episode_runtime_minutes}分` : null,
     work.season_count ? `${work.season_count}シーズン` : null,
   ].filter(Boolean);
-
-  const handleStatusSelect = async (status: BacklogStatus) => {
-    if (status === item.status) return;
-    const nextSortOrder = getSortOrderForStatusChange(items, item.id, status);
-    const { error } = await updateBacklogItem(item.id, { status, sort_order: nextSortOrder });
-    if (error) {
-      onStateChange({ ...state, message: `更新に失敗しました: ${error}` });
-      return;
-    }
-    onUpdate(applyBacklogItemUpdate(item, { status, sort_order: nextSortOrder }));
-    onStateChange(createDetailModalState(item.id));
-  };
-
-  const saveField = async () => {
-    if (!state.editingField || !item) return;
-    const update = buildDetailFieldUpdate(state.editingField, state.draftValue);
-    const { error } = await updateBacklogItem(item.id, update);
-
-    if (error) {
-      onStateChange({ ...state, message: `更新に失敗しました: ${error}` });
-      return;
-    }
-
-    onUpdate(applyBacklogItemUpdate(item, update));
-    onStateChange(createDetailModalState(item.id));
-  };
-
-  const startEditing = (field: DetailModalEditableField) => {
-    onStateChange(createDetailEditingState(item, field));
-  };
-
-  const cancelEditing = () => {
-    onStateChange(createDetailModalState(item.id));
-  };
-
-  const handlePlatformSelect = async (value: string) => {
-    const platform = normalizePrimaryPlatform(value);
-    const { error } = await updateBacklogItem(item.id, { primary_platform: platform });
-    if (error) {
-      onStateChange({ ...state, message: `更新に失敗しました: ${error}` });
-      return;
-    }
-    onUpdate(applyBacklogItemUpdate(item, { primary_platform: platform }));
-    onStateChange(createDetailModalState(item.id));
-  };
 
   const renderNote = () => {
     const isEditing = state.editingField === "note";
@@ -231,7 +191,7 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
                       ? " bg-primary border-primary text-primary-foreground font-semibold"
                       : " border-[rgba(92,59,35,0.2)] bg-transparent text-muted-foreground hover:bg-[rgba(92,59,35,0.08)] hover:text-foreground"
                   }`}
-                  onClick={() => void handleStatusSelect(s)}
+                  onClick={() => void handleStatusSelect(s as BacklogStatus)}
                 >
                   {statusLabels[s]}
                 </button>

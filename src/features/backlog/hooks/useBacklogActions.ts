@@ -9,6 +9,7 @@ import {
 import { upsertBacklogItemsToStatus } from "../backlog-repository.ts";
 import { upsertTmdbWork } from "../work-repository.ts";
 import type { BacklogItem } from "../types.ts";
+import { browserBacklogFeedback, type BacklogFeedback } from "../ui-feedback.ts";
 
 type Props = {
   items: BacklogItem[];
@@ -16,6 +17,7 @@ type Props = {
   loadItems: () => Promise<void>;
   onItemDeleted: (itemId: string) => void;
   onWorksAdded: () => void;
+  feedback?: BacklogFeedback;
 };
 
 export function useBacklogActions({
@@ -24,12 +26,13 @@ export function useBacklogActions({
   loadItems,
   onItemDeleted,
   onWorksAdded,
+  feedback = browserBacklogFeedback,
 }: Props) {
   const handleDeleteItem = async (itemId: string) => {
     const { error: deleteError } = await supabase.from("backlog_items").delete().eq("id", itemId);
 
     if (deleteError) {
-      window.alert(`削除に失敗しました: ${deleteError.message}`);
+      await Promise.resolve(feedback.alert(`削除に失敗しました: ${deleteError.message}`));
       return;
     }
 
@@ -46,7 +49,7 @@ export function useBacklogActions({
       .eq("id", itemId);
 
     if (updateError) {
-      window.alert(`変更に失敗しました: ${updateError.message}`);
+      await Promise.resolve(feedback.alert(`変更に失敗しました: ${updateError.message}`));
       return;
     }
 
@@ -67,7 +70,7 @@ export function useBacklogActions({
     }
 
     if (workIds.length === 0) {
-      window.alert("作品の追加に失敗しました");
+      await Promise.resolve(feedback.alert("作品の追加に失敗しました"));
       return;
     }
 
@@ -77,12 +80,14 @@ export function useBacklogActions({
       "stacked",
       `${results.length}件の作品`,
     );
-    if (confirmMessage && !window.confirm(confirmMessage)) {
+    const shouldProceed =
+      !confirmMessage || (await Promise.resolve(feedback.confirm(confirmMessage)));
+    if (!shouldProceed) {
       return;
     }
 
     if (plan.actions.length === 0) {
-      window.alert("選択した作品はすでにストックにあります");
+      await Promise.resolve(feedback.alert("選択した作品はすでにストックにあります"));
       return;
     }
 
@@ -95,7 +100,7 @@ export function useBacklogActions({
     );
 
     if (insertError) {
-      window.alert(`追加に失敗しました: ${insertError}`);
+      await Promise.resolve(feedback.alert(`追加に失敗しました: ${insertError}`));
       return;
     }
 

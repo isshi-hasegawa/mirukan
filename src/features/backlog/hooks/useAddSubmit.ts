@@ -13,6 +13,7 @@ import {
 } from "../work-repository.ts";
 import { normalizePrimaryPlatform } from "../helpers.ts";
 import type { BacklogItem, WorkType } from "../types.ts";
+import { browserBacklogFeedback, type BacklogFeedback } from "../ui-feedback.ts";
 
 type UseAddSubmitOptions = {
   items: BacklogItem[];
@@ -27,6 +28,7 @@ type UseAddSubmitOptions = {
   note: string;
   onClose: () => void;
   onAdded: () => Promise<void>;
+  feedback?: BacklogFeedback;
 };
 
 export function useAddSubmit({
@@ -42,6 +44,7 @@ export function useAddSubmit({
   note,
   onClose,
   onAdded,
+  feedback = browserBacklogFeedback,
 }: UseAddSubmitOptions) {
   const [formMessage, setFormMessage] = useState("");
 
@@ -95,7 +98,9 @@ export function useAddSubmit({
         "stacked",
         buildSelectedSubject(),
       );
-      if (confirmMessage && !window.confirm(confirmMessage)) {
+      const shouldProceed =
+        !confirmMessage || (await Promise.resolve(feedback.confirm(confirmMessage)));
+      if (!shouldProceed) {
         setFormMessage("既存カードはそのままにしました。");
         return;
       }
@@ -158,7 +163,9 @@ export function useAddSubmit({
       "stacked",
       buildSelectedSubject(),
     );
-    if (confirmMessage && !window.confirm(confirmMessage)) {
+    const shouldProceed =
+      !confirmMessage || (await Promise.resolve(feedback.confirm(confirmMessage)));
+    if (!shouldProceed) {
       setFormMessage("既存カードはそのままにしました。");
       return;
     }

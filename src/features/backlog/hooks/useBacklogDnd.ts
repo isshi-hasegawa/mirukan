@@ -9,17 +9,24 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { supabase } from "../../../lib/supabase.ts";
-import { getSortOrderForDrop } from "../data.ts";
+import { getSortOrderForDrop } from "../backlog-item-utils.ts";
 import { getClientYFromPointerEvent, getDropIndicator, resolveDropTarget } from "../helpers.ts";
 import type { BacklogItem, DropIndicator } from "../types.ts";
+import { browserBacklogFeedback, type BacklogFeedback } from "../ui-feedback.ts";
 
 type Props = {
   items: BacklogItem[];
   isMobileLayout: boolean;
   onAfterDrop: () => Promise<void>;
+  feedback?: BacklogFeedback;
 };
 
-export function useBacklogDnd({ items, isMobileLayout, onAfterDrop }: Props) {
+export function useBacklogDnd({
+  items,
+  isMobileLayout,
+  onAfterDrop,
+  feedback = browserBacklogFeedback,
+}: Props) {
   const [dragItemId, setDragItemId] = useState<string | null>(null);
   const [dropIndicator, setDropIndicator] = useState<DropIndicator | null>(null);
 
@@ -89,7 +96,9 @@ export function useBacklogDnd({ items, isMobileLayout, onAfterDrop }: Props) {
       .eq("id", draggedId);
 
     if (updateError) {
-      window.alert(`ドラッグ移動に失敗しました: ${updateError.message}`);
+      await Promise.resolve(
+        feedback.alert(`ドラッグ移動に失敗しました: ${updateError.message}`),
+      );
       return;
     }
 
