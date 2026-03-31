@@ -66,6 +66,7 @@ type RecommendationCacheEntry = {
 };
 
 const RECOMMENDATIONS_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const MAX_RECOMMENDATION_SOURCE_ITEMS = 8;
 
 let trendingCache: RecommendationCacheEntry | null = null;
 let trendingCachePromise: Promise<TmdbSearchResult[]> | null = null;
@@ -107,7 +108,7 @@ function normalizeRecommendationSources(
     uniqueItems.push(item);
   }
 
-  return uniqueItems.slice(0, 5);
+  return uniqueItems.slice(0, MAX_RECOMMENDATION_SOURCE_ITEMS);
 }
 
 function buildRecommendationSourceCacheKey(

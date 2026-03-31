@@ -90,6 +90,8 @@ function filterVisibleResults(items: BacklogItem[], results: TmdbSearchResult[])
   return results.filter((result) => !isHiddenSearchResult(items, result));
 }
 
+const MAX_RECOMMENDATION_SOURCE_ITEMS = 8;
+
 function buildRecommendationSourceItems(items: BacklogItem[]) {
   return items
     .filter(
@@ -104,7 +106,7 @@ function buildRecommendationSourceItems(items: BacklogItem[]) {
       if (a.status !== "watched" && b.status === "watched") return 1;
       return Math.random() - 0.5;
     })
-    .slice(0, 5)
+    .slice(0, MAX_RECOMMENDATION_SOURCE_ITEMS)
     .map((item) => ({
       tmdbId: item.works!.tmdb_id!,
       tmdbMediaType: item.works!.tmdb_media_type as "movie" | "tv",

@@ -203,6 +203,71 @@ describe("recommendation caches", () => {
     ).toHaveLength(2);
   });
 
+  test("fetchTmdbSimilar sends at most 8 unique source items", async () => {
+    supabaseMocks.invoke.mockResolvedValue({ data: [], error: null });
+
+    await fetchTmdbSimilar([
+      { tmdbId: 1, tmdbMediaType: "movie" },
+      { tmdbId: 2, tmdbMediaType: "movie" },
+      { tmdbId: 3, tmdbMediaType: "movie" },
+      { tmdbId: 4, tmdbMediaType: "movie" },
+      { tmdbId: 5, tmdbMediaType: "movie" },
+      { tmdbId: 6, tmdbMediaType: "movie" },
+      { tmdbId: 7, tmdbMediaType: "movie" },
+      { tmdbId: 8, tmdbMediaType: "movie" },
+      { tmdbId: 9, tmdbMediaType: "movie" },
+      { tmdbId: 1, tmdbMediaType: "movie" },
+    ]);
+
+    expect(supabaseMocks.invoke).toHaveBeenCalledWith("fetch-tmdb-similar", {
+      body: {
+        sourceItems: [
+          { tmdbId: 1, tmdbMediaType: "movie" },
+          { tmdbId: 2, tmdbMediaType: "movie" },
+          { tmdbId: 3, tmdbMediaType: "movie" },
+          { tmdbId: 4, tmdbMediaType: "movie" },
+          { tmdbId: 5, tmdbMediaType: "movie" },
+          { tmdbId: 6, tmdbMediaType: "movie" },
+          { tmdbId: 7, tmdbMediaType: "movie" },
+          { tmdbId: 8, tmdbMediaType: "movie" },
+        ],
+      },
+    });
+  });
+
+  test("fetchTmdbSimilar reuses cache for the same source item set in different order", async () => {
+    supabaseMocks.invoke.mockResolvedValue({
+      data: [
+        {
+          tmdbId: 101,
+          tmdbMediaType: "movie",
+          workType: "movie",
+          title: "Movie Similar A",
+          originalTitle: "Movie Similar A",
+          overview: "Movie Similar A overview",
+          posterPath: null,
+          releaseDate: "2025-01-01",
+          jpWatchPlatforms: [],
+          hasJapaneseRelease: true,
+        },
+      ],
+      error: null,
+    });
+
+    await fetchTmdbSimilar([
+      { tmdbId: 1, tmdbMediaType: "movie" },
+      { tmdbId: 2, tmdbMediaType: "tv" },
+    ]);
+    await fetchTmdbSimilar([
+      { tmdbId: 2, tmdbMediaType: "tv" },
+      { tmdbId: 1, tmdbMediaType: "movie" },
+    ]);
+
+    expect(
+      supabaseMocks.invoke.mock.calls.filter(([name]) => name === "fetch-tmdb-similar"),
+    ).toHaveLength(1);
+  });
+
   test("fetchTmdbTrending keeps movie and tv entries with the same tmdb id", async () => {
     supabaseMocks.invoke.mockResolvedValue({
       data: [

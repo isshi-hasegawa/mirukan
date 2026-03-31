@@ -168,6 +168,14 @@ const TMDB_PROVIDER_ID_MAP: Record<number, string> = {
 const TRENDING_CACHE_WINDOW = "week";
 const TRENDING_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const SIMILAR_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const TMDB_METADATA_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const TMDB_RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
+const TMDB_MAX_RETRY_ATTEMPTS = 3;
+const TMDB_RETRY_BASE_DELAY_MS = 400;
+const TMDB_ENRICH_CONCURRENCY = 6;
+const MAX_RECOMMENDATION_SOURCE_ITEMS = 8;
+const MAX_SIMILAR_RESULTS_PER_SOURCE = 40;
+const MAX_SIMILAR_RESULTS = 60;
 
 function getTmdbApiKey() {
   const apiKey = Deno.env.get("TMDB_API_KEY");
@@ -191,16 +199,64 @@ async function fetchTmdbJson<T>(
     url.searchParams.set(key, value);
   }
 
-  const response = await fetch(url, init);
+  let lastStatus: number | null = null;
 
-  if (!response.ok) {
-    throw new Error(`TMDb request failed with status ${response.status}`);
+  for (let attempt = 0; attempt <= TMDB_MAX_RETRY_ATTEMPTS; attempt += 1) {
+    const response = await fetch(url, init);
+
+    if (response.ok) {
+      return (await response.json()) as T;
+    }
+
+    lastStatus = response.status;
+    if (!TMDB_RETRYABLE_STATUSES.has(response.status) || attempt === TMDB_MAX_RETRY_ATTEMPTS) {
+      throw new Error(`TMDb request failed with status ${response.status}`);
+    }
+
+    const retryAfterHeader = response.headers.get("retry-after");
+    const retryAfterMs = retryAfterHeader ? Number.parseFloat(retryAfterHeader) * 1000 : NaN;
+    const backoffMs =
+      Number.isFinite(retryAfterMs) && retryAfterMs > 0
+        ? retryAfterMs
+        : TMDB_RETRY_BASE_DELAY_MS * 2 ** attempt;
+    await delay(backoffMs);
   }
 
-  return (await response.json()) as T;
+  throw new Error(`TMDb request failed with status ${lastStatus ?? "unknown"}`);
 }
 
-async function fetchWatchProvidersJP(
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function mapWithConcurrency<TInput, TOutput>(
+  items: TInput[],
+  concurrency: number,
+  mapper: (item: TInput, index: number) => Promise<TOutput>,
+): Promise<TOutput[]> {
+  if (items.length === 0) {
+    return [];
+  }
+
+  const results = new Array<TOutput>(items.length);
+  let nextIndex = 0;
+
+  async function worker() {
+    while (nextIndex < items.length) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+      results[currentIndex] = await mapper(items[currentIndex]!, currentIndex);
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, items.length) }, () => worker()),
+  );
+
+  return results;
+}
+
+async function fetchWatchProvidersFromTmdb(
   tmdbId: number,
   mediaType: TmdbMediaType,
 ): Promise<TmdbWatchPlatform[]> {
@@ -240,17 +296,131 @@ async function checkJapaneseRelease(tmdbId: number): Promise<boolean> {
   }
 }
 
+type TmdbMetadataCacheRow = {
+  payload: unknown;
+  expires_at: string | null;
+};
+
+async function readTmdbMetadataCache(
+  cacheKey: string,
+): Promise<{ fresh: boolean; payload: unknown } | null> {
+  const admin = getSupabaseAdminClient();
+  if (!admin) {
+    return null;
+  }
+
+  const { data, error } = await admin
+    .from("tmdb_metadata_cache")
+    .select("payload, expires_at")
+    .eq("cache_key", cacheKey)
+    .maybeSingle<TmdbMetadataCacheRow>();
+
+  if (error) {
+    throw new Error(`Failed to read TMDb metadata cache: ${error.message}`);
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  return {
+    fresh: isCacheEntryFresh(data.expires_at),
+    payload: data.payload,
+  };
+}
+
+async function writeTmdbMetadataCache(cacheKey: string, payload: unknown) {
+  const admin = getSupabaseAdminClient();
+  if (!admin) {
+    return;
+  }
+
+  const { error } = await admin.from("tmdb_metadata_cache").upsert({
+    cache_key: cacheKey,
+    payload,
+    fetched_at: new Date().toISOString(),
+    expires_at: buildExpiresAt(TMDB_METADATA_CACHE_TTL_MS),
+  });
+
+  if (error) {
+    throw new Error(`Failed to write TMDb metadata cache: ${error.message}`);
+  }
+}
+
+function normalizeCachedWatchPlatforms(payload: unknown): TmdbWatchPlatform[] | null {
+  if (!Array.isArray(payload)) {
+    return null;
+  }
+
+  return payload.flatMap((item) => {
+    if (!item || typeof item !== "object") {
+      return [];
+    }
+
+    const key = "key" in item && typeof item.key === "string" ? item.key : null;
+    const logoPath =
+      "logoPath" in item && (typeof item.logoPath === "string" || item.logoPath === null)
+        ? item.logoPath
+        : null;
+
+    return key ? [{ key, logoPath }] : [];
+  });
+}
+
+async function fetchWatchProvidersJP(
+  tmdbId: number,
+  mediaType: TmdbMediaType,
+): Promise<TmdbWatchPlatform[]> {
+  const cacheKey = `watch-providers:${mediaType}:${tmdbId}:JP`;
+  const cached = await readTmdbMetadataCache(cacheKey).catch(() => null);
+  const cachedPlatforms = normalizeCachedWatchPlatforms(cached?.payload);
+
+  if (cached?.fresh && cachedPlatforms) {
+    return cachedPlatforms;
+  }
+
+  const fresh = await fetchWatchProvidersFromTmdb(tmdbId, mediaType).catch(() => null);
+  if (fresh) {
+    await writeTmdbMetadataCache(cacheKey, fresh).catch(() => undefined);
+    return fresh;
+  }
+
+  return cachedPlatforms ?? [];
+}
+
+function normalizeCachedBoolean(payload: unknown): boolean | null {
+  return typeof payload === "boolean" ? payload : null;
+}
+
+async function checkJapaneseReleaseCached(tmdbId: number): Promise<boolean> {
+  const cacheKey = `jp-release:movie:${tmdbId}`;
+  const cached = await readTmdbMetadataCache(cacheKey).catch(() => null);
+  const cachedValue = normalizeCachedBoolean(cached?.payload);
+
+  if (cached?.fresh && cachedValue !== null) {
+    return cachedValue;
+  }
+
+  const fresh = await checkJapaneseRelease(tmdbId).catch(() => null);
+  if (fresh !== null) {
+    await writeTmdbMetadataCache(cacheKey, fresh).catch(() => undefined);
+    return fresh;
+  }
+
+  return cachedValue ?? true;
+}
+
 async function enrichWithWatchProviders(results: TmdbSearchResult[]): Promise<TmdbSearchResult[]> {
-  return Promise.all(
-    results.map(async (result) => {
+  return mapWithConcurrency(results, TMDB_ENRICH_CONCURRENCY, async (result) => {
       const [jpWatchPlatforms, hasJapaneseRelease] = await Promise.all([
         fetchWatchProvidersJP(result.tmdbId, result.tmdbMediaType),
-        result.workType === "movie" ? checkJapaneseRelease(result.tmdbId) : Promise.resolve(true),
+        result.workType === "movie"
+          ? checkJapaneseReleaseCached(result.tmdbId)
+          : Promise.resolve(true),
       ]);
 
       return { ...result, jpWatchPlatforms, hasJapaneseRelease };
-    }),
-  );
+    });
 }
 
 function mapMultiSearchResult(
@@ -484,7 +654,7 @@ function normalizeRecommendationSources(
     uniqueItems.push(item);
   }
 
-  return uniqueItems.slice(0, 5);
+  return uniqueItems.slice(0, MAX_RECOMMENDATION_SOURCE_ITEMS);
 }
 
 export async function fetchTmdbSimilar(
@@ -519,7 +689,7 @@ export async function fetchTmdbSimilar(
     }),
   );
 
-  return dedupeRecommendationResults(resultGroups.flat()).slice(0, 40);
+  return dedupeRecommendationResults(resultGroups.flat()).slice(0, MAX_SIMILAR_RESULTS);
 }
 
 function dedupeRecommendationResults(results: TmdbSearchResult[]) {
@@ -600,7 +770,7 @@ async function refreshSimilarCacheForSource(sourceItem: {
   const fresh = await enrichWithWatchProviders(
     dedupeRecommendationResults(
       await fetchSimilarPage(sourceItem.tmdbId, sourceItem.tmdbMediaType),
-    ).slice(0, 40),
+    ).slice(0, MAX_SIMILAR_RESULTS_PER_SOURCE),
   );
   const admin = getSupabaseAdminClient();
 
