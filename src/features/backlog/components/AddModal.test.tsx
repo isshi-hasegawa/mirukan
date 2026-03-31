@@ -178,6 +178,103 @@ describe("AddModal", () => {
     expect(document.querySelector('[data-footer-layout="panel"]')).not.toBeInTheDocument();
   });
 
+  test("ストック済みの映画は候補から除外し、未追加シーズンがあるシリーズは表示する", async () => {
+    const stackedMovieResult = createSearchResult({ tmdbId: 11, title: "ストック済み映画" });
+    const stackedSeriesResult = createSearchResult({
+      tmdbId: 12,
+      tmdbMediaType: "tv",
+      workType: "series",
+      title: "ストック済みシリーズ",
+    });
+    const stackedMovieItem = createItem({
+      works: {
+        ...createItem().works!,
+        id: "stacked-movie-work",
+        title: "ストック済み映画",
+        tmdb_id: 11,
+        tmdb_media_type: "movie",
+        work_type: "movie",
+      },
+    });
+    const stackedSeriesItem = createItem({
+      id: "item-2",
+      works: {
+        ...createItem().works!,
+        id: "stacked-series-work",
+        title: "ストック済みシリーズ",
+        tmdb_id: 12,
+        tmdb_media_type: "tv",
+        work_type: "series",
+        season_count: 2,
+      },
+    });
+    tmdbMocks.fetchTmdbTrending.mockResolvedValue([stackedMovieResult, stackedSeriesResult]);
+    tmdbMocks.searchTmdbWorks.mockResolvedValue([stackedMovieResult]);
+
+    const { user } = renderAddModal({ items: [stackedMovieItem, stackedSeriesItem] });
+
+    expect(await screen.findByRole("button", { name: /ストック済みシリーズ/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /ストック済み映画/ })).not.toBeInTheDocument();
+
+    await search(user, "ストック済み映画");
+
+    expect(screen.queryByRole("button", { name: /ストック済み映画/ })).not.toBeInTheDocument();
+    expect(
+      screen.getByText("すでにストック済みの作品は候補から除外しています。"),
+    ).toBeInTheDocument();
+  });
+
+  test("全シーズンストック済みのシリーズは候補から除外する", async () => {
+    const fullyStackedSeriesResult = createSearchResult({
+      tmdbId: 13,
+      tmdbMediaType: "tv",
+      workType: "series",
+      title: "全シーズン済みシリーズ",
+    });
+    const stackedSeriesItem = createItem({
+      works: {
+        ...createItem().works!,
+        id: "stacked-series-root-work",
+        title: "全シーズン済みシリーズ",
+        tmdb_id: 13,
+        tmdb_media_type: "tv",
+        work_type: "series",
+        season_count: 2,
+      },
+    });
+    const stackedSeasonItem = createItem({
+      id: "item-2",
+      works: {
+        ...createItem().works!,
+        id: "stacked-series-season-work",
+        title: "全シーズン済みシリーズ シーズン2",
+        tmdb_id: 13,
+        tmdb_media_type: "tv",
+        work_type: "season",
+        season_number: 2,
+      },
+    });
+    tmdbMocks.fetchTmdbTrending.mockResolvedValue([fullyStackedSeriesResult]);
+    tmdbMocks.searchTmdbWorks.mockResolvedValue([fullyStackedSeriesResult]);
+
+    const { user } = renderAddModal({ items: [stackedSeriesItem, stackedSeasonItem] });
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: /全シーズン済みシリーズ/ }),
+      ).not.toBeInTheDocument(),
+    );
+
+    await search(user, "全シーズン済みシリーズ");
+
+    expect(
+      screen.queryByRole("button", { name: /全シーズン済みシリーズ/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText("すでにストック済みの作品は候補から除外しています。"),
+    ).toBeInTheDocument();
+  });
+
   test("TV 選択時はシーズン1を初期選択し、取得後のシーズン候補と重複通知を表示する", async () => {
     const seriesResult = createSearchResult({
       tmdbId: 30,
@@ -216,6 +313,39 @@ describe("AddModal", () => {
     expect(
       screen.getByText("シーズン1はすでに「視聴済み」にあります。追加するとストックに戻せます。"),
     ).toBeInTheDocument();
+  });
+
+  test("すでにストック済みのシーズンだけを選んだときは追加ボタンを無効化する", async () => {
+    const seriesResult = createSearchResult({
+      tmdbId: 31,
+      tmdbMediaType: "tv",
+      workType: "series",
+      title: "ストック済みシリーズ",
+    });
+    const duplicateItem = createItem({
+      works: {
+        ...createItem().works!,
+        id: "series-work-31",
+        title: "ストック済みシリーズ",
+        work_type: "series",
+        tmdb_id: 31,
+        tmdb_media_type: "tv",
+      },
+    });
+    tmdbMocks.fetchTmdbTrending.mockResolvedValue([seriesResult]);
+    tmdbMocks.fetchTmdbSeasonOptions.mockResolvedValue([
+      createSeasonOption({ seasonNumber: 2, title: "ストック済みシリーズ シーズン2" }),
+    ]);
+
+    const { user } = renderAddModal({ items: [duplicateItem] });
+
+    await user.click(await screen.findByRole("button", { name: /ストック済みシリーズ/ }));
+
+    expect(await screen.findByText("シーズン1はすでにストックにあります。")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "シーズン1" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /シーズン2/ })).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: "ストック済み" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "ストックに追加" })).not.toBeInTheDocument();
   });
 
   test("confirm をキャンセルすると追加せずメッセージを表示する", async () => {

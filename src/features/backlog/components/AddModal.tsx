@@ -30,10 +30,13 @@ export function AddModal({ items, session, onClose, onAdded }: Props) {
     selectedTmdbResult,
     seasonOptions,
     selectedSeasonNumbers,
+    stackedSeasonNumbers,
     isLoadingSeasons,
     searchMessage,
     duplicateNotice,
+    canAddSelectionToStacked,
     isTvSelection,
+    canToggleAllSeasons,
     hasAllSeasonsSelected,
     selectedSeasonSummary,
     searchInputRef,
@@ -47,6 +50,10 @@ export function AddModal({ items, session, onClose, onAdded }: Props) {
 
   const resolvedTitle = selectedTmdbResult?.title ?? manualTitle;
   const resolvedWorkType = selectedTmdbResult?.workType ?? workType;
+  const isSelectedTmdbSubmitDisabled =
+    !!selectedTmdbResult &&
+    ((isTvSelection && selectedSeasonNumbers.length === 0) || !canAddSelectionToStacked);
+  const selectedTmdbSubmitLabel = canAddSelectionToStacked ? "ストックに追加" : "ストック済み";
 
   const { formMessage, clearFormMessage, handleSubmit } = useAddSubmit({
     items,
@@ -137,11 +144,12 @@ export function AddModal({ items, session, onClose, onAdded }: Props) {
                               useInlineFooter ? (
                                 <Button
                                   type="submit"
+                                  disabled={isSelectedTmdbSubmitDisabled}
                                   onClick={(event) => {
                                     event.stopPropagation();
                                   }}
                                 >
-                                  ストックに追加
+                                  {selectedTmdbSubmitLabel}
                                 </Button>
                               ) : (
                                 <div className="grid gap-2.5">
@@ -149,7 +157,9 @@ export function AddModal({ items, session, onClose, onAdded }: Props) {
                                     <SeasonPicker
                                       seasonOptions={seasonOptions}
                                       selectedSeasonNumbers={selectedSeasonNumbers}
+                                      stackedSeasonNumbers={stackedSeasonNumbers}
                                       isLoadingSeasons={isLoadingSeasons}
+                                      canToggleAllSeasons={canToggleAllSeasons}
                                       hasAllSeasonsSelected={hasAllSeasonsSelected}
                                       selectedSeasonSummary={selectedSeasonSummary}
                                       onToggleSeason={toggleSeasonSelection}
@@ -172,11 +182,12 @@ export function AddModal({ items, session, onClose, onAdded }: Props) {
                                     )}
                                     <Button
                                       type="submit"
+                                      disabled={isSelectedTmdbSubmitDisabled}
                                       onClick={(event) => {
                                         event.stopPropagation();
                                       }}
                                     >
-                                      ストックに追加
+                                      {selectedTmdbSubmitLabel}
                                     </Button>
                                   </div>
                                 </div>
