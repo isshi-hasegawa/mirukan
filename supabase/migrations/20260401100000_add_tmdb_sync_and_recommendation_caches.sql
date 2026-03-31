@@ -22,7 +22,7 @@ with check (
 );
 
 create table public.tmdb_trending_cache (
-  window text not null,
+  cache_window text not null,
   rank integer not null,
   tmdb_media_type public.tmdb_media_type not null,
   tmdb_id bigint not null,
@@ -30,14 +30,14 @@ create table public.tmdb_trending_cache (
   fetched_at timestamptz not null default now(),
   expires_at timestamptz not null,
   created_at timestamptz not null default now(),
-  primary key (window, tmdb_media_type, tmdb_id)
+  primary key (cache_window, tmdb_media_type, tmdb_id)
 );
 
 create index tmdb_trending_cache_window_rank_idx
-  on public.tmdb_trending_cache (window, rank);
+  on public.tmdb_trending_cache (cache_window, rank);
 
 create index tmdb_trending_cache_window_expires_idx
-  on public.tmdb_trending_cache (window, expires_at desc);
+  on public.tmdb_trending_cache (cache_window, expires_at desc);
 
 create table public.work_recommendation_cache (
   recommendation_source text not null,

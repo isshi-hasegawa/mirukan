@@ -369,7 +369,7 @@ async function readTrendingCache() {
   const { data, error } = await admin
     .from("tmdb_trending_cache")
     .select("payload, rank, expires_at")
-    .eq("window", TRENDING_CACHE_WINDOW)
+    .eq("cache_window", TRENDING_CACHE_WINDOW)
     .order("rank", { ascending: true });
 
   if (error) {
@@ -401,7 +401,7 @@ async function writeTrendingCache(
   const { error: deleteError } = await admin
     .from("tmdb_trending_cache")
     .delete()
-    .eq("window", TRENDING_CACHE_WINDOW);
+    .eq("cache_window", TRENDING_CACHE_WINDOW);
 
   if (deleteError) {
     throw new Error(`Failed to clear trending cache: ${deleteError.message}`);
@@ -413,7 +413,7 @@ async function writeTrendingCache(
 
   const { error: insertError } = await admin.from("tmdb_trending_cache").insert(
     results.map((result, index) => ({
-      window: TRENDING_CACHE_WINDOW,
+      cache_window: TRENDING_CACHE_WINDOW,
       rank: index,
       tmdb_media_type: result.tmdbMediaType,
       tmdb_id: result.tmdbId,
