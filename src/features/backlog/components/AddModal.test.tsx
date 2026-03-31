@@ -7,7 +7,7 @@ import type { BacklogItem } from "../types.ts";
 import { AddModal } from "./AddModal.tsx";
 
 const tmdbMocks = vi.hoisted(() => ({
-  fetchTmdbTrending: vi.fn(),
+  fetchTmdbRecommendations: vi.fn(),
   searchTmdbWorks: vi.fn(),
   fetchTmdbSeasonOptions: vi.fn(),
 }));
@@ -24,7 +24,7 @@ vi.mock("../../../lib/tmdb.ts", async () => {
     await vi.importActual<typeof import("../../../lib/tmdb.ts")>("../../../lib/tmdb.ts");
   return {
     ...actual,
-    fetchTmdbTrending: tmdbMocks.fetchTmdbTrending,
+    fetchTmdbRecommendations: tmdbMocks.fetchTmdbRecommendations,
     searchTmdbWorks: tmdbMocks.searchTmdbWorks,
     fetchTmdbSeasonOptions: tmdbMocks.fetchTmdbSeasonOptions,
   };
@@ -146,7 +146,7 @@ async function search(query: string) {
 
 describe("AddModal", () => {
   beforeEach(() => {
-    tmdbMocks.fetchTmdbTrending.mockResolvedValue([]);
+    tmdbMocks.fetchTmdbRecommendations.mockResolvedValue([]);
     tmdbMocks.searchTmdbWorks.mockResolvedValue([]);
     tmdbMocks.fetchTmdbSeasonOptions.mockResolvedValue([]);
     dataMocks.resolveSelectedSeasonWorkIds.mockResolvedValue({ error: null, workIds: [] });
@@ -171,7 +171,7 @@ describe("AddModal", () => {
     async () => {
       const trendingResult = createSearchResult({ tmdbId: 10, title: "トレンド映画" });
       const searchResult = createSearchResult({ tmdbId: 20, title: "検索映画" });
-      tmdbMocks.fetchTmdbTrending.mockResolvedValue([trendingResult]);
+      tmdbMocks.fetchTmdbRecommendations.mockResolvedValue([trendingResult]);
       tmdbMocks.searchTmdbWorks.mockResolvedValue([searchResult]);
 
       const { user } = renderAddModal();
@@ -194,7 +194,7 @@ describe("AddModal", () => {
     10_000,
   );
 
-  test("ストック済みの映画は候補から除外し、未追加シーズンがあるシリーズは表示する", async () => {
+  test("初期おすすめでは既存作品を除外し、検索では未追加シーズンがあるシリーズを表示する", async () => {
     const stackedMovieResult = createSearchResult({ tmdbId: 11, title: "ストック済み映画" });
     const stackedSeriesResult = createSearchResult({
       tmdbId: 12,
@@ -224,13 +224,19 @@ describe("AddModal", () => {
         season_count: 2,
       },
     });
-    tmdbMocks.fetchTmdbTrending.mockResolvedValue([stackedMovieResult, stackedSeriesResult]);
-    tmdbMocks.searchTmdbWorks.mockResolvedValue([stackedMovieResult]);
+    tmdbMocks.fetchTmdbRecommendations.mockResolvedValue([
+      stackedMovieResult,
+      stackedSeriesResult,
+    ]);
+    tmdbMocks.searchTmdbWorks.mockImplementation(async (query: string) =>
+      query.includes("映画") ? [stackedMovieResult] : [stackedSeriesResult],
+    );
 
     const { user } = renderAddModal({ items: [stackedMovieItem, stackedSeriesItem] });
 
-    expect(await screen.findByRole("button", { name: /ストック済みシリーズ/ })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /ストック済み映画/ })).not.toBeInTheDocument();
+    expect(
+      await screen.findByText("おすすめ候補が見つかりませんでした。作品名で検索できます。"),
+    ).toBeInTheDocument();
 
     await search("ストック済み映画");
 
@@ -238,6 +244,10 @@ describe("AddModal", () => {
     expect(
       screen.getByText("すでにストック済みの作品は候補から除外しています。"),
     ).toBeInTheDocument();
+
+    await search("ストック済みシリーズ");
+
+    expect(await screen.findByRole("button", { name: /ストック済みシリーズ/ })).toBeInTheDocument();
   });
 
   test("全シーズンストック済みのシリーズは候補から除外する", async () => {
@@ -270,7 +280,7 @@ describe("AddModal", () => {
         season_number: 2,
       },
     });
-    tmdbMocks.fetchTmdbTrending.mockResolvedValue([fullyStackedSeriesResult]);
+    tmdbMocks.fetchTmdbRecommendations.mockResolvedValue([fullyStackedSeriesResult]);
     tmdbMocks.searchTmdbWorks.mockResolvedValue([fullyStackedSeriesResult]);
 
     const { user } = renderAddModal({ items: [stackedSeriesItem, stackedSeasonItem] });
@@ -309,13 +319,15 @@ describe("AddModal", () => {
         tmdb_media_type: "tv",
       },
     });
-    tmdbMocks.fetchTmdbTrending.mockResolvedValue([seriesResult]);
+    tmdbMocks.fetchTmdbRecommendations.mockResolvedValue([seriesResult]);
+    tmdbMocks.searchTmdbWorks.mockResolvedValue([seriesResult]);
     tmdbMocks.fetchTmdbSeasonOptions.mockResolvedValue([
       createSeasonOption({ seasonNumber: 2, title: "テストシリーズ シーズン2" }),
     ]);
 
     const { user } = renderAddModal({ items: [duplicateItem] });
 
+    await search("テストシリーズ");
     await user.click(await screen.findByRole("button", { name: /テストシリーズ/ }));
 
     await waitFor(() =>
@@ -348,13 +360,15 @@ describe("AddModal", () => {
         tmdb_media_type: "tv",
       },
     });
-    tmdbMocks.fetchTmdbTrending.mockResolvedValue([seriesResult]);
+    tmdbMocks.fetchTmdbRecommendations.mockResolvedValue([seriesResult]);
+    tmdbMocks.searchTmdbWorks.mockResolvedValue([seriesResult]);
     tmdbMocks.fetchTmdbSeasonOptions.mockResolvedValue([
       createSeasonOption({ seasonNumber: 2, title: "ストック済みシリーズ シーズン2" }),
     ]);
 
     const { user } = renderAddModal({ items: [duplicateItem] });
 
+    await search("ストック済みシリーズ");
     await user.click(await screen.findByRole("button", { name: /ストック済みシリーズ/ }));
 
     expect(await screen.findByText("シーズン1はすでにストックにあります。")).toBeInTheDocument();
@@ -376,7 +390,8 @@ describe("AddModal", () => {
         tmdb_media_type: "movie",
       },
     });
-    tmdbMocks.fetchTmdbTrending.mockResolvedValue([movieResult]);
+    tmdbMocks.fetchTmdbRecommendations.mockResolvedValue([movieResult]);
+    tmdbMocks.searchTmdbWorks.mockResolvedValue([movieResult]);
     dataMocks.upsertTmdbWork.mockResolvedValue({
       data: { id: "existing-work-1" },
       error: null,
@@ -385,6 +400,7 @@ describe("AddModal", () => {
 
     const { user, onAdded, onClose } = renderAddModal({ items: [duplicateItem] });
 
+    await search("既存映画");
     await user.click(await screen.findByRole("button", { name: /既存映画/ }));
     await user.click(screen.getByRole("button", { name: "ストックに追加" }));
 
@@ -418,7 +434,7 @@ describe("AddModal", () => {
 
   test("TMDb 作品追加では upsertTmdbWork を使って保存する", async () => {
     const movieResult = createSearchResult({ tmdbId: 50, title: "TMDb映画" });
-    tmdbMocks.fetchTmdbTrending.mockResolvedValue([movieResult]);
+    tmdbMocks.fetchTmdbRecommendations.mockResolvedValue([movieResult]);
 
     const { user, onAdded, onClose } = renderAddModal();
 

@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { fetchTmdbSeasonOptions, fetchTmdbTrending, searchTmdbWorks } from "../../../lib/tmdb.ts";
+import {
+  fetchTmdbRecommendations,
+  fetchTmdbSeasonOptions,
+  searchTmdbWorks,
+} from "../../../lib/tmdb.ts";
 import type { TmdbSearchResult, TmdbSeasonOption } from "../../../lib/tmdb.ts";
 import type { BacklogItem } from "../types.ts";
 import { statusLabels } from "../constants.ts";
@@ -86,6 +90,41 @@ function filterVisibleResults(items: BacklogItem[], results: TmdbSearchResult[])
   return results.filter((result) => !isHiddenSearchResult(items, result));
 }
 
+function buildRecommendationSourceItems(items: BacklogItem[]) {
+  return items
+    .filter(
+      (item) =>
+        (item.status === "watched" || item.status === "watching") &&
+        item.works?.tmdb_id != null &&
+        item.works?.source_type === "tmdb" &&
+        item.works?.work_type !== "season",
+    )
+    .sort((a, b) => {
+      if (a.status === "watched" && b.status !== "watched") return -1;
+      if (a.status !== "watched" && b.status === "watched") return 1;
+      return Math.random() - 0.5;
+    })
+    .slice(0, 5)
+    .map((item) => ({
+      tmdbId: item.works!.tmdb_id!,
+      tmdbMediaType: item.works!.tmdb_media_type as "movie" | "tv",
+    }));
+}
+
+function filterVisibleRecommendations(items: BacklogItem[], results: TmdbSearchResult[]) {
+  const itemTmdbKeys = new Set(
+    items
+      .filter((item) => item.works?.tmdb_id && item.works?.tmdb_media_type)
+      .map((item) => `${item.works!.tmdb_media_type}-${item.works!.tmdb_id}`),
+  );
+
+  return filterVisibleResults(items, results).filter(
+    (result) =>
+      !itemTmdbKeys.has(`${result.tmdbMediaType}-${result.tmdbId}`) &&
+      (result.workType === "series" || result.hasJapaneseRelease),
+  );
+}
+
 function buildDuplicateState(
   items: BacklogItem[],
   result: TmdbSearchResult,
@@ -157,11 +196,12 @@ type UseTmdbSearchOptions = {
 export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<TmdbSearchResult[]>([]);
+  const [recommendedResults, setRecommendedResults] = useState<TmdbSearchResult[]>([]);
   const [selectedTmdbResult, setSelectedTmdbResult] = useState<TmdbSearchResult | null>(null);
   const [seasonOptions, setSeasonOptions] = useState<TmdbSeasonOption[]>([]);
   const [selectedSeasonNumbersState, setSelectedSeasonNumbers] = useState<number[]>([]);
-  const [trendingResults, setTrendingResults] = useState<TmdbSearchResult[]>([]);
   const [isLoadingSeasons, setIsLoadingSeasons] = useState(false);
+  const [recommendedMessage, setRecommendedMessage] = useState<string | null>(null);
   const [searchMessage, setSearchMessage] = useState<string | null>(null);
   const [duplicateNotice, setDuplicateNotice] = useState<string | null>(null);
   const [canAddSelectionToStacked, setCanAddSelectionToStacked] = useState(true);
@@ -201,12 +241,18 @@ export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
 
   useEffect(() => {
     searchInputRef.current?.focus();
-    fetchTmdbTrending()
+    fetchTmdbRecommendations(buildRecommendationSourceItems(itemsRef.current))
       .then((results) => {
-        setTrendingResults(filterVisibleResults(itemsRef.current, results));
+        const visibleResults = filterVisibleRecommendations(itemsRef.current, results);
+        setRecommendedResults(visibleResults);
+        if (visibleResults.length === 0) {
+          setRecommendedMessage("おすすめ候補が見つかりませんでした。作品名で検索できます。");
+        } else {
+          setRecommendedMessage(null);
+        }
       })
       .catch(() => {
-        // trending fetch failure is non-critical
+        setRecommendedMessage("おすすめ候補の取得に失敗しました。作品名で検索できます。");
       });
     return () => {
       if (searchTimerRef.current !== null) {
@@ -370,7 +416,8 @@ export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
   return {
     searchQuery,
     searchResults,
-    trendingResults,
+    recommendedResults,
+    recommendedMessage,
     selectedTmdbResult,
     seasonOptions,
     selectedSeasonNumbers,

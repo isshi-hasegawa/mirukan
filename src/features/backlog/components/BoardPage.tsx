@@ -13,7 +13,6 @@ import { Header } from "./Header.tsx";
 import { KanbanBoard } from "./KanbanBoard.tsx";
 import { AddModal } from "./AddModal.tsx";
 import { DetailModal } from "./DetailModal.tsx";
-import { RecommendModal } from "./RecommendModal.tsx";
 
 type Props = { session: Session };
 
@@ -27,7 +26,6 @@ const headerCard =
 export function BoardPage({ session }: Props) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [detailModal, setDetailModal] = useState<DetailModalState>(createDetailModalState(null));
-  const [isRecommendOpen, setIsRecommendOpen] = useState(false);
   const [selectedTabStatus, setSelectedTabStatus] = useState<BacklogStatus>("stacked");
 
   const windowWidth = useWindowSize();
@@ -44,7 +42,7 @@ export function BoardPage({ session }: Props) {
       onAfterDrop: loadItems,
     });
 
-  const { handleDeleteItem, handleMarkAsWatched, handleAddTmdbWorksToStacked } = useBacklogActions({
+  const { handleDeleteItem, handleMarkAsWatched } = useBacklogActions({
     items,
     session,
     loadItems,
@@ -131,7 +129,7 @@ export function BoardPage({ session }: Props) {
 
   return (
     <main className={shellBoard}>
-      <Header session={session} onOpenRecommend={() => setIsRecommendOpen(true)} />
+      <Header session={session} />
 
       <DndContext
         sensors={sensors}
@@ -181,14 +179,6 @@ export function BoardPage({ session }: Props) {
           ) : null}
         </DragOverlay>
       </DndContext>
-
-      {isRecommendOpen && (
-        <RecommendModal
-          items={items}
-          onClose={() => setIsRecommendOpen(false)}
-          onAddTmdbWorksToStacked={(results) => handleAddTmdbWorksToStacked(results)}
-        />
-      )}
 
       {isAddModalOpen && (
         <AddModal

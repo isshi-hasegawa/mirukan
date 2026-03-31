@@ -162,24 +162,28 @@ export async function fetchTmdbSimilar(
   return shuffleArray(await request);
 }
 
-export async function fetchMergedRecommendations(
+export async function fetchTmdbRecommendations(
   sourceItems: Array<{ tmdbId: number; tmdbMediaType: "movie" | "tv" }>,
 ): Promise<TmdbSearchResult[]> {
-  const [trending, similar] = await Promise.all([
-    fetchTmdbTrending(),
+  const [similar, trending] = await Promise.all([
     fetchTmdbSimilar(sourceItems),
+    fetchTmdbTrending(),
   ]);
-
-  const combined = [...trending, ...similar];
   const seen = new Set<string>();
-  const deduped = combined.filter((item) => {
+  const dedupedSimilar = similar.filter((item) => {
+    const key = `${item.tmdbMediaType}-${item.tmdbId}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  const trendingSupplement = trending.filter((item) => {
     const key = `${item.tmdbMediaType}-${item.tmdbId}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
   });
 
-  return shuffleArray(deduped);
+  return [...shuffleArray(dedupedSimilar), ...shuffleArray(trendingSupplement)];
 }
 
 export async function fetchTmdbTrending(): Promise<TmdbSearchResult[]> {

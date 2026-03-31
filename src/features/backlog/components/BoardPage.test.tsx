@@ -17,9 +17,6 @@ const hookMocks = vi.hoisted(() => ({
     hookMocks.onItemDeleted?.(itemId);
   }),
   handleMarkAsWatched: vi.fn(),
-  handleAddTmdbWorksToStacked: vi.fn(async () => {
-    hookMocks.onWorksAdded?.();
-  }),
   signOut: vi.fn().mockResolvedValue({ error: null }),
 }));
 
@@ -77,17 +74,12 @@ vi.mock("../hooks/useBacklogActions.ts", () => ({
     return {
       handleDeleteItem: hookMocks.handleDeleteItem,
       handleMarkAsWatched: hookMocks.handleMarkAsWatched,
-      handleAddTmdbWorksToStacked: hookMocks.handleAddTmdbWorksToStacked,
     };
   },
 }));
 
 vi.mock("./Header.tsx", () => ({
-  Header: ({ onOpenRecommend }: { onOpenRecommend: () => void }) => (
-    <button type="button" onClick={onOpenRecommend}>
-      おすすめを開く
-    </button>
-  ),
+  Header: () => <div>header</div>,
 }));
 
 vi.mock("./KanbanBoard.tsx", () => ({
@@ -134,26 +126,6 @@ vi.mock("./AddModal.tsx", () => ({
       </button>
       <button type="button" onClick={onClose}>
         追加モーダルを閉じる
-      </button>
-    </div>
-  ),
-}));
-
-vi.mock("./RecommendModal.tsx", () => ({
-  RecommendModal: ({
-    onAddTmdbWorksToStacked,
-    onClose,
-  }: {
-    onAddTmdbWorksToStacked: (results: Array<{ tmdbId: number }>) => Promise<void>;
-    onClose: () => void;
-  }) => (
-    <div>
-      <p>recommend-modal</p>
-      <button type="button" onClick={() => void onAddTmdbWorksToStacked([{ tmdbId: 1 }])}>
-        おすすめ追加完了
-      </button>
-      <button type="button" onClick={onClose}>
-        おすすめを閉じる
       </button>
     </div>
   ),
@@ -213,7 +185,6 @@ describe("BoardPage", () => {
     hookMocks.setItems.mockReset();
     hookMocks.handleDeleteItem.mockClear();
     hookMocks.handleMarkAsWatched.mockClear();
-    hookMocks.handleAddTmdbWorksToStacked.mockClear();
     hookMocks.signOut.mockClear();
     hookMocks.onItemDeleted = null;
     hookMocks.onWorksAdded = null;
@@ -242,7 +213,7 @@ describe("BoardPage", () => {
     expect(screen.getByText("network failed")).toBeInTheDocument();
   });
 
-  test("モバイル時は追加完了後と recommendation 追加後に stacked タブへ戻る", async () => {
+  test("モバイル時は追加完了後に stacked タブへ戻る", async () => {
     hookMocks.windowWidth = 390;
     const user = userEvent.setup();
 
@@ -257,27 +228,9 @@ describe("BoardPage", () => {
     await user.click(screen.getByRole("button", { name: "追加完了" }));
     await waitFor(() => expect(screen.getByText("selected-tab:stacked")).toBeInTheDocument());
 
-    await user.click(screen.getByRole("button", { name: "watching に切り替え" }));
-    await user.click(screen.getByRole("button", { name: "おすすめを開く" }));
-    await user.click(screen.getByRole("button", { name: "おすすめ追加完了" }));
-    await waitFor(() => expect(screen.getByText("selected-tab:stacked")).toBeInTheDocument());
   });
 
-  test("recommendation modal の open / close 導線が機能する", async () => {
-    const user = userEvent.setup();
-
-    renderBoardPage();
-
-    expect(screen.queryByText("recommend-modal")).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "おすすめを開く" }));
-    expect(screen.getByText("recommend-modal")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "おすすめを閉じる" }));
-    await waitFor(() => expect(screen.queryByText("recommend-modal")).not.toBeInTheDocument());
-  });
-
-  test("desktop 時は追加完了後と recommendation 追加後に stacked 列へ scroll する", async () => {
+  test("desktop 時は追加完了後に stacked 列へ scroll する", async () => {
     const user = userEvent.setup();
     const scrollIntoViewSpy = vi.spyOn(Element.prototype, "scrollIntoView");
 
@@ -285,19 +238,6 @@ describe("BoardPage", () => {
 
     await user.click(screen.getByRole("button", { name: "追加モーダルを開く" }));
     await user.click(screen.getByRole("button", { name: "追加完了" }));
-
-    await waitFor(() =>
-      expect(scrollIntoViewSpy).toHaveBeenCalledWith({
-        behavior: "smooth",
-        block: "nearest",
-        inline: "center",
-      }),
-    );
-
-    scrollIntoViewSpy.mockClear();
-
-    await user.click(screen.getByRole("button", { name: "おすすめを開く" }));
-    await user.click(screen.getByRole("button", { name: "おすすめ追加完了" }));
 
     await waitFor(() =>
       expect(scrollIntoViewSpy).toHaveBeenCalledWith({

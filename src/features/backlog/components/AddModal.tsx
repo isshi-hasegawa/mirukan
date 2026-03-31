@@ -26,7 +26,8 @@ export function AddModal({ items, session, onClose, onAdded }: Props) {
   const {
     searchQuery,
     searchResults,
-    trendingResults,
+    recommendedResults,
+    recommendedMessage,
     selectedTmdbResult,
     seasonOptions,
     selectedSeasonNumbers,
@@ -124,7 +125,8 @@ export function AddModal({ items, session, onClose, onAdded }: Props) {
 
             <div className="modal-scrollable grid gap-2.5 overflow-y-auto max-[720px]:h-[min(40svh,320px)]">
               {(() => {
-                const displayResults = searchQuery.trim() === "" ? trendingResults : searchResults;
+                const displayResults =
+                  searchQuery.trim() === "" ? recommendedResults : searchResults;
                 if (displayResults.length > 0) {
                   return displayResults.map((result) =>
                     (() => {
@@ -200,8 +202,10 @@ export function AddModal({ items, session, onClose, onAdded }: Props) {
                   );
                 }
                 return (
-                  searchMessage && (
-                    <p className="text-muted-foreground text-[0.88rem]">{searchMessage}</p>
+                  (searchQuery.trim() === "" ? recommendedMessage : searchMessage) && (
+                    <p className="text-muted-foreground text-[0.88rem]">
+                      {searchQuery.trim() === "" ? recommendedMessage : searchMessage}
+                    </p>
                   )
                 );
               })()}

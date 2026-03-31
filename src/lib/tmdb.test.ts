@@ -11,6 +11,7 @@ vi.mock("./supabase.ts", () => ({
 }));
 
 import {
+  fetchTmdbRecommendations,
   fetchTmdbSeasonOptions,
   fetchTmdbSimilar,
   fetchTmdbTrending,
@@ -67,6 +68,71 @@ describe("resolveSeasonTitle", () => {
 });
 
 describe("recommendation caches", () => {
+  test("fetchTmdbRecommendations returns similar first and fills the rest with trending", async () => {
+    supabaseMocks.invoke.mockImplementation(async (name) => {
+      if (name === "fetch-tmdb-similar") {
+        return {
+          data: [
+            {
+              tmdbId: 101,
+              tmdbMediaType: "movie",
+              workType: "movie",
+              title: "Similar A",
+              originalTitle: "Similar A",
+              overview: "similar overview",
+              posterPath: null,
+              releaseDate: "2025-01-01",
+              jpWatchPlatforms: [],
+              hasJapaneseRelease: true,
+            },
+          ],
+          error: null,
+        };
+      }
+
+      if (name === "fetch-tmdb-trending") {
+        return {
+          data: [
+            {
+              tmdbId: 101,
+              tmdbMediaType: "movie",
+              workType: "movie",
+              title: "Similar A",
+              originalTitle: "Similar A",
+              overview: "duplicate",
+              posterPath: null,
+              releaseDate: "2025-01-01",
+              jpWatchPlatforms: [],
+              hasJapaneseRelease: true,
+            },
+            {
+              tmdbId: 202,
+              tmdbMediaType: "tv",
+              workType: "series",
+              title: "Trending B",
+              originalTitle: "Trending B",
+              overview: "trending overview",
+              posterPath: null,
+              releaseDate: "2025-01-01",
+              jpWatchPlatforms: [],
+              hasJapaneseRelease: true,
+            },
+          ],
+          error: null,
+        };
+      }
+
+      throw new Error(`Unexpected invoke: ${String(name)}`);
+    });
+
+    const results = await fetchTmdbRecommendations([{ tmdbId: 1, tmdbMediaType: "movie" }]);
+
+    expect(results.map((result) => `${result.tmdbMediaType}-${result.tmdbId}`)).toEqual([
+      "movie-101",
+      "tv-202",
+    ]);
+  });
+
   test("fetchTmdbSimilar caches per source item set", async () => {
     supabaseMocks.invoke.mockImplementation(async (name, options) => {
       const sourceItems =
