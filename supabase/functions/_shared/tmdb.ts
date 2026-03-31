@@ -1,3 +1,5 @@
+import "./edge-runtime.d.ts";
+
 type TmdbMediaType = "movie" | "tv";
 
 type TmdbMultiSearchResponse = {
