@@ -177,10 +177,12 @@ describe("recommendation caches", () => {
   });
 
   test("fetchTmdbTrending reuses an in-flight request", async () => {
-    let resolveInvoke: ((value: { data: []; error: null }) => void) | null = null;
+    type TrendingInvokeResult = { data: []; error: null };
+
+    let resolveInvoke: ((value: TrendingInvokeResult) => void) | undefined;
     supabaseMocks.invoke.mockImplementation(
       () =>
-        new Promise((resolve) => {
+        new Promise<TrendingInvokeResult>((resolve) => {
           resolveInvoke = resolve;
         }),
     );
@@ -188,7 +190,11 @@ describe("recommendation caches", () => {
     const first = fetchTmdbTrending();
     const second = fetchTmdbTrending();
 
-    resolveInvoke?.({ data: [], error: null });
+    if (!resolveInvoke) {
+      throw new Error("invoke resolver was not captured");
+    }
+
+    resolveInvoke({ data: [], error: null });
     await Promise.all([first, second]);
 
     expect(supabaseMocks.invoke).toHaveBeenCalledTimes(1);
