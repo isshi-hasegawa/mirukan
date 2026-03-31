@@ -114,7 +114,7 @@ function renderAddModal({ items = [] }: RenderOptions = {}) {
   const onAdded = vi.fn().mockResolvedValue(undefined);
   const user = userEvent.setup();
 
-  render(
+  const view = render(
     <AddModal
       items={items}
       session={{ user: { id: "user-1" } } as Session}
@@ -123,7 +123,7 @@ function renderAddModal({ items = [] }: RenderOptions = {}) {
     />,
   );
 
-  return { user, onClose, onAdded };
+  return { user, onClose, onAdded, ...view };
 }
 
 async function search(user: ReturnType<typeof userEvent.setup>, query: string) {
@@ -174,6 +174,8 @@ describe("AddModal", () => {
     expect(screen.getByLabelText("タイトル")).toHaveValue("検索映画");
     expect(screen.queryByRole("button", { name: "シーズン1" })).not.toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "追加する" })).toHaveLength(1);
+    expect(document.querySelector('[data-footer-layout="inline"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-footer-layout="panel"]')).not.toBeInTheDocument();
   });
 
   test("TV 選択時はシーズン1を初期選択し、取得後のシーズン候補と重複通知を表示する", async () => {

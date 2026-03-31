@@ -11,6 +11,7 @@ type Props = {
   onAddToStacked?: () => void;
   isChecked?: boolean;
   footer?: ReactNode;
+  footerLayout?: "panel" | "inline";
 };
 
 export function TmdbWorkCard({
@@ -20,6 +21,7 @@ export function TmdbWorkCard({
   onAddToStacked,
   isChecked,
   footer,
+  footerLayout = "panel",
 }: Props) {
   const posterUrl = result.posterPath
     ? `https://image.tmdb.org/t/p/w185${result.posterPath}`
@@ -130,10 +132,51 @@ export function TmdbWorkCard({
     ? "grid-cols-[24px_56px_minmax(0,1fr)]"
     : "grid-cols-[56px_minmax(0,1fr)]";
 
+  const cardButtonClass = `grid ${gridCols} gap-3 items-start w-full px-4 py-3.5 text-left transition-[border-color,box-shadow] duration-150`;
+  const cardStaticClass = `grid ${gridCols} gap-3 items-start w-full px-4 py-3.5 text-foreground cursor-default`;
+
+  if (footer && footerLayout === "inline") {
+    return onSelect ? (
+      <div className="relative">
+        <div
+          className={`overflow-hidden border rounded-2xl bg-[#353535] text-foreground${
+            isSelected
+              ? " border-[rgba(191,90,54,0.45)] shadow-[inset_0_0_0_1px_rgba(191,90,54,0.2)]"
+              : " border-[rgba(92,59,35,0.2)]"
+          }`}
+        >
+          <button className={`${cardButtonClass} cursor-pointer`} type="button" onClick={onSelect}>
+            {cardContent}
+          </button>
+          <div
+            className="flex items-end justify-end gap-3 border-t border-[rgba(92,59,35,0.16)] px-4 py-3"
+            data-footer-layout="inline"
+          >
+            {footer}
+          </div>
+        </div>
+        {tmdbLink}
+      </div>
+    ) : (
+      <div className="relative w-full">
+        <div className="overflow-hidden border border-[rgba(92,59,35,0.2)] rounded-2xl bg-[#353535] text-foreground">
+          <div className={cardStaticClass}>{cardContent}</div>
+          <div
+            className="flex items-end justify-end gap-3 border-t border-[rgba(92,59,35,0.16)] px-4 py-3"
+            data-footer-layout="inline"
+          >
+            {footer}
+          </div>
+        </div>
+        {tmdbLink}
+      </div>
+    );
+  }
+
   return onSelect ? (
     <div className="relative">
       <button
-        className={`grid ${gridCols} gap-3 items-start w-full px-4 py-3.5 border rounded-2xl bg-[#353535] text-foreground text-left cursor-pointer transition-[border-color,box-shadow] duration-150${
+        className={`${cardButtonClass} border rounded-2xl bg-[#353535] text-foreground cursor-pointer${
           isSelected
             ? " border-[rgba(191,90,54,0.45)] shadow-[inset_0_0_0_1px_rgba(191,90,54,0.2)]"
             : " border-[rgba(92,59,35,0.2)]"
@@ -144,7 +187,10 @@ export function TmdbWorkCard({
         {cardContent}
       </button>
       {footer && (
-        <div className="mt-2 rounded-2xl border border-[rgba(92,59,35,0.16)] bg-[rgba(255,255,255,0.05)] px-4 py-3">
+        <div
+          className="mt-2 rounded-2xl border border-[rgba(92,59,35,0.16)] bg-[rgba(255,255,255,0.05)] px-4 py-3"
+          data-footer-layout="panel"
+        >
           {footer}
         </div>
       )}
@@ -153,12 +199,15 @@ export function TmdbWorkCard({
   ) : (
     <div className="relative w-full">
       <div
-        className={`grid ${gridCols} gap-3 items-start w-full px-4 py-3.5 border border-[rgba(92,59,35,0.2)] rounded-2xl bg-[#353535] text-foreground cursor-default`}
+        className={`${cardStaticClass} border border-[rgba(92,59,35,0.2)] rounded-2xl bg-[#353535]`}
       >
         {cardContent}
       </div>
       {footer && (
-        <div className="mt-2 rounded-2xl border border-[rgba(92,59,35,0.16)] bg-[rgba(255,255,255,0.05)] px-4 py-3">
+        <div
+          className="mt-2 rounded-2xl border border-[rgba(92,59,35,0.16)] bg-[rgba(255,255,255,0.05)] px-4 py-3"
+          data-footer-layout="panel"
+        >
           {footer}
         </div>
       )}

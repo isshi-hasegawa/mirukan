@@ -119,54 +119,74 @@ export function AddModal({ items, session, onClose, onAdded }: Props) {
               {(() => {
                 const displayResults = searchQuery.trim() === "" ? trendingResults : searchResults;
                 if (displayResults.length > 0) {
-                  return displayResults.map((result) => (
-                    <TmdbWorkCard
-                      key={`${result.tmdbMediaType}-${result.tmdbId}`}
-                      result={result}
-                      isSelected={selectedTmdbResult?.tmdbId === result.tmdbId}
-                      onSelect={() => handleSelectResult(result)}
-                      footer={
-                        selectedTmdbResult?.tmdbId === result.tmdbId ? (
-                          <div className="grid gap-2.5">
-                            {isTvSelection && (
-                              <SeasonPicker
-                                seasonOptions={seasonOptions}
-                                selectedSeasonNumbers={selectedSeasonNumbers}
-                                isLoadingSeasons={isLoadingSeasons}
-                                hasAllSeasonsSelected={hasAllSeasonsSelected}
-                                selectedSeasonSummary={selectedSeasonSummary}
-                                onToggleSeason={toggleSeasonSelection}
-                                onToggleAll={toggleAllSeasons}
-                              />
-                            )}
-                            {duplicateNotice && (
-                              <p className="text-[0.82rem] text-muted-foreground px-2 py-1 rounded-lg bg-[rgba(0,0,0,0.08)]">
-                                {duplicateNotice}
-                              </p>
-                            )}
-                            <div className="flex items-end justify-end gap-3">
-                              {formMessage && (
-                                <p
-                                  className="text-muted-foreground text-sm text-right"
-                                  aria-live="polite"
+                  return displayResults.map((result) =>
+                    (() => {
+                      const isSelected = selectedTmdbResult?.tmdbId === result.tmdbId;
+                      const useInlineFooter =
+                        isSelected && !isTvSelection && !duplicateNotice && !formMessage;
+
+                      return (
+                        <TmdbWorkCard
+                          key={`${result.tmdbMediaType}-${result.tmdbId}`}
+                          result={result}
+                          isSelected={isSelected}
+                          onSelect={() => handleSelectResult(result)}
+                          footerLayout={useInlineFooter ? "inline" : "panel"}
+                          footer={
+                            isSelected ? (
+                              useInlineFooter ? (
+                                <Button
+                                  type="submit"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                  }}
                                 >
-                                  {formMessage}
-                                </p>
-                              )}
-                              <Button
-                                type="submit"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                }}
-                              >
-                                追加する
-                              </Button>
-                            </div>
-                          </div>
-                        ) : null
-                      }
-                    />
-                  ));
+                                  追加する
+                                </Button>
+                              ) : (
+                                <div className="grid gap-2.5">
+                                  {isTvSelection && (
+                                    <SeasonPicker
+                                      seasonOptions={seasonOptions}
+                                      selectedSeasonNumbers={selectedSeasonNumbers}
+                                      isLoadingSeasons={isLoadingSeasons}
+                                      hasAllSeasonsSelected={hasAllSeasonsSelected}
+                                      selectedSeasonSummary={selectedSeasonSummary}
+                                      onToggleSeason={toggleSeasonSelection}
+                                      onToggleAll={toggleAllSeasons}
+                                    />
+                                  )}
+                                  {duplicateNotice && (
+                                    <p className="text-[0.82rem] text-muted-foreground px-2 py-1 rounded-lg bg-[rgba(0,0,0,0.08)]">
+                                      {duplicateNotice}
+                                    </p>
+                                  )}
+                                  <div className="flex items-end justify-end gap-3">
+                                    {formMessage && (
+                                      <p
+                                        className="text-muted-foreground text-sm text-right"
+                                        aria-live="polite"
+                                      >
+                                        {formMessage}
+                                      </p>
+                                    )}
+                                    <Button
+                                      type="submit"
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                      }}
+                                    >
+                                      追加する
+                                    </Button>
+                                  </div>
+                                </div>
+                              )
+                            ) : null
+                          }
+                        />
+                      );
+                    })(),
+                  );
                 }
                 return (
                   searchMessage && (
