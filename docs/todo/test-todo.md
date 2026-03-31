@@ -34,24 +34,12 @@
 ### Vitest Coverage の運用整理
 
 - 目的
-  - 現在のテストの穴を見える化する
+  - coverage をもとに未検証の分岐を継続的に埋める
 - 見たい観点
-  - statements / branches の不足
-  - 条件分岐の多い処理の穴
-  - UI イベントの主要分岐が通っているか
+  - `useAddSubmit.ts` の送信失敗系・分岐の穴
+  - `useTmdbSearch.ts` の検索 / 重複判定 / TV シーズン分岐の穴
+  - `data.ts` の未到達分岐
+  - `BacklogCard.tsx` / `BoardPage.tsx` / `SeasonPicker.tsx` / `TmdbWorkCard.tsx` の UI 分岐
+  - `AboutDialog.tsx` / `UserMenu.tsx` / `PlatformIcon.tsx` の低カバレッジ部分
 - 関連 idea
   - `docs/ideas/tooling-ideas.md` の「Vitest Coverage」
-
-### 2026-04-01 時点の実測メモ
-
-- `vp exec vitest --coverage` が実行可能な状態になった
-- 全体 coverage は `statements 78.7% / branches 72.35% / functions 79.56% / lines 80.84%`
-- 優先度高
-  - `src/features/backlog/hooks/useAddSubmit.ts` の分岐追加
-  - `src/features/backlog/hooks/useTmdbSearch.ts` の分岐追加
-  - `src/features/backlog/data.ts` の未到達分岐追加
-- 次点
-  - `BacklogCard.tsx` / `BoardPage.tsx` / `SeasonPicker.tsx` / `TmdbWorkCard.tsx` の UI 分岐追加
-  - `AboutDialog.tsx` / `UserMenu.tsx` / `PlatformIcon.tsx` の低カバレッジ部分の整理
-- 補足
-  - `assets/` 配下の SVG も集計対象に入っているため、必要なら coverage 対象から除外を検討する
