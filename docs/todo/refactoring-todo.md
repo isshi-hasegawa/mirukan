@@ -8,29 +8,40 @@
 
 ## 追加でほしいテスト
 
-### `DetailModal` の統合テスト
+既存テストの状況を見ると、`AddModal` と `data.ts` の pure function、`tmdb.ts` の recommendation cache / `resolveSeasonTitle` はすでに一定カバーされている。
+次は UI の状態遷移と Supabase / TMDb 境界の非同期分岐を埋める優先度が高い。
+
+### 優先度高: `DetailModal` の統合テスト
 
 - 対象
   - `src/features/backlog/components/DetailModal.tsx`
 - 追加で確認したい観点
-  - ステータス変更
-  - note 保存
-  - platform 保存
-  - `Escape` による編集キャンセル / モーダル close の分岐
+  - ステータス変更成功時に `updateBacklogItem` が正しい `status` / `sort_order` で呼ばれ、`onUpdate` と state reset が走る
+  - ステータス変更失敗時にエラーメッセージを表示し、`onUpdate` しない
+  - note 編集時の `blur` 保存
+  - note 編集時の `Ctrl/Cmd + Enter` 保存
+  - platform 変更時の即時保存
+  - `Escape` による「編集中ならキャンセル」「非編集中なら modal close」の分岐
 
-### `RecommendModal` / `BoardPage` の挙動テスト
+### 優先度高: `RecommendModal` / `BoardPage` の挙動テスト
 
 - 対象
   - `src/features/backlog/components/RecommendModal.tsx`
   - `src/features/backlog/components/BoardPage.tsx`
 - 追加で確認したい観点
-  - 推薦候補の除外条件
-  - checked した作品の追加
-  - 初回ロード
-  - エラー表示
-  - モバイル時のタブ遷移
+  - `RecommendModal`
+    - 推薦ソースに使う item の条件 (`watched` / `watching`、TMDb 作品、season 除外)
+    - backlog 済み作品の除外
+    - 映画は `hasJapaneseRelease` が `true` のものだけ残し、シリーズは残す
+    - checked した作品だけ `onAddTmdbWorksToStacked` に渡す
+    - fetch 失敗時でも close でき、追加は発生しない
+  - `BoardPage`
+    - 初回ロード表示
+    - エラー表示
+    - モバイル時に追加完了後 / recommendation 追加後に `stacked` タブへ戻る
+    - 詳細モーダルを開いている item が削除されたときにモーダルが閉じる
 
-### `data.ts` の非同期テスト
+### 優先度中: `data.ts` の非同期テスト
 
 - 対象
   - `src/features/backlog/data.ts`
@@ -38,11 +49,20 @@
   - pure function まわりのユニットテストは追加済み
 - 追加で確認したい観点
   - `resolveSelectedSeasonWorkIds`
+    - 空入力時のエラー
+    - シーズン情報組み立て失敗時のエラー
+    - 途中の `upsertTmdbWork` 失敗時に workIds を返さず打ち切る
   - `upsertBacklogItemsToStatus`
+    - 空入力または action なしの no-op
+    - insert / move 混在時に `sort_order` を先頭から振る
+    - upsert 失敗時にエラーを返す
   - `upsertManualWork`
-  - 競合時、途中失敗時、空入力時の扱い
+    - 既存ヒット時の再利用
+    - insert 成功
+    - `23505` 競合後の再 select で救済
+    - 競合後の再 select 失敗
 
-### `tmdb.ts` の API 境界テスト追加
+### 優先度中: `tmdb.ts` の API 境界テスト追加
 
 - 対象
   - `src/lib/tmdb.ts`
@@ -52,8 +72,10 @@
   - `searchTmdbWorks`
   - `fetchTmdbSeasonOptions`
   - `fetchTmdbWorkDetails`
-  - watch provider の正規化
-  - 日本公開判定
+  - `supabase.functions.invoke` のエラーが例外化されること
+- メモ
+  - watch provider の正規化や日本公開判定のような整形ロジックは、現在の `src/lib/tmdb.ts` には見当たらない
+  - それらが Supabase Edge Function 側にあるなら、クライアントではなく Function 側のテスト対象として切り分ける
 
 ## セキュリティ関連
 
