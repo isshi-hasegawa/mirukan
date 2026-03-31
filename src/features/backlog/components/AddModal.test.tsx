@@ -194,6 +194,43 @@ describe("AddModal", () => {
     10_000,
   );
 
+  test("検索結果とおすすめは日本語情報がある作品を優先表示する", async () => {
+    const originalOnlyResult = createSearchResult({
+      tmdbId: 30,
+      title: "Original Only",
+      originalTitle: "Original Only",
+      overview: null,
+    });
+    const localizedResult = createSearchResult({
+      tmdbId: 31,
+      title: "邦題あり作品",
+      originalTitle: "Localized Work",
+      overview: "日本語のあらすじ",
+    });
+
+    tmdbMocks.fetchTmdbRecommendations.mockResolvedValue([originalOnlyResult, localizedResult]);
+    tmdbMocks.searchTmdbWorks.mockResolvedValue([originalOnlyResult, localizedResult]);
+
+    renderAddModal();
+
+    const recommendedOriginal = await screen.findByRole("button", { name: /Original Only/ });
+    const recommendedLocalized = await screen.findByRole("button", { name: /邦題あり作品/ });
+
+    expect(
+      recommendedLocalized.compareDocumentPosition(recommendedOriginal) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+
+    await search("test");
+
+    const searchedOriginal = await screen.findByRole("button", { name: /Original Only/ });
+    const searchedLocalized = await screen.findByRole("button", { name: /邦題あり作品/ });
+
+    expect(
+      searchedLocalized.compareDocumentPosition(searchedOriginal) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   test("初期おすすめでは既存作品を除外し、検索では未追加シーズンがあるシリーズを表示する", async () => {
     const stackedMovieResult = createSearchResult({ tmdbId: 11, title: "ストック済み映画" });
     const stackedSeriesResult = createSearchResult({

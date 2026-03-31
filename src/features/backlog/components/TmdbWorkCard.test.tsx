@@ -22,24 +22,14 @@ function createResult(overrides: Partial<TmdbSearchResult> = {}): TmdbSearchResu
 }
 
 describe("TmdbWorkCard", () => {
-  test("原題は邦題と異なる場合だけ補助表示する", () => {
-    const { rerender } = render(<TmdbWorkCard result={createResult()} />);
+  test("原題は表示しない", () => {
+    render(<TmdbWorkCard result={createResult()} />);
 
     expect(screen.getByText("ゴジラ")).toBeInTheDocument();
-    expect(screen.getByText("Godzilla")).toBeInTheDocument();
-
-    rerender(
-      <TmdbWorkCard
-        result={createResult({
-          originalTitle: "ゴジラ",
-        })}
-      />,
-    );
-
     expect(screen.queryByText("Godzilla")).not.toBeInTheDocument();
   });
 
-  test("概要がない場合はプレースホルダーを表示する", () => {
+  test("概要がない場合は説明文を表示しない", () => {
     render(
       <TmdbWorkCard
         result={createResult({
@@ -48,6 +38,6 @@ describe("TmdbWorkCard", () => {
       />,
     );
 
-    expect(screen.getByText("あらすじはまだ取得できていません。")).toBeInTheDocument();
+    expect(screen.queryByText("あらすじはまだ取得できていません。")).not.toBeInTheDocument();
   });
 });

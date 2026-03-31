@@ -26,9 +26,6 @@ export function TmdbWorkCard({
   const posterUrl = result.posterPath
     ? `https://image.tmdb.org/t/p/w185${result.posterPath}`
     : null;
-  const hasDistinctOriginalTitle =
-    result.originalTitle !== null && result.originalTitle.trim() !== result.title.trim();
-  const overviewText = result.overview?.trim() || "あらすじはまだ取得できていません。";
 
   const checkButton = onAddToStacked ? (
     <button
@@ -78,9 +75,6 @@ export function TmdbWorkCard({
       </div>
       <div className="grid gap-1 min-w-0 pr-8">
         <span className="font-bold">{result.title}</span>
-        {hasDistinctOriginalTitle && (
-          <span className="text-[0.82rem] text-muted-foreground truncate">{result.originalTitle}</span>
-        )}
         <span className="flex items-center gap-1 text-muted-foreground text-[0.88rem]">
           {result.workType === "movie" ? (
             <FilmIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -114,13 +108,11 @@ export function TmdbWorkCard({
             })}
           </span>
         )}
-        <span
-          className={`text-[0.88rem] [-webkit-box-orient:vertical] [-webkit-line-clamp:3] [display:-webkit-box] overflow-hidden ${
-            result.overview?.trim() ? "text-muted-foreground" : "text-muted-foreground/80 italic"
-          }`}
-        >
-          {overviewText}
-        </span>
+        {result.overview?.trim() && (
+          <span className="text-[0.88rem] text-muted-foreground [-webkit-box-orient:vertical] [-webkit-line-clamp:3] [display:-webkit-box] overflow-hidden">
+            {result.overview}
+          </span>
+        )}
       </div>
     </>
   );

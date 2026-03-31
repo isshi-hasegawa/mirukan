@@ -90,6 +90,30 @@ function filterVisibleResults(items: BacklogItem[], results: TmdbSearchResult[])
   return results.filter((result) => !isHiddenSearchResult(items, result));
 }
 
+function getLocalizationScore(result: TmdbSearchResult) {
+  let score = 0;
+
+  if (!result.originalTitle || result.title.trim() !== result.originalTitle.trim()) {
+    score += 2;
+  }
+
+  if (result.overview?.trim()) {
+    score += 1;
+  }
+
+  return score;
+}
+
+function prioritizeLocalizedResults(results: TmdbSearchResult[]) {
+  return results
+    .map((result, index) => ({ result, index }))
+    .sort((left, right) => {
+      const scoreDiff = getLocalizationScore(right.result) - getLocalizationScore(left.result);
+      return scoreDiff !== 0 ? scoreDiff : left.index - right.index;
+    })
+    .map(({ result }) => result);
+}
+
 const MAX_RECOMMENDATION_SOURCE_ITEMS = 8;
 
 function buildRecommendationSourceItems(items: BacklogItem[]) {
@@ -120,10 +144,12 @@ function filterVisibleRecommendations(items: BacklogItem[], results: TmdbSearchR
       .map((item) => `${item.works!.tmdb_media_type}-${item.works!.tmdb_id}`),
   );
 
-  return filterVisibleResults(items, results).filter(
-    (result) =>
+  return prioritizeLocalizedResults(
+    filterVisibleResults(items, results).filter(
+      (result) =>
       !itemTmdbKeys.has(`${result.tmdbMediaType}-${result.tmdbId}`) &&
-      (result.workType === "series" || result.hasJapaneseRelease),
+        (result.workType === "series" || result.hasJapaneseRelease),
+    ),
   );
 }
 
@@ -302,7 +328,7 @@ export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
     try {
       const results = await searchTmdbWorks(trimmed);
       if (requestId !== searchRequestIdRef.current) return;
-      const visibleResults = filterVisibleResults(items, results);
+      const visibleResults = prioritizeLocalizedResults(filterVisibleResults(items, results));
       setSearchResults(visibleResults);
       setSearchMessage(
         visibleResults.length > 0
