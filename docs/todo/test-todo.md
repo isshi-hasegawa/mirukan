@@ -6,27 +6,6 @@
 既存テストの状況を見ると、`AddModal` と `data.ts` の pure function、`tmdb.ts` の recommendation cache / `resolveSeasonTitle` はすでに一定カバーされている。
 次は UI の状態遷移と Supabase / TMDb 境界の非同期分岐を埋める優先度が高い。
 
-## 優先度中: `data.ts` の非同期テスト
-
-- 対象
-  - `src/features/backlog/data.ts`
-- 現状
-  - pure function まわりのユニットテストは追加済み
-- 追加で確認したい観点
-  - `resolveSelectedSeasonWorkIds`
-    - 空入力時のエラー
-    - シーズン情報組み立て失敗時のエラー
-    - 途中の `upsertTmdbWork` 失敗時に workIds を返さず打ち切る
-  - `upsertBacklogItemsToStatus`
-    - 空入力または action なしの no-op
-    - insert / move 混在時に `sort_order` を先頭から振る
-    - upsert 失敗時にエラーを返す
-  - `upsertManualWork`
-    - 既存ヒット時の再利用
-    - insert 成功
-    - `23505` 競合後の再 select で救済
-    - 競合後の再 select 失敗
-
 ## 優先度中: `tmdb.ts` の API 境界テスト追加
 
 - 対象

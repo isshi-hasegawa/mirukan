@@ -1,4 +1,26 @@
-import { describe, expect, test } from "vite-plus/test";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vite-plus/test";
+const supabaseMocks = vi.hoisted(() => ({
+  from: vi.fn(),
+}));
+
+const tmdbMocks = vi.hoisted(() => ({
+  fetchTmdbWorkDetails: vi.fn(),
+}));
+
+vi.mock("../../lib/supabase.ts", () => ({
+  supabase: {
+    from: supabaseMocks.from,
+  },
+}));
+
+vi.mock("../../lib/tmdb.ts", async () => {
+  const actual = await vi.importActual<typeof import("../../lib/tmdb.ts")>("../../lib/tmdb.ts");
+  return {
+    ...actual,
+    fetchTmdbWorkDetails: tmdbMocks.fetchTmdbWorkDetails,
+  };
+});
+
 import {
   applyBacklogItemUpdate,
   applyModeFilter,
@@ -11,11 +33,74 @@ import {
   getSortOrderForStatusChange,
   normalizeBacklogItems,
   planBacklogItemUpserts,
+  resolveSelectedSeasonWorkIds,
   shouldRefreshTmdbWork,
   sortStackedItemsByViewingMode,
+  upsertBacklogItemsToStatus,
+  upsertManualWork,
 } from "./data.ts";
 import type { BacklogItem, WorkSummary } from "./types.ts";
 import type { TmdbSearchResult, TmdbSeasonOption, TmdbWorkDetails } from "../../lib/tmdb.ts";
+
+type MaybeSingleResult = {
+  data: { id: string; last_tmdb_synced_at?: string | null } | null;
+  error: { message: string; code?: string } | null;
+};
+
+type SingleResult = {
+  data: { id: string } | null;
+  error: { message: string; code?: string } | null;
+  count: null;
+  status: number;
+  statusText: string;
+};
+
+function createWorksTableMock({
+  maybeSingleResults = [],
+  singleResults = [],
+}: {
+  maybeSingleResults?: MaybeSingleResult[];
+  singleResults?: SingleResult[];
+}) {
+  const selectChain = {
+    eq: vi.fn(),
+    maybeSingle: vi.fn(),
+  };
+  selectChain.eq.mockImplementation(() => selectChain);
+  selectChain.maybeSingle.mockImplementation(async () => {
+    const result = maybeSingleResults.shift();
+    if (!result) {
+      throw new Error("Unexpected maybeSingle call");
+    }
+    return result;
+  });
+
+  const insertChain = {
+    select: vi.fn(),
+    single: vi.fn(),
+  };
+  insertChain.select.mockImplementation(() => insertChain);
+  insertChain.single.mockImplementation(async () => {
+    const result = singleResults.shift();
+    if (!result) {
+      throw new Error("Unexpected single call");
+    }
+    return result;
+  });
+
+  return {
+    select: vi.fn(() => selectChain),
+    insert: vi.fn(() => insertChain),
+    selectChain,
+    insertChain,
+  };
+}
+
+function createBacklogItemsTableMock(error: { message: string } | null = null) {
+  return {
+    upsert: vi.fn(async () => ({ error })),
+  };
+}
 
 function createItem(
   id: string,
@@ -75,6 +160,15 @@ function makeDetails(
     seasonNumber: null,
   };
 }
+
+beforeEach(() => {
+  supabaseMocks.from.mockReset();
+  tmdbMocks.fetchTmdbWorkDetails.mockReset();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("calcCompletionLoadScore", () => {
   describe("movie: 全体尺ベース", () => {
@@ -489,5 +583,290 @@ describe("shouldRefreshTmdbWork", () => {
 
   test("不正な日付なら再同期する", () => {
     expect(shouldRefreshTmdbWork("not-a-date")).toBe(true);
+  });
+});
+
+describe("resolveSelectedSeasonWorkIds", () => {
+  const seriesResult: TmdbSearchResult = {
+    tmdbId: 100,
+    tmdbMediaType: "tv",
+    workType: "series",
+    title: "テストシリーズ",
+    originalTitle: "Test Series",
+    overview: "overview",
+    posterPath: "/poster.jpg",
+    releaseDate: "2024-01-01",
+    jpWatchPlatforms: [],
+    hasJapaneseRelease: true,
+  };
+
+  const seasonOptions: TmdbSeasonOption[] = [
+    {
+      seasonNumber: 2,
+      title: "テストシリーズ シーズン2",
+      overview: "season 2",
+      posterPath: "/season2.jpg",
+      releaseDate: "2025-01-01",
+      episodeCount: 8,
+    },
+  ];
+
+  test("空入力時はエラーを返す", async () => {
+    await expect(
+      resolveSelectedSeasonWorkIds(seriesResult, "user-1", [], { seasonOptions }),
+    ).resolves.toEqual({
+      error: "追加するシーズンを1つ以上選択してください",
+      workIds: [],
+    });
+    expect(supabaseMocks.from).not.toHaveBeenCalled();
+  });
+
+  test("シーズン情報組み立て失敗時はエラーを返す", async () => {
+    await expect(
+      resolveSelectedSeasonWorkIds(seriesResult, "user-1", [3], { seasonOptions }),
+    ).resolves.toEqual({
+      error: "シーズン3の情報が見つかりません",
+      workIds: [],
+    });
+    expect(supabaseMocks.from).not.toHaveBeenCalled();
+  });
+
+  test("途中の保存に失敗したら workIds を返さず打ち切る", async () => {
+    const worksTable = createWorksTableMock({
+      maybeSingleResults: [
+        {
+          data: { id: "series-work", last_tmdb_synced_at: "2026-03-31T00:00:00.000Z" },
+          error: null,
+        },
+        {
+          data: { id: "series-work", last_tmdb_synced_at: "2026-03-31T00:00:00.000Z" },
+          error: null,
+        },
+        {
+          data: null,
+          error: { message: "season fetch failed" },
+        },
+      ],
+    });
+    supabaseMocks.from.mockImplementation((table: string) => {
+      if (table !== "works") {
+        throw new Error(`Unexpected table: ${table}`);
+      }
+      return worksTable;
+    });
+
+    await expect(
+      resolveSelectedSeasonWorkIds(seriesResult, "user-1", [1, 2], { seasonOptions }),
+    ).resolves.toEqual({
+      error: "season fetch failed",
+      workIds: [],
+    });
+    expect(worksTable.selectChain.maybeSingle).toHaveBeenCalledTimes(3);
+    expect(tmdbMocks.fetchTmdbWorkDetails).not.toHaveBeenCalled();
+  });
+});
+
+describe("upsertBacklogItemsToStatus", () => {
+  test("空入力または action なしなら no-op", async () => {
+    await expect(
+      upsertBacklogItemsToStatus("user-1", [], [], "stacked", {
+        note: null,
+        primaryPlatform: null,
+      }),
+    ).resolves.toEqual({ error: null });
+
+    await expect(
+      upsertBacklogItemsToStatus(
+        "user-1",
+        [createItem("a", "stacked", 1000, "work-1")],
+        ["work-1"],
+        "stacked",
+        {
+          note: "ignored",
+          primaryPlatform: "netflix",
+        },
+      ),
+    ).resolves.toEqual({ error: null });
+
+    expect(supabaseMocks.from).not.toHaveBeenCalled();
+  });
+
+  test("insert と move が混在しても先頭側から sort_order を振る", async () => {
+    const backlogItemsTable = createBacklogItemsTableMock();
+    supabaseMocks.from.mockImplementation((table: string) => {
+      if (table !== "backlog_items") {
+        throw new Error(`Unexpected table: ${table}`);
+      }
+      return backlogItemsTable;
+    });
+
+    const items = [
+      createItem("existing-top", "stacked", 3000, "work-top"),
+      createItem("move-me", "watching", 1000, "work-move"),
+    ];
+
+    await expect(
+      upsertBacklogItemsToStatus("user-1", items, ["work-move", "work-new"], "stacked", {
+        note: "新規メモ",
+        primaryPlatform: "netflix",
+      }),
+    ).resolves.toEqual({ error: null });
+
+    expect(backlogItemsTable.upsert).toHaveBeenCalledWith(
+      [
+        {
+          user_id: "user-1",
+          work_id: "work-move",
+          status: "stacked",
+          primary_platform: null,
+          note: null,
+          sort_order: 2000,
+        },
+        {
+          user_id: "user-1",
+          work_id: "work-new",
+          status: "stacked",
+          primary_platform: "netflix",
+          note: "新規メモ",
+          sort_order: 3000,
+        },
+      ],
+      { onConflict: "user_id,work_id" },
+    );
+  });
+
+  test("upsert 失敗時はエラーを返す", async () => {
+    const backlogItemsTable = createBacklogItemsTableMock({ message: "save failed" });
+    supabaseMocks.from.mockImplementation((table: string) => {
+      if (table !== "backlog_items") {
+        throw new Error(`Unexpected table: ${table}`);
+      }
+      return backlogItemsTable;
+    });
+
+    await expect(
+      upsertBacklogItemsToStatus(
+        "user-1",
+        [createItem("move-me", "watching", 1000, "work-move")],
+        ["work-move"],
+        "stacked",
+        {
+          note: null,
+          primaryPlatform: null,
+        },
+      ),
+    ).resolves.toEqual({ error: "save failed" });
+  });
+});
+
+describe("upsertManualWork", () => {
+  test("既存ヒット時は再利用する", async () => {
+    const worksTable = createWorksTableMock({
+      maybeSingleResults: [{ data: { id: "existing-work" }, error: null }],
+    });
+    supabaseMocks.from.mockImplementation((table: string) => {
+      if (table !== "works") {
+        throw new Error(`Unexpected table: ${table}`);
+      }
+      return worksTable;
+    });
+
+    await expect(upsertManualWork("テスト作品", "movie", "user-1")).resolves.toMatchObject({
+      data: { id: "existing-work" },
+      error: null,
+      status: 200,
+    });
+    expect(worksTable.insert).not.toHaveBeenCalled();
+  });
+
+  test("insert 成功時は新規 id を返す", async () => {
+    const worksTable = createWorksTableMock({
+      maybeSingleResults: [{ data: null, error: null }],
+      singleResults: [
+        {
+          data: { id: "inserted-work" },
+          error: null,
+          count: null,
+          status: 201,
+          statusText: "Created",
+        },
+      ],
+    });
+    supabaseMocks.from.mockImplementation((table: string) => {
+      if (table !== "works") {
+        throw new Error(`Unexpected table: ${table}`);
+      }
+      return worksTable;
+    });
+
+    await expect(upsertManualWork("テスト作品", "movie", "user-1")).resolves.toMatchObject({
+      data: { id: "inserted-work" },
+      error: null,
+      status: 201,
+    });
+  });
+
+  test("23505 競合後は再 select で救済する", async () => {
+    const worksTable = createWorksTableMock({
+      maybeSingleResults: [
+        { data: null, error: null },
+        { data: { id: "rescued-work" }, error: null },
+      ],
+      singleResults: [
+        {
+          data: null,
+          error: { message: "duplicate key value", code: "23505" },
+          count: null,
+          status: 409,
+          statusText: "Conflict",
+        },
+      ],
+    });
+    supabaseMocks.from.mockImplementation((table: string) => {
+      if (table !== "works") {
+        throw new Error(`Unexpected table: ${table}`);
+      }
+      return worksTable;
+    });
+
+    await expect(upsertManualWork("テスト作品", "movie", "user-1")).resolves.toEqual({
+      data: { id: "rescued-work" },
+      error: null,
+      count: null,
+      status: 200,
+      statusText: "OK",
+    });
+  });
+
+  test("競合後の再 select 失敗時は conflict を返す", async () => {
+    const worksTable = createWorksTableMock({
+      maybeSingleResults: [
+        { data: null, error: null },
+        { data: null, error: { message: "reselect failed" } },
+      ],
+      singleResults: [
+        {
+          data: null,
+          error: { message: "duplicate key value", code: "23505" },
+          count: null,
+          status: 409,
+          statusText: "Conflict",
+        },
+      ],
+    });
+    supabaseMocks.from.mockImplementation((table: string) => {
+      if (table !== "works") {
+        throw new Error(`Unexpected table: ${table}`);
+      }
+      return worksTable;
+    });
+
+    await expect(upsertManualWork("テスト作品", "movie", "user-1")).resolves.toEqual({
+      data: null,
+      error: { message: "reselect failed" },
+      count: null,
+      status: 409,
+      statusText: "Conflict",
+    });
   });
 });
