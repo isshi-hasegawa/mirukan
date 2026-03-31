@@ -49,7 +49,7 @@ function createItem(overrides: Partial<BacklogItem> = {}): BacklogItem {
 }
 
 describe("KanbanColumn", () => {
-  test("ストック列では視聴モードの説明付きカードを表示する", () => {
+  test("ストック列では絞り込みカードを表示する", () => {
     render(
       <KanbanColumn
         status="stacked"
@@ -65,12 +65,9 @@ describe("KanbanColumn", () => {
       />,
     );
 
-    expect(screen.getByRole("group", { name: "視聴モード" })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "おすすめの絞り込み" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /ガッツリ/ })).toHaveTextContent("ガッツリ集中して一本見たい");
-    expect(screen.getByRole("button", { name: /じっくり/ })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
+    expect(screen.getByRole("button", { name: /じっくり/ })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: /サクッと/ })).toHaveTextContent("サクッと短時間でテンポよく");
     expect(screen.getByRole("button", { name: /のんびり/ })).toHaveTextContent("のんびり流し見や作業のおともに");
   });

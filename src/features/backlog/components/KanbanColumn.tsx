@@ -106,61 +106,54 @@ export function KanbanColumn({
           </Button>
         )}
       </header>
-      {status === "stacked" && (
-        <div className="grid gap-2 px-[14px] pt-[12px] max-[500px]:px-3 max-[400px]:px-2">
-          <p className="px-1 text-[0.74rem] font-medium tracking-[0.06em] text-[var(--text-muted)] uppercase">
-            視聴モード
-          </p>
-          <div
-            className="grid grid-cols-2 gap-2 max-[380px]:grid-cols-1"
-            role="group"
-            aria-label="視聴モード"
-          >
-            {viewingModeOrder.map((mode) => {
-              const isActive = activeViewingMode === mode;
-              const Icon = viewingModeIcons[mode];
-              return (
-                <button
-                  key={mode}
-                  type="button"
-                  className={cn(
-                    "grid min-h-[88px] content-start gap-2 rounded-[18px] border px-3.5 py-3 text-left transition-[background,color,border-color,box-shadow,transform] duration-150",
-                    "focus-visible:outline-2 focus-visible:outline-primary/50 focus-visible:outline-offset-2",
-                    isActive
-                      ? "border-primary/70 bg-[linear-gradient(180deg,rgba(191,90,54,0.2),rgba(191,90,54,0.1))] text-foreground shadow-[0_12px_28px_rgba(191,90,54,0.16)]"
-                      : "border-[rgba(92,59,35,0.18)] bg-[rgba(255,255,255,0.02)] text-muted-foreground hover:-translate-y-[1px] hover:border-primary/[0.28] hover:bg-primary/[0.08] hover:text-foreground hover:shadow-[0_10px_24px_rgba(0,0,0,0.16)]",
-                  )}
-                  aria-pressed={isActive}
-                  onClick={() => onViewingModeToggle?.(mode)}
-                >
-                  <span className="flex items-center gap-2 text-[0.92rem] font-semibold">
-                    <span
-                      className={cn(
-                        "inline-flex h-8 w-8 items-center justify-center rounded-full border",
-                        isActive
-                          ? "border-primary/40 bg-primary text-primary-foreground"
-                          : "border-[rgba(92,59,35,0.16)] bg-[rgba(92,59,35,0.08)] text-muted-foreground",
-                      )}
-                    >
-                      <Icon className="h-4 w-4" aria-hidden />
-                    </span>
-                    <span>{viewingModeLabels[mode]}</span>
-                  </span>
-                  <span className="text-[0.76rem] leading-[1.5] text-inherit/80">
-                    {viewingModeDescriptions[mode]}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
       <div
         ref={setNodeRef}
         className="grid min-h-0 min-w-0 flex-1 content-start gap-[10px] overflow-y-auto pt-[10px] [scrollbar-gutter:stable]"
         style={dropzoneStyle}
       >
         <div className="grid content-start gap-[10px] pl-[14px] pr-[4px] max-[500px]:px-3 max-[400px]:px-2">
+          {status === "stacked" && (
+            <div
+              className="grid grid-cols-2 gap-2 pb-1 max-[380px]:grid-cols-1"
+              role="group"
+              aria-label="おすすめの絞り込み"
+            >
+              {viewingModeOrder.map((mode) => {
+                const isActive = activeViewingMode === mode;
+                const Icon = viewingModeIcons[mode];
+                return (
+                  <button
+                    key={mode}
+                    type="button"
+                    className={cn(
+                      "grid content-start gap-1.5 rounded-[16px] border px-3 py-2 text-left transition-[background,color,border-color] duration-150",
+                      "focus-visible:outline-2 focus-visible:outline-primary/50 focus-visible:outline-offset-2",
+                      isActive
+                        ? "border-primary/70 bg-primary/12 text-foreground"
+                        : "border-[rgba(92,59,35,0.18)] bg-[rgba(255,255,255,0.02)] text-muted-foreground hover:border-primary/[0.28] hover:bg-primary/[0.08] hover:text-foreground",
+                    )}
+                    aria-pressed={isActive}
+                    onClick={() => onViewingModeToggle?.(mode)}
+                  >
+                    <span className="flex items-center gap-1.5 text-[0.8rem] font-semibold">
+                      <span
+                        className={cn(
+                          "inline-flex h-5 w-5 items-center justify-center rounded-full",
+                          isActive ? "bg-primary text-primary-foreground" : "bg-[rgba(92,59,35,0.08)]",
+                        )}
+                      >
+                        <Icon className="h-3 w-3" aria-hidden />
+                      </span>
+                      <span>{viewingModeLabels[mode]}</span>
+                    </span>
+                    <span className="text-[0.68rem] leading-[1.4] text-inherit/80">
+                      {viewingModeDescriptions[mode]}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
           {items.length > 0 ? (
             items.map((item) => (
               <BacklogCard
