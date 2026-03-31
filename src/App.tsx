@@ -22,13 +22,7 @@ export function App() {
   }, []);
 
   if (session === undefined) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-foreground">読み込み中</h1>
-        </div>
-      </div>
-    );
+    return <LoginPage isSessionLoading />;
   }
 
   if (!session) {

@@ -8,15 +8,6 @@
 既存テストの状況を見ると、`AddModal` と `data.ts` の pure function、`tmdb.ts` の recommendation cache / `resolveSeasonTitle` はすでに一定カバーされている。
 次は UI の状態遷移と Supabase / TMDb 境界の非同期分岐を埋める優先度が高い。
 
-## 優先度高: `RecommendModal` / `BoardPage` の挙動テスト
-
-- 対象
-  - `src/features/backlog/components/RecommendModal.tsx`
-  - `src/features/backlog/components/BoardPage.tsx`
-- 追加で確認したい観点
-  - 現状メモ
-    - `RecommendModal` の主要分岐と `BoardPage` のロード / エラー / モバイル復帰 / recommendation modal open-close / 削除時モーダル close / desktop scroll は追加済み
-
 ## 優先度中: `data.ts` の非同期テスト
 
 - 対象
