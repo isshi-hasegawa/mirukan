@@ -57,39 +57,6 @@
 
 ## セキュリティ関連
 
-### TMDb API キーの秘密管理（**優先度: 高**）
-
-- **現状の問題**
-  - `VITE_TMDB_API_KEY` が `src/lib/env.ts` で定義され、クライアント側で直接 TMDb API にリクエストを送信
-  - Vite の `VITE_*` プレフィックスが付いた環境変数はビルド時にバンドルされ、ブラウザで確認可能になる
-  - `console.log(import.meta.env.VITE_TMDB_API_KEY)` でクライアントコードから API キーが読み取られる可能性
-  - API キーが URL クエリパラメータとして送信される
-
-- **セキュリティリスク**
-  - API キーの露出 → 悪意のある第三者による不正利用、API 課金の乱用
-  - リクエストの追跡 → ユーザーの検索パターンが記録される可能性
-  - 無制限な利用 → サーバー側でリクエスト制限ができない
-
-- **改善方法**
-  - Supabase Edge Functions を使用して、サーバー側で TMDb API リクエストをラップ
-  - API キーは `SUPABASE_SECRET_*` または サーバー環境変数として管理
-  - クライアント → Edge Function → TMDb API の構成に変更
-  - Edge Functions で認証チェック、レート制限、キャッシュを実装可能
-
-- **実装ステップ（案）**
-  1. `supabase/functions/` に TMDb API ラッパー関数を作成
-     - `search-tmdb-works`
-     - `fetch-tmdb-work-details`
-     - `fetch-tmdb-trending`
-     - `fetch-tmdb-season-options`
-  2. `src/lib/tmdb.ts` から fetch 処理を削除、Edge Functions の呼び出しに変更
-  3. `.env.local` や Supabase ダッシュボードで `TMDB_API_KEY` を設定
-  4. クライアント側の環境変数から `VITE_TMDB_API_KEY` を削除
-
-- **参考資料**
-  - [Supabase Edge Functions](https://supabase.com/docs/guides/functions)
-  - [TMDb API](https://developer.themoviedb.org/docs)
-
 ### シークレット検出ツールの導入検討
 
 - **目的**

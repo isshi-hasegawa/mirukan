@@ -18,7 +18,16 @@ vp check --fix
 vp test
 ```
 
-環境変数は `.env.example` を参照してください。
+クライアント側の環境変数は `.env.example` を参照してください。
+
+TMDb API キーはクライアントに置かず、Supabase Edge Functions の secret として設定します。
+
+```bash
+cp .env.example .env.local
+cp supabase/functions/.env.example supabase/functions/.env
+```
+
+`supabase/functions/.env` にはローカル開発用の `TMDB_API_KEY` を設定してください。リモート環境は `supabase secrets set TMDB_API_KEY=...` で管理します。
 
 ## 補足
 

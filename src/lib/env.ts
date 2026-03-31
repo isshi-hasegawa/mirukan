@@ -12,5 +12,4 @@ export const env = {
     "VITE_SUPABASE_PUBLISHABLE_KEY",
     import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
   ),
-  tmdbApiKey: requireEnv("VITE_TMDB_API_KEY", import.meta.env.VITE_TMDB_API_KEY),
 };

@@ -1,4 +1,16 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vite-plus/test";
+const supabaseMocks = vi.hoisted(() => ({
+  invoke: vi.fn(),
+}));
+
+vi.mock("./supabase.ts", () => ({
+  supabase: {
+    functions: {
+      invoke: supabaseMocks.invoke,
+    },
+  },
+}));
+
 import {
   fetchTmdbSimilar,
   fetchTmdbTrending,
@@ -6,69 +18,13 @@ import {
   resolveSeasonTitle,
 } from "./tmdb.ts";
 
-function createJsonResponse(body: unknown): Response {
-  return {
-    ok: true,
-    status: 200,
-    json: async () => body,
-  } as Response;
-}
-
-function resolveFetchUrl(input: RequestInfo | URL): URL {
-  if (typeof input === "string") {
-    return new URL(input);
-  }
-
-  if (input instanceof URL) {
-    return input;
-  }
-
-  return new URL(input.url);
-}
-
-function buildTrendingPayload(
-  results: Array<{ id: number; mediaType: "movie" | "tv"; title: string }>,
-) {
-  return {
-    results: results.map((result) => ({
-      id: result.id,
-      media_type: result.mediaType,
-      title: result.mediaType === "movie" ? result.title : undefined,
-      name: result.mediaType === "tv" ? result.title : undefined,
-      original_title: result.mediaType === "movie" ? result.title : undefined,
-      original_name: result.mediaType === "tv" ? result.title : undefined,
-      overview: `${result.title} overview`,
-      poster_path: null,
-      release_date: result.mediaType === "movie" ? "2025-01-01" : undefined,
-      first_air_date: result.mediaType === "tv" ? "2025-01-01" : undefined,
-    })),
-  };
-}
-
-function buildSimilarPayload(id: number, mediaType: "movie" | "tv", title: string) {
-  return {
-    results: [
-      {
-        id,
-        title: mediaType === "movie" ? title : undefined,
-        name: mediaType === "tv" ? title : undefined,
-        original_title: mediaType === "movie" ? title : undefined,
-        original_name: mediaType === "tv" ? title : undefined,
-        overview: `${title} overview`,
-        poster_path: null,
-        release_date: mediaType === "movie" ? "2025-01-01" : undefined,
-        first_air_date: mediaType === "tv" ? "2025-01-01" : undefined,
-      },
-    ],
-  };
-}
-
 beforeEach(() => {
   resetTmdbRecommendationCachesForTest();
 });
 
 afterEach(() => {
   vi.restoreAllMocks();
+  supabaseMocks.invoke.mockReset();
 });
 
 describe("resolveSeasonTitle", () => {
@@ -107,70 +63,104 @@ describe("resolveSeasonTitle", () => {
 
 describe("recommendation caches", () => {
   test("fetchTmdbSimilar caches per source item set", async () => {
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
-      const url = resolveFetchUrl(input);
+    supabaseMocks.invoke.mockImplementation(async (name, options) => {
+      const sourceItems =
+        options?.body && "sourceItems" in options.body ? options.body.sourceItems : null;
 
-      if (url.pathname === "/3/movie/1/similar") {
-        return createJsonResponse(buildSimilarPayload(101, "movie", "Movie Similar A"));
+      if (
+        name === "fetch-tmdb-similar" &&
+        Array.isArray(sourceItems) &&
+        sourceItems[0]?.tmdbId === 1
+      ) {
+        return {
+          data: [
+            {
+              tmdbId: 101,
+              tmdbMediaType: "movie",
+              workType: "movie",
+              title: "Movie Similar A",
+              originalTitle: "Movie Similar A",
+              overview: "Movie Similar A overview",
+              posterPath: null,
+              releaseDate: "2025-01-01",
+              jpWatchPlatforms: [],
+              hasJapaneseRelease: true,
+            },
+          ],
+          error: null,
+        };
       }
 
-      if (url.pathname === "/3/movie/2/similar") {
-        return createJsonResponse(buildSimilarPayload(202, "movie", "Movie Similar B"));
+      if (
+        name === "fetch-tmdb-similar" &&
+        Array.isArray(sourceItems) &&
+        sourceItems[0]?.tmdbId === 2
+      ) {
+        return {
+          data: [
+            {
+              tmdbId: 202,
+              tmdbMediaType: "movie",
+              workType: "movie",
+              title: "Movie Similar B",
+              originalTitle: "Movie Similar B",
+              overview: "Movie Similar B overview",
+              posterPath: null,
+              releaseDate: "2025-01-01",
+              jpWatchPlatforms: [],
+              hasJapaneseRelease: true,
+            },
+          ],
+          error: null,
+        };
       }
 
-      if (url.pathname.endsWith("/watch/providers")) {
-        return createJsonResponse({ results: {} });
-      }
-
-      if (url.pathname.endsWith("/release_dates")) {
-        return createJsonResponse({
-          results: [{ iso_3166_1: "JP", release_dates: [{ release_date: "2025-01-01" }] }],
-        });
-      }
-
-      throw new Error(`Unexpected fetch: ${url.toString()}`);
+      throw new Error(`Unexpected invoke: ${String(name)}`);
     });
 
     const first = await fetchTmdbSimilar([{ tmdbId: 1, tmdbMediaType: "movie" }]);
+    const firstCached = await fetchTmdbSimilar([{ tmdbId: 1, tmdbMediaType: "movie" }]);
     const second = await fetchTmdbSimilar([{ tmdbId: 2, tmdbMediaType: "movie" }]);
 
     expect(first).toHaveLength(1);
     expect(first[0]?.tmdbId).toBe(101);
+    expect(firstCached[0]?.tmdbId).toBe(101);
     expect(second).toHaveLength(1);
     expect(second[0]?.tmdbId).toBe(202);
-    const calledPaths = fetchMock.mock.calls.map(([input]) => resolveFetchUrl(input).pathname);
-    expect(calledPaths).toContain("/3/movie/1/similar");
-    expect(calledPaths).toContain("/3/movie/2/similar");
+    expect(
+      supabaseMocks.invoke.mock.calls.filter(([name]) => name === "fetch-tmdb-similar"),
+    ).toHaveLength(2);
   });
 
   test("fetchTmdbTrending keeps movie and tv entries with the same tmdb id", async () => {
-    vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
-      const url = resolveFetchUrl(input);
-
-      if (url.pathname === "/3/trending/all/week") {
-        const page = url.searchParams.get("page");
-        if (page === "1") {
-          return createJsonResponse(
-            buildTrendingPayload([
-              { id: 10, mediaType: "movie", title: "Same Id Movie" },
-              { id: 10, mediaType: "tv", title: "Same Id TV" },
-            ]),
-          );
-        }
-        return createJsonResponse({ results: [] });
-      }
-
-      if (url.pathname.endsWith("/watch/providers")) {
-        return createJsonResponse({ results: {} });
-      }
-
-      if (url.pathname.endsWith("/release_dates")) {
-        return createJsonResponse({
-          results: [{ iso_3166_1: "JP", release_dates: [{ release_date: "2025-01-01" }] }],
-        });
-      }
-
-      throw new Error(`Unexpected fetch: ${url.toString()}`);
+    supabaseMocks.invoke.mockResolvedValue({
+      data: [
+        {
+          tmdbId: 10,
+          tmdbMediaType: "movie",
+          workType: "movie",
+          title: "Same Id Movie",
+          originalTitle: "Same Id Movie",
+          overview: "movie overview",
+          posterPath: null,
+          releaseDate: "2025-01-01",
+          jpWatchPlatforms: [],
+          hasJapaneseRelease: true,
+        },
+        {
+          tmdbId: 10,
+          tmdbMediaType: "tv",
+          workType: "series",
+          title: "Same Id TV",
+          originalTitle: "Same Id TV",
+          overview: "tv overview",
+          posterPath: null,
+          releaseDate: "2025-01-01",
+          jpWatchPlatforms: [],
+          hasJapaneseRelease: true,
+        },
+      ],
+      error: null,
     });
 
     const results = await fetchTmdbTrending();
@@ -182,23 +172,20 @@ describe("recommendation caches", () => {
   });
 
   test("fetchTmdbTrending reuses an in-flight request", async () => {
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
-      const url = resolveFetchUrl(input);
+    let resolveInvoke: ((value: { data: []; error: null }) => void) | null = null;
+    supabaseMocks.invoke.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveInvoke = resolve;
+        }),
+    );
 
-      if (url.pathname === "/3/trending/all/week") {
-        return createJsonResponse({ results: [] });
-      }
+    const first = fetchTmdbTrending();
+    const second = fetchTmdbTrending();
 
-      throw new Error(`Unexpected fetch: ${url.toString()}`);
-    });
+    resolveInvoke?.({ data: [], error: null });
+    await Promise.all([first, second]);
 
-    await Promise.all([fetchTmdbTrending(), fetchTmdbTrending()]);
-
-    const trendingCalls = fetchMock.mock.calls.filter(([input]) => {
-      const url = resolveFetchUrl(input);
-      return url.pathname === "/3/trending/all/week";
-    });
-
-    expect(trendingCalls).toHaveLength(3);
+    expect(supabaseMocks.invoke).toHaveBeenCalledTimes(1);
   });
 });
