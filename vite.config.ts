@@ -18,7 +18,14 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
-      exclude: ["node_modules/", "src/test/", "e2e/**", "**/*.test.ts", "**/*.test.tsx"],
+      exclude: [
+        "node_modules/",
+        "src/test/",
+        "src/assets/**",
+        "e2e/**",
+        "**/*.test.ts",
+        "**/*.test.tsx",
+      ],
     },
   },
   staged: {
