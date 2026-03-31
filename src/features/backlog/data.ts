@@ -128,6 +128,8 @@ type BacklogItemUpdate = Partial<
   Pick<BacklogItem, "status" | "sort_order" | "primary_platform" | "note">
 >;
 
+const TMDB_WORK_REFRESH_INTERVAL_MS = 30 * 24 * 60 * 60 * 1000;
+
 export async function updateBacklogItem(
   itemId: string,
   update: BacklogItemUpdate,
@@ -161,6 +163,23 @@ export function applyBacklogItemUpdate(item: BacklogItem, update: BacklogItemUpd
     ...item,
     ...update,
   };
+}
+
+export function shouldRefreshTmdbWork(
+  lastSyncedAt: string | null,
+  now = Date.now(),
+  refreshIntervalMs = TMDB_WORK_REFRESH_INTERVAL_MS,
+) {
+  if (!lastSyncedAt) {
+    return true;
+  }
+
+  const syncedAtMs = Date.parse(lastSyncedAt);
+  if (Number.isNaN(syncedAtMs)) {
+    return true;
+  }
+
+  return now - syncedAtMs >= refreshIntervalMs;
 }
 
 export function getSortOrderForDrop(
@@ -212,11 +231,9 @@ export async function upsertTmdbWork(
   }
 
   const workType = target.workType as Extract<WorkType, "movie" | "series">;
-  const details = await fetchTmdbWorkDetails(target);
-
   const { data: existing, error: selectError } = await supabase
     .from("works")
-    .select("id")
+    .select("id, last_tmdb_synced_at")
     .eq("source_type", "tmdb")
     .eq("tmdb_media_type", target.tmdbMediaType)
     .eq("tmdb_id", target.tmdbId)
@@ -226,6 +243,12 @@ export async function upsertTmdbWork(
   if (selectError) {
     return { data: null, error: selectError, count: null, status: 400, statusText: "Bad Request" };
   }
+
+  if (existing && !shouldRefreshTmdbWork(existing.last_tmdb_synced_at)) {
+    return { data: { id: existing.id }, error: null, count: null, status: 200, statusText: "OK" };
+  }
+
+  const details = await fetchTmdbWorkDetails(target);
 
   if (existing) {
     const { error: updateError } = await supabase
@@ -359,6 +382,7 @@ function buildTmdbWorkUpdate(details: TmdbWorkDetails) {
     focus_required_score: calcFocusRequiredScore(details.genres),
     background_fit_score: calcBackgroundFitScore(details.genres),
     completion_load_score: calcCompletionLoadScore(details),
+    last_tmdb_synced_at: new Date().toISOString(),
   };
 }
 
@@ -472,10 +496,9 @@ async function upsertTmdbSeasonWork(
     return seriesResult as PostgrestSingleResponse<{ id: string }>;
   }
 
-  const details = await fetchTmdbWorkDetails(target);
   const { data: existing, error: selectError } = await supabase
     .from("works")
-    .select("id")
+    .select("id, last_tmdb_synced_at")
     .eq("source_type", "tmdb")
     .eq("tmdb_media_type", "tv")
     .eq("tmdb_id", target.tmdbId)
@@ -486,6 +509,12 @@ async function upsertTmdbSeasonWork(
   if (selectError) {
     return { data: null, error: selectError, count: null, status: 400, statusText: "Bad Request" };
   }
+
+  if (existing && !shouldRefreshTmdbWork(existing.last_tmdb_synced_at)) {
+    return { data: { id: existing.id }, error: null, count: null, status: 200, statusText: "OK" };
+  }
+
+  const details = await fetchTmdbWorkDetails(target);
 
   if (existing) {
     const { error: updateError } = await supabase

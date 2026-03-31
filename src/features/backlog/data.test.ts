@@ -11,6 +11,7 @@ import {
   getSortOrderForStatusChange,
   normalizeBacklogItems,
   planBacklogItemUpserts,
+  shouldRefreshTmdbWork,
   sortStackedItemsByViewingMode,
 } from "./data.ts";
 import type { BacklogItem, WorkSummary } from "./types.ts";
@@ -464,5 +465,29 @@ describe("normalizeBacklogItems", () => {
       },
     ];
     expect(normalizeBacklogItems(rows)).toHaveLength(0);
+  });
+});
+
+describe("shouldRefreshTmdbWork", () => {
+  test("last_synced が無ければ再同期する", () => {
+    expect(shouldRefreshTmdbWork(null)).toBe(true);
+  });
+
+  test("十分新しければ再同期しない", () => {
+    const now = Date.parse("2026-04-01T00:00:00.000Z");
+    const lastSyncedAt = "2026-03-15T00:00:00.000Z";
+
+    expect(shouldRefreshTmdbWork(lastSyncedAt, now)).toBe(false);
+  });
+
+  test("30日以上経過していれば再同期する", () => {
+    const now = Date.parse("2026-04-01T00:00:00.000Z");
+    const lastSyncedAt = "2026-02-28T00:00:00.000Z";
+
+    expect(shouldRefreshTmdbWork(lastSyncedAt, now)).toBe(true);
+  });
+
+  test("不正な日付なら再同期する", () => {
+    expect(shouldRefreshTmdbWork("not-a-date")).toBe(true);
   });
 });

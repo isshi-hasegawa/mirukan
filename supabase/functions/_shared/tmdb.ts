@@ -1,4 +1,5 @@
 import "./edge-runtime.d.ts";
+import { getSupabaseAdminClient } from "./supabase-admin.ts";
 
 type TmdbMediaType = "movie" | "tv";
 
@@ -164,6 +165,10 @@ const TMDB_PROVIDER_ID_MAP: Record<number, string> = {
   97: "u_next",
 };
 
+const TRENDING_CACHE_WINDOW = "week";
+const TRENDING_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const SIMILAR_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
 function getTmdbApiKey() {
   const apiKey = Deno.env.get("TMDB_API_KEY");
 
@@ -309,7 +314,7 @@ async function fetchTrendingPage(page: number): Promise<TmdbSearchResult[]> {
   });
 }
 
-export async function fetchTmdbTrending(): Promise<TmdbSearchResult[]> {
+async function fetchFreshTmdbTrending(): Promise<TmdbSearchResult[]> {
   const pages = await Promise.all([
     fetchTrendingPage(1),
     fetchTrendingPage(2),
@@ -328,6 +333,120 @@ export async function fetchTmdbTrending(): Promise<TmdbSearchResult[]> {
       return true;
     }),
   );
+}
+
+function buildRecommendationSourceKey(item: { tmdbId: number; tmdbMediaType: TmdbMediaType }) {
+  return `${item.tmdbMediaType}-${item.tmdbId}`;
+}
+
+function isCacheEntryFresh(expiresAt: string | null) {
+  if (!expiresAt) {
+    return false;
+  }
+
+  const expiresAtMs = Date.parse(expiresAt);
+  return !Number.isNaN(expiresAtMs) && expiresAtMs > Date.now();
+}
+
+function buildExpiresAt(ttlMs: number) {
+  return new Date(Date.now() + ttlMs).toISOString();
+}
+
+function normalizeCachedSearchResult(payload: unknown): TmdbSearchResult | null {
+  if (!payload || typeof payload !== "object") {
+    return null;
+  }
+
+  return payload as TmdbSearchResult;
+}
+
+async function readTrendingCache() {
+  const admin = getSupabaseAdminClient();
+  if (!admin) {
+    return null;
+  }
+
+  const { data, error } = await admin
+    .from("tmdb_trending_cache")
+    .select("payload, rank, expires_at")
+    .eq("window", TRENDING_CACHE_WINDOW)
+    .order("rank", { ascending: true });
+
+  if (error) {
+    throw new Error(`Failed to read trending cache: ${error.message}`);
+  }
+
+  const results = (data ?? [])
+    .flatMap((row) => {
+      const result = normalizeCachedSearchResult(row.payload);
+      return result ? [result] : [];
+    })
+    .filter((result) => !!result);
+
+  return {
+    fresh:
+      (data ?? []).length > 0 && (data ?? []).every((row) => isCacheEntryFresh(row.expires_at)),
+    results,
+    admin,
+  };
+}
+
+async function writeTrendingCache(
+  admin: NonNullable<ReturnType<typeof getSupabaseAdminClient>>,
+  results: TmdbSearchResult[],
+) {
+  const fetchedAt = new Date().toISOString();
+  const expiresAt = buildExpiresAt(TRENDING_CACHE_TTL_MS);
+
+  const { error: deleteError } = await admin
+    .from("tmdb_trending_cache")
+    .delete()
+    .eq("window", TRENDING_CACHE_WINDOW);
+
+  if (deleteError) {
+    throw new Error(`Failed to clear trending cache: ${deleteError.message}`);
+  }
+
+  if (results.length === 0) {
+    return;
+  }
+
+  const { error: insertError } = await admin.from("tmdb_trending_cache").insert(
+    results.map((result, index) => ({
+      window: TRENDING_CACHE_WINDOW,
+      rank: index,
+      tmdb_media_type: result.tmdbMediaType,
+      tmdb_id: result.tmdbId,
+      payload: result,
+      fetched_at: fetchedAt,
+      expires_at: expiresAt,
+    })),
+  );
+
+  if (insertError) {
+    throw new Error(`Failed to write trending cache: ${insertError.message}`);
+  }
+}
+
+export async function fetchTmdbTrending(): Promise<TmdbSearchResult[]> {
+  const cached = await readTrendingCache().catch(() => null);
+  if (cached?.fresh && cached.results.length > 0) {
+    return cached.results;
+  }
+
+  try {
+    const fresh = await fetchFreshTmdbTrending();
+    if (cached?.admin) {
+      await writeTrendingCache(cached.admin, fresh);
+    }
+    return fresh;
+  } catch (error) {
+    if (cached && cached.results.length > 0) {
+      return cached.results;
+    }
+
+    throw error;
+  }
 }
 
 async function fetchSimilarPage(
@@ -377,25 +496,154 @@ export async function fetchTmdbSimilar(
     return [];
   }
 
-  const pages = await Promise.all(
-    normalizedSourceItems.map((item) => fetchSimilarPage(item.tmdbId, item.tmdbMediaType)),
-  );
+  const cached = await readSimilarCache(normalizedSourceItems).catch(() => new Map());
+  const resultGroups = await Promise.all(
+    normalizedSourceItems.map(async (item) => {
+      const key = buildRecommendationSourceKey(item);
+      const cacheEntry = cached.get(key);
 
-  const seen = new Set<string>();
-  const deduped = pages
-    .flat()
-    .filter((item) => {
-      const key = `${item.tmdbMediaType}-${item.tmdbId}`;
-      if (seen.has(key)) {
-        return false;
+      if (cacheEntry?.fresh) {
+        return cacheEntry.results;
       }
 
-      seen.add(key);
-      return true;
-    })
-    .slice(0, 40);
+      try {
+        const refreshed = await refreshSimilarCacheForSource(item);
+        if (refreshed.length > 0 || !cacheEntry) {
+          return refreshed;
+        }
+      } catch {
+        // fall through to stale cache
+      }
 
-  return enrichWithWatchProviders(deduped);
+      return cacheEntry?.results ?? [];
+    }),
+  );
+
+  return dedupeRecommendationResults(resultGroups.flat()).slice(0, 40);
+}
+
+function dedupeRecommendationResults(results: TmdbSearchResult[]) {
+  const seen = new Set<string>();
+
+  return results.filter((item) => {
+    const key = buildRecommendationSourceKey(item);
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
+
+async function readSimilarCache(
+  sourceItems: Array<{ tmdbId: number; tmdbMediaType: TmdbMediaType }>,
+) {
+  const grouped = new Map<
+    string,
+    {
+      fresh: boolean;
+      results: TmdbSearchResult[];
+    }
+  >();
+  const admin = getSupabaseAdminClient();
+
+  if (!admin) {
+    return grouped;
+  }
+
+  const sourceIds = [...new Set(sourceItems.map((item) => item.tmdbId))];
+  const validSourceKeys = new Set(sourceItems.map((item) => buildRecommendationSourceKey(item)));
+
+  const { data, error } = await admin
+    .from("work_recommendation_cache")
+    .select("source_tmdb_media_type, source_tmdb_id, payload, rank, expires_at")
+    .eq("recommendation_source", "similar")
+    .in("source_tmdb_id", sourceIds)
+    .order("rank", { ascending: true });
+
+  if (error) {
+    throw new Error(`Failed to read similar cache: ${error.message}`);
+  }
+
+  const rowsBySource = new Map<string, Array<{ payload: unknown; expires_at: string | null }>>();
+  for (const row of data ?? []) {
+    const sourceKey = `${row.source_tmdb_media_type}-${row.source_tmdb_id}`;
+    if (!validSourceKeys.has(sourceKey)) {
+      continue;
+    }
+
+    const current = rowsBySource.get(sourceKey) ?? [];
+    current.push({ payload: row.payload, expires_at: row.expires_at });
+    rowsBySource.set(sourceKey, current);
+  }
+
+  for (const item of sourceItems) {
+    const key = buildRecommendationSourceKey(item);
+    const rows = rowsBySource.get(key) ?? [];
+    grouped.set(key, {
+      fresh: rows.length > 0 && rows.every((row) => isCacheEntryFresh(row.expires_at)),
+      results: rows.flatMap((row) => {
+        const result = normalizeCachedSearchResult(row.payload);
+        return result ? [result] : [];
+      }),
+    });
+  }
+
+  return grouped;
+}
+
+async function refreshSimilarCacheForSource(sourceItem: {
+  tmdbId: number;
+  tmdbMediaType: TmdbMediaType;
+}) {
+  const fresh = await enrichWithWatchProviders(
+    dedupeRecommendationResults(
+      await fetchSimilarPage(sourceItem.tmdbId, sourceItem.tmdbMediaType),
+    ).slice(0, 40),
+  );
+  const admin = getSupabaseAdminClient();
+
+  if (!admin) {
+    return fresh;
+  }
+
+  const { error: deleteError } = await admin
+    .from("work_recommendation_cache")
+    .delete()
+    .eq("recommendation_source", "similar")
+    .eq("source_tmdb_media_type", sourceItem.tmdbMediaType)
+    .eq("source_tmdb_id", sourceItem.tmdbId);
+
+  if (deleteError) {
+    throw new Error(`Failed to clear similar cache: ${deleteError.message}`);
+  }
+
+  if (fresh.length === 0) {
+    return fresh;
+  }
+
+  const fetchedAt = new Date().toISOString();
+  const expiresAt = buildExpiresAt(SIMILAR_CACHE_TTL_MS);
+  const { error: insertError } = await admin.from("work_recommendation_cache").insert(
+    fresh.map((result, index) => ({
+      recommendation_source: "similar",
+      source_tmdb_media_type: sourceItem.tmdbMediaType,
+      source_tmdb_id: sourceItem.tmdbId,
+      recommended_tmdb_media_type: result.tmdbMediaType,
+      recommended_tmdb_id: result.tmdbId,
+      rank: index,
+      payload: result,
+      fetched_at: fetchedAt,
+      expires_at: expiresAt,
+    })),
+  );
+
+  if (insertError) {
+    throw new Error(`Failed to write similar cache: ${insertError.message}`);
+  }
+
+  return fresh;
 }
 
 export async function fetchTmdbSeasonOptions(
