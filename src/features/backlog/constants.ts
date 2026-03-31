@@ -63,3 +63,10 @@ export const viewingModeLabels: Record<ViewingMode, string> = {
   quick: "サクッと",
   background: "のんびり",
 };
+
+export const viewingModeDescriptions: Record<ViewingMode, string> = {
+  focus: "集中して一本見たい夜向け",
+  thoughtful: "負荷はほどよく、腰を据えて楽しむ",
+  quick: "短時間でテンポよく消化したい",
+  background: "流し見や作業のおともにちょうどいい",
+};

@@ -1,9 +1,21 @@
 import type { ReactNode } from "react";
 import { useDroppable } from "@dnd-kit/core";
+import {
+  BoltIcon,
+  ClockIcon,
+  FireIcon,
+  SpeakerWaveIcon,
+} from "@heroicons/react/24/outline";
 import type { BacklogItem, BacklogStatus, ViewingMode } from "../types.ts";
-import { statusLabels, viewingModeLabels, viewingModeOrder } from "../constants.ts";
+import {
+  statusLabels,
+  viewingModeDescriptions,
+  viewingModeLabels,
+  viewingModeOrder,
+} from "../constants.ts";
 import { BacklogCard } from "./BacklogCard.tsx";
 import { Button } from "@/components/ui/button.tsx";
+import { cn } from "@/lib/utils";
 
 type DropIndicator =
   | { type: "card"; itemId: string; side: "before" | "after" }
@@ -21,6 +33,16 @@ type Props = {
   onDeleteItem: (itemId: string) => void;
   onMarkAsWatched: (itemId: string) => void;
   onViewingModeToggle?: (mode: ViewingMode) => void;
+};
+
+const viewingModeIcons: Record<
+  ViewingMode,
+  React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>
+> = {
+  focus: FireIcon,
+  thoughtful: ClockIcon,
+  quick: BoltIcon,
+  background: SpeakerWaveIcon,
 };
 
 export function KanbanColumn({
@@ -85,25 +107,52 @@ export function KanbanColumn({
         )}
       </header>
       {status === "stacked" && (
-        <div className="flex flex-wrap gap-1.5 px-[14px] pt-[10px] max-[500px]:px-3 max-[400px]:px-2">
-          {viewingModeOrder.map((mode) => {
-            const isActive = activeViewingMode === mode;
-            return (
-              <button
-                key={mode}
-                type="button"
-                className={`rounded-full border px-3 py-1 text-[0.78rem] font-medium transition-[background,color,border-color] duration-150 ${
-                  isActive
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-[rgba(92,59,35,0.18)] bg-transparent text-muted-foreground hover:border-primary/[0.26] hover:bg-primary/[0.08] hover:text-foreground"
-                }`}
-                aria-pressed={isActive}
-                onClick={() => onViewingModeToggle?.(mode)}
-              >
-                {viewingModeLabels[mode]}
-              </button>
-            );
-          })}
+        <div className="grid gap-2 px-[14px] pt-[12px] max-[500px]:px-3 max-[400px]:px-2">
+          <p className="px-1 text-[0.74rem] font-medium tracking-[0.06em] text-[var(--text-muted)] uppercase">
+            視聴モード
+          </p>
+          <div
+            className="grid grid-cols-2 gap-2 max-[380px]:grid-cols-1"
+            role="group"
+            aria-label="視聴モード"
+          >
+            {viewingModeOrder.map((mode) => {
+              const isActive = activeViewingMode === mode;
+              const Icon = viewingModeIcons[mode];
+              return (
+                <button
+                  key={mode}
+                  type="button"
+                  className={cn(
+                    "grid min-h-[88px] content-start gap-2 rounded-[18px] border px-3.5 py-3 text-left transition-[background,color,border-color,box-shadow,transform] duration-150",
+                    "focus-visible:outline-2 focus-visible:outline-primary/50 focus-visible:outline-offset-2",
+                    isActive
+                      ? "border-primary/70 bg-[linear-gradient(180deg,rgba(191,90,54,0.2),rgba(191,90,54,0.1))] text-foreground shadow-[0_12px_28px_rgba(191,90,54,0.16)]"
+                      : "border-[rgba(92,59,35,0.18)] bg-[rgba(255,255,255,0.02)] text-muted-foreground hover:-translate-y-[1px] hover:border-primary/[0.28] hover:bg-primary/[0.08] hover:text-foreground hover:shadow-[0_10px_24px_rgba(0,0,0,0.16)]",
+                  )}
+                  aria-pressed={isActive}
+                  onClick={() => onViewingModeToggle?.(mode)}
+                >
+                  <span className="flex items-center gap-2 text-[0.92rem] font-semibold">
+                    <span
+                      className={cn(
+                        "inline-flex h-8 w-8 items-center justify-center rounded-full border",
+                        isActive
+                          ? "border-primary/40 bg-primary text-primary-foreground"
+                          : "border-[rgba(92,59,35,0.16)] bg-[rgba(92,59,35,0.08)] text-muted-foreground",
+                      )}
+                    >
+                      <Icon className="h-4 w-4" aria-hidden />
+                    </span>
+                    <span>{viewingModeLabels[mode]}</span>
+                  </span>
+                  <span className="text-[0.76rem] leading-[1.5] text-inherit/80">
+                    {viewingModeDescriptions[mode]}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
       <div
