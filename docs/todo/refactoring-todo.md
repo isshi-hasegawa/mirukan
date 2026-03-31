@@ -8,17 +8,6 @@
 
 ## 追加でほしいテスト
 
-### `AddModal` の統合テスト
-
-- 対象
-  - `src/features/backlog/components/AddModal.tsx`
-- 追加で確認したい観点
-  - 検索結果選択時の分岐
-  - TV 選択時のシーズン初期選択
-  - 重複通知
-  - confirm キャンセル時の挙動
-  - manual / TMDb の submit 分岐
-
 ### `DetailModal` の統合テスト
 
 - 対象
