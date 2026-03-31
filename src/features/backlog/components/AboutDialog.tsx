@@ -1,6 +1,7 @@
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
+import { TmdbAttributionLink } from "./TmdbAttributionLink.tsx";
 
 type Props = {
   onClose: () => void;
@@ -70,14 +71,7 @@ export function AboutDialog({ onClose }: Props) {
             <p className="text-sm leading-6">
               This product uses the TMDB API but is not endorsed or certified by TMDB.
             </p>
-            <a
-              href="https://www.themoviedb.org/"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex w-fit items-center rounded-full border border-border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
-            >
-              TMDB
-            </a>
+            <TmdbAttributionLink />
           </section>
         </div>
       </section>
