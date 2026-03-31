@@ -12,10 +12,13 @@ vi.mock("./supabase.ts", () => ({
 }));
 
 import {
+  fetchTmdbSeasonOptions,
   fetchTmdbSimilar,
   fetchTmdbTrending,
+  fetchTmdbWorkDetails,
   resetTmdbRecommendationCachesForTest,
   resolveSeasonTitle,
+  searchTmdbWorks,
 } from "./tmdb.ts";
 
 beforeEach(() => {
@@ -187,5 +190,132 @@ describe("recommendation caches", () => {
     await Promise.all([first, second]);
 
     expect(supabaseMocks.invoke).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("API boundary wrappers", () => {
+  test("searchTmdbWorks passes query and returns results", async () => {
+    supabaseMocks.invoke.mockResolvedValue({
+      data: [
+        {
+          tmdbId: 1,
+          tmdbMediaType: "movie",
+          workType: "movie",
+          title: "Search Result",
+          originalTitle: null,
+          overview: null,
+          posterPath: null,
+          releaseDate: "2025-01-01",
+          jpWatchPlatforms: [],
+          hasJapaneseRelease: true,
+        },
+      ],
+      error: null,
+    });
+
+    await expect(searchTmdbWorks("query text")).resolves.toEqual([
+      expect.objectContaining({
+        tmdbId: 1,
+        title: "Search Result",
+      }),
+    ]);
+    expect(supabaseMocks.invoke).toHaveBeenCalledWith("search-tmdb-works", {
+      body: { query: "query text" },
+    });
+  });
+
+  test("fetchTmdbSeasonOptions passes result and returns season options", async () => {
+    const result = {
+      tmdbId: 10,
+      tmdbMediaType: "tv" as const,
+      workType: "series" as const,
+      title: "Series",
+      originalTitle: "Series",
+      overview: "overview",
+      posterPath: null,
+      releaseDate: "2024-01-01",
+      jpWatchPlatforms: [],
+      hasJapaneseRelease: true,
+    };
+    supabaseMocks.invoke.mockResolvedValue({
+      data: [
+        {
+          seasonNumber: 2,
+          title: "Series Season 2",
+          overview: "season overview",
+          posterPath: null,
+          releaseDate: "2025-01-01",
+          episodeCount: 8,
+        },
+      ],
+      error: null,
+    });
+
+    await expect(fetchTmdbSeasonOptions(result)).resolves.toEqual([
+      expect.objectContaining({
+        seasonNumber: 2,
+        title: "Series Season 2",
+      }),
+    ]);
+    expect(supabaseMocks.invoke).toHaveBeenCalledWith("fetch-tmdb-season-options", {
+      body: { result },
+    });
+  });
+
+  test("fetchTmdbWorkDetails passes target and returns details", async () => {
+    const target = {
+      tmdbId: 20,
+      tmdbMediaType: "tv" as const,
+      workType: "season" as const,
+      title: "Season 2",
+      originalTitle: "Original Series",
+      overview: "overview",
+      posterPath: "/poster.jpg",
+      releaseDate: "2025-01-01",
+      seasonNumber: 2,
+      episodeCount: 10,
+      seriesTitle: "Series",
+    };
+    supabaseMocks.invoke.mockResolvedValue({
+      data: {
+        tmdbId: 20,
+        tmdbMediaType: "tv",
+        workType: "season",
+        title: "Season 2",
+        originalTitle: "Original Series",
+        overview: "overview",
+        posterPath: "/poster.jpg",
+        releaseDate: "2025-01-01",
+        genres: ["Drama"],
+        runtimeMinutes: null,
+        typicalEpisodeRuntimeMinutes: 50,
+        episodeCount: 10,
+        seasonCount: null,
+        seasonNumber: 2,
+      },
+      error: null,
+    });
+
+    await expect(fetchTmdbWorkDetails(target)).resolves.toEqual(
+      expect.objectContaining({
+        tmdbId: 20,
+        workType: "season",
+        seasonNumber: 2,
+      }),
+    );
+    expect(supabaseMocks.invoke).toHaveBeenCalledWith("fetch-tmdb-work-details", {
+      body: { target },
+    });
+  });
+
+  test("invoke error is surfaced as an exception", async () => {
+    supabaseMocks.invoke.mockResolvedValue({
+      data: null,
+      error: { message: "edge function failed" },
+    });
+
+    await expect(searchTmdbWorks("query text")).rejects.toThrow(
+      "Supabase function search-tmdb-works failed: edge function failed",
+    );
   });
 });

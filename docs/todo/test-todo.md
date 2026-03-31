@@ -6,21 +6,6 @@
 既存テストの状況を見ると、`AddModal` と `data.ts` の pure function、`tmdb.ts` の recommendation cache / `resolveSeasonTitle` はすでに一定カバーされている。
 次は UI の状態遷移と Supabase / TMDb 境界の非同期分岐を埋める優先度が高い。
 
-## 優先度中: `tmdb.ts` の API 境界テスト追加
-
-- 対象
-  - `src/lib/tmdb.ts`
-- 現状
-  - `resolveSeasonTitle` と recommendation cache 周辺はテスト追加済み
-- 追加で確認したい観点
-  - `searchTmdbWorks`
-  - `fetchTmdbSeasonOptions`
-  - `fetchTmdbWorkDetails`
-  - `supabase.functions.invoke` のエラーが例外化されること
-- メモ
-  - watch provider の正規化や日本公開判定のような整形ロジックは、現在の `src/lib/tmdb.ts` には見当たらない
-  - それらが Supabase Edge Function 側にあるなら、クライアントではなく Function 側のテスト対象として切り分ける
-
 ## テスト基盤の拡張検討
 
 ### Playwright 活用範囲の拡張
