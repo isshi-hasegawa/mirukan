@@ -1,36 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import {
-  DndContext,
-  DragOverlay,
-  MouseSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type DragOverEvent,
-  type DragStartEvent,
-} from "@dnd-kit/core";
+import { DndContext, DragOverlay } from "@dnd-kit/core";
 import { Button } from "@/components/ui/button.tsx";
 import { supabase } from "../../../lib/supabase.ts";
-import {
-  buildMoveToStatusConfirmMessage,
-  getSortOrderForDrop,
-  getTopSortOrder,
-  normalizeBacklogItems,
-  planBacklogItemUpserts,
-  upsertBacklogItemsToStatus,
-  upsertTmdbWork,
-} from "../data.ts";
-import type { TmdbSearchResult } from "../../../lib/tmdb.ts";
-import type { BacklogItem, BacklogStatus, DetailModalState, DropIndicator } from "../types.ts";
-import {
-  createDetailModalState,
-  getClientYFromPointerEvent,
-  getDropIndicator,
-  resolveDropTarget,
-} from "../helpers.ts";
+import type { BacklogItem, BacklogStatus, DetailModalState } from "../types.ts";
+import { createDetailModalState } from "../helpers.ts";
 import { useWindowSize } from "../hooks/useWindowSize.ts";
+import { useBacklogItems } from "../hooks/useBacklogItems.ts";
+import { useBacklogDnd } from "../hooks/useBacklogDnd.ts";
+import { useBacklogActions } from "../hooks/useBacklogActions.ts";
 import { Header } from "./Header.tsx";
 import { KanbanBoard } from "./KanbanBoard.tsx";
 import { AddModal } from "./AddModal.tsx";
@@ -47,13 +25,8 @@ const headerCard =
   "w-full min-w-0 border border-border bg-[rgba(28,28,28,0.95)] backdrop-blur-xl shadow-[0_24px_60px_rgba(0,0,0,0.5)] grid grid-cols-[minmax(0,1fr)_auto] gap-4 items-center px-[18px] py-[14px] rounded-[28px] relative z-10 max-[720px]:rounded-[22px] max-[720px]:p-4";
 
 export function BoardPage({ session }: Props) {
-  const [items, setItems] = useState<BacklogItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [detailModal, setDetailModal] = useState<DetailModalState>(createDetailModalState(null));
-  const [dragItemId, setDragItemId] = useState<string | null>(null);
-  const [dropIndicator, setDropIndicator] = useState<DropIndicator | null>(null);
   const [isRecommendOpen, setIsRecommendOpen] = useState(false);
   const [selectedTabStatus, setSelectedTabStatus] = useState<BacklogStatus>("stacked");
 
@@ -62,190 +35,33 @@ export function BoardPage({ session }: Props) {
 
   const columnRefs = useRef<Partial<Record<BacklogStatus, HTMLElement | null>>>({});
 
-  const mouseSensor = useSensor(MouseSensor, {
-    activationConstraint: { distance: 8 },
-  });
-  const touchSensor = useSensor(TouchSensor, {
-    activationConstraint: { delay: 300, tolerance: 8 },
-  });
-  const sensors = useSensors(mouseSensor, touchSensor);
+  const { items, setItems, isLoading, error, loadItems } = useBacklogItems();
 
-  const handleColumnRef = (status: BacklogStatus, el: HTMLElement | null) => {
-    columnRefs.current[status] = el;
-  };
-
-  const loadItems = useCallback(async () => {
-    const { data, error: fetchError } = await supabase
-      .from("backlog_items")
-      .select(
-        "id, status, primary_platform, note, sort_order, works(id, title, work_type, source_type, tmdb_id, tmdb_media_type, original_title, overview, poster_path, release_date, runtime_minutes, typical_episode_runtime_minutes, duration_bucket, genres, season_count, season_number, focus_required_score, background_fit_score, completion_load_score)",
-      )
-      .order("sort_order")
-      .order("created_at");
-
-    if (fetchError) {
-      setError(fetchError.message);
-    } else {
-      setItems(normalizeBacklogItems(data ?? []));
-      setError(null);
-    }
-    setIsLoading(false);
-  }, []);
-
-  useEffect(() => {
-    void loadItems();
-  }, [loadItems]);
-
-  const handleDragStart = (event: DragStartEvent) => {
-    setDragItemId(event.active.id as string);
-  };
-
-  const handleDragOver = (event: DragOverEvent) => {
-    const { over } = event;
-    if (!over) {
-      setDropIndicator(null);
-      return;
-    }
-
-    const overId = over.id as string;
-    const rect = over.rect;
-    const clientY = getClientYFromPointerEvent(
-      event.activatorEvent as MouseEvent | TouchEvent | null | undefined,
-      rect,
-    );
-    setDropIndicator(getDropIndicator(overId, rect, clientY));
-  };
-
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-    setDragItemId(null);
-    setDropIndicator(null);
-
-    if (!over) return;
-
-    const draggedId = active.id as string;
-    const overId = over.id as string;
-
-    const target = resolveDropTarget(
+  const { dragItemId, dropIndicator, sensors, handleDragStart, handleDragOver, handleDragEnd } =
+    useBacklogDnd({
       items,
-      overId,
-      over.rect,
-      getClientYFromPointerEvent(
-        event.activatorEvent as MouseEvent | TouchEvent | null | undefined,
-        over.rect,
-        "changedTouches",
-      ),
-    );
-    if (!target) return;
+      isMobileLayout,
+      onAfterDrop: loadItems,
+    });
 
-    const { status: targetStatus, targetItemId, side } = target;
-
-    // モバイルレイアウトでは列間ドラッグを無効化
-    if (isMobileLayout) {
-      const dragItem = items.find((i) => i.id === draggedId);
-      if (dragItem && dragItem.status !== targetStatus) return;
-    }
-
-    const sortOrder = getSortOrderForDrop(items, draggedId, targetStatus, targetItemId, side);
-
-    const { error: updateError } = await supabase
-      .from("backlog_items")
-      .update({ status: targetStatus, sort_order: sortOrder })
-      .eq("id", draggedId);
-
-    if (updateError) {
-      window.alert(`ドラッグ移動に失敗しました: ${updateError.message}`);
-      return;
-    }
-
-    await loadItems();
-  };
-
-  const handleDeleteItem = async (itemId: string) => {
-    const { error: deleteError } = await supabase.from("backlog_items").delete().eq("id", itemId);
-
-    if (deleteError) {
-      window.alert(`削除に失敗しました: ${deleteError.message}`);
-      return;
-    }
-
-    if (detailModal.openItemId === itemId) {
-      setDetailModal(createDetailModalState(null));
-    }
-    await loadItems();
-  };
-
-  const handleMarkAsWatched = async (itemId: string) => {
-    const sortOrder = getTopSortOrder(items, "watched");
-
-    const { error: updateError } = await supabase
-      .from("backlog_items")
-      .update({ status: "watched", sort_order: sortOrder })
-      .eq("id", itemId);
-
-    if (updateError) {
-      window.alert(`変更に失敗しました: ${updateError.message}`);
-      return;
-    }
-
-    await loadItems();
-  };
-
-  const handleAddTmdbWorksToStacked = async (results: TmdbSearchResult[]) => {
-    if (results.length === 0) return;
-
-    const workIds: string[] = [];
-    for (const result of results) {
-      const { data, error } = await upsertTmdbWork(result, session.user.id);
-      if (error || !data) {
-        console.error(`追加に失敗: ${result.title}`, error);
-        continue;
+  const { handleDeleteItem, handleMarkAsWatched, handleAddTmdbWorksToStacked } = useBacklogActions({
+    items,
+    session,
+    loadItems,
+    onItemDeleted: (itemId) => {
+      if (detailModal.openItemId === itemId) {
+        setDetailModal(createDetailModalState(null));
       }
-      workIds.push(data.id);
-    }
-
-    if (workIds.length === 0) {
-      window.alert("作品の追加に失敗しました");
-      return;
-    }
-
-    const plan = planBacklogItemUpserts(items, workIds, "stacked");
-    const confirmMessage = buildMoveToStatusConfirmMessage(
-      plan.existingOtherItems,
-      "stacked",
-      `${results.length}件の作品`,
-    );
-    if (confirmMessage && !window.confirm(confirmMessage)) {
-      return;
-    }
-
-    if (plan.actions.length === 0) {
-      window.alert("選択した作品はすでにストックにあります");
-      return;
-    }
-
-    const { error: insertError } = await upsertBacklogItemsToStatus(
-      session.user.id,
-      items,
-      workIds,
-      "stacked",
-      { primaryPlatform: null, note: null },
-    );
-
-    if (insertError) {
-      window.alert(`追加に失敗しました: ${insertError}`);
-      return;
-    }
-
-    await loadItems();
-
-    if (isMobileLayout) {
-      setSelectedTabStatus("stacked");
-    } else {
-      const col = columnRefs.current["stacked"];
-      col?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-    }
-  };
+    },
+    onWorksAdded: () => {
+      if (isMobileLayout) {
+        setSelectedTabStatus("stacked");
+      } else {
+        const col = columnRefs.current["stacked"];
+        col?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+      }
+    },
+  });
 
   const handleOpenDetail = (itemId: string) => {
     setDetailModal(createDetailModalState(itemId));
@@ -267,6 +83,10 @@ export function BoardPage({ session }: Props) {
 
   const handleUpdateItem = (updated: BacklogItem) => {
     setItems((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+  };
+
+  const handleColumnRef = (status: BacklogStatus, el: HTMLElement | null) => {
+    columnRefs.current[status] = el;
   };
 
   if (isLoading) {
