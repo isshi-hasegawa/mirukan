@@ -19,7 +19,7 @@ export default defineConfig({
     },
   },
   staged: {
-    "*": "vp check --fix",
+    "*": "./scripts/check-staged-secrets.sh && vp check --fix",
   },
   lint: { options: { typeAware: true, typeCheck: false } },
 });
