@@ -40,11 +40,10 @@
 - 背景
   - TMDb の `Logos & Attribution` と FAQ では、データや画像を利用するアプリは TMDb を出典として適切に帰属表示する必要がある
   - FAQ では `You shall use the TMDB logo` とされ、`About` または `Credits` 相当の画面に帰属表示を置くよう求めている
-  - 現状のアプリに TMDb 帰属表示やロゴ掲載が十分に実装されているか未確認
+  - 現状、`About` ダイアログに注意文言と TMDb への導線はあるが、TMDb ロゴ掲載は未対応
 - 確認・対応項目
-  - `About` または `Credits` 相当の導線をどこに置くか決める
-  - TMDb 指定の注意文言を表示する
   - TMDb 承認済みロゴのどれを使うか決める
+  - 既存の `About` ダイアログへロゴを置くか、別の `Credits` 導線を用意するか決める
   - ロゴの見せ方が自アプリの主ブランドより強くならないことを確認する
 - 参照
   - https://www.themoviedb.org/about/logos-attribution
