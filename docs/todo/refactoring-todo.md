@@ -11,35 +11,18 @@
 既存テストの状況を見ると、`AddModal` と `data.ts` の pure function、`tmdb.ts` の recommendation cache / `resolveSeasonTitle` はすでに一定カバーされている。
 次は UI の状態遷移と Supabase / TMDb 境界の非同期分岐を埋める優先度が高い。
 
-### 優先度高: `DetailModal` の統合テスト
-
-- 対象
-  - `src/features/backlog/components/DetailModal.tsx`
-- 追加で確認したい観点
-  - ステータス変更成功時に `updateBacklogItem` が正しい `status` / `sort_order` で呼ばれ、`onUpdate` と state reset が走る
-  - ステータス変更失敗時にエラーメッセージを表示し、`onUpdate` しない
-  - note 編集時の `blur` 保存
-  - note 編集時の `Ctrl/Cmd + Enter` 保存
-  - platform 変更時の即時保存
-  - `Escape` による「編集中ならキャンセル」「非編集中なら modal close」の分岐
-
 ### 優先度高: `RecommendModal` / `BoardPage` の挙動テスト
 
 - 対象
   - `src/features/backlog/components/RecommendModal.tsx`
   - `src/features/backlog/components/BoardPage.tsx`
 - 追加で確認したい観点
-  - `RecommendModal`
-    - 推薦ソースに使う item の条件 (`watched` / `watching`、TMDb 作品、season 除外)
-    - backlog 済み作品の除外
-    - 映画は `hasJapaneseRelease` が `true` のものだけ残し、シリーズは残す
-    - checked した作品だけ `onAddTmdbWorksToStacked` に渡す
-    - fetch 失敗時でも close でき、追加は発生しない
-  - `BoardPage`
-    - 初回ロード表示
-    - エラー表示
-    - モバイル時に追加完了後 / recommendation 追加後に `stacked` タブへ戻る
-    - 詳細モーダルを開いている item が削除されたときにモーダルが閉じる
+  - 現状メモ
+    - `RecommendModal` の主要分岐と `BoardPage` のロード / エラー / モバイル復帰 / 削除時モーダル close は追加済み
+  - 追加で確認したい観点
+    - `BoardPage`
+      - recommendation modal 自体の open / close 導線
+      - desktop 時に追加完了後 / recommendation 追加後に `stacked` 列へ scroll する
 
 ### 優先度中: `data.ts` の非同期テスト
 
