@@ -1,0 +1,264 @@
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vite-plus/test";
+import type { BacklogItem, BacklogStatus } from "../types.ts";
+import { BoardPage } from "./BoardPage.tsx";
+
+const hookMocks = vi.hoisted(() => ({
+  windowWidth: 1280,
+  items: [] as BacklogItem[],
+  isLoading: false,
+  error: null as string | null,
+  loadItems: vi.fn().mockResolvedValue(undefined),
+  setItems: vi.fn(),
+  onItemDeleted: null as ((itemId: string) => void) | null,
+  onWorksAdded: null as (() => void) | null,
+  handleDeleteItem: vi.fn(async (itemId: string) => {
+    hookMocks.onItemDeleted?.(itemId);
+  }),
+  handleMarkAsWatched: vi.fn(),
+  handleAddTmdbWorksToStacked: vi.fn(async () => {
+    hookMocks.onWorksAdded?.();
+  }),
+  signOut: vi.fn().mockResolvedValue({ error: null }),
+}));
+
+vi.mock("@dnd-kit/core", () => ({
+  DndContext: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  DragOverlay: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+vi.mock("../../../lib/supabase.ts", () => ({
+  supabase: {
+    auth: {
+      signOut: hookMocks.signOut,
+    },
+  },
+}));
+
+vi.mock("../hooks/useWindowSize.ts", () => ({
+  useWindowSize: () => hookMocks.windowWidth,
+}));
+
+vi.mock("../hooks/useBacklogItems.ts", () => ({
+  useBacklogItems: () => ({
+    items: hookMocks.items,
+    setItems: hookMocks.setItems,
+    isLoading: hookMocks.isLoading,
+    error: hookMocks.error,
+    loadItems: hookMocks.loadItems,
+  }),
+}));
+
+vi.mock("../hooks/useBacklogDnd.ts", () => ({
+  useBacklogDnd: () => ({
+    dragItemId: null,
+    dropIndicator: null,
+    sensors: [],
+    handleDragStart: vi.fn(),
+    handleDragOver: vi.fn(),
+    handleDragEnd: vi.fn(),
+  }),
+}));
+
+vi.mock("../hooks/useBacklogActions.ts", () => ({
+  useBacklogActions: ({
+    onItemDeleted,
+    onWorksAdded,
+  }: {
+    onItemDeleted: (itemId: string) => void;
+    onWorksAdded: () => void;
+  }) => {
+    hookMocks.onItemDeleted = onItemDeleted;
+    hookMocks.onWorksAdded = onWorksAdded;
+
+    return {
+      handleDeleteItem: hookMocks.handleDeleteItem,
+      handleMarkAsWatched: hookMocks.handleMarkAsWatched,
+      handleAddTmdbWorksToStacked: hookMocks.handleAddTmdbWorksToStacked,
+    };
+  },
+}));
+
+vi.mock("./Header.tsx", () => ({
+  Header: ({ onOpenRecommend }: { onOpenRecommend: () => void }) => (
+    <button type="button" onClick={onOpenRecommend}>
+      おすすめを開く
+    </button>
+  ),
+}));
+
+vi.mock("./KanbanBoard.tsx", () => ({
+  KanbanBoard: ({
+    selectedTabStatus,
+    onTabChange,
+    onOpenAddModal,
+    onOpenDetail,
+    onDeleteItem,
+  }: {
+    selectedTabStatus: BacklogStatus;
+    onTabChange: (status: BacklogStatus) => void;
+    onOpenAddModal: () => void;
+    onOpenDetail: (itemId: string) => void;
+    onDeleteItem: (itemId: string) => void;
+  }) => (
+    <div>
+      <p>selected-tab:{selectedTabStatus}</p>
+      <button type="button" onClick={() => onTabChange("watching")}>
+        watching に切り替え
+      </button>
+      <button type="button" onClick={onOpenAddModal}>
+        追加モーダルを開く
+      </button>
+      <button type="button" onClick={() => onOpenDetail("item-1")}>
+        詳細を開く
+      </button>
+      <button type="button" onClick={() => onDeleteItem("item-1")}>
+        item-1 を削除
+      </button>
+    </div>
+  ),
+}));
+
+vi.mock("./AddModal.tsx", () => ({
+  AddModal: ({ onAdded }: { onAdded: () => Promise<void> }) => (
+    <div>
+      <p>add-modal</p>
+      <button type="button" onClick={() => void onAdded()}>
+        追加完了
+      </button>
+    </div>
+  ),
+}));
+
+vi.mock("./RecommendModal.tsx", () => ({
+  RecommendModal: ({
+    onAddTmdbWorksToStacked,
+  }: {
+    onAddTmdbWorksToStacked: (results: Array<{ tmdbId: number }>) => Promise<void>;
+  }) => (
+    <div>
+      <p>recommend-modal</p>
+      <button type="button" onClick={() => void onAddTmdbWorksToStacked([{ tmdbId: 1 }])}>
+        おすすめ追加完了
+      </button>
+    </div>
+  ),
+}));
+
+vi.mock("./DetailModal.tsx", () => ({
+  DetailModal: ({ item }: { item: BacklogItem | null }) => (
+    <div>detail-modal:{item?.id ?? "missing"}</div>
+  ),
+}));
+
+function createItem(overrides: Partial<BacklogItem> = {}): BacklogItem {
+  return {
+    id: "item-1",
+    status: "stacked",
+    primary_platform: null,
+    note: null,
+    sort_order: 1000,
+    works: {
+      id: "work-1",
+      title: "作品1",
+      work_type: "movie",
+      source_type: "tmdb",
+      tmdb_id: 1,
+      tmdb_media_type: "movie",
+      original_title: null,
+      overview: null,
+      poster_path: null,
+      release_date: null,
+      runtime_minutes: null,
+      typical_episode_runtime_minutes: null,
+      duration_bucket: null,
+      genres: [],
+      season_count: null,
+      season_number: null,
+      focus_required_score: null,
+      background_fit_score: null,
+      completion_load_score: null,
+    },
+    ...overrides,
+  };
+}
+
+function renderBoardPage() {
+  return render(
+    <BoardPage session={{ user: { id: "user-1", email: "test@example.com" } } as never} />,
+  );
+}
+
+describe("BoardPage", () => {
+  beforeEach(() => {
+    hookMocks.windowWidth = 1280;
+    hookMocks.items = [createItem()];
+    hookMocks.isLoading = false;
+    hookMocks.error = null;
+    hookMocks.loadItems.mockResolvedValue(undefined);
+    hookMocks.setItems.mockReset();
+    hookMocks.handleDeleteItem.mockClear();
+    hookMocks.handleMarkAsWatched.mockClear();
+    hookMocks.handleAddTmdbWorksToStacked.mockClear();
+    hookMocks.signOut.mockClear();
+    hookMocks.onItemDeleted = null;
+    hookMocks.onWorksAdded = null;
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("初回ロード中は loading 表示を出す", () => {
+    hookMocks.isLoading = true;
+
+    renderBoardPage();
+
+    expect(screen.getByText("backlog を読み込んでいます。")).toBeInTheDocument();
+    expect(screen.getByText("ローカル Supabase の seed データを取得中です。")).toBeInTheDocument();
+  });
+
+  test("取得エラー時はエラーメッセージを表示する", () => {
+    hookMocks.error = "network failed";
+
+    renderBoardPage();
+
+    expect(screen.getByText("backlog の取得でつまずいています。")).toBeInTheDocument();
+    expect(screen.getByText("network failed")).toBeInTheDocument();
+  });
+
+  test("モバイル時は追加完了後と recommendation 追加後に stacked タブへ戻る", async () => {
+    hookMocks.windowWidth = 390;
+    const user = userEvent.setup();
+
+    renderBoardPage();
+
+    expect(screen.getByText("selected-tab:stacked")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "watching に切り替え" }));
+    expect(screen.getByText("selected-tab:watching")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "追加モーダルを開く" }));
+    await user.click(screen.getByRole("button", { name: "追加完了" }));
+    await waitFor(() => expect(screen.getByText("selected-tab:stacked")).toBeInTheDocument());
+
+    await user.click(screen.getByRole("button", { name: "watching に切り替え" }));
+    await user.click(screen.getByRole("button", { name: "おすすめを開く" }));
+    await user.click(screen.getByRole("button", { name: "おすすめ追加完了" }));
+    await waitFor(() => expect(screen.getByText("selected-tab:stacked")).toBeInTheDocument());
+  });
+
+  test("詳細モーダルを開いている item が削除されたらモーダルを閉じる", async () => {
+    const user = userEvent.setup();
+
+    renderBoardPage();
+
+    await user.click(screen.getByRole("button", { name: "詳細を開く" }));
+    expect(screen.getByText("detail-modal:item-1")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "item-1 を削除" }));
+
+    await waitFor(() => expect(screen.queryByText("detail-modal:item-1")).not.toBeInTheDocument());
+  });
+});
