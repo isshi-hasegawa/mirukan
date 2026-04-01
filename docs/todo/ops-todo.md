@@ -26,8 +26,6 @@
   - メジャー更新は分ける
   - テスト系とビルド系はまとめ方を調整する
   - CI が整ってから入れると効果が大きい
-- 関連 idea
-  - `docs/ideas/tooling-ideas.md` の「Renovate」
 
 ### `rollup-plugin-visualizer` 導入検討
 
@@ -37,5 +35,3 @@
   - `@supabase/supabase-js`
   - icon / UI 系依存
   - ルート初期表示に不要なコードが混ざっていないか
-- 関連 idea
-  - `docs/ideas/tooling-ideas.md` の「rollup-plugin-visualizer」

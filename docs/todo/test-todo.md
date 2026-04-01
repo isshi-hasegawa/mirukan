@@ -17,8 +17,6 @@
   - 作品追加モーダルから作品を追加できる
   - カード詳細を編集できる
   - カードを別カラムへ移動できる
-- 関連 idea
-  - `docs/ideas/tooling-ideas.md` の「Playwright」
 
 ### MSW 活用範囲の整理
 
@@ -28,8 +26,6 @@
   - TMDb 検索結果
   - シーズン一覧取得
   - backlog CRUD の成功系 / 失敗系
-- 関連 idea
-  - `docs/ideas/tooling-ideas.md` の「MSW」
 
 ### Vitest Coverage の運用整理
 
@@ -41,5 +37,3 @@
   - `backlog-item-utils.ts` / `work-repository.ts` の未到達分岐
   - `BacklogCard.tsx` / `BoardPage.tsx` / `SeasonPicker.tsx` / `TmdbWorkCard.tsx` の UI 分岐
   - `AboutDialog.tsx` / `UserMenu.tsx` / `PlatformIcon.tsx` の低カバレッジ部分
-- 関連 idea
-  - `docs/ideas/tooling-ideas.md` の「Vitest Coverage」
