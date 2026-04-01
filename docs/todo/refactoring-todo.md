@@ -87,7 +87,8 @@
   - dragged card preview はコンポーネント化済み
   - modal 制御と追加後復帰処理は `useBoardPageState` へ切り出し済み
   - `useBoardPageController.ts` を追加し、`useBacklogItems` / `useBacklogActions` / `useBacklogDnd` / modal state を画面用途ごとに束ねた
-  - 次は layout ごとの差分描画を `KanbanBoard` からさらに切るかを見ればよい
+  - `KanbanBoard` の mobile / desktop 描画は `MobileKanbanBoard.tsx` / `DesktopKanbanBoard.tsx` へ分離した
+  - 次に見るなら stacked 列専用の viewing mode 絞り込み UI を `KanbanColumn` からさらに外すかどうか
   - ただし desktop / mobile を完全に別画面へ分けるほどの抽象化は今の規模では過剰
 
 ## 優先度中: UI から `window.alert` / `window.confirm` を追い出す
