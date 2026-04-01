@@ -34,8 +34,8 @@
   - `src/features/backlog/hooks/useTmdbSearch.ts`
   - `src/features/backlog/hooks/useAddSubmit.ts`
 - 現状
-  - TMDb 検索、シーズン選択、重複判定、手動入力、submit 後の分岐が複数箇所に散っている
-  - UI 上の見た目は分かれていても、追加フロー全体の state machine は見通しづらい
+  - TMDb 検索、シーズン選択、手動入力、submit orchestration の分離は進んだ
+  - 残りは `useAddSubmit.ts` 内の保存分岐と「確認待ち」状態の扱いをどこまで明示化するか
 - 分けたい責務
   - 検索結果一覧と選択 UI
   - TV シリーズのシーズン選択状態
@@ -43,14 +43,11 @@
   - 手動入力フォーム
 - 着手メモ
   - `AddModal` 自体は modal shell と左右ペイン構成に絞る
-  - 「検索選択状態」と「保存実行状態」を hook または reducer で明示化したい
-  - `useAddSubmit.ts` の submit orchestration は helper 抽出で薄くした。次は AddModal 側の state machine 明示化を優先する
-  - AddModal の左右ペイン UI は子コンポーネントへ分離した。次は検索選択状態そのものを reducer 化するかを見極める
-  - `useTmdbSearch.ts` の duplicate 判定とシーズン選択更新は pure helper へ抽出した。次は reducer 導入の是非を state 遷移数ベースで判断する
-  - 選択系 state は reducer 化した。残りは検索 request lifecycle まで reducer に寄せるか、現状のまま副作用境界だけ保つかを見ればよい
-  - 検索結果 / おすすめ結果 / メッセージも reducer 化し、fetch 副作用は `useTmdbSearchRequest.ts` へ分離した
-  - 手動入力 draft と submit message の橋渡しは `useAddFlow.ts` へ集約し、`AddModal.tsx` は modal shell に寄せた
-  - 追加フロー高優先度 TODO はひとまず一段落。次に触るなら `window.confirm` / `window.alert` の UI 基盤移行を優先する
+  - 検索結果 / おすすめ結果 / メッセージ取得は `useTmdbSearchRequest.ts` へ分離済み
+  - 選択系 state は reducer 化し、手動入力 draft と submit message の橋渡しは `useAddFlow.ts` へ集約済み
+  - AddModal の重複追加確認は browser confirm ではなく、追加時だけ確認パネルを出す仕様へ見直した
+  - 事前の duplicate notice やキャンセル後メッセージは削除し、通常時は静かに選ばせる UI に寄せた
+  - 次に触るなら `useAddSubmit.ts` 内の `TVシーズン追加` / `単体作品追加` / `確認待ち` の分岐を、過剰抽象化せずに整理できるかを見る
   - `TVシーズン追加` と `単体作品追加` の保存分岐は分けても自然だが、work / backlog 保存を汎用 helper 化しすぎるのは避けたい
 
 ## 優先度中: 詳細モーダルの編集 UI 部品化
@@ -101,17 +98,17 @@
   - `src/features/backlog/hooks/useAddSubmit.ts`
   - そのほか backlog 操作フロー
 - 現状
-  - callback 注入の入口は作ったが、既定実装はまだ browser 標準 API
-  - UI と hook の境界は少し改善したが、shadcn/ui ベースの確認 UI には未移行
+  - backlog 画面では UI overlay 経由の confirm / alert が入っている
+  - ただし hook の既定実装にはまだ browser 標準 API が残っている
 - 分けたい責務
   - ドメインロジック
   - 確認ダイアログの表示
   - toast / form message / error presentation
 - 着手メモ
-  - callback 注入での分離は着手済み
-  - backlog 画面では `useBacklogFeedback.tsx` を導入し、browser 標準 API ではなく UI overlay 経由で confirm / alert を出すようにした
-  - AddModal の重複追加確認は browser confirm ではなく、モーダル内で「そのままにする / ストックへ戻す」を選べる仕様へ見直した
-  - 次は AddModal 以外の画面遷移や表示優先度を見ながら、通知の auto dismiss や queue 制御が要るかを判断する
+  - callback 注入での分離と `useBacklogFeedback.tsx` 導入までは完了
+  - AddModal では `window.confirm` 依存を外し、モーダル内確認パネルへ置き換え済み
+  - 次は `browserBacklogFeedback` を既定実装として残す必要がまだあるかを見直す
+  - AddModal 以外の画面遷移や表示優先度を見ながら、通知の auto dismiss や queue 制御が要るかを判断する
   - confirm 文言組み立ては pure function のまま残す
   - UI 基盤への置き換えはリファクタリングとして妥当で、追加フロー整理と並行して進めやすい
 
@@ -136,7 +133,6 @@
 
 - 続ける価値が高い
   - `useAddSubmit.ts` の submit orchestration 整理
-  - `AddModal.tsx` の表示責務整理
   - `DetailModal.tsx` の note / platform UI 切り出し
   - `window.alert` / `window.confirm` の UI 基盤移行
 - 慎重に進める
