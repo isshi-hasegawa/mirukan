@@ -6,38 +6,11 @@ import {
 } from "../../../lib/tmdb.ts";
 import type { TmdbSearchResult, TmdbSeasonOption } from "../../../lib/tmdb.ts";
 import type { BacklogItem } from "../types.ts";
-import { statusLabels } from "../constants.ts";
-
-type DuplicateState = {
-  notice: string | null;
-  canAddToStacked: boolean;
-};
-
-function findMatchingTvItem(items: BacklogItem[], result: TmdbSearchResult, seasonNumber: number) {
-  return items.find((item) => {
-    const work = item.works;
-    if (work?.tmdb_id !== result.tmdbId || work.tmdb_media_type !== result.tmdbMediaType) {
-      return false;
-    }
-
-    return seasonNumber === 1
-      ? work.work_type === "series"
-      : work.work_type === "season" && work.season_number === seasonNumber;
-  });
-}
-
-function getStackedSeasonNumbers(
-  items: BacklogItem[],
-  result: TmdbSearchResult,
-  seasonNumbers: number[],
-) {
-  if (result.tmdbMediaType !== "tv") return [];
-
-  return seasonNumbers.filter((seasonNumber) => {
-    const existingItem = findMatchingTvItem(items, result, seasonNumber);
-    return existingItem?.status === "stacked";
-  });
-}
+import {
+  buildTvSelectionState,
+  getStackedSeasonNumbers,
+  mergeSeasonNumbers,
+} from "../tmdb-search-state.ts";
 
 function isHiddenSearchResult(items: BacklogItem[], result: TmdbSearchResult) {
   if (result.tmdbMediaType === "movie" && result.workType === "movie") {
@@ -153,68 +126,6 @@ function filterVisibleRecommendations(items: BacklogItem[], results: TmdbSearchR
   );
 }
 
-function buildDuplicateState(
-  items: BacklogItem[],
-  result: TmdbSearchResult,
-  seasonNumbers: number[] = [],
-): DuplicateState {
-  const matches = items.filter((item) => {
-    const w = item.works;
-    if (w?.tmdb_id !== result.tmdbId || w?.tmdb_media_type !== result.tmdbMediaType) return false;
-    if (result.tmdbMediaType === "tv") {
-      return seasonNumbers.some((seasonNumber) =>
-        seasonNumber === 1
-          ? w?.work_type === "series"
-          : w?.work_type === "season" && w?.season_number === seasonNumber,
-      );
-    }
-    return w?.work_type === result.workType;
-  });
-
-  if (matches.length === 0) {
-    return { notice: null, canAddToStacked: true };
-  }
-
-  const labels = matches.map((item) => statusLabels[item.status]);
-  const unique = [...new Set(labels)];
-  const canRestoreToStacked = matches.some((item) => item.status !== "stacked");
-
-  if (result.tmdbMediaType === "tv") {
-    const duplicatedSeasons = seasonNumbers.filter((seasonNumber) =>
-      items.some((item) => {
-        const work = item.works;
-        if (work?.tmdb_id !== result.tmdbId || work.tmdb_media_type !== result.tmdbMediaType) {
-          return false;
-        }
-        return seasonNumber === 1
-          ? work.work_type === "series"
-          : work.work_type === "season" && work.season_number === seasonNumber;
-      }),
-    );
-    const canAddAnySelectedSeason = seasonNumbers.some((seasonNumber) => {
-      const existingItem = findMatchingTvItem(items, result, seasonNumber);
-
-      return !existingItem || existingItem.status !== "stacked";
-    });
-    const seasonLabel = duplicatedSeasons
-      .map((seasonNumber) => `シーズン${seasonNumber}`)
-      .join("・");
-    return {
-      notice: canRestoreToStacked
-        ? `${seasonLabel}はすでに「${unique.join("・")}」にあります。追加するとストックに戻せます。`
-        : `${seasonLabel}はすでにストックにあります。`,
-      canAddToStacked: canAddAnySelectedSeason,
-    };
-  }
-
-  return {
-    notice: canRestoreToStacked
-      ? `すでに「${unique.join("・")}」にあります。追加するとストックに戻せます。`
-      : "すでにストックにあります。",
-    canAddToStacked: canRestoreToStacked,
-  };
-}
-
 const SEARCH_DEBOUNCE_MS = 250;
 
 type UseTmdbSearchOptions = {
@@ -246,9 +157,10 @@ export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
     selectedTmdbResult?.tmdbMediaType === "tv"
       ? getStackedSeasonNumbers(items, selectedTmdbResult, allSeasonNumbers)
       : [];
-  const selectedSeasonNumbers = [
-    ...new Set([...selectedSeasonNumbersState, ...stackedSeasonNumbers]),
-  ].sort((left, right) => left - right);
+  const selectedSeasonNumbers = mergeSeasonNumbers(
+    selectedSeasonNumbersState,
+    stackedSeasonNumbers,
+  );
   const canToggleAllSeasons =
     isTvSelection &&
     allSeasonNumbers.some((seasonNumber) => !stackedSeasonNumbers.includes(seasonNumber));
@@ -353,19 +265,19 @@ export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
     if (result.tmdbMediaType !== "tv") {
       setIsLoadingSeasons(false);
       setSelectedSeasonNumbers([]);
-      const duplicateState = buildDuplicateState(items, result);
-      setDuplicateNotice(duplicateState.notice);
-      setCanAddSelectionToStacked(duplicateState.canAddToStacked);
+      const nextState = buildTvSelectionState(items, result, []);
+      setDuplicateNotice(nextState.duplicateNotice);
+      setCanAddSelectionToStacked(nextState.canAddSelectionToStacked);
       return;
     }
 
     const nextSelectedSeasonNumbers = getStackedSeasonNumbers(items, result, [1]).includes(1)
       ? []
       : [1];
+    const nextState = buildTvSelectionState(items, result, [1]);
     setSelectedSeasonNumbers(nextSelectedSeasonNumbers);
-    const duplicateState = buildDuplicateState(items, result, [1]);
-    setDuplicateNotice(duplicateState.notice);
-    setCanAddSelectionToStacked(duplicateState.canAddToStacked);
+    setDuplicateNotice(nextState.duplicateNotice);
+    setCanAddSelectionToStacked(nextState.canAddSelectionToStacked);
 
     setIsLoadingSeasons(true);
     try {
@@ -389,13 +301,14 @@ export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
     const nextSelectedSeasonNumbers = selectedSeasonNumbersState.includes(seasonNumber)
       ? selectedSeasonNumbersState.filter((value) => value !== seasonNumber)
       : [...selectedSeasonNumbersState, seasonNumber].sort((left, right) => left - right);
-    const next = [...new Set([...nextSelectedSeasonNumbers, ...stackedSeasonNumbers])].sort(
-      (left, right) => left - right,
+    const nextState = buildTvSelectionState(
+      items,
+      selectedTmdbResult,
+      mergeSeasonNumbers(nextSelectedSeasonNumbers, stackedSeasonNumbers),
     );
     setSelectedSeasonNumbers(nextSelectedSeasonNumbers);
-    const duplicateState = buildDuplicateState(items, selectedTmdbResult, next);
-    setDuplicateNotice(duplicateState.notice);
-    setCanAddSelectionToStacked(duplicateState.canAddToStacked);
+    setDuplicateNotice(nextState.duplicateNotice);
+    setCanAddSelectionToStacked(nextState.canAddSelectionToStacked);
   };
 
   const toggleAllSeasons = () => {
@@ -411,13 +324,14 @@ export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
     const nextSelectedSeasonNumbers = hasAllToggleableSeasonsSelected
       ? []
       : toggleableSeasonNumbers;
-    const next = [...new Set([...nextSelectedSeasonNumbers, ...stackedSeasonNumbers])].sort(
-      (left, right) => left - right,
+    const nextState = buildTvSelectionState(
+      items,
+      selectedTmdbResult,
+      mergeSeasonNumbers(nextSelectedSeasonNumbers, stackedSeasonNumbers),
     );
     setSelectedSeasonNumbers(nextSelectedSeasonNumbers);
-    const duplicateState = buildDuplicateState(items, selectedTmdbResult, next);
-    setDuplicateNotice(duplicateState.notice);
-    setCanAddSelectionToStacked(duplicateState.canAddToStacked);
+    setDuplicateNotice(nextState.duplicateNotice);
+    setCanAddSelectionToStacked(nextState.canAddSelectionToStacked);
   };
 
   const handleQueryChange = (query: string) => {

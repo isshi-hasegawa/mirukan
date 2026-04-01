@@ -1,0 +1,148 @@
+import { setupTestLifecycle } from "../../test/test-lifecycle.ts";
+import {
+  buildDuplicateState,
+  buildTvSelectionState,
+  getStackedSeasonNumbers,
+  mergeSeasonNumbers,
+} from "./tmdb-search-state.ts";
+import type { BacklogItem } from "./types.ts";
+import type { TmdbSearchResult } from "../../lib/tmdb.ts";
+
+setupTestLifecycle();
+
+function createSearchResult(
+  overrides: Partial<TmdbSearchResult> & Pick<TmdbSearchResult, "tmdbId" | "title">,
+): TmdbSearchResult {
+  return {
+    tmdbId: overrides.tmdbId,
+    tmdbMediaType: "tv",
+    workType: "series",
+    title: overrides.title,
+    originalTitle: null,
+    overview: null,
+    posterPath: null,
+    releaseDate: "2024-01-01",
+    ...overrides,
+  };
+}
+
+function createItem(overrides: Partial<BacklogItem> = {}): BacklogItem {
+  return {
+    id: "item-1",
+    status: "stacked",
+    primary_platform: null,
+    note: null,
+    sort_order: 1000,
+    works: {
+      id: "work-1",
+      title: "既存作品",
+      work_type: "series",
+      source_type: "tmdb",
+      tmdb_id: 1,
+      tmdb_media_type: "tv",
+      original_title: null,
+      overview: null,
+      poster_path: null,
+      release_date: "2024-01-01",
+      runtime_minutes: null,
+      typical_episode_runtime_minutes: null,
+      duration_bucket: null,
+      genres: [],
+      season_count: 2,
+      season_number: null,
+      focus_required_score: null,
+      background_fit_score: null,
+      completion_load_score: null,
+    },
+    ...overrides,
+  };
+}
+
+describe("mergeSeasonNumbers", () => {
+  test("選択済みとストック済みを重複なく昇順でまとめる", () => {
+    expect(mergeSeasonNumbers([3, 1, 2], [2, 4])).toEqual([1, 2, 3, 4]);
+  });
+});
+
+describe("getStackedSeasonNumbers", () => {
+  test("ストック済みシーズンだけを返す", () => {
+    const result = createSearchResult({ tmdbId: 10, title: "シリーズ" });
+    const items = [
+      createItem({
+        works: { ...createItem().works!, tmdb_id: 10, season_count: 3 },
+      }),
+      createItem({
+        id: "item-2",
+        works: {
+          ...createItem().works!,
+          id: "work-2",
+          tmdb_id: 10,
+          work_type: "season",
+          season_number: 2,
+        },
+      }),
+      createItem({
+        id: "item-3",
+        status: "watched",
+        works: {
+          ...createItem().works!,
+          id: "work-3",
+          tmdb_id: 10,
+          work_type: "season",
+          season_number: 3,
+        },
+      }),
+    ];
+
+    expect(getStackedSeasonNumbers(items, result, [1, 2, 3])).toEqual([1, 2]);
+  });
+});
+
+describe("buildDuplicateState", () => {
+  test("視聴済みシーズンはストックへ戻せる文言を返す", () => {
+    const result = createSearchResult({ tmdbId: 20, title: "シリーズ" });
+    const items = [
+      createItem({
+        status: "watched",
+        works: { ...createItem().works!, tmdb_id: 20 },
+      }),
+    ];
+
+    expect(buildDuplicateState(items, result, [1])).toEqual({
+      notice: "シーズン1はすでに「視聴済み」にあります。追加するとストックに戻せます。",
+      canAddToStacked: true,
+    });
+  });
+
+  test("ストック済みシーズンだけなら追加不可を返す", () => {
+    const result = createSearchResult({ tmdbId: 21, title: "シリーズ" });
+    const items = [
+      createItem({
+        works: { ...createItem().works!, tmdb_id: 21 },
+      }),
+    ];
+
+    expect(buildDuplicateState(items, result, [1])).toEqual({
+      notice: "シーズン1はすでにストックにあります。",
+      canAddToStacked: false,
+    });
+  });
+});
+
+describe("buildTvSelectionState", () => {
+  test("選択シーズンに応じた duplicate 状態をまとめる", () => {
+    const result = createSearchResult({ tmdbId: 30, title: "シリーズ" });
+    const items = [
+      createItem({
+        status: "watched",
+        works: { ...createItem().works!, tmdb_id: 30 },
+      }),
+    ];
+
+    expect(buildTvSelectionState(items, result, [1])).toEqual({
+      selectedSeasonNumbers: [1],
+      duplicateNotice: "シーズン1はすでに「視聴済み」にあります。追加するとストックに戻せます。",
+      canAddSelectionToStacked: true,
+    });
+  });
+});
