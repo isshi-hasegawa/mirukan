@@ -6,7 +6,6 @@ import {
   resolveAddFlowDraft,
 } from "../add-flow-state.ts";
 import type { BacklogItem } from "../types.ts";
-import { browserBacklogFeedback, type BacklogFeedback } from "../ui-feedback.ts";
 import { useAddSubmit } from "./useAddSubmit.ts";
 import { useTmdbSearch } from "./useTmdbSearch.ts";
 
@@ -15,7 +14,6 @@ type UseAddFlowOptions = {
   session: Session;
   onClose: () => void;
   onAdded: () => Promise<void>;
-  feedback?: BacklogFeedback;
 };
 
 export function useAddFlow({
@@ -23,7 +21,6 @@ export function useAddFlow({
   session,
   onClose,
   onAdded,
-  feedback = browserBacklogFeedback,
 }: UseAddFlowOptions) {
   const [draftState, dispatchDraft] = useReducer(addFlowDraftReducer, initialAddFlowDraftState);
   const {
@@ -57,7 +54,14 @@ export function useAddFlow({
     ((isTvSelection && selectedSeasonNumbers.length === 0) || !canAddSelectionToStacked);
   const selectedTmdbSubmitLabel = canAddSelectionToStacked ? "ストックに追加" : "ストック済み";
 
-  const { formMessage, clearFormMessage, handleSubmit } = useAddSubmit({
+  const {
+    formMessage,
+    pendingSaveMessage,
+    clearSubmissionState,
+    confirmPendingSave,
+    cancelPendingSave,
+    handleSubmit,
+  } = useAddSubmit({
     items,
     session,
     selectedTmdbResult,
@@ -70,51 +74,50 @@ export function useAddFlow({
     note: draftState.note,
     onClose,
     onAdded,
-    feedback,
   });
 
   const handleQueryChange = (query: string) => {
-    clearFormMessage();
+    clearSubmissionState();
     handleTmdbQueryChange(query);
   };
 
   const handleCompositionEnd = (query: string) => {
-    clearFormMessage();
+    clearSubmissionState();
     handleTmdbCompositionEnd(query);
   };
 
   const handleSelectResult = (result: NonNullable<typeof selectedTmdbResult>) => {
-    clearFormMessage();
+    clearSubmissionState();
     void handleTmdbSelectResult(result);
   };
 
   const toggleSeasonSelection = (seasonNumber: number) => {
-    clearFormMessage();
+    clearSubmissionState();
     toggleTmdbSeasonSelection(seasonNumber);
   };
 
   const toggleAllSeasons = () => {
-    clearFormMessage();
+    clearSubmissionState();
     toggleTmdbAllSeasons();
   };
 
   const setManualTitle = (manualTitle: string) => {
-    clearFormMessage();
+    clearSubmissionState();
     dispatchDraft({ type: "set_manual_title", manualTitle });
   };
 
   const setWorkType = (workType: typeof draftState.workType) => {
-    clearFormMessage();
+    clearSubmissionState();
     dispatchDraft({ type: "set_work_type", workType });
   };
 
   const setPrimaryPlatform = (primaryPlatform: string) => {
-    clearFormMessage();
+    clearSubmissionState();
     dispatchDraft({ type: "set_primary_platform", primaryPlatform });
   };
 
   const setNote = (note: string) => {
-    clearFormMessage();
+    clearSubmissionState();
     dispatchDraft({ type: "set_note", note });
   };
 
@@ -146,12 +149,15 @@ export function useAddFlow({
     primaryPlatform: draftState.primaryPlatform,
     note: draftState.note,
     formMessage,
+    pendingSaveMessage,
     isSelectedTmdbSubmitDisabled,
     selectedTmdbSubmitLabel,
     setManualTitle,
     setWorkType,
     setPrimaryPlatform,
     setNote,
+    confirmPendingSave,
+    cancelPendingSave,
     handleSubmit,
   };
 }

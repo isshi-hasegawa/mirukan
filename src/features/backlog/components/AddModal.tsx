@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { BacklogItem } from "../types.ts";
-import { browserBacklogFeedback, type BacklogFeedback } from "../ui-feedback.ts";
 import { useAddFlow } from "../hooks/useAddFlow.ts";
 import { AddModalDetailsPane } from "./AddModalDetailsPane.tsx";
 import { AddModalSearchPane } from "./AddModalSearchPane.tsx";
@@ -11,16 +10,9 @@ type Props = {
   session: Session;
   onClose: () => void;
   onAdded: () => Promise<void>;
-  feedback?: BacklogFeedback;
 };
 
-export function AddModal({
-  items,
-  session,
-  onClose,
-  onAdded,
-  feedback = browserBacklogFeedback,
-}: Props) {
+export function AddModal({ items, session, onClose, onAdded }: Props) {
   const {
     searchQuery,
     searchResults,
@@ -49,19 +41,21 @@ export function AddModal({
     primaryPlatform,
     note,
     formMessage,
+    pendingSaveMessage,
     isSelectedTmdbSubmitDisabled,
     selectedTmdbSubmitLabel,
     setManualTitle,
     setWorkType,
     setPrimaryPlatform,
     setNote,
+    confirmPendingSave,
+    cancelPendingSave,
     handleSubmit,
   } = useAddFlow({
     items,
     session,
     onClose,
     onAdded,
-    feedback,
   });
 
   useEffect(() => {
@@ -109,6 +103,7 @@ export function AddModal({
             isLoadingSeasons={isLoadingSeasons}
             duplicateNotice={duplicateNotice}
             formMessage={formMessage}
+            pendingSaveMessage={pendingSaveMessage}
             isTvSelection={isTvSelection}
             canToggleAllSeasons={canToggleAllSeasons}
             hasAllSeasonsSelected={hasAllSeasonsSelected}
@@ -120,6 +115,8 @@ export function AddModal({
             onSelectResult={handleSelectResult}
             onToggleSeason={toggleSeasonSelection}
             onToggleAllSeasons={toggleAllSeasons}
+            onConfirmPendingSave={() => void confirmPendingSave()}
+            onCancelPendingSave={cancelPendingSave}
           />
 
           <AddModalDetailsPane
@@ -129,10 +126,13 @@ export function AddModal({
             note={note}
             primaryPlatform={primaryPlatform}
             formMessage={formMessage}
+            pendingSaveMessage={pendingSaveMessage}
             onChangeTitle={setManualTitle}
             onChangeWorkType={setWorkType}
             onChangePrimaryPlatform={setPrimaryPlatform}
             onChangeNote={setNote}
+            onConfirmPendingSave={() => void confirmPendingSave()}
+            onCancelPendingSave={cancelPendingSave}
           />
         </form>
       </section>

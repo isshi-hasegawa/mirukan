@@ -8,7 +8,6 @@ import {
   upsertTmdbWork,
 } from "../work-repository.ts";
 import type { BacklogItem, WorkType } from "../types.ts";
-import { browserBacklogFeedback, type BacklogFeedback } from "../ui-feedback.ts";
 import {
   buildSelectedSubject,
   buildStackedBacklogOptions,
@@ -28,7 +27,15 @@ type UseAddSubmitOptions = {
   note: string;
   onClose: () => void;
   onAdded: () => Promise<void>;
-  feedback?: BacklogFeedback;
+};
+
+type PendingStackedSave = {
+  message: string;
+  workIds: string[];
+  backlogOptions: {
+    note: string | null;
+    primaryPlatform: string | null;
+  };
 };
 
 export function useAddSubmit({
@@ -44,11 +51,50 @@ export function useAddSubmit({
   note,
   onClose,
   onAdded,
-  feedback = browserBacklogFeedback,
 }: UseAddSubmitOptions) {
   const [formMessage, setFormMessage] = useState("");
+  const [pendingSave, setPendingSave] = useState<PendingStackedSave | null>(null);
 
-  const clearFormMessage = () => setFormMessage("");
+  const clearSubmissionState = () => {
+    setFormMessage("");
+    setPendingSave(null);
+  };
+
+  const saveToStacked = async (payload: Omit<PendingStackedSave, "message">) => {
+    const backlogResult = await upsertBacklogItemsToStatus(
+      session.user.id,
+      items,
+      payload.workIds,
+      "stacked",
+      payload.backlogOptions,
+    );
+
+    if (backlogResult.error) {
+      setFormMessage(`カードの保存に失敗しました: ${backlogResult.error}`);
+      return;
+    }
+
+    setPendingSave(null);
+    onClose();
+    await onAdded();
+  };
+
+  const confirmPendingSave = async () => {
+    if (!pendingSave) {
+      return;
+    }
+
+    setFormMessage("ストックへ戻しています...");
+    await saveToStacked({
+      workIds: pendingSave.workIds,
+      backlogOptions: pendingSave.backlogOptions,
+    });
+  };
+
+  const cancelPendingSave = () => {
+    setPendingSave(null);
+    setFormMessage("既存カードはそのままにしました。");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,6 +106,7 @@ export function useAddSubmit({
       resolvedTitle,
     });
     const backlogOptions = buildStackedBacklogOptions(primaryPlatform, note);
+    setPendingSave(null);
 
     if (!title) {
       setFormMessage("タイトルを入力してください。");
@@ -90,27 +137,27 @@ export function useAddSubmit({
         workIds: result.workIds,
         subject,
         emptyMessage: "選択したシーズンはすでにストックにあります。",
-        feedback,
       });
-      if (!confirmResult.shouldSave) {
+
+      if (confirmResult.type === "empty") {
         setFormMessage(confirmResult.message);
         return;
       }
 
-      const upsertResult = await upsertBacklogItemsToStatus(
-        session.user.id,
-        items,
-        result.workIds,
-        "stacked",
-        backlogOptions,
-      );
-      if (upsertResult.error) {
-        setFormMessage(`シーズンの保存に失敗しました: ${upsertResult.error}`);
+      if (confirmResult.type === "confirm") {
+        setFormMessage("");
+        setPendingSave({
+          message: confirmResult.message,
+          workIds: result.workIds,
+          backlogOptions,
+        });
         return;
       }
 
-      onClose();
-      await onAdded();
+      await saveToStacked({
+        workIds: result.workIds,
+        backlogOptions,
+      });
       return;
     }
 
@@ -147,29 +194,35 @@ export function useAddSubmit({
       workIds: [work.id],
       subject,
       emptyMessage: "すでにストックにあります。",
-      feedback,
     });
-    if (!confirmResult.shouldSave) {
+
+    if (confirmResult.type === "empty") {
       setFormMessage(confirmResult.message);
       return;
     }
 
-    const backlogResult = await upsertBacklogItemsToStatus(
-      session.user.id,
-      items,
-      [work.id],
-      "stacked",
-      backlogOptions,
-    );
-
-    if (backlogResult.error) {
-      setFormMessage(`カードの保存に失敗しました: ${backlogResult.error}`);
+    if (confirmResult.type === "confirm") {
+      setFormMessage("");
+      setPendingSave({
+        message: confirmResult.message,
+        workIds: [work.id],
+        backlogOptions,
+      });
       return;
     }
 
-    onClose();
-    await onAdded();
+    await saveToStacked({
+      workIds: [work.id],
+      backlogOptions,
+    });
   };
 
-  return { formMessage, clearFormMessage, handleSubmit };
+  return {
+    formMessage,
+    pendingSaveMessage: pendingSave?.message ?? null,
+    clearSubmissionState,
+    confirmPendingSave,
+    cancelPendingSave,
+    handleSubmit,
+  };
 }

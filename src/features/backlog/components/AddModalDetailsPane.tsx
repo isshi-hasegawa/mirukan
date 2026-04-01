@@ -11,10 +11,13 @@ type Props = {
   note: string;
   primaryPlatform: string;
   formMessage: string;
+  pendingSaveMessage: string | null;
   onChangeTitle: (title: string) => void;
   onChangeWorkType: (workType: "movie" | "series") => void;
   onChangePrimaryPlatform: (platform: string) => void;
   onChangeNote: (note: string) => void;
+  onConfirmPendingSave: () => void;
+  onCancelPendingSave: () => void;
 };
 
 export function AddModalDetailsPane({
@@ -24,10 +27,13 @@ export function AddModalDetailsPane({
   note,
   primaryPlatform,
   formMessage,
+  pendingSaveMessage,
   onChangeTitle,
   onChangeWorkType,
   onChangePrimaryPlatform,
   onChangeNote,
+  onConfirmPendingSave,
+  onCancelPendingSave,
 }: Props) {
   const noteId = useId();
 
@@ -96,6 +102,19 @@ export function AddModalDetailsPane({
           onChange={(e) => onChangeNote(e.target.value)}
         />
       </div>
+      {pendingSaveMessage && !selectedTmdbResult ? (
+        <div className="rounded-[20px] border border-[rgba(191,90,54,0.35)] bg-[rgba(191,90,54,0.08)] px-3.5 py-3">
+          <p className="text-sm leading-6 text-foreground">{pendingSaveMessage}</p>
+          <div className="mt-3 flex justify-end gap-2.5">
+            <Button type="button" variant="outline" onClick={onCancelPendingSave}>
+              そのままにする
+            </Button>
+            <Button type="button" onClick={onConfirmPendingSave}>
+              ストックへ戻す
+            </Button>
+          </div>
+        </div>
+      ) : null}
       {!selectedTmdbResult && (
         <div className="flex justify-end items-center gap-3 pt-1">
           {formMessage && (

@@ -20,6 +20,7 @@ type Props = {
   isLoadingSeasons: boolean;
   duplicateNotice: string | null;
   formMessage: string;
+  pendingSaveMessage: string | null;
   isTvSelection: boolean;
   canToggleAllSeasons: boolean;
   hasAllSeasonsSelected: boolean;
@@ -31,7 +32,48 @@ type Props = {
   onSelectResult: (result: TmdbSearchResult) => void;
   onToggleSeason: (seasonNumber: number) => void;
   onToggleAllSeasons: () => void;
+  onConfirmPendingSave: () => void;
+  onCancelPendingSave: () => void;
 };
+
+type SelectedResultFooterProps = Omit<
+  Props,
+  | "searchInputRef"
+  | "isComposingRef"
+  | "searchQuery"
+  | "recommendedResults"
+  | "searchResults"
+  | "recommendedMessage"
+  | "searchMessage"
+  | "selectedTmdbResult"
+  | "onQueryChange"
+  | "onCompositionEnd"
+  | "onSelectResult"
+>;
+
+function PendingSaveNotice({
+  message,
+  onConfirm,
+  onCancel,
+}: {
+  message: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="rounded-[20px] border border-[rgba(191,90,54,0.35)] bg-[rgba(191,90,54,0.08)] px-3.5 py-3">
+      <p className="text-sm leading-6 text-foreground">{message}</p>
+      <div className="mt-3 flex justify-end gap-2.5">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          そのままにする
+        </Button>
+        <Button type="button" onClick={onConfirm}>
+          ストックへ戻す
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 function SelectedResultFooter({
   isTvSelection,
@@ -44,11 +86,14 @@ function SelectedResultFooter({
   selectedSeasonSummary,
   duplicateNotice,
   formMessage,
+  pendingSaveMessage,
   isSelectedTmdbSubmitDisabled,
   selectedTmdbSubmitLabel,
   onToggleSeason,
   onToggleAllSeasons,
-}: Omit<Props, "searchInputRef" | "isComposingRef" | "searchQuery" | "recommendedResults" | "searchResults" | "recommendedMessage" | "searchMessage" | "selectedTmdbResult" | "onQueryChange" | "onCompositionEnd" | "onSelectResult">) {
+  onConfirmPendingSave,
+  onCancelPendingSave,
+}: SelectedResultFooterProps) {
   return (
     <div className="grid gap-2.5">
       {isTvSelection && (
@@ -69,6 +114,13 @@ function SelectedResultFooter({
           {duplicateNotice}
         </p>
       )}
+      {pendingSaveMessage ? (
+        <PendingSaveNotice
+          message={pendingSaveMessage}
+          onConfirm={onConfirmPendingSave}
+          onCancel={onCancelPendingSave}
+        />
+      ) : null}
       <div className="flex items-end justify-end gap-3">
         {formMessage && (
           <p className="text-muted-foreground text-sm text-right" aria-live="polite">
@@ -104,6 +156,7 @@ export function AddModalSearchPane({
   isLoadingSeasons,
   duplicateNotice,
   formMessage,
+  pendingSaveMessage,
   isTvSelection,
   canToggleAllSeasons,
   hasAllSeasonsSelected,
@@ -115,6 +168,8 @@ export function AddModalSearchPane({
   onSelectResult,
   onToggleSeason,
   onToggleAllSeasons,
+  onConfirmPendingSave,
+  onCancelPendingSave,
 }: Props) {
   const displayResults = searchQuery.trim() === "" ? recommendedResults : searchResults;
   const emptyMessage = searchQuery.trim() === "" ? recommendedMessage : searchMessage;
@@ -175,10 +230,13 @@ export function AddModalSearchPane({
                         selectedSeasonSummary={selectedSeasonSummary}
                         duplicateNotice={duplicateNotice}
                         formMessage={formMessage}
+                        pendingSaveMessage={pendingSaveMessage}
                         isSelectedTmdbSubmitDisabled={isSelectedTmdbSubmitDisabled}
                         selectedTmdbSubmitLabel={selectedTmdbSubmitLabel}
                         onToggleSeason={onToggleSeason}
                         onToggleAllSeasons={onToggleAllSeasons}
+                        onConfirmPendingSave={onConfirmPendingSave}
+                        onCancelPendingSave={onCancelPendingSave}
                       />
                     )
                   ) : null

@@ -97,61 +97,46 @@ describe("buildStackedBacklogOptions", () => {
 });
 
 describe("confirmStackedSave", () => {
-  test("既存カードの移動確認をキャンセルしたときは保存しない", async () => {
-    const confirm = vi.fn().mockResolvedValue(false);
+  test("既存カードがあれば確認用メッセージを返す", () => {
     const items = [createItem("item-1", "watched", "work-1")];
 
-    await expect(
+    expect(
       confirmStackedSave({
         items,
         workIds: ["work-1"],
         subject: "「作品タイトル」",
         emptyMessage: "すでにストックにあります。",
-        feedback: { confirm },
       }),
-    ).resolves.toEqual({
-      shouldSave: false,
-      message: "既存カードはそのままにしました。",
+    ).toEqual({
+      type: "confirm",
+      message: "「作品タイトル」はすでに「視聴済み」にあります。ストックに戻しますか？",
     });
-
-    expect(confirm).toHaveBeenCalledWith(
-      "「作品タイトル」はすでに「視聴済み」にあります。ストックに戻しますか？",
-    );
   });
 
-  test("保存対象がなければ emptyMessage を返す", async () => {
-    const confirm = vi.fn();
+  test("保存対象がなければ emptyMessage を返す", () => {
     const items = [createItem("item-1", "stacked", "work-1")];
 
-    await expect(
+    expect(
       confirmStackedSave({
         items,
         workIds: ["work-1"],
         subject: "「作品タイトル」",
         emptyMessage: "すでにストックにあります。",
-        feedback: { confirm },
       }),
-    ).resolves.toEqual({
-      shouldSave: false,
+    ).toEqual({
+      type: "empty",
       message: "すでにストックにあります。",
     });
-
-    expect(confirm).not.toHaveBeenCalled();
   });
 
-  test("新規追加があれば保存を続行する", async () => {
-    const confirm = vi.fn();
-
-    await expect(
+  test("新規追加があれば保存を続行する", () => {
+    expect(
       confirmStackedSave({
         items: [],
         workIds: ["work-1"],
         subject: "「作品タイトル」",
         emptyMessage: "すでにストックにあります。",
-        feedback: { confirm },
       }),
-    ).resolves.toEqual({ shouldSave: true });
-
-    expect(confirm).not.toHaveBeenCalled();
+    ).toEqual({ type: "ready" });
   });
 });

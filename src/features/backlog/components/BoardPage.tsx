@@ -82,7 +82,6 @@ export function BoardPage({ session }: Props) {
         <AddModal
           items={addModal.items}
           session={addModal.session}
-          feedback={addModal.feedback}
           onClose={addModal.onClose}
           onAdded={addModal.onAdded}
         />

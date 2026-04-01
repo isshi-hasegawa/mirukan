@@ -5,7 +5,6 @@ import {
 } from "./backlog-item-utils.ts";
 import type { BacklogItem } from "./types.ts";
 import type { TmdbSearchResult } from "../../lib/tmdb.ts";
-import type { BacklogFeedback } from "./ui-feedback.ts";
 
 type SelectedSubjectOptions = {
   selectedTmdbResult: TmdbSearchResult | null;
@@ -18,8 +17,12 @@ type ConfirmStackedSaveOptions = {
   workIds: string[];
   subject: string;
   emptyMessage: string;
-  feedback: Pick<BacklogFeedback, "confirm">;
 };
+
+export type StackedSaveReview =
+  | { type: "ready" }
+  | { type: "empty"; message: string }
+  | { type: "confirm"; message: string };
 
 export function buildSelectedSubject({
   selectedTmdbResult,
@@ -48,31 +51,26 @@ export function buildStackedBacklogOptions(primaryPlatform: string, note: string
   };
 }
 
-export async function confirmStackedSave({
+export function confirmStackedSave({
   items,
   workIds,
   subject,
   emptyMessage,
-  feedback,
-}: ConfirmStackedSaveOptions): Promise<
-  { shouldSave: true } | { shouldSave: false; message: string }
-> {
+}: ConfirmStackedSaveOptions): StackedSaveReview {
   const plan = planBacklogItemUpserts(items, workIds, "stacked");
   const confirmMessage = buildMoveToStatusConfirmMessage(
     plan.existingOtherItems,
     "stacked",
     subject,
   );
-  const shouldProceed =
-    !confirmMessage || (await Promise.resolve(feedback.confirm(confirmMessage)));
 
-  if (!shouldProceed) {
-    return { shouldSave: false, message: "既存カードはそのままにしました。" };
+  if (confirmMessage) {
+    return { type: "confirm", message: confirmMessage };
   }
 
   if (plan.actions.length === 0) {
-    return { shouldSave: false, message: emptyMessage };
+    return { type: "empty", message: emptyMessage };
   }
 
-  return { shouldSave: true };
+  return { type: "ready" };
 }

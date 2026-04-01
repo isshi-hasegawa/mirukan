@@ -4,7 +4,6 @@ import type { Session } from "@supabase/supabase-js";
 import type { TmdbSearchResult, TmdbSeasonOption } from "../../../lib/tmdb.ts";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
 import type { BacklogItem } from "../types.ts";
-import type { BacklogFeedback } from "../ui-feedback.ts";
 import { AddModal } from "./AddModal.tsx";
 
 const tmdbMocks = vi.hoisted(() => ({
@@ -119,10 +118,9 @@ function createItem(overrides: Partial<BacklogItem> = {}): BacklogItem {
 
 type RenderOptions = {
   items?: BacklogItem[];
-  feedback?: BacklogFeedback;
 };
 
-function renderAddModal({ items = [], feedback }: RenderOptions = {}) {
+function renderAddModal({ items = [] }: RenderOptions = {}) {
   const onClose = vi.fn();
   const onAdded = vi.fn().mockResolvedValue(undefined);
   const user = userEvent.setup();
@@ -133,7 +131,6 @@ function renderAddModal({ items = [], feedback }: RenderOptions = {}) {
       session={{ user: { id: "user-1" } } as Session}
       onClose={onClose}
       onAdded={onAdded}
-      feedback={feedback}
     />,
   );
 
@@ -418,7 +415,7 @@ describe("AddModal", () => {
     expect(screen.queryByRole("button", { name: "ストックに追加" })).not.toBeInTheDocument();
   });
 
-  test("confirm をキャンセルすると追加せずメッセージを表示する", async () => {
+  test("重複作品の追加ではモーダル内で戻すかどうかを選べる", async () => {
     const movieResult = createSearchResult({ tmdbId: 40, title: "既存映画" });
     const duplicateItem = createItem({
       status: "watched",
@@ -436,7 +433,6 @@ describe("AddModal", () => {
       data: { id: "existing-work-1" },
       error: null,
     });
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
 
     const { user, onAdded, onClose } = renderAddModal({ items: [duplicateItem] });
 
@@ -444,16 +440,23 @@ describe("AddModal", () => {
     await user.click(await screen.findByRole("button", { name: /既存映画/ }));
     await user.click(screen.getByRole("button", { name: "ストックに追加" }));
 
-    expect(confirmSpy).toHaveBeenCalledWith(
-      "「既存映画」はすでに「視聴済み」にあります。ストックに戻しますか？",
-    );
+    expect(
+      await screen.findByText(
+        "「既存映画」はすでに「視聴済み」にあります。ストックに戻しますか？",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "そのままにする" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "ストックへ戻す" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "そのままにする" }));
+
     expect(await screen.findByText("既存カードはそのままにしました。")).toBeInTheDocument();
     expect(dataMocks.upsertBacklogItemsToStatus).not.toHaveBeenCalled();
     expect(onClose).not.toHaveBeenCalled();
     expect(onAdded).not.toHaveBeenCalled();
   });
 
-  test("custom feedback を渡したときは browser confirm に依存しない", async () => {
+  test("重複作品の追加でストックへ戻すと保存する", async () => {
     const movieResult = createSearchResult({ tmdbId: 41, title: "別既存映画" });
     const duplicateItem = createItem({
       status: "watched",
@@ -471,25 +474,66 @@ describe("AddModal", () => {
       data: { id: "existing-work-41" },
       error: null,
     });
-    const confirmSpy = vi.spyOn(window, "confirm");
-    const feedback: BacklogFeedback = {
-      alert: vi.fn(),
-      confirm: vi.fn().mockResolvedValue(false),
-    };
 
-    const { user } = renderAddModal({ items: [duplicateItem], feedback });
+    const { user, onAdded, onClose } = renderAddModal({ items: [duplicateItem] });
 
     await search("別既存映画");
     await user.click(await screen.findByRole("button", { name: /別既存映画/ }));
     await user.click(screen.getByRole("button", { name: "ストックに追加" }));
 
-    await waitFor(() =>
-      expect(feedback.confirm).toHaveBeenCalledWith(
+    expect(
+      await screen.findByText(
         "「別既存映画」はすでに「視聴済み」にあります。ストックに戻しますか？",
       ),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "ストックへ戻す" }));
+
+    await waitFor(() =>
+      expect(dataMocks.upsertBacklogItemsToStatus).toHaveBeenCalledWith(
+        "user-1",
+        [duplicateItem],
+        ["existing-work-41"],
+        "stacked",
+        { note: null, primaryPlatform: null },
+      ),
     );
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onAdded).toHaveBeenCalledTimes(1);
+  });
+
+  test("重複作品の追加では browser confirm を使わない", async () => {
+    const movieResult = createSearchResult({ tmdbId: 42, title: "confirm不要映画" });
+    const duplicateItem = createItem({
+      status: "watched",
+      works: {
+        ...createItem().works!,
+        id: "existing-work-42",
+        title: "confirm不要映画",
+        tmdb_id: 42,
+        tmdb_media_type: "movie",
+      },
+    });
+    tmdbMocks.fetchTmdbRecommendations.mockResolvedValue([movieResult]);
+    tmdbMocks.searchTmdbWorks.mockResolvedValue([movieResult]);
+    dataMocks.upsertTmdbWork.mockResolvedValue({
+      data: { id: "existing-work-42" },
+      error: null,
+    });
+    const confirmSpy = vi.spyOn(window, "confirm");
+
+    const { user } = renderAddModal({ items: [duplicateItem] });
+
+    await search("confirm不要映画");
+    await user.click(await screen.findByRole("button", { name: /confirm不要映画/ }));
+    await user.click(screen.getByRole("button", { name: "ストックに追加" }));
+
+    expect(
+      await screen.findByText(
+        "「confirm不要映画」はすでに「視聴済み」にあります。ストックに戻しますか？",
+      ),
+    ).toBeInTheDocument();
     expect(confirmSpy).not.toHaveBeenCalled();
-    expect(await screen.findByText("既存カードはそのままにしました。")).toBeInTheDocument();
   });
 
   test("手動追加のエラーメッセージは入力開始でクリアする", async () => {

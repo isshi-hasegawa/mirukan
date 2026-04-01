@@ -71,7 +71,6 @@ export function useBoardPageController({ session }: UseBoardPageControllerOption
       isOpen: boardPageState.isAddModalOpen,
       items,
       session,
-      feedback,
       onClose: boardPageState.handleCloseAddModal,
       onAdded: async () => {
         await loadItems();
