@@ -4,37 +4,44 @@ import { test, expect } from "@playwright/test";
  * Kanban Board E2E tests
  */
 
-test("ボードのコラムが表示される", async ({ page }) => {
-  await page.goto("/");
+const TEST_USER_EMAIL = process.env.TEST_USER_EMAIL || "akari@example.com";
+const TEST_USER_PASSWORD = process.env.TEST_USER_PASSWORD || "password123";
 
-  // Verify all 5 status columns are visible
-  // Note: These selectors may need to be adjusted based on actual implementation
-  const columnText = ["Stacked", "Want to Watch", "Watching", "Interrupted", "Watched"];
+async function login(page: Parameters<typeof test>[0]["page"]) {
+  await page.goto("/");
+  await page.getByLabel("メールアドレス").fill(TEST_USER_EMAIL);
+  await page.getByLabel("パスワード").fill(TEST_USER_PASSWORD);
+  await page.getByRole("button", { name: "ログインして backlog を見る" }).click();
+  await expect(page.getByRole("heading", { name: "mirukan" })).toBeVisible();
+}
+
+test("ボードのコラムが表示される", async ({ page }) => {
+  await login(page);
+
+  const columnText = ["ストック", "見たい", "視聴中", "中断", "視聴済み"];
+  const isMobileLayout = page.viewportSize()?.width !== null && page.viewportSize()!.width <= 720;
 
   for (const text of columnText) {
-    const column = page.locator(`text=${text}`).first();
-    // Column headers might not always be visible depending on implementation
-    // So we just verify the page loads
+    if (isMobileLayout) {
+      await expect(page.getByRole("tab", { name: text })).toBeVisible();
+      continue;
+    }
+
+    await expect(page.getByRole("heading", { name: text })).toBeVisible();
   }
 });
 
 test("ボードが読み込まれる", async ({ page }) => {
-  await page.goto("/");
+  await login(page);
 
-  // Wait for page to load - use a more reliable selector
-  // Check for any main content area
   await expect(page.locator("main").or(page.locator("[role='main']")).first()).toBeVisible({
     timeout: 5000,
   });
+  await expect(page.getByRole("heading", { name: "mirukan" })).toBeVisible();
 });
 
-test("「Add」ボタンがある", async ({ page }) => {
-  await page.goto("/");
+test("作品追加の導線が表示される", async ({ page }) => {
+  await login(page);
 
-  // Look for Add button or similar CTA
-  const addButton = page.locator("button:has-text('Add')").first();
-
-  // Verify it exists - may not be visible on all pages
-  const count = await addButton.count();
-  expect(count).toBeGreaterThan(0);
+  await expect(page.getByRole("button", { name: "作品を検索してストックに追加" })).toBeVisible();
 });
