@@ -1,14 +1,12 @@
-import { useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { DndContext, DragOverlay } from "@dnd-kit/core";
 import { Button } from "@/components/ui/button.tsx";
 import { supabase } from "../../../lib/supabase.ts";
-import type { BacklogItem, BacklogStatus, DetailModalState } from "../types.ts";
-import { createDetailModalState } from "../helpers.ts";
 import { useWindowSize } from "../hooks/useWindowSize.ts";
 import { useBacklogItems } from "../hooks/useBacklogItems.ts";
 import { useBacklogDnd } from "../hooks/useBacklogDnd.ts";
 import { useBacklogActions } from "../hooks/useBacklogActions.ts";
+import { useBoardPageState } from "../hooks/useBoardPageState.ts";
 import { Header } from "./Header.tsx";
 import { KanbanBoard } from "./KanbanBoard.tsx";
 import { AddModal } from "./AddModal.tsx";
@@ -25,16 +23,29 @@ const headerCard =
   "w-full min-w-0 border border-border bg-[rgba(28,28,28,0.95)] backdrop-blur-xl shadow-[0_24px_60px_rgba(0,0,0,0.5)] grid grid-cols-[minmax(0,1fr)_auto] gap-4 items-center px-[18px] py-[14px] rounded-[28px] relative z-10 max-[720px]:rounded-[22px] max-[720px]:p-4";
 
 export function BoardPage({ session }: Props) {
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [detailModal, setDetailModal] = useState<DetailModalState>(createDetailModalState(null));
-  const [selectedTabStatus, setSelectedTabStatus] = useState<BacklogStatus>("stacked");
-
   const windowWidth = useWindowSize();
   const isMobileLayout = windowWidth <= 720;
 
-  const columnRefs = useRef<Partial<Record<BacklogStatus, HTMLElement | null>>>({});
-
   const { items, setItems, isLoading, error, loadItems } = useBacklogItems();
+  const {
+    isAddModalOpen,
+    detailModal,
+    selectedTabStatus,
+    setDetailModal,
+    setSelectedTabStatus,
+    handleOpenAddModal,
+    handleCloseAddModal,
+    handleOpenDetail,
+    handleCloseDetail,
+    handleAdded,
+    handleItemDeleted,
+    handleWorksAdded,
+    handleUpdateItem,
+    handleColumnRef,
+  } = useBoardPageState({
+    isMobileLayout,
+    setItems,
+  });
 
   const { dragItemId, dropIndicator, sensors, handleDragStart, handleDragOver, handleDragEnd } =
     useBacklogDnd({
@@ -47,46 +58,9 @@ export function BoardPage({ session }: Props) {
     items,
     session,
     loadItems,
-    onItemDeleted: (itemId) => {
-      if (detailModal.openItemId === itemId) {
-        setDetailModal(createDetailModalState(null));
-      }
-    },
-    onWorksAdded: () => {
-      if (isMobileLayout) {
-        setSelectedTabStatus("stacked");
-      } else {
-        const col = columnRefs.current["stacked"];
-        col?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-      }
-    },
+    onItemDeleted: handleItemDeleted,
+    onWorksAdded: handleWorksAdded,
   });
-
-  const handleOpenDetail = (itemId: string) => {
-    setDetailModal(createDetailModalState(itemId));
-  };
-
-  const handleCloseDetail = () => {
-    setDetailModal(createDetailModalState(null));
-  };
-
-  const handleAdded = async () => {
-    await loadItems();
-    if (isMobileLayout) {
-      setSelectedTabStatus("stacked");
-      return;
-    }
-    const col = columnRefs.current.stacked;
-    col?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-  };
-
-  const handleUpdateItem = (updated: BacklogItem) => {
-    setItems((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
-  };
-
-  const handleColumnRef = (status: BacklogStatus, el: HTMLElement | null) => {
-    columnRefs.current[status] = el;
-  };
 
   if (isLoading) {
     return (
@@ -145,7 +119,7 @@ export function BoardPage({ session }: Props) {
           isMobileDragging={isMobileLayout && dragItemId !== null}
           selectedTabStatus={selectedTabStatus}
           onTabChange={setSelectedTabStatus}
-          onOpenAddModal={() => setIsAddModalOpen(true)}
+          onOpenAddModal={handleOpenAddModal}
           onOpenDetail={handleOpenDetail}
           onDeleteItem={(itemId) => void handleDeleteItem(itemId)}
           onMarkAsWatched={(itemId) => void handleMarkAsWatched(itemId)}
@@ -164,8 +138,11 @@ export function BoardPage({ session }: Props) {
         <AddModal
           items={items}
           session={session}
-          onClose={() => setIsAddModalOpen(false)}
-          onAdded={handleAdded}
+          onClose={handleCloseAddModal}
+          onAdded={async () => {
+            await loadItems();
+            handleAdded();
+          }}
         />
       )}
 

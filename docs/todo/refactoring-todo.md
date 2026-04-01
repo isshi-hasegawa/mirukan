@@ -72,7 +72,8 @@
   - layout ごとの差分処理
 - 着手メモ
   - dragged card preview はコンポーネント化済み
-  - 今すぐ大分割するより、次は modal 制御と layout 差分を順に外す
+  - modal 制御と追加後復帰処理は `useBoardPageState` へ切り出し済み
+  - 次は layout ごとの差分描画を board shell から順に外したい
   - `useBacklogItems` / `useBacklogActions` / `useBacklogDnd` の戻り値を画面用途ごとに整理したい
 
 ## 優先度中: UI から `window.alert` / `window.confirm` を追い出す
