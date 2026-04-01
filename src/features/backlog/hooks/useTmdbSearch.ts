@@ -15,6 +15,10 @@ import {
   initialTmdbSearchSelectionState,
   tmdbSearchSelectionReducer,
 } from "../tmdb-search-selection.ts";
+import {
+  initialTmdbSearchRequestState,
+  tmdbSearchRequestReducer,
+} from "../tmdb-search-request.ts";
 
 function isHiddenSearchResult(items: BacklogItem[], result: TmdbSearchResult) {
   if (result.tmdbMediaType === "movie" && result.workType === "movie") {
@@ -138,9 +142,10 @@ type UseTmdbSearchOptions = {
 
 export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<TmdbSearchResult[]>([]);
-  const [recommendedResults, setRecommendedResults] = useState<TmdbSearchResult[]>([]);
-  const [recommendedMessage, setRecommendedMessage] = useState<string | null>(null);
+  const [requestState, dispatchRequest] = useReducer(
+    tmdbSearchRequestReducer,
+    initialTmdbSearchRequestState,
+  );
   const [selectionState, dispatchSelection] = useReducer(
     tmdbSearchSelectionReducer,
     initialTmdbSearchSelectionState,
@@ -151,6 +156,11 @@ export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
   const searchRequestIdRef = useRef(0);
   const isComposingRef = useRef(false);
   const itemsRef = useRef(items);
+  const {
+    searchResults,
+    recommendedResults,
+    recommendedMessage,
+  } = requestState;
   const {
     selectedTmdbResult,
     seasonOptions,
@@ -194,15 +204,21 @@ export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
     fetchTmdbRecommendations(buildRecommendationSourceItems(itemsRef.current))
       .then((results) => {
         const visibleResults = filterVisibleRecommendations(itemsRef.current, results);
-        setRecommendedResults(visibleResults);
-        if (visibleResults.length === 0) {
-          setRecommendedMessage("おすすめ候補が見つかりませんでした。作品名で検索できます。");
-        } else {
-          setRecommendedMessage(null);
-        }
+        dispatchRequest({
+          type: "set_recommendations",
+          results: visibleResults,
+          message:
+            visibleResults.length === 0
+              ? "おすすめ候補が見つかりませんでした。作品名で検索できます。"
+              : null,
+        });
       })
       .catch(() => {
-        setRecommendedMessage("おすすめ候補の取得に失敗しました。作品名で検索できます。");
+        dispatchRequest({
+          type: "set_recommendations",
+          results: [],
+          message: "おすすめ候補の取得に失敗しました。作品名で検索できます。",
+        });
       });
     return () => {
       if (searchTimerRef.current !== null) {
@@ -213,7 +229,7 @@ export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
 
   const resetSearchState = () => {
     searchRequestIdRef.current += 1;
-    setSearchResults([]);
+    dispatchRequest({ type: "reset_search_results" });
     dispatchSelection({ type: "reset" });
   };
 
@@ -245,7 +261,7 @@ export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
       const results = await searchTmdbWorks(trimmed);
       if (requestId !== searchRequestIdRef.current) return;
       const visibleResults = prioritizeLocalizedResults(filterVisibleResults(items, results));
-      setSearchResults(visibleResults);
+      dispatchRequest({ type: "set_search_results", results: visibleResults });
       dispatchSelection({
         type: "set_search_message",
         message:
