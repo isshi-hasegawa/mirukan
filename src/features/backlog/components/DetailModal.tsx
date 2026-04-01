@@ -1,14 +1,12 @@
 import { useEffect, useRef } from "react";
-import { DocumentTextIcon, FilmIcon, TvIcon } from "@heroicons/react/24/outline";
-import {
-  createDetailModalState,
-  getWorkTypeLabel,
-} from "../helpers.ts";
+import { FilmIcon, TvIcon } from "@heroicons/react/24/outline";
+import { createDetailModalState, getWorkTypeLabel } from "../helpers.ts";
 import { statusLabels, statusOrder } from "../constants.ts";
-import { PlatformPicker } from "./PlatformPicker.tsx";
 import { PosterImage } from "./PosterImage.tsx";
 import { TmdbLink } from "./TmdbLink.tsx";
 import { useDetailModalActions } from "../hooks/useDetailModalActions.ts";
+import { DetailModalNoteField } from "./DetailModalNoteField.tsx";
+import { DetailModalPlatformField } from "./DetailModalPlatformField.tsx";
 import type {
   BacklogItem,
   BacklogStatus,
@@ -79,55 +77,6 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
     work.season_count ? `${work.season_count}シーズン` : null,
   ].filter(Boolean);
 
-  const renderNote = () => {
-    const isEditing = state.editingField === "note";
-
-    if (!isEditing) {
-      return (
-        <button
-          className="flex items-start gap-2 w-full p-0 border-none bg-transparent text-foreground text-left cursor-pointer"
-          type="button"
-          onClick={() => startEditing("note")}
-        >
-          <DocumentTextIcon className="w-5 h-5 shrink-0 stroke-[1.5] text-muted-foreground mt-0.5" />
-          <span
-            className={`flex-1 leading-[1.6] whitespace-pre-wrap${item.note ? "" : " text-muted-foreground"}`}
-          >
-            {item.note || "メモを追加"}
-          </span>
-        </button>
-      );
-    }
-
-    return (
-      <div className="flex items-start gap-2 w-full">
-        <DocumentTextIcon className="w-5 h-5 shrink-0 stroke-[1.5] text-muted-foreground mt-0.5" />
-        <textarea
-          ref={(el) => {
-            inputRef.current = el;
-          }}
-          className="w-full p-0 border-none bg-transparent text-foreground leading-[1.6] outline-none resize-none min-h-[108px] flex-1 placeholder:text-muted-foreground"
-          placeholder="メモを追加"
-          rows={5}
-          maxLength={500}
-          value={state.draftValue}
-          onChange={(e) => onStateChange({ ...state, draftValue: e.target.value })}
-          onBlur={() => void saveField()}
-          onKeyDown={(e) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-              e.preventDefault();
-              void saveField();
-            }
-            if (e.key === "Escape") {
-              e.preventDefault();
-              cancelEditing();
-            }
-          }}
-        />
-      </div>
-    );
-  };
-
   return (
     <div
       className="fixed inset-0 z-10 grid place-items-center p-5 bg-[rgba(51,34,23,0.4)] backdrop-blur-[10px]"
@@ -197,11 +146,19 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
                 </button>
               ))}
             </div>
-            <PlatformPicker
-              value={item.primary_platform ?? ""}
-              onChange={(v) => void handlePlatformSelect(v)}
+            <DetailModalPlatformField
+              value={item.primary_platform}
+              onSelect={handlePlatformSelect}
             />
-            {renderNote()}
+            <DetailModalNoteField
+              note={item.note}
+              state={state}
+              inputRef={inputRef}
+              onStartEditing={() => startEditing("note")}
+              onCancelEditing={cancelEditing}
+              onChangeDraft={(draftValue) => onStateChange({ ...state, draftValue })}
+              onSave={saveField}
+            />
 
             {state.message && (
               <p className="text-muted-foreground text-sm" aria-live="polite">

@@ -63,7 +63,7 @@
   - modal の表示ロジック
 - 着手メモ
   - `useDetailModalActions` で更新処理はまとめたので、次は inline editor の部品化可否を確認する
-  - `PlatformPicker` と note 編集の見た目責務まで薄くできると modal 本体がさらに読みやすい
+  - `PlatformPicker` と note 編集の見た目責務は部品化した。次は必要なら status 行まで切り出す
   - `NoteEditor` 相当の切り出しは妥当
   - field ごとの細かすぎる部品分割は過剰になりやすいので避けたい
 
