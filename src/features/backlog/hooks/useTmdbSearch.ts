@@ -67,12 +67,6 @@ export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
     isTvSelection &&
     selectedSeasonNumbers.length > 0 &&
     selectedSeasonNumbers.length === allSeasonNumbers.length;
-  const selectedSeasonSummary =
-    selectedSeasonNumbers.length === 0
-      ? "シーズン未選択"
-      : selectedSeasonNumbers.length <= 3
-        ? selectedSeasonNumbers.map((seasonNumber) => `シーズン${seasonNumber}`).join("・")
-        : `${selectedSeasonNumbers.length}シーズン選択`;
 
   const handleSelectResult = async (result: TmdbSearchResult) => {
     if (result.tmdbMediaType !== "tv") {
@@ -178,7 +172,6 @@ export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
     allSeasonNumbers,
     canToggleAllSeasons,
     hasAllSeasonsSelected,
-    selectedSeasonSummary,
     searchInputRef,
     isComposingRef,
     handleQueryChange,

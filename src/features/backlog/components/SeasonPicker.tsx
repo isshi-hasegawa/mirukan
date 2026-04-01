@@ -8,7 +8,6 @@ type Props = {
   isLoadingSeasons: boolean;
   canToggleAllSeasons: boolean;
   hasAllSeasonsSelected: boolean;
-  selectedSeasonSummary: string;
   onToggleSeason: (seasonNumber: number) => void;
   onToggleAll: () => void;
 };
@@ -41,14 +40,12 @@ export function SeasonPicker({
   isLoadingSeasons,
   canToggleAllSeasons,
   hasAllSeasonsSelected,
-  selectedSeasonSummary,
   onToggleSeason,
   onToggleAll,
 }: Props) {
   return (
     <div className="grid gap-2.5">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-[0.88rem] text-muted-foreground">{selectedSeasonSummary}</p>
+      <div className="flex justify-end">
         {seasonOptions.length > 0 && canToggleAllSeasons && (
           <button
             className="text-[0.82rem] text-muted-foreground transition-colors hover:text-foreground"

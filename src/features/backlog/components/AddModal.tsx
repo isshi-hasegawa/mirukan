@@ -28,7 +28,6 @@ export function AddModal({ items, session, onClose, onAdded }: Props) {
     isTvSelection,
     canToggleAllSeasons,
     hasAllSeasonsSelected,
-    selectedSeasonSummary,
     searchInputRef,
     isComposingRef,
     handleQueryChange,
@@ -107,7 +106,6 @@ export function AddModal({ items, session, onClose, onAdded }: Props) {
             isTvSelection={isTvSelection}
             canToggleAllSeasons={canToggleAllSeasons}
             hasAllSeasonsSelected={hasAllSeasonsSelected}
-            selectedSeasonSummary={selectedSeasonSummary}
             isSelectedTmdbSubmitDisabled={isSelectedTmdbSubmitDisabled}
             selectedTmdbSubmitLabel={selectedTmdbSubmitLabel}
             onQueryChange={handleQueryChange}

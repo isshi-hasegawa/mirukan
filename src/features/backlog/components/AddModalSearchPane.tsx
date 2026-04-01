@@ -24,7 +24,6 @@ type Props = {
   isTvSelection: boolean;
   canToggleAllSeasons: boolean;
   hasAllSeasonsSelected: boolean;
-  selectedSeasonSummary: string;
   isSelectedTmdbSubmitDisabled: boolean;
   selectedTmdbSubmitLabel: string;
   onQueryChange: (query: string) => void;
@@ -83,7 +82,6 @@ function SelectedResultFooter({
   isLoadingSeasons,
   canToggleAllSeasons,
   hasAllSeasonsSelected,
-  selectedSeasonSummary,
   duplicateNotice,
   formMessage,
   pendingSaveMessage,
@@ -104,7 +102,6 @@ function SelectedResultFooter({
           isLoadingSeasons={isLoadingSeasons}
           canToggleAllSeasons={canToggleAllSeasons}
           hasAllSeasonsSelected={hasAllSeasonsSelected}
-          selectedSeasonSummary={selectedSeasonSummary}
           onToggleSeason={onToggleSeason}
           onToggleAll={onToggleAllSeasons}
         />
@@ -160,7 +157,6 @@ export function AddModalSearchPane({
   isTvSelection,
   canToggleAllSeasons,
   hasAllSeasonsSelected,
-  selectedSeasonSummary,
   isSelectedTmdbSubmitDisabled,
   selectedTmdbSubmitLabel,
   onQueryChange,
@@ -227,7 +223,6 @@ export function AddModalSearchPane({
                         isLoadingSeasons={isLoadingSeasons}
                         canToggleAllSeasons={canToggleAllSeasons}
                         hasAllSeasonsSelected={hasAllSeasonsSelected}
-                        selectedSeasonSummary={selectedSeasonSummary}
                         duplicateNotice={duplicateNotice}
                         formMessage={formMessage}
                         pendingSaveMessage={pendingSaveMessage}
