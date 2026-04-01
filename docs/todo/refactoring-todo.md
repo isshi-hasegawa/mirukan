@@ -44,6 +44,8 @@
 - 着手メモ
   - `AddModal` 自体は modal shell と左右ペイン構成に絞る
   - 「検索選択状態」と「保存実行状態」を hook または reducer で明示化したい
+  - 次に着手するなら最優先候補。`useAddSubmit.ts` の submit orchestration 分割がいちばん効果が大きい
+  - `TVシーズン追加` と `単体作品追加` の保存分岐は分けても自然だが、work / backlog 保存を汎用 helper 化しすぎるのは避けたい
 
 ## 優先度中: 詳細モーダルの編集 UI 部品化
 
@@ -58,6 +60,8 @@
 - 着手メモ
   - `useDetailModalActions` で更新処理はまとめたので、次は inline editor の部品化可否を確認する
   - `PlatformPicker` と note 編集の見た目責務まで薄くできると modal 本体がさらに読みやすい
+  - `NoteEditor` 相当の切り出しは妥当
+  - field ごとの細かすぎる部品分割は過剰になりやすいので避けたい
 
 ## 優先度中: `BoardPage` の画面状態整理
 
@@ -79,6 +83,7 @@
   - modal 制御と追加後復帰処理は `useBoardPageState` へ切り出し済み
   - 次は layout ごとの差分描画を board shell から順に外したい
   - `useBacklogItems` / `useBacklogActions` / `useBacklogDnd` の戻り値を画面用途ごとに整理したい
+  - ただし desktop / mobile を完全に別画面へ分けるほどの抽象化は今の規模では過剰
 
 ## 優先度中: UI から `window.alert` / `window.confirm` を追い出す
 
@@ -97,6 +102,7 @@
   - callback 注入での分離は着手済み
   - 次は confirm / alert を modal / toast ベースへ置き換える
   - confirm 文言組み立ては pure function のまま残す
+  - UI 基盤への置き換えはリファクタリングとして妥当で、追加フロー整理と並行して進めやすい
 
 ## 優先度低: backlog 取得クエリ定義の集約
 
@@ -113,3 +119,19 @@
 - 着手メモ
   - `data.ts` 分割と合わせて repository 側へ寄せると整理しやすい
   - 将来的な realtime 対応や query 再利用の足場にもなる
+  - ただし `useBacklogItems.ts` は現状かなり薄いため、これ以上の抽象化は優先度低
+
+## 判断メモ
+
+- 続ける価値が高い
+  - `useAddSubmit.ts` の submit orchestration 整理
+  - `AddModal.tsx` の表示責務整理
+  - `DetailModal.tsx` の note / platform UI 切り出し
+  - `window.alert` / `window.confirm` の UI 基盤移行
+- 慎重に進める
+  - `work-repository.ts` の season / series upsert 共通化
+  - `BoardPage.tsx` の layout 差分切り出し
+- 今は止める
+  - `useBacklogItems.ts` のさらなる抽象化
+  - 汎用 repository 基盤化
+  - field ごとの細かすぎる UI 部品分割
