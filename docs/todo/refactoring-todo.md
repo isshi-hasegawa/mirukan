@@ -48,7 +48,8 @@
   - AddModal の左右ペイン UI は子コンポーネントへ分離した。次は検索選択状態そのものを reducer 化するかを見極める
   - `useTmdbSearch.ts` の duplicate 判定とシーズン選択更新は pure helper へ抽出した。次は reducer 導入の是非を state 遷移数ベースで判断する
   - 選択系 state は reducer 化した。残りは検索 request lifecycle まで reducer に寄せるか、現状のまま副作用境界だけ保つかを見ればよい
-  - 検索結果 / おすすめ結果 / メッセージも reducer 化した。今後は fetch 副作用を別 hook に切るかどうかが判断ポイント
+  - 検索結果 / おすすめ結果 / メッセージも reducer 化し、fetch 副作用は `useTmdbSearchRequest.ts` へ分離した
+  - 追加フロー高優先度 TODO はひとまず一段落。次に触るなら `window.confirm` / `window.alert` の UI 基盤移行を優先する
   - `TVシーズン追加` と `単体作品追加` の保存分岐は分けても自然だが、work / backlog 保存を汎用 helper 化しすぎるのは避けたい
 
 ## 優先度中: 詳細モーダルの編集 UI 部品化
