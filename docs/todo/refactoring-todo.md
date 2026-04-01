@@ -49,6 +49,7 @@
   - `useTmdbSearch.ts` の duplicate 判定とシーズン選択更新は pure helper へ抽出した。次は reducer 導入の是非を state 遷移数ベースで判断する
   - 選択系 state は reducer 化した。残りは検索 request lifecycle まで reducer に寄せるか、現状のまま副作用境界だけ保つかを見ればよい
   - 検索結果 / おすすめ結果 / メッセージも reducer 化し、fetch 副作用は `useTmdbSearchRequest.ts` へ分離した
+  - 手動入力 draft と submit message の橋渡しは `useAddFlow.ts` へ集約し、`AddModal.tsx` は modal shell に寄せた
   - 追加フロー高優先度 TODO はひとまず一段落。次に触るなら `window.confirm` / `window.alert` の UI 基盤移行を優先する
   - `TVシーズン追加` と `単体作品追加` の保存分岐は分けても自然だが、work / backlog 保存を汎用 helper 化しすぎるのは避けたい
 

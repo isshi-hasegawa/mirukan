@@ -492,6 +492,37 @@ describe("AddModal", () => {
     expect(await screen.findByText("既存カードはそのままにしました。")).toBeInTheDocument();
   });
 
+  test("手動追加のエラーメッセージは入力開始でクリアする", async () => {
+    const { user } = renderAddModal();
+
+    await user.type(screen.getByLabelText("タイトル"), "   ");
+    await user.click(screen.getByRole("button", { name: "ストックに追加" }));
+    expect(await screen.findByText("タイトルを入力してください。")).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("タイトル"), "手");
+
+    await waitFor(() =>
+      expect(screen.queryByText("タイトルを入力してください。")).not.toBeInTheDocument(),
+    );
+  });
+
+  test("手動追加のエラーメッセージは TMDb 選択へ切り替えるとクリアする", async () => {
+    const movieResult = createSearchResult({ tmdbId: 42, title: "切替映画" });
+    tmdbMocks.fetchTmdbRecommendations.mockResolvedValue([movieResult]);
+
+    const { user } = renderAddModal();
+
+    await user.type(screen.getByLabelText("タイトル"), "   ");
+    await user.click(screen.getByRole("button", { name: "ストックに追加" }));
+    expect(await screen.findByText("タイトルを入力してください。")).toBeInTheDocument();
+
+    await user.click(await screen.findByRole("button", { name: /切替映画/ }));
+
+    await waitFor(() =>
+      expect(screen.queryByText("タイトルを入力してください。")).not.toBeInTheDocument(),
+    );
+  });
+
   test("手動追加では upsertManualWork を使って保存する", async () => {
     const { user, onAdded, onClose } = renderAddModal();
 

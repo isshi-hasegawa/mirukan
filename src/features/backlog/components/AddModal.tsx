@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { useTmdbSearch } from "../hooks/useTmdbSearch.ts";
-import { useAddSubmit } from "../hooks/useAddSubmit.ts";
 import type { BacklogItem } from "../types.ts";
 import { browserBacklogFeedback, type BacklogFeedback } from "../ui-feedback.ts";
+import { useAddFlow } from "../hooks/useAddFlow.ts";
 import { AddModalDetailsPane } from "./AddModalDetailsPane.tsx";
 import { AddModalSearchPane } from "./AddModalSearchPane.tsx";
 
@@ -22,11 +21,6 @@ export function AddModal({
   onAdded,
   feedback = browserBacklogFeedback,
 }: Props) {
-  const [primaryPlatform, setPrimaryPlatform] = useState("");
-  const [note, setNote] = useState("");
-  const [manualTitle, setManualTitle] = useState("");
-  const [workType, setWorkType] = useState<"movie" | "series">("movie");
-
   const {
     searchQuery,
     searchResults,
@@ -39,7 +33,6 @@ export function AddModal({
     isLoadingSeasons,
     searchMessage,
     duplicateNotice,
-    canAddSelectionToStacked,
     isTvSelection,
     canToggleAllSeasons,
     hasAllSeasonsSelected,
@@ -48,29 +41,24 @@ export function AddModal({
     isComposingRef,
     handleQueryChange,
     handleCompositionEnd,
-    handleSelectResult: selectResult,
+    handleSelectResult,
     toggleSeasonSelection,
     toggleAllSeasons,
-  } = useTmdbSearch({ items });
-
-  const resolvedTitle = selectedTmdbResult?.title ?? manualTitle;
-  const resolvedWorkType = selectedTmdbResult?.workType ?? workType;
-  const isSelectedTmdbSubmitDisabled =
-    !!selectedTmdbResult &&
-    ((isTvSelection && selectedSeasonNumbers.length === 0) || !canAddSelectionToStacked);
-  const selectedTmdbSubmitLabel = canAddSelectionToStacked ? "ストックに追加" : "ストック済み";
-
-  const { formMessage, clearFormMessage, handleSubmit } = useAddSubmit({
-    items,
-    session,
-    selectedTmdbResult,
-    selectedSeasonNumbers,
-    seasonOptions,
-    isTvSelection,
     resolvedTitle,
     resolvedWorkType,
     primaryPlatform,
     note,
+    formMessage,
+    isSelectedTmdbSubmitDisabled,
+    selectedTmdbSubmitLabel,
+    setManualTitle,
+    setWorkType,
+    setPrimaryPlatform,
+    setNote,
+    handleSubmit,
+  } = useAddFlow({
+    items,
+    session,
     onClose,
     onAdded,
     feedback,
@@ -85,11 +73,6 @@ export function AddModal({
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
-
-  const handleSelectResult = (result: Parameters<typeof selectResult>[0]) => {
-    clearFormMessage();
-    void selectResult(result);
-  };
 
   return (
     <div
