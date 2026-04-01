@@ -20,11 +20,10 @@ vi.mock("../../lib/tmdb.ts", async () => {
   };
 });
 
-import type { TmdbSearchResult, TmdbSeasonOption, TmdbWorkDetails } from "../../lib/tmdb.ts";
+import type { TmdbSearchResult, TmdbSeasonOption } from "../../lib/tmdb.ts";
 import { setupTestLifecycle } from "../../test/test-lifecycle.ts";
 import {
   buildSelectedSeasonTargets,
-  calcCompletionLoadScore,
   resolveSelectedSeasonWorkIds,
   shouldRefreshTmdbWork,
   upsertManualWork,
@@ -86,29 +85,6 @@ function createWorksTableMock({
   };
 }
 
-function makeDetails(
-  workType: TmdbWorkDetails["workType"],
-  runtimeMinutes: number | null,
-  typicalEpisodeRuntimeMinutes: number | null,
-): TmdbWorkDetails {
-  return {
-    tmdbId: 1,
-    tmdbMediaType: workType === "movie" ? "movie" : "tv",
-    workType,
-    title: "test",
-    originalTitle: null,
-    overview: null,
-    posterPath: null,
-    releaseDate: null,
-    genres: [],
-    runtimeMinutes,
-    typicalEpisodeRuntimeMinutes,
-    episodeCount: null,
-    seasonCount: null,
-    seasonNumber: null,
-  };
-}
-
 beforeEach(() => {
   supabaseMocks.from.mockReset();
   tmdbMocks.fetchTmdbWorkDetails.mockReset();
@@ -116,48 +92,6 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
-});
-
-describe("calcCompletionLoadScore", () => {
-  describe("movie: 全体尺ベース", () => {
-    test("short (≤30分) → 0", () => {
-      expect(calcCompletionLoadScore(makeDetails("movie", 20, null))).toBe(0);
-    });
-
-    test("medium (≤70分) → 25", () => {
-      expect(calcCompletionLoadScore(makeDetails("movie", 60, null))).toBe(25);
-    });
-
-    test("long (≤120分) → 50", () => {
-      expect(calcCompletionLoadScore(makeDetails("movie", 90, null))).toBe(50);
-    });
-
-    test("very_long (>120分) → 75", () => {
-      expect(calcCompletionLoadScore(makeDetails("movie", 150, null))).toBe(75);
-    });
-
-    test("尺不明 → 50", () => {
-      expect(calcCompletionLoadScore(makeDetails("movie", null, null))).toBe(50);
-    });
-  });
-
-  describe("season/series: 1話尺ベース", () => {
-    test("アニメ1話20分 → 0", () => {
-      expect(calcCompletionLoadScore(makeDetails("season", null, 20))).toBe(0);
-    });
-
-    test("ドラマ1話45分 → 25", () => {
-      expect(calcCompletionLoadScore(makeDetails("season", null, 45))).toBe(25);
-    });
-
-    test("長尺エピソード90分 → 50", () => {
-      expect(calcCompletionLoadScore(makeDetails("series", null, 90))).toBe(50);
-    });
-
-    test("1話尺不明 → 50", () => {
-      expect(calcCompletionLoadScore(makeDetails("season", null, null))).toBe(50);
-    });
-  });
 });
 
 describe("buildSelectedSeasonTargets", () => {

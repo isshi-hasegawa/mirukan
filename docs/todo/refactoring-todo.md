@@ -24,7 +24,8 @@
   - hook から query 定義を追い出すところまでは着手済み
   - `data.test.ts` は backlog repository / backlog-item util / viewing mode / work repository の単位へ分割済み
   - internal import の `data.ts` barrel 経由は解消済みで、barrel 自体も削除済み
-  - 次は recommendation 用スコア計算や TMDb 同期まわりの pure 部分をさらに分離できるか見直したい
+  - recommendation 用スコア計算と TMDb 更新 payload 組み立ては `work-metadata.ts` へ分離済み
+  - 次は season / series upsert の重複した Supabase アクセスパターンを薄くできるか見直したい
 
 ## 優先度高: 追加フローの状態管理整理
 
