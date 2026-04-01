@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import {
   fetchTmdbRecommendations,
   fetchTmdbSeasonOptions,
@@ -11,6 +11,10 @@ import {
   getStackedSeasonNumbers,
   mergeSeasonNumbers,
 } from "../tmdb-search-state.ts";
+import {
+  initialTmdbSearchSelectionState,
+  tmdbSearchSelectionReducer,
+} from "../tmdb-search-selection.ts";
 
 function isHiddenSearchResult(items: BacklogItem[], result: TmdbSearchResult) {
   if (result.tmdbMediaType === "movie" && result.workType === "movie") {
@@ -136,20 +140,26 @@ export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<TmdbSearchResult[]>([]);
   const [recommendedResults, setRecommendedResults] = useState<TmdbSearchResult[]>([]);
-  const [selectedTmdbResult, setSelectedTmdbResult] = useState<TmdbSearchResult | null>(null);
-  const [seasonOptions, setSeasonOptions] = useState<TmdbSeasonOption[]>([]);
-  const [selectedSeasonNumbersState, setSelectedSeasonNumbers] = useState<number[]>([]);
-  const [isLoadingSeasons, setIsLoadingSeasons] = useState(false);
   const [recommendedMessage, setRecommendedMessage] = useState<string | null>(null);
-  const [searchMessage, setSearchMessage] = useState<string | null>(null);
-  const [duplicateNotice, setDuplicateNotice] = useState<string | null>(null);
-  const [canAddSelectionToStacked, setCanAddSelectionToStacked] = useState(true);
+  const [selectionState, dispatchSelection] = useReducer(
+    tmdbSearchSelectionReducer,
+    initialTmdbSearchSelectionState,
+  );
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchTimerRef = useRef<number | null>(null);
   const searchRequestIdRef = useRef(0);
   const isComposingRef = useRef(false);
   const itemsRef = useRef(items);
+  const {
+    selectedTmdbResult,
+    seasonOptions,
+    selectedSeasonNumbersState,
+    isLoadingSeasons,
+    searchMessage,
+    duplicateNotice,
+    canAddSelectionToStacked,
+  } = selectionState;
 
   const isTvSelection = selectedTmdbResult?.tmdbMediaType === "tv";
   const allSeasonNumbers = [1, ...seasonOptions.map((season) => season.seasonNumber)];
@@ -204,13 +214,7 @@ export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
   const resetSearchState = () => {
     searchRequestIdRef.current += 1;
     setSearchResults([]);
-    setSelectedTmdbResult(null);
-    setSeasonOptions([]);
-    setSelectedSeasonNumbers([]);
-    setIsLoadingSeasons(false);
-    setSearchMessage(null);
-    setDuplicateNotice(null);
-    setCanAddSelectionToStacked(true);
+    dispatchSelection({ type: "reset" });
   };
 
   const queueSearch = (query: string) => {
@@ -242,32 +246,36 @@ export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
       if (requestId !== searchRequestIdRef.current) return;
       const visibleResults = prioritizeLocalizedResults(filterVisibleResults(items, results));
       setSearchResults(visibleResults);
-      setSearchMessage(
-        visibleResults.length > 0
-          ? null
-          : results.length > 0
-            ? "すでにストック済みの作品は候補から除外しています。"
-            : "候補が見つかりませんでした。このまま入力して追加できます。",
-      );
+      dispatchSelection({
+        type: "set_search_message",
+        message:
+          visibleResults.length > 0
+            ? null
+            : results.length > 0
+              ? "すでにストック済みの作品は候補から除外しています。"
+              : "候補が見つかりませんでした。このまま入力して追加できます。",
+      });
     } catch (error) {
       if (requestId !== searchRequestIdRef.current) return;
-      setSearchMessage(
-        error instanceof Error ? `検索に失敗しました: ${error.message}` : "検索に失敗しました。",
-      );
+      dispatchSelection({
+        type: "set_search_message",
+        message:
+          error instanceof Error ? `検索に失敗しました: ${error.message}` : "検索に失敗しました。",
+      });
     }
   };
 
   const handleSelectResult = async (result: TmdbSearchResult) => {
-    setSelectedTmdbResult(result);
-    setSeasonOptions([]);
-    setSearchMessage(null);
-
     if (result.tmdbMediaType !== "tv") {
-      setIsLoadingSeasons(false);
-      setSelectedSeasonNumbers([]);
       const nextState = buildTvSelectionState(items, result, []);
-      setDuplicateNotice(nextState.duplicateNotice);
-      setCanAddSelectionToStacked(nextState.canAddSelectionToStacked);
+      dispatchSelection({
+        type: "select_result",
+        result,
+        selectedSeasonNumbersState: [],
+        duplicateNotice: nextState.duplicateNotice,
+        canAddSelectionToStacked: nextState.canAddSelectionToStacked,
+        isLoadingSeasons: false,
+      });
       return;
     }
 
@@ -275,22 +283,26 @@ export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
       ? []
       : [1];
     const nextState = buildTvSelectionState(items, result, [1]);
-    setSelectedSeasonNumbers(nextSelectedSeasonNumbers);
-    setDuplicateNotice(nextState.duplicateNotice);
-    setCanAddSelectionToStacked(nextState.canAddSelectionToStacked);
+    dispatchSelection({
+      type: "select_result",
+      result,
+      selectedSeasonNumbersState: nextSelectedSeasonNumbers,
+      duplicateNotice: nextState.duplicateNotice,
+      canAddSelectionToStacked: nextState.canAddSelectionToStacked,
+      isLoadingSeasons: true,
+    });
 
-    setIsLoadingSeasons(true);
     try {
       const options = await fetchTmdbSeasonOptions(result);
-      setSeasonOptions(options);
-      setIsLoadingSeasons(false);
+      dispatchSelection({ type: "set_season_options", seasonOptions: options });
     } catch (error) {
-      setIsLoadingSeasons(false);
-      setSearchMessage(
-        error instanceof Error
-          ? `シーズン一覧の取得に失敗しました: ${error.message}`
-          : "シーズン一覧の取得に失敗しました。",
-      );
+      dispatchSelection({
+        type: "set_search_message",
+        message:
+          error instanceof Error
+            ? `シーズン一覧の取得に失敗しました: ${error.message}`
+            : "シーズン一覧の取得に失敗しました。",
+      });
     }
   };
 
@@ -306,9 +318,12 @@ export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
       selectedTmdbResult,
       mergeSeasonNumbers(nextSelectedSeasonNumbers, stackedSeasonNumbers),
     );
-    setSelectedSeasonNumbers(nextSelectedSeasonNumbers);
-    setDuplicateNotice(nextState.duplicateNotice);
-    setCanAddSelectionToStacked(nextState.canAddSelectionToStacked);
+    dispatchSelection({
+      type: "set_selected_seasons",
+      selectedSeasonNumbersState: nextSelectedSeasonNumbers,
+      duplicateNotice: nextState.duplicateNotice,
+      canAddSelectionToStacked: nextState.canAddSelectionToStacked,
+    });
   };
 
   const toggleAllSeasons = () => {
@@ -329,9 +344,12 @@ export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
       selectedTmdbResult,
       mergeSeasonNumbers(nextSelectedSeasonNumbers, stackedSeasonNumbers),
     );
-    setSelectedSeasonNumbers(nextSelectedSeasonNumbers);
-    setDuplicateNotice(nextState.duplicateNotice);
-    setCanAddSelectionToStacked(nextState.canAddSelectionToStacked);
+    dispatchSelection({
+      type: "set_selected_seasons",
+      selectedSeasonNumbersState: nextSelectedSeasonNumbers,
+      duplicateNotice: nextState.duplicateNotice,
+      canAddSelectionToStacked: nextState.canAddSelectionToStacked,
+    });
   };
 
   const handleQueryChange = (query: string) => {
