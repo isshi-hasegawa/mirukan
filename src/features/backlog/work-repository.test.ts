@@ -20,13 +20,19 @@ vi.mock("../../lib/tmdb.ts", async () => {
   };
 });
 
-import type { TmdbSearchResult, TmdbSeasonOption } from "../../lib/tmdb.ts";
+import type {
+  TmdbSearchResult,
+  TmdbSeasonOption,
+  TmdbSeasonSelectionTarget,
+  TmdbWorkDetails,
+} from "../../lib/tmdb.ts";
 import { setupTestLifecycle } from "../../test/test-lifecycle.ts";
 import {
   buildSelectedSeasonTargets,
   resolveSelectedSeasonWorkIds,
   shouldRefreshTmdbWork,
   upsertManualWork,
+  upsertTmdbWork,
 } from "./work-repository.ts";
 
 setupTestLifecycle();
@@ -44,12 +50,18 @@ type SingleResult = {
   statusText: string;
 };
 
+type UpdateResult = {
+  error: { message: string; code?: string } | null;
+};
+
 function createWorksTableMock({
   maybeSingleResults = [],
   singleResults = [],
+  updateResults = [],
 }: {
   maybeSingleResults?: MaybeSingleResult[];
   singleResults?: SingleResult[];
+  updateResults?: UpdateResult[];
 }) {
   const selectChain = {
     eq: vi.fn(),
@@ -77,11 +89,44 @@ function createWorksTableMock({
     return result;
   });
 
+  const updateChain = {
+    eq: vi.fn(),
+  };
+  updateChain.eq.mockImplementation(async () => {
+    const result = updateResults.shift();
+    if (!result) {
+      throw new Error("Unexpected update call");
+    }
+    return result;
+  });
+
   return {
     select: vi.fn(() => selectChain),
     insert: vi.fn(() => insertChain),
+    update: vi.fn(() => updateChain),
     selectChain,
     insertChain,
+    updateChain,
+  };
+}
+
+function createTmdbDetails(overrides: Partial<TmdbWorkDetails> = {}): TmdbWorkDetails {
+  return {
+    tmdbId: 1,
+    tmdbMediaType: "movie",
+    workType: "movie",
+    title: "テスト作品",
+    originalTitle: "Test Work",
+    overview: "overview",
+    posterPath: "/poster.jpg",
+    releaseDate: "2024-01-01",
+    genres: ["ドラマ"],
+    runtimeMinutes: 120,
+    typicalEpisodeRuntimeMinutes: null,
+    episodeCount: null,
+    seasonCount: null,
+    seasonNumber: null,
+    ...overrides,
   };
 }
 
@@ -172,6 +217,188 @@ describe("shouldRefreshTmdbWork", () => {
 
   test("不正な日付なら再同期する", () => {
     expect(shouldRefreshTmdbWork("not-a-date")).toBe(true);
+  });
+});
+
+describe("upsertTmdbWork", () => {
+  const movieTarget: TmdbSearchResult = {
+    tmdbId: 200,
+    tmdbMediaType: "movie",
+    workType: "movie",
+    title: "テスト映画",
+    originalTitle: "Test Movie",
+    overview: "overview",
+    posterPath: "/movie.jpg",
+    releaseDate: "2024-01-01",
+    jpWatchPlatforms: [],
+    hasJapaneseRelease: true,
+  };
+
+  const seasonTarget: TmdbSeasonSelectionTarget = {
+    tmdbId: 300,
+    tmdbMediaType: "tv",
+    workType: "season",
+    title: "テストシリーズ シーズン2",
+    originalTitle: "Test Series",
+    overview: "season overview",
+    posterPath: "/season.jpg",
+    releaseDate: "2025-01-01",
+    seasonNumber: 2,
+    episodeCount: 8,
+    seriesTitle: "テストシリーズ",
+  };
+
+  test("十分新しい既存作品は再同期せず再利用する", async () => {
+    const worksTable = createWorksTableMock({
+      maybeSingleResults: [
+        {
+          data: { id: "existing-work", last_tmdb_synced_at: "2026-03-31T00:00:00.000Z" },
+          error: null,
+        },
+      ],
+    });
+    supabaseMocks.from.mockImplementation((table: string) => {
+      if (table !== "works") {
+        throw new Error(`Unexpected table: ${table}`);
+      }
+      return worksTable;
+    });
+
+    await expect(upsertTmdbWork(movieTarget, "user-1")).resolves.toEqual({
+      data: { id: "existing-work" },
+      error: null,
+      count: null,
+      status: 200,
+      statusText: "OK",
+    });
+    expect(tmdbMocks.fetchTmdbWorkDetails).not.toHaveBeenCalled();
+    expect(worksTable.update).not.toHaveBeenCalled();
+    expect(worksTable.insert).not.toHaveBeenCalled();
+  });
+
+  test("期限切れの既存作品は詳細を再取得して update する", async () => {
+    const worksTable = createWorksTableMock({
+      maybeSingleResults: [
+        {
+          data: { id: "existing-work", last_tmdb_synced_at: "2026-01-01T00:00:00.000Z" },
+          error: null,
+        },
+      ],
+      updateResults: [{ error: null }],
+    });
+    supabaseMocks.from.mockImplementation((table: string) => {
+      if (table !== "works") {
+        throw new Error(`Unexpected table: ${table}`);
+      }
+      return worksTable;
+    });
+    tmdbMocks.fetchTmdbWorkDetails.mockResolvedValue(
+      createTmdbDetails({
+        tmdbId: movieTarget.tmdbId,
+        title: "更新後タイトル",
+        originalTitle: movieTarget.originalTitle,
+      }),
+    );
+
+    await expect(upsertTmdbWork(movieTarget, "user-1")).resolves.toEqual({
+      data: { id: "existing-work" },
+      error: null,
+      count: null,
+      status: 200,
+      statusText: "OK",
+    });
+    expect(tmdbMocks.fetchTmdbWorkDetails).toHaveBeenCalledWith(movieTarget);
+    expect(worksTable.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "更新後タイトル",
+        original_title: "Test Movie",
+      }),
+    );
+    expect(worksTable.updateChain.eq).toHaveBeenCalledWith("id", "existing-work");
+  });
+
+  test("シーズン追加時は親 series を先に解決してから insert する", async () => {
+    const worksTable = createWorksTableMock({
+      maybeSingleResults: [
+        { data: null, error: null },
+        { data: null, error: null },
+      ],
+      singleResults: [
+        {
+          data: { id: "series-work" },
+          error: null,
+          count: null,
+          status: 201,
+          statusText: "Created",
+        },
+        {
+          data: { id: "season-work" },
+          error: null,
+          count: null,
+          status: 201,
+          statusText: "Created",
+        },
+      ],
+    });
+    supabaseMocks.from.mockImplementation((table: string) => {
+      if (table !== "works") {
+        throw new Error(`Unexpected table: ${table}`);
+      }
+      return worksTable;
+    });
+    tmdbMocks.fetchTmdbWorkDetails
+      .mockResolvedValueOnce(
+        createTmdbDetails({
+          tmdbId: seasonTarget.tmdbId,
+          tmdbMediaType: "tv",
+          workType: "series",
+          title: seasonTarget.seriesTitle,
+          originalTitle: seasonTarget.originalTitle,
+          runtimeMinutes: null,
+          typicalEpisodeRuntimeMinutes: 48,
+          seasonCount: 3,
+        }),
+      )
+      .mockResolvedValueOnce(
+        createTmdbDetails({
+          tmdbId: seasonTarget.tmdbId,
+          tmdbMediaType: "tv",
+          workType: "season",
+          title: seasonTarget.title,
+          originalTitle: seasonTarget.originalTitle,
+          overview: seasonTarget.overview,
+          posterPath: seasonTarget.posterPath,
+          releaseDate: seasonTarget.releaseDate,
+          runtimeMinutes: null,
+          typicalEpisodeRuntimeMinutes: 48,
+          episodeCount: seasonTarget.episodeCount,
+          seasonNumber: seasonTarget.seasonNumber,
+        }),
+      );
+
+    await expect(upsertTmdbWork(seasonTarget, "user-1")).resolves.toEqual({
+      data: { id: "season-work" },
+      error: null,
+      count: null,
+      status: 201,
+      statusText: "Created",
+    });
+    expect(tmdbMocks.fetchTmdbWorkDetails).toHaveBeenCalledTimes(2);
+    expect(worksTable.insert).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        work_type: "series",
+        parent_work_id: null,
+      }),
+    );
+    expect(worksTable.insert).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        work_type: "season",
+        parent_work_id: "series-work",
+        season_number: 2,
+      }),
+    );
   });
 });
 

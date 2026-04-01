@@ -1,4 +1,4 @@
-import type { PostgrestSingleResponse } from "@supabase/supabase-js";
+import type { PostgrestError, PostgrestSingleResponse } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase.ts";
 import {
   fetchTmdbWorkDetails,
@@ -12,6 +12,19 @@ import type { WorkType } from "./types.ts";
 import { buildTmdbWorkUpdate } from "./work-metadata.ts";
 
 const TMDB_WORK_REFRESH_INTERVAL_MS = 30 * 24 * 60 * 60 * 1000;
+type TmdbWorkIdResponse = PostgrestSingleResponse<{ id: string }>;
+type ExistingTmdbWorkRow = { id: string; last_tmdb_synced_at: string | null };
+type TmdbWorkLookup = {
+  tmdbMediaType: "movie" | "tv";
+  tmdbId: number;
+  workType: WorkType;
+  seasonNumber?: number;
+};
+type UpsertFetchedTmdbWorkOptions = {
+  parentWorkId?: string;
+  seasonNumber?: number;
+  workType?: WorkType;
+};
 
 export function shouldRefreshTmdbWork(
   lastSyncedAt: string | null,
@@ -33,55 +46,12 @@ export function shouldRefreshTmdbWork(
 export async function upsertTmdbWork(
   target: TmdbSelectionTarget,
   userId: string,
-): Promise<PostgrestSingleResponse<{ id: string }>> {
+): Promise<TmdbWorkIdResponse> {
   if (target.workType === "season") {
     return upsertTmdbSeasonWork(target, userId);
   }
 
-  const workType = target.workType as Extract<WorkType, "movie" | "series">;
-  const { data: existing, error: selectError } = await supabase
-    .from("works")
-    .select("id, last_tmdb_synced_at")
-    .eq("source_type", "tmdb")
-    .eq("tmdb_media_type", target.tmdbMediaType)
-    .eq("tmdb_id", target.tmdbId)
-    .eq("work_type", workType)
-    .maybeSingle();
-
-  if (selectError) {
-    return { data: null, error: selectError, count: null, status: 400, statusText: "Bad Request" };
-  }
-
-  if (existing && !shouldRefreshTmdbWork(existing.last_tmdb_synced_at)) {
-    return { data: { id: existing.id }, error: null, count: null, status: 200, statusText: "OK" };
-  }
-
-  const details = await fetchTmdbWorkDetails(target);
-
-  if (existing) {
-    const { error: updateError } = await supabase
-      .from("works")
-      .update(buildTmdbWorkUpdate(details))
-      .eq("id", existing.id);
-
-    if (updateError) {
-      return {
-        data: null,
-        error: updateError,
-        count: null,
-        status: 400,
-        statusText: "Bad Request",
-      };
-    }
-
-    return { data: existing, error: null, count: null, status: 200, statusText: "OK" };
-  }
-
-  return supabase
-    .from("works")
-    .insert(buildTmdbWorkInsert(details, userId, workType))
-    .select("id")
-    .single();
+  return upsertFetchedTmdbWork(target, userId);
 }
 
 export async function upsertManualWork(
@@ -247,22 +217,96 @@ function buildTmdbWorkInsert(
 async function upsertTmdbSeasonWork(
   target: TmdbSeasonSelectionTarget,
   userId: string,
-): Promise<PostgrestSingleResponse<{ id: string }>> {
+): Promise<TmdbWorkIdResponse> {
+  const seriesTarget = buildTmdbSeriesTarget(target);
+
   if (target.seasonNumber === 1) {
-    const seriesTarget: TmdbSearchResult = {
-      tmdbId: target.tmdbId,
-      tmdbMediaType: "tv",
-      workType: "series",
-      title: target.seriesTitle,
-      originalTitle: target.originalTitle,
-      overview: target.overview,
-      posterPath: target.posterPath,
-      releaseDate: target.releaseDate,
-    };
     return upsertTmdbWork(seriesTarget, userId);
   }
 
-  const seriesTarget: TmdbSearchResult = {
+  const seriesResult = await upsertTmdbWork(seriesTarget, userId);
+
+  if (seriesResult.error || !seriesResult.data) {
+    return seriesResult;
+  }
+
+  return upsertFetchedTmdbWork(target, userId, {
+    parentWorkId: seriesResult.data.id,
+  });
+}
+
+async function findExistingTmdbWork({
+  tmdbMediaType,
+  tmdbId,
+  workType,
+  seasonNumber,
+}: TmdbWorkLookup): Promise<{ data: ExistingTmdbWorkRow | null; error: PostgrestError | null }> {
+  let query = supabase
+    .from("works")
+    .select("id, last_tmdb_synced_at")
+    .eq("source_type", "tmdb")
+    .eq("tmdb_media_type", tmdbMediaType)
+    .eq("tmdb_id", tmdbId)
+    .eq("work_type", workType);
+
+  if (seasonNumber !== undefined) {
+    query = query.eq("season_number", seasonNumber);
+  }
+
+  return query.maybeSingle();
+}
+
+async function upsertFetchedTmdbWork(
+  target: TmdbSelectionTarget,
+  userId: string,
+  options: UpsertFetchedTmdbWorkOptions = {},
+): Promise<TmdbWorkIdResponse> {
+  const workType = options.workType ?? target.workType;
+  const seasonNumber =
+    options.seasonNumber ?? (target.workType === "season" ? target.seasonNumber : undefined);
+  const { data: existing, error: selectError } = await findExistingTmdbWork({
+    tmdbMediaType: target.tmdbMediaType,
+    tmdbId: target.tmdbId,
+    workType,
+    seasonNumber,
+  });
+
+  if (selectError) {
+    return buildBadRequestResponse(selectError);
+  }
+
+  if (existing && !shouldRefreshTmdbWork(existing.last_tmdb_synced_at)) {
+    return buildOkIdResponse(existing.id);
+  }
+
+  const details = await fetchTmdbWorkDetails(target);
+  const updatePayload =
+    options.parentWorkId === undefined
+      ? buildTmdbWorkUpdate(details)
+      : {
+          ...buildTmdbWorkUpdate(details),
+          parent_work_id: options.parentWorkId,
+        };
+
+  if (existing) {
+    const { error: updateError } = await supabase.from("works").update(updatePayload).eq("id", existing.id);
+
+    if (updateError) {
+      return buildBadRequestResponse(updateError);
+    }
+
+    return buildOkIdResponse(existing.id);
+  }
+
+  return supabase
+    .from("works")
+    .insert(buildTmdbWorkInsert(details, userId, workType, options.parentWorkId ?? null))
+    .select("id")
+    .single();
+}
+
+function buildTmdbSeriesTarget(target: TmdbSeasonSelectionTarget): TmdbSearchResult {
+  return {
     tmdbId: target.tmdbId,
     tmdbMediaType: "tv",
     workType: "series",
@@ -272,57 +316,12 @@ async function upsertTmdbSeasonWork(
     posterPath: target.posterPath,
     releaseDate: target.releaseDate,
   };
-  const seriesResult = await upsertTmdbWork(seriesTarget, userId);
+}
 
-  if (seriesResult.error || !seriesResult.data) {
-    return seriesResult as PostgrestSingleResponse<{ id: string }>;
-  }
+function buildBadRequestResponse(error: PostgrestError): TmdbWorkIdResponse {
+  return { data: null, error, count: null, status: 400, statusText: "Bad Request" };
+}
 
-  const { data: existing, error: selectError } = await supabase
-    .from("works")
-    .select("id, last_tmdb_synced_at")
-    .eq("source_type", "tmdb")
-    .eq("tmdb_media_type", "tv")
-    .eq("tmdb_id", target.tmdbId)
-    .eq("work_type", "season")
-    .eq("season_number", target.seasonNumber)
-    .maybeSingle();
-
-  if (selectError) {
-    return { data: null, error: selectError, count: null, status: 400, statusText: "Bad Request" };
-  }
-
-  if (existing && !shouldRefreshTmdbWork(existing.last_tmdb_synced_at)) {
-    return { data: { id: existing.id }, error: null, count: null, status: 200, statusText: "OK" };
-  }
-
-  const details = await fetchTmdbWorkDetails(target);
-
-  if (existing) {
-    const { error: updateError } = await supabase
-      .from("works")
-      .update({
-        ...buildTmdbWorkUpdate(details),
-        parent_work_id: seriesResult.data.id,
-      })
-      .eq("id", existing.id);
-
-    if (updateError) {
-      return {
-        data: null,
-        error: updateError,
-        count: null,
-        status: 400,
-        statusText: "Bad Request",
-      };
-    }
-
-    return { data: existing, error: null, count: null, status: 200, statusText: "OK" };
-  }
-
-  return supabase
-    .from("works")
-    .insert(buildTmdbWorkInsert(details, userId, "season", seriesResult.data.id))
-    .select("id")
-    .single();
+function buildOkIdResponse(id: string): TmdbWorkIdResponse {
+  return { data: { id }, error: null, count: null, status: 200, statusText: "OK" };
 }

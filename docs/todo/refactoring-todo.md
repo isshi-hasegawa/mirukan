@@ -25,7 +25,7 @@
   - `data.test.ts` は backlog repository / backlog-item util / viewing mode / work repository の単位へ分割済み
   - internal import の `data.ts` barrel 経由は解消済みで、barrel 自体も削除済み
   - recommendation 用スコア計算と TMDb 更新 payload 組み立ては `work-metadata.ts` へ分離済み
-  - 次は season / series upsert の重複した Supabase アクセスパターンを薄くできるか見直したい
+  - season / series upsert の既存判定・再同期・insert/update は共通 helper へ寄せ直した
 
 ## 優先度高: 追加フローの状態管理整理
 
@@ -139,7 +139,6 @@
   - `DetailModal.tsx` の note / platform UI 切り出し
   - `window.alert` / `window.confirm` の UI 基盤移行
 - 慎重に進める
-  - `work-repository.ts` の season / series upsert 共通化
   - `BoardPage.tsx` の layout 差分切り出し
 - 今は止める
   - `useBacklogItems.ts` のさらなる抽象化
