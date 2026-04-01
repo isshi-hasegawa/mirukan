@@ -107,7 +107,7 @@ export function AddModalDetailsPane({
           <p className="text-sm leading-6 text-foreground">{pendingSaveMessage}</p>
           <div className="mt-3 flex justify-end gap-2.5">
             <Button type="button" variant="outline" onClick={onCancelPendingSave}>
-              そのままにする
+              キャンセル
             </Button>
             <Button type="button" onClick={onConfirmPendingSave}>
               ストックへ戻す

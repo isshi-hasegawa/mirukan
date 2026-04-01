@@ -30,14 +30,12 @@ describe("tmdbSearchSelectionReducer", () => {
         type: "select_result",
         result,
         selectedSeasonNumbersState: [1],
-        duplicateNotice: "重複あり",
         canAddSelectionToStacked: true,
         isLoadingSeasons: true,
       }),
     ).toMatchObject({
       selectedTmdbResult: result,
       selectedSeasonNumbersState: [1],
-      duplicateNotice: "重複あり",
       canAddSelectionToStacked: true,
       isLoadingSeasons: true,
       searchMessage: null,
@@ -48,12 +46,10 @@ describe("tmdbSearchSelectionReducer", () => {
     const selectedState = tmdbSearchSelectionReducer(initialTmdbSearchSelectionState, {
       type: "set_selected_seasons",
       selectedSeasonNumbersState: [2],
-      duplicateNotice: "シーズン2はすでに視聴済みです。",
       canAddSelectionToStacked: true,
     });
 
     expect(selectedState.selectedSeasonNumbersState).toEqual([2]);
-    expect(selectedState.duplicateNotice).toBe("シーズン2はすでに視聴済みです。");
     expect(selectedState.canAddSelectionToStacked).toBe(true);
   });
 

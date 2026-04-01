@@ -6,7 +6,6 @@ type SelectionState = {
   selectedSeasonNumbersState: number[];
   isLoadingSeasons: boolean;
   searchMessage: string | null;
-  duplicateNotice: string | null;
   canAddSelectionToStacked: boolean;
 };
 
@@ -16,7 +15,6 @@ type SelectionAction =
       type: "select_result";
       result: TmdbSearchResult;
       selectedSeasonNumbersState: number[];
-      duplicateNotice: string | null;
       canAddSelectionToStacked: boolean;
       isLoadingSeasons: boolean;
     }
@@ -25,7 +23,6 @@ type SelectionAction =
   | {
       type: "set_selected_seasons";
       selectedSeasonNumbersState: number[];
-      duplicateNotice: string | null;
       canAddSelectionToStacked: boolean;
     };
 
@@ -35,7 +32,6 @@ export const initialTmdbSearchSelectionState: SelectionState = {
   selectedSeasonNumbersState: [],
   isLoadingSeasons: false,
   searchMessage: null,
-  duplicateNotice: null,
   canAddSelectionToStacked: true,
 };
 
@@ -54,7 +50,6 @@ export function tmdbSearchSelectionReducer(
         selectedSeasonNumbersState: action.selectedSeasonNumbersState,
         isLoadingSeasons: action.isLoadingSeasons,
         searchMessage: null,
-        duplicateNotice: action.duplicateNotice,
         canAddSelectionToStacked: action.canAddSelectionToStacked,
       };
     case "set_season_options":
@@ -73,7 +68,6 @@ export function tmdbSearchSelectionReducer(
       return {
         ...state,
         selectedSeasonNumbersState: action.selectedSeasonNumbersState,
-        duplicateNotice: action.duplicateNotice,
         canAddSelectionToStacked: action.canAddSelectionToStacked,
       };
     default:

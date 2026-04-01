@@ -93,7 +93,7 @@ export function useAddSubmit({
 
   const cancelPendingSave = () => {
     setPendingSave(null);
-    setFormMessage("既存カードはそのままにしました。");
+    setFormMessage("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

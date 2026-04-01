@@ -28,7 +28,6 @@ export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
     selectedSeasonNumbersState,
     isLoadingSeasons,
     searchMessage,
-    duplicateNotice,
     canAddSelectionToStacked,
   } = selectionState;
   const {
@@ -75,7 +74,6 @@ export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
         type: "select_result",
         result,
         selectedSeasonNumbersState: [],
-        duplicateNotice: nextState.duplicateNotice,
         canAddSelectionToStacked: nextState.canAddSelectionToStacked,
         isLoadingSeasons: false,
       });
@@ -90,7 +88,6 @@ export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
       type: "select_result",
       result,
       selectedSeasonNumbersState: nextSelectedSeasonNumbers,
-      duplicateNotice: nextState.duplicateNotice,
       canAddSelectionToStacked: nextState.canAddSelectionToStacked,
       isLoadingSeasons: true,
     });
@@ -124,7 +121,6 @@ export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
     dispatchSelection({
       type: "set_selected_seasons",
       selectedSeasonNumbersState: nextSelectedSeasonNumbers,
-      duplicateNotice: nextState.duplicateNotice,
       canAddSelectionToStacked: nextState.canAddSelectionToStacked,
     });
   };
@@ -150,7 +146,6 @@ export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
     dispatchSelection({
       type: "set_selected_seasons",
       selectedSeasonNumbersState: nextSelectedSeasonNumbers,
-      duplicateNotice: nextState.duplicateNotice,
       canAddSelectionToStacked: nextState.canAddSelectionToStacked,
     });
   };
@@ -166,7 +161,6 @@ export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
     stackedSeasonNumbers,
     isLoadingSeasons,
     searchMessage,
-    duplicateNotice,
     canAddSelectionToStacked,
     isTvSelection,
     allSeasonNumbers,

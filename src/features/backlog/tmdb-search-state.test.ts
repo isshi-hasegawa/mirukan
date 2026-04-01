@@ -99,7 +99,7 @@ describe("getStackedSeasonNumbers", () => {
 });
 
 describe("buildDuplicateState", () => {
-  test("視聴済みシーズンはストックへ戻せる文言を返す", () => {
+  test("視聴済みシーズンはストックへ戻せる状態を返す", () => {
     const result = createSearchResult({ tmdbId: 20, title: "シリーズ" });
     const items = [
       createItem({
@@ -109,7 +109,6 @@ describe("buildDuplicateState", () => {
     ];
 
     expect(buildDuplicateState(items, result, [1])).toEqual({
-      notice: "シーズン1はすでに「視聴済み」にあります。追加するとストックに戻せます。",
       canAddToStacked: true,
     });
   });
@@ -123,7 +122,6 @@ describe("buildDuplicateState", () => {
     ];
 
     expect(buildDuplicateState(items, result, [1])).toEqual({
-      notice: "シーズン1はすでにストックにあります。",
       canAddToStacked: false,
     });
   });
@@ -141,7 +139,6 @@ describe("buildTvSelectionState", () => {
 
     expect(buildTvSelectionState(items, result, [1])).toEqual({
       selectedSeasonNumbers: [1],
-      duplicateNotice: "シーズン1はすでに「視聴済み」にあります。追加するとストックに戻せます。",
       canAddSelectionToStacked: true,
     });
   });

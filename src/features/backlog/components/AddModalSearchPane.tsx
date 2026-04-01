@@ -18,7 +18,6 @@ type Props = {
   selectedSeasonNumbers: number[];
   stackedSeasonNumbers: number[];
   isLoadingSeasons: boolean;
-  duplicateNotice: string | null;
   formMessage: string;
   pendingSaveMessage: string | null;
   isTvSelection: boolean;
@@ -64,7 +63,7 @@ function PendingSaveNotice({
       <p className="text-sm leading-6 text-foreground">{message}</p>
       <div className="mt-3 flex justify-end gap-2.5">
         <Button type="button" variant="outline" onClick={onCancel}>
-          そのままにする
+          キャンセル
         </Button>
         <Button type="button" onClick={onConfirm}>
           ストックへ戻す
@@ -82,7 +81,6 @@ function SelectedResultFooter({
   isLoadingSeasons,
   canToggleAllSeasons,
   hasAllSeasonsSelected,
-  duplicateNotice,
   formMessage,
   pendingSaveMessage,
   isSelectedTmdbSubmitDisabled,
@@ -105,11 +103,6 @@ function SelectedResultFooter({
           onToggleSeason={onToggleSeason}
           onToggleAll={onToggleAllSeasons}
         />
-      )}
-      {duplicateNotice && (
-        <p className="text-[0.82rem] text-muted-foreground px-2 py-1 rounded-lg bg-[rgba(0,0,0,0.08)]">
-          {duplicateNotice}
-        </p>
       )}
       {pendingSaveMessage ? (
         <PendingSaveNotice
@@ -151,7 +144,6 @@ export function AddModalSearchPane({
   selectedSeasonNumbers,
   stackedSeasonNumbers,
   isLoadingSeasons,
-  duplicateNotice,
   formMessage,
   pendingSaveMessage,
   isTvSelection,
@@ -193,7 +185,7 @@ export function AddModalSearchPane({
           displayResults.map((result) => {
             const isSelected = selectedTmdbResult?.tmdbId === result.tmdbId;
             const useInlineFooter =
-              isSelected && !isTvSelection && !duplicateNotice && !formMessage;
+              isSelected && !isTvSelection && !formMessage && !pendingSaveMessage;
 
             return (
               <TmdbWorkCard
@@ -223,7 +215,6 @@ export function AddModalSearchPane({
                         isLoadingSeasons={isLoadingSeasons}
                         canToggleAllSeasons={canToggleAllSeasons}
                         hasAllSeasonsSelected={hasAllSeasonsSelected}
-                        duplicateNotice={duplicateNotice}
                         formMessage={formMessage}
                         pendingSaveMessage={pendingSaveMessage}
                         isSelectedTmdbSubmitDisabled={isSelectedTmdbSubmitDisabled}

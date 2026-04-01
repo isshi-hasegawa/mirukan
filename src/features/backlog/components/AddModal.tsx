@@ -24,7 +24,6 @@ export function AddModal({ items, session, onClose, onAdded }: Props) {
     stackedSeasonNumbers,
     isLoadingSeasons,
     searchMessage,
-    duplicateNotice,
     isTvSelection,
     canToggleAllSeasons,
     hasAllSeasonsSelected,
@@ -100,7 +99,6 @@ export function AddModal({ items, session, onClose, onAdded }: Props) {
             selectedSeasonNumbers={selectedSeasonNumbers}
             stackedSeasonNumbers={stackedSeasonNumbers}
             isLoadingSeasons={isLoadingSeasons}
-            duplicateNotice={duplicateNotice}
             formMessage={formMessage}
             pendingSaveMessage={pendingSaveMessage}
             isTvSelection={isTvSelection}

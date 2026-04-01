@@ -338,7 +338,7 @@ describe("AddModal", () => {
     ).toBeInTheDocument();
   });
 
-  test("TV 選択時はシーズン1を初期選択し、取得後のシーズン候補と重複通知を表示する", async () => {
+  test("TV 選択時はシーズン1を初期選択し、取得後のシーズン候補を表示する", async () => {
     const seriesResult = createSearchResult({
       tmdbId: 30,
       tmdbMediaType: "tv",
@@ -375,9 +375,6 @@ describe("AddModal", () => {
       "true",
     );
     expect(await screen.findByRole("button", { name: /シーズン2/ })).toBeInTheDocument();
-    expect(
-      screen.getByText("シーズン1はすでに「視聴済み」にあります。追加するとストックに戻せます。"),
-    ).toBeInTheDocument();
   });
 
   test("すでにストック済みのシーズンだけを選んだときは追加ボタンを無効化する", async () => {
@@ -408,7 +405,6 @@ describe("AddModal", () => {
     await search("ストック済みシリーズ");
     await user.click(await screen.findByRole("button", { name: /ストック済みシリーズ/ }));
 
-    expect(await screen.findByText("シーズン1はすでにストックにあります。")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "シーズン1" })).toBeDisabled();
     expect(screen.getByRole("button", { name: /シーズン2/ })).not.toBeDisabled();
     expect(screen.getByRole("button", { name: "ストック済み" })).toBeDisabled();
@@ -445,12 +441,16 @@ describe("AddModal", () => {
         "「既存映画」はすでに「視聴済み」にあります。ストックに戻しますか？",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "そのままにする" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "キャンセル" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "ストックへ戻す" })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "そのままにする" }));
+    await user.click(screen.getByRole("button", { name: "キャンセル" }));
 
-    expect(await screen.findByText("既存カードはそのままにしました。")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.queryByText("「既存映画」はすでに「視聴済み」にあります。ストックに戻しますか？"),
+      ).not.toBeInTheDocument(),
+    );
     expect(dataMocks.upsertBacklogItemsToStatus).not.toHaveBeenCalled();
     expect(onClose).not.toHaveBeenCalled();
     expect(onAdded).not.toHaveBeenCalled();
