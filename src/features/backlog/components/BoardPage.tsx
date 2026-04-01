@@ -2,12 +2,7 @@ import type { Session } from "@supabase/supabase-js";
 import { DndContext, DragOverlay } from "@dnd-kit/core";
 import { Button } from "@/components/ui/button.tsx";
 import { supabase } from "../../../lib/supabase.ts";
-import { useWindowSize } from "../hooks/useWindowSize.ts";
-import { useBacklogItems } from "../hooks/useBacklogItems.ts";
-import { useBacklogDnd } from "../hooks/useBacklogDnd.ts";
-import { useBacklogActions } from "../hooks/useBacklogActions.ts";
-import { useBacklogFeedback } from "../hooks/useBacklogFeedback.tsx";
-import { useBoardPageState } from "../hooks/useBoardPageState.ts";
+import { useBoardPageController } from "../hooks/useBoardPageController.ts";
 import { Header } from "./Header.tsx";
 import { KanbanBoard } from "./KanbanBoard.tsx";
 import { AddModal } from "./AddModal.tsx";
@@ -24,47 +19,8 @@ const headerCard =
   "w-full min-w-0 border border-border bg-[rgba(28,28,28,0.95)] backdrop-blur-xl shadow-[0_24px_60px_rgba(0,0,0,0.5)] grid grid-cols-[minmax(0,1fr)_auto] gap-4 items-center px-[18px] py-[14px] rounded-[28px] relative z-10 max-[720px]:rounded-[22px] max-[720px]:p-4";
 
 export function BoardPage({ session }: Props) {
-  const windowWidth = useWindowSize();
-  const isMobileLayout = windowWidth <= 720;
-  const { feedback, feedbackUi } = useBacklogFeedback();
-
-  const { items, setItems, isLoading, error, loadItems } = useBacklogItems();
-  const {
-    isAddModalOpen,
-    detailModal,
-    selectedTabStatus,
-    setDetailModal,
-    setSelectedTabStatus,
-    handleOpenAddModal,
-    handleCloseAddModal,
-    handleOpenDetail,
-    handleCloseDetail,
-    handleAdded,
-    handleItemDeleted,
-    handleWorksAdded,
-    handleUpdateItem,
-    handleColumnRef,
-  } = useBoardPageState({
-    isMobileLayout,
-    setItems,
-  });
-
-  const { dragItemId, dropIndicator, sensors, handleDragStart, handleDragOver, handleDragEnd } =
-    useBacklogDnd({
-      items,
-      isMobileLayout,
-      onAfterDrop: loadItems,
-      feedback,
-    });
-
-  const { handleDeleteItem, handleMarkAsWatched } = useBacklogActions({
-    items,
-    session,
-    loadItems,
-    onItemDeleted: handleItemDeleted,
-    onWorksAdded: handleWorksAdded,
-    feedback,
-  });
+  const { isLoading, error, board, dnd, addModal, detailModal, feedbackUi } =
+    useBoardPageController({ session });
 
   if (isLoading) {
     return (
@@ -102,63 +58,44 @@ export function BoardPage({ session }: Props) {
     );
   }
 
-  const detailItem = detailModal.openItemId
-    ? (items.find((i) => i.id === detailModal.openItemId) ?? null)
-    : null;
-
   return (
     <main className={shellBoard}>
       <Header session={session} />
 
       <DndContext
-        sensors={sensors}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={(e) => void handleDragEnd(e)}
+        sensors={dnd.sensors}
+        onDragStart={dnd.handleDragStart}
+        onDragOver={dnd.handleDragOver}
+        onDragEnd={(e) => void dnd.handleDragEnd(e)}
       >
-        <KanbanBoard
-          items={items}
-          dropIndicator={dropIndicator}
-          isMobileLayout={isMobileLayout}
-          isMobileDragging={isMobileLayout && dragItemId !== null}
-          selectedTabStatus={selectedTabStatus}
-          onTabChange={setSelectedTabStatus}
-          onOpenAddModal={handleOpenAddModal}
-          onOpenDetail={handleOpenDetail}
-          onDeleteItem={(itemId) => void handleDeleteItem(itemId)}
-          onMarkAsWatched={(itemId) => void handleMarkAsWatched(itemId)}
-          columnRef={handleColumnRef}
-        />
+        <KanbanBoard {...board} />
         <DragOverlay dropAnimation={null}>
-          {dragItemId ? (
+          {dnd.dragItemId ? (
             <DraggedBacklogCardOverlay
-              item={items.find((candidate) => candidate.id === dragItemId) ?? null}
+              item={board.items.find((candidate) => candidate.id === dnd.dragItemId) ?? null}
             />
           ) : null}
         </DragOverlay>
       </DndContext>
 
-      {isAddModalOpen && (
+      {addModal.isOpen && (
         <AddModal
-          items={items}
-          session={session}
-          feedback={feedback}
-          onClose={handleCloseAddModal}
-          onAdded={async () => {
-            await loadItems();
-            handleAdded();
-          }}
+          items={addModal.items}
+          session={addModal.session}
+          feedback={addModal.feedback}
+          onClose={addModal.onClose}
+          onAdded={addModal.onAdded}
         />
       )}
 
-      {detailModal.openItemId !== null && (
+      {detailModal.isOpen && (
         <DetailModal
-          item={detailItem}
-          state={detailModal}
-          items={items}
-          onStateChange={setDetailModal}
-          onClose={handleCloseDetail}
-          onUpdate={handleUpdateItem}
+          item={detailModal.item}
+          state={detailModal.state}
+          items={detailModal.items}
+          onStateChange={detailModal.onStateChange}
+          onClose={detailModal.onClose}
+          onUpdate={detailModal.onUpdate}
         />
       )}
 

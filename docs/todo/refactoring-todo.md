@@ -86,8 +86,8 @@
 - 着手メモ
   - dragged card preview はコンポーネント化済み
   - modal 制御と追加後復帰処理は `useBoardPageState` へ切り出し済み
-  - 次は layout ごとの差分描画を board shell から順に外したい
-  - `useBacklogItems` / `useBacklogActions` / `useBacklogDnd` の戻り値を画面用途ごとに整理したい
+  - `useBoardPageController.ts` を追加し、`useBacklogItems` / `useBacklogActions` / `useBacklogDnd` / modal state を画面用途ごとに束ねた
+  - 次は layout ごとの差分描画を `KanbanBoard` からさらに切るかを見ればよい
   - ただし desktop / mobile を完全に別画面へ分けるほどの抽象化は今の規模では過剰
 
 ## 優先度中: UI から `window.alert` / `window.confirm` を追い出す
