@@ -21,7 +21,8 @@
   - recommendation 用のスコア計算
 - 着手メモ
   - hook から query 定義を追い出すところまでは着手済み
-  - 次は barrel import を減らしつつ、`data.test.ts` を repository / util / viewing mode 単位へ分割したい
+  - `data.test.ts` は backlog repository / backlog-item util / viewing mode / work repository の単位へ分割済み
+  - 次は internal import の barrel 経由を減らす見直しを優先したい
 
 ## 優先度高: 追加フローの状態管理整理
 
