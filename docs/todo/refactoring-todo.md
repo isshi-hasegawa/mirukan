@@ -6,14 +6,15 @@
 ## 優先度中: backlog repository / util の仕上げ
 
 - 対象
-  - `src/features/backlog/data.ts`
   - `src/features/backlog/backlog-repository.ts`
   - `src/features/backlog/work-repository.ts`
-  - `src/features/backlog/data.test.ts`
+  - `src/features/backlog/backlog-item-utils.ts`
+  - `src/features/backlog/viewing-mode.ts`
+  - `src/features/backlog/*.test.ts`
 - 現状
-  - `data.ts` 自体は barrel になり、repository / pure util の分離は一段進んだ
-  - 一方で internal import がまだ一部 barrel 経由
-  - `data.test.ts` は複数責務のテストを抱えたままで粒度が大きい
+  - repository / pure util / viewing mode の分離は進み、`data.ts` barrel は削除済み
+  - `data.test.ts` の責務分割も終わり、テストはモジュール単位へ寄せ直した
+  - 残りは work repository 内の pure 計算と TMDb 同期責務の境界整理
 - 分けたい責務
   - backlog item query definition / normalizer / React hook
   - backlog item 並び替え・更新ロジック
@@ -22,7 +23,8 @@
 - 着手メモ
   - hook から query 定義を追い出すところまでは着手済み
   - `data.test.ts` は backlog repository / backlog-item util / viewing mode / work repository の単位へ分割済み
-  - 次は internal import の barrel 経由を減らす見直しを優先したい
+  - internal import の `data.ts` barrel 経由は解消済みで、barrel 自体も削除済み
+  - 次は recommendation 用スコア計算や TMDb 同期まわりの pure 部分をさらに分離できるか見直したい
 
 ## 優先度高: 追加フローの状態管理整理
 

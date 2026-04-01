@@ -3,7 +3,7 @@
 追加したいテスト、欠けている検証観点、テスト強化候補を置く。
 既存カバレッジを踏まえて、次に埋めるべき抜けを優先度付きで残す。
 
-既存テストの状況を見ると、`AddModal` と `data.ts` の pure function、`tmdb.ts` の recommendation cache / `resolveSeasonTitle` はすでに一定カバーされている。
+既存テストの状況を見ると、`AddModal` と backlog repository / util / viewing mode / work repository の pure function、`tmdb.ts` の recommendation cache / `resolveSeasonTitle` はすでに一定カバーされている。
 次は UI の状態遷移と Supabase / TMDb 境界の非同期分岐を埋める優先度が高い。
 
 ## テスト基盤の拡張検討
@@ -38,7 +38,7 @@
 - 見たい観点
   - `useAddSubmit.ts` の送信失敗系・分岐の穴
   - `useTmdbSearch.ts` の検索 / 重複判定 / TV シーズン分岐の穴
-  - `data.ts` の未到達分岐
+  - `backlog-item-utils.ts` / `work-repository.ts` の未到達分岐
   - `BacklogCard.tsx` / `BoardPage.tsx` / `SeasonPicker.tsx` / `TmdbWorkCard.tsx` の UI 分岐
   - `AboutDialog.tsx` / `UserMenu.tsx` / `PlatformIcon.tsx` の低カバレッジ部分
 - 関連 idea

@@ -8,7 +8,7 @@ import {
   TvIcon,
 } from "@heroicons/react/24/outline";
 import type { BacklogItem, BacklogStatus, ViewingMode } from "../types.ts";
-import { getViewingMode } from "../data.ts";
+import { getViewingMode } from "../viewing-mode.ts";
 import { PlatformIcon } from "./PlatformIcon.tsx";
 import { PosterImage } from "./PosterImage.tsx";
 import {
