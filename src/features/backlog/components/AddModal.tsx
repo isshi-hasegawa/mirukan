@@ -1,14 +1,10 @@
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button.tsx";
-import { Input } from "@/components/ui/input.tsx";
-import { DocumentTextIcon, FilmIcon, TvIcon } from "@heroicons/react/24/outline";
-import { TmdbWorkCard } from "./TmdbWorkCard.tsx";
 import type { Session } from "@supabase/supabase-js";
-import { PlatformPicker } from "./PlatformPicker.tsx";
-import { SeasonPicker } from "./SeasonPicker.tsx";
 import { useTmdbSearch } from "../hooks/useTmdbSearch.ts";
 import { useAddSubmit } from "../hooks/useAddSubmit.ts";
 import type { BacklogItem } from "../types.ts";
+import { AddModalDetailsPane } from "./AddModalDetailsPane.tsx";
+import { AddModalSearchPane } from "./AddModalSearchPane.tsx";
 
 type Props = {
   items: BacklogItem[];
@@ -106,184 +102,46 @@ export function AddModal({ items, session, onClose, onAdded }: Props) {
             void handleSubmit(e);
           }}
         >
-          <div className="grid gap-3.5 p-4 overflow-y-auto content-start rounded-[20px] bg-[rgba(191,90,54,0.06)] max-[720px]:p-3 max-[720px]:overflow-y-visible">
-            <Input
-              ref={searchInputRef}
-              type="text"
-              placeholder="作品名で検索"
-              value={searchQuery}
-              onCompositionStart={() => {
-                isComposingRef.current = true;
-              }}
-              onCompositionEnd={(e) => {
-                handleCompositionEnd(e.currentTarget.value);
-              }}
-              onChange={(e) => {
-                handleQueryChange(e.target.value);
-              }}
-            />
+          <AddModalSearchPane
+            searchInputRef={searchInputRef}
+            isComposingRef={isComposingRef}
+            searchQuery={searchQuery}
+            recommendedResults={recommendedResults}
+            searchResults={searchResults}
+            recommendedMessage={recommendedMessage}
+            searchMessage={searchMessage}
+            selectedTmdbResult={selectedTmdbResult}
+            seasonOptions={seasonOptions}
+            selectedSeasonNumbers={selectedSeasonNumbers}
+            stackedSeasonNumbers={stackedSeasonNumbers}
+            isLoadingSeasons={isLoadingSeasons}
+            duplicateNotice={duplicateNotice}
+            formMessage={formMessage}
+            isTvSelection={isTvSelection}
+            canToggleAllSeasons={canToggleAllSeasons}
+            hasAllSeasonsSelected={hasAllSeasonsSelected}
+            selectedSeasonSummary={selectedSeasonSummary}
+            isSelectedTmdbSubmitDisabled={isSelectedTmdbSubmitDisabled}
+            selectedTmdbSubmitLabel={selectedTmdbSubmitLabel}
+            onQueryChange={handleQueryChange}
+            onCompositionEnd={handleCompositionEnd}
+            onSelectResult={handleSelectResult}
+            onToggleSeason={toggleSeasonSelection}
+            onToggleAllSeasons={toggleAllSeasons}
+          />
 
-            <div className="modal-scrollable grid gap-2.5 overflow-y-auto max-[720px]:h-[min(40svh,320px)]">
-              {(() => {
-                const displayResults =
-                  searchQuery.trim() === "" ? recommendedResults : searchResults;
-                if (displayResults.length > 0) {
-                  return displayResults.map((result) =>
-                    (() => {
-                      const isSelected = selectedTmdbResult?.tmdbId === result.tmdbId;
-                      const useInlineFooter =
-                        isSelected && !isTvSelection && !duplicateNotice && !formMessage;
-
-                      return (
-                        <TmdbWorkCard
-                          key={`${result.tmdbMediaType}-${result.tmdbId}`}
-                          result={result}
-                          isSelected={isSelected}
-                          onSelect={() => handleSelectResult(result)}
-                          footerLayout={useInlineFooter ? "inline" : "panel"}
-                          footer={
-                            isSelected ? (
-                              useInlineFooter ? (
-                                <Button
-                                  type="submit"
-                                  disabled={isSelectedTmdbSubmitDisabled}
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                  }}
-                                >
-                                  {selectedTmdbSubmitLabel}
-                                </Button>
-                              ) : (
-                                <div className="grid gap-2.5">
-                                  {isTvSelection && (
-                                    <SeasonPicker
-                                      seasonOptions={seasonOptions}
-                                      selectedSeasonNumbers={selectedSeasonNumbers}
-                                      stackedSeasonNumbers={stackedSeasonNumbers}
-                                      isLoadingSeasons={isLoadingSeasons}
-                                      canToggleAllSeasons={canToggleAllSeasons}
-                                      hasAllSeasonsSelected={hasAllSeasonsSelected}
-                                      selectedSeasonSummary={selectedSeasonSummary}
-                                      onToggleSeason={toggleSeasonSelection}
-                                      onToggleAll={toggleAllSeasons}
-                                    />
-                                  )}
-                                  {duplicateNotice && (
-                                    <p className="text-[0.82rem] text-muted-foreground px-2 py-1 rounded-lg bg-[rgba(0,0,0,0.08)]">
-                                      {duplicateNotice}
-                                    </p>
-                                  )}
-                                  <div className="flex items-end justify-end gap-3">
-                                    {formMessage && (
-                                      <p
-                                        className="text-muted-foreground text-sm text-right"
-                                        aria-live="polite"
-                                      >
-                                        {formMessage}
-                                      </p>
-                                    )}
-                                    <Button
-                                      type="submit"
-                                      disabled={isSelectedTmdbSubmitDisabled}
-                                      onClick={(event) => {
-                                        event.stopPropagation();
-                                      }}
-                                    >
-                                      {selectedTmdbSubmitLabel}
-                                    </Button>
-                                  </div>
-                                </div>
-                              )
-                            ) : null
-                          }
-                        />
-                      );
-                    })(),
-                  );
-                }
-                return (
-                  (searchQuery.trim() === "" ? recommendedMessage : searchMessage) && (
-                    <p className="text-muted-foreground text-[0.88rem]">
-                      {searchQuery.trim() === "" ? recommendedMessage : searchMessage}
-                    </p>
-                  )
-                );
-              })()}
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-4 overflow-y-auto max-[720px]:overflow-y-visible">
-            <Input
-              name="title"
-              type="text"
-              placeholder="タイトル"
-              aria-label="タイトル"
-              maxLength={120}
-              value={resolvedTitle}
-              readOnly={!!selectedTmdbResult}
-              onChange={(e) => {
-                if (!selectedTmdbResult) {
-                  setManualTitle(e.target.value);
-                }
-              }}
-              required
-            />
-            <div className="flex flex-wrap gap-1.5" role="group" aria-label="種別">
-              {(["movie", "series"] as const).map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  className={`px-3 py-1 border rounded-[20px] text-[0.88rem] cursor-pointer transition-[background,color,border-color] duration-150${
-                    resolvedWorkType === t
-                      ? " bg-primary border-primary text-primary-foreground font-semibold"
-                      : " border-[rgba(92,59,35,0.2)] bg-transparent text-muted-foreground hover:bg-[rgba(92,59,35,0.08)] hover:text-foreground"
-                  }`}
-                  disabled={!!selectedTmdbResult}
-                  onClick={() => setWorkType(t)}
-                >
-                  {t === "movie" ? (
-                    <>
-                      <FilmIcon
-                        className="w-4 h-4 inline-block align-middle mr-1 shrink-0"
-                        aria-hidden="true"
-                      />
-                      映画
-                    </>
-                  ) : (
-                    <>
-                      <TvIcon
-                        className="w-4 h-4 inline-block align-middle mr-1 shrink-0"
-                        aria-hidden="true"
-                      />
-                      シリーズ
-                    </>
-                  )}
-                </button>
-              ))}
-            </div>
-            <PlatformPicker value={primaryPlatform} onChange={setPrimaryPlatform} />
-            <div className="flex items-start gap-2 w-full">
-              <DocumentTextIcon className="w-5 h-5 shrink-0 stroke-[1.5] text-muted-foreground mt-0.5" />
-              <textarea
-                name="note"
-                className="w-full p-0 border-none bg-transparent text-foreground leading-[1.6] outline-none resize-none min-h-[60px] flex-1 placeholder:text-muted-foreground"
-                placeholder="メモを追加"
-                maxLength={500}
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-              />
-            </div>
-            {!selectedTmdbResult && (
-              <div className="flex justify-end items-center gap-3 pt-1">
-                {formMessage && (
-                  <p className="text-muted-foreground text-sm" aria-live="polite">
-                    {formMessage}
-                  </p>
-                )}
-                <Button type="submit">ストックに追加</Button>
-              </div>
-            )}
-          </div>
+          <AddModalDetailsPane
+            selectedTmdbResult={selectedTmdbResult}
+            resolvedTitle={resolvedTitle}
+            resolvedWorkType={resolvedWorkType}
+            note={note}
+            primaryPlatform={primaryPlatform}
+            formMessage={formMessage}
+            onChangeTitle={setManualTitle}
+            onChangeWorkType={setWorkType}
+            onChangePrimaryPlatform={setPrimaryPlatform}
+            onChangeNote={setNote}
+          />
         </form>
       </section>
     </div>
