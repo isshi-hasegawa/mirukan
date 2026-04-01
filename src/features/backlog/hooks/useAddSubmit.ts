@@ -1,19 +1,19 @@
 import { useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { TmdbSearchResult, TmdbSeasonOption } from "../../../lib/tmdb.ts";
-import {
-  buildMoveToStatusConfirmMessage,
-  planBacklogItemUpserts,
-} from "../backlog-item-utils.ts";
 import { upsertBacklogItemsToStatus } from "../backlog-repository.ts";
 import {
   resolveSelectedSeasonWorkIds,
   upsertManualWork,
   upsertTmdbWork,
 } from "../work-repository.ts";
-import { normalizePrimaryPlatform } from "../helpers.ts";
 import type { BacklogItem, WorkType } from "../types.ts";
 import { browserBacklogFeedback, type BacklogFeedback } from "../ui-feedback.ts";
+import {
+  buildSelectedSubject,
+  buildStackedBacklogOptions,
+  confirmStackedSave,
+} from "../add-submit-flow.ts";
 
 type UseAddSubmitOptions = {
   items: BacklogItem[];
@@ -50,23 +50,16 @@ export function useAddSubmit({
 
   const clearFormMessage = () => setFormMessage("");
 
-  const buildSelectedSubject = () => {
-    if (!selectedTmdbResult) {
-      return `「${resolvedTitle.trim() || "この作品"}」`;
-    }
-    if (selectedTmdbResult.tmdbMediaType !== "tv") {
-      return `「${selectedTmdbResult.title}」`;
-    }
-    if (selectedSeasonNumbers.length <= 3) {
-      return selectedSeasonNumbers.map((seasonNumber) => `シーズン${seasonNumber}`).join("・");
-    }
-    return `${selectedSeasonNumbers.length}シーズン`;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const title = resolvedTitle.trim();
+    const subject = buildSelectedSubject({
+      selectedTmdbResult,
+      selectedSeasonNumbers,
+      resolvedTitle,
+    });
+    const backlogOptions = buildStackedBacklogOptions(primaryPlatform, note);
 
     if (!title) {
       setFormMessage("タイトルを入力してください。");
@@ -92,20 +85,15 @@ export function useAddSubmit({
         return;
       }
 
-      const plan = planBacklogItemUpserts(items, result.workIds, "stacked");
-      const confirmMessage = buildMoveToStatusConfirmMessage(
-        plan.existingOtherItems,
-        "stacked",
-        buildSelectedSubject(),
-      );
-      const shouldProceed =
-        !confirmMessage || (await Promise.resolve(feedback.confirm(confirmMessage)));
-      if (!shouldProceed) {
-        setFormMessage("既存カードはそのままにしました。");
-        return;
-      }
-      if (plan.actions.length === 0) {
-        setFormMessage("選択したシーズンはすでにストックにあります。");
+      const confirmResult = await confirmStackedSave({
+        items,
+        workIds: result.workIds,
+        subject,
+        emptyMessage: "選択したシーズンはすでにストックにあります。",
+        feedback,
+      });
+      if (!confirmResult.shouldSave) {
+        setFormMessage(confirmResult.message);
         return;
       }
 
@@ -114,10 +102,7 @@ export function useAddSubmit({
         items,
         result.workIds,
         "stacked",
-        {
-          primaryPlatform: normalizePrimaryPlatform(primaryPlatform),
-          note: note.trim() || null,
-        },
+        backlogOptions,
       );
       if (upsertResult.error) {
         setFormMessage(`シーズンの保存に失敗しました: ${upsertResult.error}`);
@@ -157,20 +142,15 @@ export function useAddSubmit({
       return;
     }
 
-    const plan = planBacklogItemUpserts(items, [work.id], "stacked");
-    const confirmMessage = buildMoveToStatusConfirmMessage(
-      plan.existingOtherItems,
-      "stacked",
-      buildSelectedSubject(),
-    );
-    const shouldProceed =
-      !confirmMessage || (await Promise.resolve(feedback.confirm(confirmMessage)));
-    if (!shouldProceed) {
-      setFormMessage("既存カードはそのままにしました。");
-      return;
-    }
-    if (plan.actions.length === 0) {
-      setFormMessage("すでにストックにあります。");
+    const confirmResult = await confirmStackedSave({
+      items,
+      workIds: [work.id],
+      subject,
+      emptyMessage: "すでにストックにあります。",
+      feedback,
+    });
+    if (!confirmResult.shouldSave) {
+      setFormMessage(confirmResult.message);
       return;
     }
 
@@ -179,10 +159,7 @@ export function useAddSubmit({
       items,
       [work.id],
       "stacked",
-      {
-        primaryPlatform: normalizePrimaryPlatform(primaryPlatform),
-        note: note.trim() || null,
-      },
+      backlogOptions,
     );
 
     if (backlogResult.error) {

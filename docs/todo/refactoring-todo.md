@@ -44,7 +44,7 @@
 - 着手メモ
   - `AddModal` 自体は modal shell と左右ペイン構成に絞る
   - 「検索選択状態」と「保存実行状態」を hook または reducer で明示化したい
-  - 次に着手するなら最優先候補。`useAddSubmit.ts` の submit orchestration 分割がいちばん効果が大きい
+  - `useAddSubmit.ts` の submit orchestration は helper 抽出で薄くした。次は AddModal 側の state machine 明示化を優先する
   - `TVシーズン追加` と `単体作品追加` の保存分岐は分けても自然だが、work / backlog 保存を汎用 helper 化しすぎるのは避けたい
 
 ## 優先度中: 詳細モーダルの編集 UI 部品化

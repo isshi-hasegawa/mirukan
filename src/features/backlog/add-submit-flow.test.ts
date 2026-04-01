@@ -1,0 +1,157 @@
+import { setupTestLifecycle } from "../../test/test-lifecycle.ts";
+import {
+  buildSelectedSubject,
+  buildStackedBacklogOptions,
+  confirmStackedSave,
+} from "./add-submit-flow.ts";
+import type { BacklogItem } from "./types.ts";
+import type { TmdbSearchResult } from "../../lib/tmdb.ts";
+
+setupTestLifecycle();
+
+function createMovieResult(overrides: Partial<TmdbSearchResult> = {}): TmdbSearchResult {
+  return {
+    tmdbId: 1,
+    tmdbMediaType: "movie",
+    workType: "movie",
+    title: "作品タイトル",
+    originalTitle: null,
+    overview: null,
+    posterPath: null,
+    releaseDate: "2024-01-01",
+    ...overrides,
+  };
+}
+
+function createItem(
+  id: string,
+  status: BacklogItem["status"],
+  workId: string,
+  workOverrides: Partial<NonNullable<BacklogItem["works"]>> = {},
+): BacklogItem {
+  return {
+    id,
+    status,
+    primary_platform: null,
+    note: null,
+    sort_order: 1000,
+    works: {
+      id: workId,
+      title: `作品 ${id}`,
+      work_type: "movie",
+      source_type: "tmdb",
+      tmdb_id: null,
+      tmdb_media_type: null,
+      original_title: null,
+      overview: null,
+      poster_path: null,
+      release_date: null,
+      runtime_minutes: null,
+      typical_episode_runtime_minutes: null,
+      duration_bucket: null,
+      genres: [],
+      season_count: null,
+      season_number: null,
+      focus_required_score: null,
+      background_fit_score: null,
+      completion_load_score: null,
+      ...workOverrides,
+    },
+  };
+}
+
+describe("buildSelectedSubject", () => {
+  test("手動追加では trim 後のタイトルを使う", () => {
+    expect(
+      buildSelectedSubject({
+        selectedTmdbResult: null,
+        selectedSeasonNumbers: [],
+        resolvedTitle: "  手動作品  ",
+      }),
+    ).toBe("「手動作品」");
+  });
+
+  test("TV で 4 シーズン以上選択したときは件数で要約する", () => {
+    expect(
+      buildSelectedSubject({
+        selectedTmdbResult: createMovieResult({
+          tmdbId: 10,
+          tmdbMediaType: "tv",
+          workType: "series",
+          title: "シリーズ作品",
+        }),
+        selectedSeasonNumbers: [1, 2, 3, 4],
+        resolvedTitle: "",
+      }),
+    ).toBe("4シーズン");
+  });
+});
+
+describe("buildStackedBacklogOptions", () => {
+  test("platform と note を保存用の形へ正規化する", () => {
+    expect(buildStackedBacklogOptions("netflix", "  メモ  ")).toEqual({
+      primaryPlatform: "netflix",
+      note: "メモ",
+    });
+  });
+});
+
+describe("confirmStackedSave", () => {
+  test("既存カードの移動確認をキャンセルしたときは保存しない", async () => {
+    const confirm = vi.fn().mockResolvedValue(false);
+    const items = [createItem("item-1", "watched", "work-1")];
+
+    await expect(
+      confirmStackedSave({
+        items,
+        workIds: ["work-1"],
+        subject: "「作品タイトル」",
+        emptyMessage: "すでにストックにあります。",
+        feedback: { confirm },
+      }),
+    ).resolves.toEqual({
+      shouldSave: false,
+      message: "既存カードはそのままにしました。",
+    });
+
+    expect(confirm).toHaveBeenCalledWith(
+      "「作品タイトル」はすでに「視聴済み」にあります。ストックに戻しますか？",
+    );
+  });
+
+  test("保存対象がなければ emptyMessage を返す", async () => {
+    const confirm = vi.fn();
+    const items = [createItem("item-1", "stacked", "work-1")];
+
+    await expect(
+      confirmStackedSave({
+        items,
+        workIds: ["work-1"],
+        subject: "「作品タイトル」",
+        emptyMessage: "すでにストックにあります。",
+        feedback: { confirm },
+      }),
+    ).resolves.toEqual({
+      shouldSave: false,
+      message: "すでにストックにあります。",
+    });
+
+    expect(confirm).not.toHaveBeenCalled();
+  });
+
+  test("新規追加があれば保存を続行する", async () => {
+    const confirm = vi.fn();
+
+    await expect(
+      confirmStackedSave({
+        items: [],
+        workIds: ["work-1"],
+        subject: "「作品タイトル」",
+        emptyMessage: "すでにストックにあります。",
+        feedback: { confirm },
+      }),
+    ).resolves.toEqual({ shouldSave: true });
+
+    expect(confirm).not.toHaveBeenCalled();
+  });
+});
