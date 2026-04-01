@@ -6,6 +6,7 @@ import { useWindowSize } from "../hooks/useWindowSize.ts";
 import { useBacklogItems } from "../hooks/useBacklogItems.ts";
 import { useBacklogDnd } from "../hooks/useBacklogDnd.ts";
 import { useBacklogActions } from "../hooks/useBacklogActions.ts";
+import { useBacklogFeedback } from "../hooks/useBacklogFeedback.tsx";
 import { useBoardPageState } from "../hooks/useBoardPageState.ts";
 import { Header } from "./Header.tsx";
 import { KanbanBoard } from "./KanbanBoard.tsx";
@@ -25,6 +26,7 @@ const headerCard =
 export function BoardPage({ session }: Props) {
   const windowWidth = useWindowSize();
   const isMobileLayout = windowWidth <= 720;
+  const { feedback, feedbackUi } = useBacklogFeedback();
 
   const { items, setItems, isLoading, error, loadItems } = useBacklogItems();
   const {
@@ -52,6 +54,7 @@ export function BoardPage({ session }: Props) {
       items,
       isMobileLayout,
       onAfterDrop: loadItems,
+      feedback,
     });
 
   const { handleDeleteItem, handleMarkAsWatched } = useBacklogActions({
@@ -60,6 +63,7 @@ export function BoardPage({ session }: Props) {
     loadItems,
     onItemDeleted: handleItemDeleted,
     onWorksAdded: handleWorksAdded,
+    feedback,
   });
 
   if (isLoading) {
@@ -138,6 +142,7 @@ export function BoardPage({ session }: Props) {
         <AddModal
           items={items}
           session={session}
+          feedback={feedback}
           onClose={handleCloseAddModal}
           onAdded={async () => {
             await loadItems();
@@ -156,6 +161,8 @@ export function BoardPage({ session }: Props) {
           onUpdate={handleUpdateItem}
         />
       )}
+
+      {feedbackUi}
     </main>
   );
 }

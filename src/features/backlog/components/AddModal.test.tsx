@@ -4,6 +4,7 @@ import type { Session } from "@supabase/supabase-js";
 import type { TmdbSearchResult, TmdbSeasonOption } from "../../../lib/tmdb.ts";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
 import type { BacklogItem } from "../types.ts";
+import type { BacklogFeedback } from "../ui-feedback.ts";
 import { AddModal } from "./AddModal.tsx";
 
 const tmdbMocks = vi.hoisted(() => ({
@@ -118,9 +119,10 @@ function createItem(overrides: Partial<BacklogItem> = {}): BacklogItem {
 
 type RenderOptions = {
   items?: BacklogItem[];
+  feedback?: BacklogFeedback;
 };
 
-function renderAddModal({ items = [] }: RenderOptions = {}) {
+function renderAddModal({ items = [], feedback }: RenderOptions = {}) {
   const onClose = vi.fn();
   const onAdded = vi.fn().mockResolvedValue(undefined);
   const user = userEvent.setup();
@@ -131,6 +133,7 @@ function renderAddModal({ items = [] }: RenderOptions = {}) {
       session={{ user: { id: "user-1" } } as Session}
       onClose={onClose}
       onAdded={onAdded}
+      feedback={feedback}
     />,
   );
 
@@ -448,6 +451,45 @@ describe("AddModal", () => {
     expect(dataMocks.upsertBacklogItemsToStatus).not.toHaveBeenCalled();
     expect(onClose).not.toHaveBeenCalled();
     expect(onAdded).not.toHaveBeenCalled();
+  });
+
+  test("custom feedback を渡したときは browser confirm に依存しない", async () => {
+    const movieResult = createSearchResult({ tmdbId: 41, title: "別既存映画" });
+    const duplicateItem = createItem({
+      status: "watched",
+      works: {
+        ...createItem().works!,
+        id: "existing-work-41",
+        title: "別既存映画",
+        tmdb_id: 41,
+        tmdb_media_type: "movie",
+      },
+    });
+    tmdbMocks.fetchTmdbRecommendations.mockResolvedValue([movieResult]);
+    tmdbMocks.searchTmdbWorks.mockResolvedValue([movieResult]);
+    dataMocks.upsertTmdbWork.mockResolvedValue({
+      data: { id: "existing-work-41" },
+      error: null,
+    });
+    const confirmSpy = vi.spyOn(window, "confirm");
+    const feedback: BacklogFeedback = {
+      alert: vi.fn(),
+      confirm: vi.fn().mockResolvedValue(false),
+    };
+
+    const { user } = renderAddModal({ items: [duplicateItem], feedback });
+
+    await search("別既存映画");
+    await user.click(await screen.findByRole("button", { name: /別既存映画/ }));
+    await user.click(screen.getByRole("button", { name: "ストックに追加" }));
+
+    await waitFor(() =>
+      expect(feedback.confirm).toHaveBeenCalledWith(
+        "「別既存映画」はすでに「視聴済み」にあります。ストックに戻しますか？",
+      ),
+    );
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(await screen.findByText("既存カードはそのままにしました。")).toBeInTheDocument();
   });
 
   test("手動追加では upsertManualWork を使って保存する", async () => {

@@ -3,6 +3,7 @@ import type { Session } from "@supabase/supabase-js";
 import { useTmdbSearch } from "../hooks/useTmdbSearch.ts";
 import { useAddSubmit } from "../hooks/useAddSubmit.ts";
 import type { BacklogItem } from "../types.ts";
+import { browserBacklogFeedback, type BacklogFeedback } from "../ui-feedback.ts";
 import { AddModalDetailsPane } from "./AddModalDetailsPane.tsx";
 import { AddModalSearchPane } from "./AddModalSearchPane.tsx";
 
@@ -11,9 +12,16 @@ type Props = {
   session: Session;
   onClose: () => void;
   onAdded: () => Promise<void>;
+  feedback?: BacklogFeedback;
 };
 
-export function AddModal({ items, session, onClose, onAdded }: Props) {
+export function AddModal({
+  items,
+  session,
+  onClose,
+  onAdded,
+  feedback = browserBacklogFeedback,
+}: Props) {
   const [primaryPlatform, setPrimaryPlatform] = useState("");
   const [note, setNote] = useState("");
   const [manualTitle, setManualTitle] = useState("");
@@ -65,6 +73,7 @@ export function AddModal({ items, session, onClose, onAdded }: Props) {
     note,
     onClose,
     onAdded,
+    feedback,
   });
 
   useEffect(() => {

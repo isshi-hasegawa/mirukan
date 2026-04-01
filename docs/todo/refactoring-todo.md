@@ -105,7 +105,8 @@
   - toast / form message / error presentation
 - 着手メモ
   - callback 注入での分離は着手済み
-  - 次は confirm / alert を modal / toast ベースへ置き換える
+  - backlog 画面では `useBacklogFeedback.tsx` を導入し、browser 標準 API ではなく UI overlay 経由で confirm / alert を出すようにした
+  - 次は AddModal 以外の画面遷移や表示優先度を見ながら、通知の auto dismiss や queue 制御が要るかを判断する
   - confirm 文言組み立ては pure function のまま残す
   - UI 基盤への置き換えはリファクタリングとして妥当で、追加フロー整理と並行して進めやすい
 
