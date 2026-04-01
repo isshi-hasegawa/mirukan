@@ -34,7 +34,6 @@ export const supabaseRestHandlers = [
    */
   http.get(`${SUPABASE_URL}/rest/v1/backlog_items`, ({ request }) => {
     const url = new URL(request.url);
-    const select = url.searchParams.get("select");
     const order = url.searchParams.get("order");
 
     const items = Array.from(mockBacklogItems.values());
@@ -59,10 +58,7 @@ export const supabaseRestHandlers = [
    * GET /rest/v1/works
    * Retrieve works with optional filtering
    */
-  http.get(`${SUPABASE_URL}/rest/v1/works`, ({ request }) => {
-    const url = new URL(request.url);
-    const select = url.searchParams.get("select");
-
+  http.get(`${SUPABASE_URL}/rest/v1/works`, () => {
     const works = Array.from(mockWorks.values());
 
     return HttpResponse.json<PostgrestResponse<Work>>({
