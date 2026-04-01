@@ -84,4 +84,22 @@ describe("KanbanColumn", () => {
 
     expect(screen.queryByRole("group", { name: "おすすめの絞り込み" })).not.toBeInTheDocument();
   });
+
+  test("件数表示を header に出す", () => {
+    render(
+      <KanbanColumn
+        status="watching"
+        items={[createItem({ status: "watching" }), createItem({ id: "item-2", status: "watching" })]}
+        activeViewingMode={null}
+        isMobileLayout={false}
+        dropIndicator={null}
+        onOpenAddModal={vi.fn()}
+        onOpenDetail={vi.fn()}
+        onDeleteItem={vi.fn()}
+        onMarkAsWatched={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("2")).toBeInTheDocument();
+  });
 });
