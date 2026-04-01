@@ -115,7 +115,7 @@ export function AddModalDetailsPane({
           </div>
         </div>
       ) : null}
-      {!selectedTmdbResult && (
+      {!selectedTmdbResult && !pendingSaveMessage && (
         <div className="flex justify-end items-center gap-3 pt-1">
           {formMessage && (
             <p className="text-muted-foreground text-sm" aria-live="polite">

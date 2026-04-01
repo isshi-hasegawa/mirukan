@@ -111,22 +111,24 @@ function SelectedResultFooter({
           onCancel={onCancelPendingSave}
         />
       ) : null}
-      <div className="flex items-end justify-end gap-3">
-        {formMessage && (
-          <p className="text-muted-foreground text-sm text-right" aria-live="polite">
-            {formMessage}
-          </p>
-        )}
-        <Button
-          type="submit"
-          disabled={isSelectedTmdbSubmitDisabled}
-          onClick={(event) => {
-            event.stopPropagation();
-          }}
-        >
-          {selectedTmdbSubmitLabel}
-        </Button>
-      </div>
+      {!pendingSaveMessage ? (
+        <div className="flex items-end justify-end gap-3">
+          {formMessage && (
+            <p className="text-muted-foreground text-sm text-right" aria-live="polite">
+              {formMessage}
+            </p>
+          )}
+          <Button
+            type="submit"
+            disabled={isSelectedTmdbSubmitDisabled}
+            onClick={(event) => {
+              event.stopPropagation();
+            }}
+          >
+            {selectedTmdbSubmitLabel}
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

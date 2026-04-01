@@ -443,6 +443,7 @@ describe("AddModal", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "キャンセル" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "ストックへ戻す" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "ストックに追加" })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "キャンセル" }));
 
@@ -486,6 +487,7 @@ describe("AddModal", () => {
         "「別既存映画」はすでに「視聴済み」にあります。ストックに戻しますか？",
       ),
     ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "ストックに追加" })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "ストックへ戻す" }));
 
@@ -533,6 +535,7 @@ describe("AddModal", () => {
         "「confirm不要映画」はすでに「視聴済み」にあります。ストックに戻しますか？",
       ),
     ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "ストックに追加" })).not.toBeInTheDocument();
     expect(confirmSpy).not.toHaveBeenCalled();
   });
 
