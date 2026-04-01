@@ -1,5 +1,4 @@
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
 import type { BacklogItem } from "../types.ts";
 import { KanbanColumn } from "./KanbanColumn.tsx";
@@ -66,33 +65,23 @@ describe("KanbanColumn", () => {
     );
 
     expect(screen.getByRole("group", { name: "おすすめの絞り込み" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /ガッツリ/ })).toHaveTextContent("ガッツリ集中して一本見たい");
-    expect(screen.getByRole("button", { name: /じっくり/ })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("button", { name: /サクッと/ })).toHaveTextContent("サクッと短時間でテンポよく");
-    expect(screen.getByRole("button", { name: /のんびり/ })).toHaveTextContent("のんびり流し見や作業のおともに");
   });
 
-  test("モードカードを押すと toggle handler を呼ぶ", async () => {
-    const user = userEvent.setup();
-    const onViewingModeToggle = vi.fn();
-
+  test("ストック列以外では絞り込みカードを表示しない", () => {
     render(
       <KanbanColumn
-        status="stacked"
-        items={[createItem()]}
+        status="watching"
+        items={[createItem({ status: "watching" })]}
         activeViewingMode={null}
-        isMobileLayout={true}
+        isMobileLayout={false}
         dropIndicator={null}
         onOpenAddModal={vi.fn()}
         onOpenDetail={vi.fn()}
         onDeleteItem={vi.fn()}
         onMarkAsWatched={vi.fn()}
-        onViewingModeToggle={onViewingModeToggle}
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: /サクッと/ }));
-
-    expect(onViewingModeToggle).toHaveBeenCalledWith("quick");
+    expect(screen.queryByRole("group", { name: "おすすめの絞り込み" })).not.toBeInTheDocument();
   });
 });

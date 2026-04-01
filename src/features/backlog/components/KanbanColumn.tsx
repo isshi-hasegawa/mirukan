@@ -1,21 +1,10 @@
 import type { ReactNode } from "react";
 import { useDroppable } from "@dnd-kit/core";
-import {
-  BoltIcon,
-  ClockIcon,
-  FireIcon,
-  SpeakerWaveIcon,
-} from "@heroicons/react/24/outline";
 import type { BacklogItem, BacklogStatus, ViewingMode } from "../types.ts";
-import {
-  statusLabels,
-  viewingModeDescriptions,
-  viewingModeLabels,
-  viewingModeOrder,
-} from "../constants.ts";
+import { statusLabels } from "../constants.ts";
 import { BacklogCard } from "./BacklogCard.tsx";
 import { Button } from "@/components/ui/button.tsx";
-import { cn } from "@/lib/utils";
+import { ViewingModeFilter } from "./ViewingModeFilter.tsx";
 
 type DropIndicator =
   | { type: "card"; itemId: string; side: "before" | "after" }
@@ -33,16 +22,6 @@ type Props = {
   onDeleteItem: (itemId: string) => void;
   onMarkAsWatched: (itemId: string) => void;
   onViewingModeToggle?: (mode: ViewingMode) => void;
-};
-
-const viewingModeIcons: Record<
-  ViewingMode,
-  React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>
-> = {
-  focus: FireIcon,
-  thoughtful: ClockIcon,
-  quick: BoltIcon,
-  background: SpeakerWaveIcon,
 };
 
 export function KanbanColumn({
@@ -112,48 +91,12 @@ export function KanbanColumn({
         style={dropzoneStyle}
       >
         <div className="grid content-start gap-[10px] pl-[14px] pr-[4px] max-[500px]:px-3 max-[400px]:px-2">
-          {status === "stacked" && (
-            <div
-              className="grid grid-cols-2 gap-2 pb-1 max-[380px]:grid-cols-1"
-              role="group"
-              aria-label="おすすめの絞り込み"
-            >
-              {viewingModeOrder.map((mode) => {
-                const isActive = activeViewingMode === mode;
-                const Icon = viewingModeIcons[mode];
-                return (
-                  <button
-                    key={mode}
-                    type="button"
-                    className={cn(
-                      "grid content-start gap-1.5 rounded-[16px] border px-3 py-2 text-left transition-[background,color,border-color] duration-150",
-                      "focus-visible:outline-2 focus-visible:outline-primary/50 focus-visible:outline-offset-2",
-                      isActive
-                        ? "border-primary/70 bg-primary/12 text-foreground"
-                        : "border-[rgba(92,59,35,0.18)] bg-[rgba(255,255,255,0.02)] text-muted-foreground hover:border-primary/[0.28] hover:bg-primary/[0.08] hover:text-foreground",
-                    )}
-                    aria-pressed={isActive}
-                    onClick={() => onViewingModeToggle?.(mode)}
-                  >
-                    <span className="flex items-center gap-1.5 text-[0.8rem] font-semibold">
-                      <span
-                        className={cn(
-                          "inline-flex h-5 w-5 items-center justify-center rounded-full",
-                          isActive ? "bg-primary text-primary-foreground" : "bg-[rgba(92,59,35,0.08)]",
-                        )}
-                      >
-                        <Icon className="h-3 w-3" aria-hidden />
-                      </span>
-                      <span>{viewingModeLabels[mode]}</span>
-                    </span>
-                    <span className="text-[0.68rem] leading-[1.4] text-inherit/80">
-                      {viewingModeDescriptions[mode]}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          {status === "stacked" && onViewingModeToggle ? (
+            <ViewingModeFilter
+              activeViewingMode={activeViewingMode}
+              onViewingModeToggle={onViewingModeToggle}
+            />
+          ) : null}
           {items.length > 0 ? (
             items.map((item) => (
               <BacklogCard
