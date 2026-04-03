@@ -175,103 +175,105 @@ export function LoginPage({ isSessionLoading = false }: Props) {
               新規登録
             </Button>
           </div>
-          {isSignUpMode && hasSentConfirmationEmail ? (
-            <>
-              <div className="rounded-[20px] border border-border/70 bg-muted/30 px-4 py-4">
-                <p className="text-sm font-medium text-foreground">確認メールを送信しました</p>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  {signUpEmail} 宛てに確認メールを送りました。メール内のリンクから登録を完了してください。
-                </p>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                size="lg"
-                onClick={() => {
-                  setAuthMode("login");
-                  setLoginEmail(signUpEmail);
-                  setLoginPassword("");
-                  setErrorMessage("");
-                  setHasSentConfirmationEmail(false);
-                }}
-              >
-                ログインへ戻る
-              </Button>
-            </>
-          ) : (
-            <>
-              <div className="grid gap-2">
-                <Label htmlFor="email">メールアドレス</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  value={email}
-                  disabled={isSubmitting}
-                  onChange={(e) => {
-                    if (isSignUpMode) {
-                      setSignUpEmail(e.target.value);
-                      return;
-                    }
-
-                    setLoginEmail(e.target.value);
+          <div className="grid min-h-[21rem] content-start gap-4.5">
+            {isSignUpMode && hasSentConfirmationEmail ? (
+              <>
+                <div className="rounded-[20px] border border-border/70 bg-muted/30 px-4 py-4">
+                  <p className="text-sm font-medium text-foreground">確認メールを送信しました</p>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                    {signUpEmail} 宛てに確認メールを送りました。メール内のリンクから登録を完了してください。
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  size="lg"
+                  onClick={() => {
+                    setAuthMode("login");
+                    setLoginEmail(signUpEmail);
+                    setLoginPassword("");
+                    setErrorMessage("");
+                    setHasSentConfirmationEmail(false);
                   }}
-                  required
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="password">パスワード</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete={isSignUpMode ? "new-password" : "current-password"}
-                  value={password}
-                  disabled={isSubmitting}
-                  onChange={(e) => {
-                    if (isSignUpMode) {
-                      setSignUpPassword(e.target.value);
-                      return;
-                    }
-
-                    setLoginPassword(e.target.value);
-                  }}
-                  required
-                />
-              </div>
-              {isSignUpMode ? (
+                >
+                  ログインへ戻る
+                </Button>
+              </>
+            ) : (
+              <>
                 <div className="grid gap-2">
-                  <Label htmlFor="password-confirmation">確認用パスワード</Label>
+                  <Label htmlFor="email">メールアドレス</Label>
                   <Input
-                    id="password-confirmation"
-                    name="password-confirmation"
-                    type="password"
-                    autoComplete="new-password"
-                    value={signUpPasswordConfirmation}
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    value={email}
                     disabled={isSubmitting}
-                    onChange={(e) => setSignUpPasswordConfirmation(e.target.value)}
+                    onChange={(e) => {
+                      if (isSignUpMode) {
+                        setSignUpEmail(e.target.value);
+                        return;
+                      }
+
+                      setLoginEmail(e.target.value);
+                    }}
                     required
                   />
                 </div>
-              ) : null}
-              {isSignUpMode ? (
-                <p className="text-sm leading-6 text-muted-foreground">
-                  登録後に確認メールを送信します。メール内のリンクを開くと、そのまま backlog を使い始められます。
-                </p>
-              ) : null}
-              <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
-                {isSubmitting
-                  ? isSignUpMode
-                    ? "確認メールを送信しています..."
-                    : "ログインしています..."
-                  : isSignUpMode
-                    ? "確認メールを送信して登録"
-                    : "ログイン"}
-              </Button>
-            </>
-          )}
+                <div className="grid gap-2">
+                  <Label htmlFor="password">パスワード</Label>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete={isSignUpMode ? "new-password" : "current-password"}
+                    value={password}
+                    disabled={isSubmitting}
+                    onChange={(e) => {
+                      if (isSignUpMode) {
+                        setSignUpPassword(e.target.value);
+                        return;
+                      }
+
+                      setLoginPassword(e.target.value);
+                    }}
+                    required
+                  />
+                </div>
+                {isSignUpMode ? (
+                  <div className="grid gap-2">
+                    <Label htmlFor="password-confirmation">確認用パスワード</Label>
+                    <Input
+                      id="password-confirmation"
+                      name="password-confirmation"
+                      type="password"
+                      autoComplete="new-password"
+                      value={signUpPasswordConfirmation}
+                      disabled={isSubmitting}
+                      onChange={(e) => setSignUpPasswordConfirmation(e.target.value)}
+                      required
+                    />
+                  </div>
+                ) : null}
+                {isSignUpMode ? (
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    登録後に確認メールを送信します。メール内のリンクを開くと、そのまま backlog を使い始められます。
+                  </p>
+                ) : null}
+                <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+                  {isSubmitting
+                    ? isSignUpMode
+                      ? "確認メールを送信しています..."
+                      : "ログインしています..."
+                    : isSignUpMode
+                      ? "確認メールを送信して登録"
+                      : "ログイン"}
+                </Button>
+              </>
+            )}
+          </div>
           {errorMessage ? (
             <p
               className="rounded-[20px] border border-destructive/40 bg-destructive/10 px-4 py-3 text-[0.94rem] text-foreground"
