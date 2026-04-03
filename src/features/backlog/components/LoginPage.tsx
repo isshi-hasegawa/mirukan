@@ -67,19 +67,20 @@ export function LoginPage({ isSessionLoading = false }: Props) {
       sideContent={
         isSessionLoading ? (
           <div className="grid gap-3" aria-hidden="true">
-            <div className="h-24 rounded-[20px] border border-border/70 bg-muted/50" />
-            <div className="h-24 rounded-[20px] border border-border/70 bg-muted/30" />
+            <div className="h-28 rounded-[24px] border border-white/8 bg-white/6" />
+            <div className="h-24 rounded-[22px] border border-white/6 bg-white/4" />
           </div>
         ) : (
-          <div className="grid gap-5">
-            <div className="grid gap-4">
-              <div className="rounded-[24px] border border-orange-400/40 bg-linear-to-br from-orange-400/20 via-orange-500/10 to-white/5 px-5 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-                <BrandLogo className="h-auto w-full max-w-[240px] object-contain object-left" />
-              </div>
-              <div className="grid gap-2">
-                <p className="max-w-[28ch] text-[clamp(1.45rem,2.1vw,2rem)] leading-[1.2] tracking-[-0.04em] text-foreground">
+          <div className="grid gap-7">
+            <div className="grid gap-6">
+              <BrandLogo className="h-auto w-full max-w-[320px] object-contain object-left drop-shadow-[0_18px_40px_rgba(0,0,0,0.28)]" />
+              <div className="grid gap-4">
+                <p className="max-w-[26ch] text-[clamp(1.55rem,2.4vw,2.45rem)] leading-[1.12] tracking-[-0.05em] text-white">
                   みるカンは、その時の自分に合う 1
                   本を決めるための、映像作品のバックログ兼意思決定アプリです
+                </p>
+                <p className="max-w-[44ch] text-[0.98rem] leading-7 text-[rgba(255,255,255,0.7)]">
+                  積みっぱなしを並べ替えながら、今の気分に合う 1 本へ絞り込みます。
                 </p>
               </div>
             </div>
@@ -87,10 +88,10 @@ export function LoginPage({ isSessionLoading = false }: Props) {
         )
       }
     >
-      <h2 className="mb-2 text-[1.15rem] leading-[1.1] font-[var(--heading)] text-foreground">
+      <h2 className="mb-2 text-[1.35rem] leading-[1.05] font-[var(--heading)] tracking-[-0.03em] text-foreground">
         {isSessionLoading ? "セッション確認中" : "ログイン"}
       </h2>
-      <p className="mb-5 text-sm text-muted-foreground">
+      <p className="mb-6 text-sm leading-6 text-muted-foreground">
         {isSessionLoading
           ? "認証状態の復元後に backlog 画面へ移動します。"
           : "ログインしてバックログを開きます。"}
@@ -112,7 +113,7 @@ export function LoginPage({ isSessionLoading = false }: Props) {
         </div>
       ) : (
         <form
-          className="grid gap-4"
+          className="grid gap-4.5"
           onSubmit={(e) => {
             void handleSubmit(e);
           }}

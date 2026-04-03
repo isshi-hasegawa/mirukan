@@ -30,6 +30,9 @@ describe("LoginPage", () => {
         "みるカンは、その時の自分に合う 1 本を決めるための、映像作品のバックログ兼意思決定アプリです",
       ),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText("積みっぱなしを並べ替えながら、今の気分に合う 1 本へ絞り込みます。"),
+    ).toBeInTheDocument();
     expect(screen.queryByText("akari@example.com")).not.toBeInTheDocument();
     expect(screen.queryByText("LOCAL AUTH")).not.toBeInTheDocument();
   });
