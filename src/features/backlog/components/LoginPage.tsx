@@ -88,9 +88,11 @@ export function LoginPage({ isSessionLoading = false }: Props) {
         )
       }
     >
-      <h2 className="mb-2 text-[1.35rem] leading-[1.05] font-[var(--heading)] tracking-[-0.03em] text-foreground">
-        {isSessionLoading ? "セッション確認中" : "ログイン"}
-      </h2>
+      {isSessionLoading ? (
+        <h2 className="mb-2 text-[1.35rem] leading-[1.05] font-[var(--heading)] tracking-[-0.03em] text-foreground">
+          セッション確認中
+        </h2>
+      ) : null}
       {isSessionLoading ? (
         <p className="mb-6 text-sm leading-6 text-muted-foreground">
           認証状態の復元後に backlog 画面へ移動します。
