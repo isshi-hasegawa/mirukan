@@ -21,20 +21,14 @@ describe("LoginPage", () => {
     supabaseMock.auth.signInWithPassword.mockResolvedValue({ error: null });
   });
 
-  test("ローカル開発用アカウントを補助情報として折りたたんで表示する", async () => {
-    const user = userEvent.setup();
-
+  test("ブランドロゴと説明を表示する", () => {
     render(<LoginPage />);
 
     expect(screen.getByText("みるカン")).toBeInTheDocument();
     expect(screen.getAllByAltText("みるカン")).toHaveLength(1);
     expect(screen.getByText("次に見る作品を決めるためのカンバン。")).toBeInTheDocument();
+    expect(screen.getByText("次に見る作品を決めるための、映像作品バックログ。")).toBeInTheDocument();
     expect(screen.queryByText("akari@example.com")).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "ローカル開発用アカウントを表示" }));
-
-    expect(screen.getByText("akari@example.com")).toBeInTheDocument();
-    expect(screen.getByText("password123")).toBeInTheDocument();
   });
 
   test("送信中は入力と送信を無効化し、成功メッセージを表示する", async () => {

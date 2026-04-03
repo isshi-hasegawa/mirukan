@@ -30,7 +30,6 @@ export function LoginPage({ isSessionLoading = false }: Props) {
   const [password, setPassword] = useState(DEV_PASSWORD);
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDevAccountVisible, setIsDevAccountVisible] = useState(false);
 
   const messageTone = getMessageTone(message);
   const statusClassName =
@@ -63,7 +62,7 @@ export function LoginPage({ isSessionLoading = false }: Props) {
       description={
         isSessionLoading
           ? "ローカル Supabase のセッションを確認しています。画面の準備ができるまで、このままお待ちください。"
-          : "ローカル Supabase に接続して、seed 済みの backlog をそのまま確認できます。開発用アカウントは補助情報として必要なときだけ参照できます。"
+          : "次に見る作品を決めるための、映像作品バックログ。"
       }
       sideContent={
         isSessionLoading ? (
@@ -83,39 +82,6 @@ export function LoginPage({ isSessionLoading = false }: Props) {
                 </p>
               </div>
             </div>
-
-            <div className="rounded-[22px] border border-border/70 bg-black/15 px-5 py-4">
-              <button
-                type="button"
-                className="text-left text-sm font-medium text-foreground"
-                onClick={() => setIsDevAccountVisible((current) => !current)}
-                aria-expanded={isDevAccountVisible}
-              >
-                {isDevAccountVisible
-                  ? "ローカル開発用アカウントを隠す"
-                  : "ローカル開発用アカウントを表示"}
-              </button>
-              {isDevAccountVisible ? (
-                <dl className="mt-4 grid gap-3.5">
-                  <div className="grid gap-1.5">
-                    <dt className="text-muted-foreground text-[0.82rem]">メール</dt>
-                    <dd>
-                      <code className="inline-flex px-2.5 py-2 rounded-full bg-white/10 text-foreground font-mono text-[0.95rem]">
-                        {DEV_EMAIL}
-                      </code>
-                    </dd>
-                  </div>
-                  <div className="grid gap-1.5">
-                    <dt className="text-muted-foreground text-[0.82rem]">パスワード</dt>
-                    <dd>
-                      <code className="inline-flex px-2.5 py-2 rounded-full bg-white/10 text-foreground font-mono text-[0.95rem]">
-                        {DEV_PASSWORD}
-                      </code>
-                    </dd>
-                  </div>
-                </dl>
-              ) : null}
-            </div>
           </div>
         )
       }
@@ -126,7 +92,7 @@ export function LoginPage({ isSessionLoading = false }: Props) {
       <p className="mb-5 text-sm text-muted-foreground">
         {isSessionLoading
           ? "認証状態の復元後に backlog 画面へ移動します。"
-          : "ローカル開発環境に接続します。"}
+          : "ログインしてバックログを開きます。"}
       </p>
       {isSessionLoading ? (
         <div className="grid gap-4" aria-live="polite">
