@@ -90,15 +90,18 @@ export function LoginPage({ isSessionLoading = false }: Props) {
             <div className="h-24 rounded-[22px] border border-white/6 bg-white/4" />
           </div>
         ) : (
-          <div className="grid gap-7">
-            <div className="grid gap-7">
+          <div className="grid gap-6">
+            <div className="grid gap-5 justify-items-start">
               <BrandWordmark
                 className="max-w-[440px]"
-                symbolClassName="h-28 w-28 shrink-0 object-contain"
+                symbolClassName="h-20 w-20 shrink-0 object-contain sm:h-24 sm:w-24"
               />
-              <div className="grid gap-4">
-                <p className="max-w-[30ch] text-[clamp(1.32rem,1.95vw,1.92rem)] leading-[1.18] tracking-[-0.04em] text-white/96">
-                  みるカンは、次に見る 1 本を決めるための映像作品バックログです
+              <div className="grid gap-3">
+                <p className="max-w-[14ch] text-[clamp(2rem,4.8vw,3.4rem)] leading-[0.96] tracking-[-0.06em] text-white">
+                  次に見る一本を、ちゃんと決める。
+                </p>
+                <p className="max-w-[34ch] text-[1rem] leading-7 text-white/72">
+                  みるカンは、積んだ映画やシリーズを整理して、いま見る候補を決めるための映像作品バックログです。
                 </p>
               </div>
             </div>
@@ -255,7 +258,7 @@ export function LoginPage({ isSessionLoading = false }: Props) {
               ) : null}
               {isSignUpMode ? (
                 <p className="text-sm leading-6 text-muted-foreground">
-                  登録後に確認メールを送信します。メール内のリンクから登録を完了してください。
+                  登録後に確認メールを送信します。メール内のリンクを開くと、そのまま backlog を使い始められます。
                 </p>
               ) : null}
               <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>

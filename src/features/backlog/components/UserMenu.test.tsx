@@ -33,8 +33,12 @@ describe("UserMenu", () => {
 
     expect(screen.getByRole("dialog", { name: "みるカンについて" })).toBeInTheDocument();
     expect(
-      screen.getByText("みるカンは、次に見る 1 本を決めるための映像作品バックログです。"),
+      screen.getByText(
+        "みるカンは、積んだ映画やシリーズから次に見る一本を決めるための映像作品バックログです。",
+      ),
     ).toBeInTheDocument();
+    expect(screen.getByText("候補を積む")).toBeInTheDocument();
+    expect(screen.getByText("次の一本を決める")).toBeInTheDocument();
     expect(
       screen.getByText("This product uses the TMDB API but is not endorsed or certified by TMDB."),
     ).toBeInTheDocument();

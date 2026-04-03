@@ -52,12 +52,31 @@ export function AboutDialog({ onClose }: Props) {
         <div className="grid gap-5 text-sm leading-7 text-muted-foreground">
           <section className="grid gap-2">
             <p className="text-base leading-7 text-foreground">
-              みるカンは、次に見る 1 本を決めるための映像作品バックログです。
+              みるカンは、積んだ映画やシリーズから次に見る一本を決めるための映像作品バックログです。
             </p>
-            <ul className="grid gap-1.5 pl-5 text-sm text-muted-foreground">
-              <li className="list-disc">積んだ作品を整理する</li>
-              <li className="list-disc">次に見る作品を決めることに特化する</li>
-            </ul>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-border/70 bg-background/35 px-4 py-3">
+                <p className="text-[0.68rem] font-semibold tracking-[0.16em] text-primary uppercase">
+                  Stack
+                </p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">候補を積む</p>
+              </div>
+              <div className="rounded-2xl border border-border/70 bg-background/35 px-4 py-3">
+                <p className="text-[0.68rem] font-semibold tracking-[0.16em] text-primary uppercase">
+                  Sort
+                </p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">状態で並べる</p>
+              </div>
+              <div className="rounded-2xl border border-border/70 bg-background/35 px-4 py-3">
+                <p className="text-[0.68rem] font-semibold tracking-[0.16em] text-primary uppercase">
+                  Decide
+                </p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">次の一本を決める</p>
+              </div>
+            </div>
+            <p className="text-sm leading-6">
+              「積んではいるけど、何を見るか決まらない」を減らすために、視聴状態の整理と次の候補選びに絞っています。
+            </p>
           </section>
 
           <section className="grid gap-2 rounded-[20px] border border-[rgba(191,90,54,0.2)] bg-[rgba(191,90,54,0.07)] p-4">
