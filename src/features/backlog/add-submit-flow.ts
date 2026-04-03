@@ -19,7 +19,7 @@ type ConfirmStackedSaveOptions = {
   emptyMessage: string;
 };
 
-export type StackedSaveReview =
+type StackedSaveReview =
   | { type: "ready" }
   | { type: "empty"; message: string }
   | { type: "confirm"; message: string };

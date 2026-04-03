@@ -1,11 +1,11 @@
 import type { TmdbSearchResult } from "../../lib/tmdb.ts";
 import type { BacklogItem } from "./types.ts";
 
-export type DuplicateState = {
+type DuplicateState = {
   canAddToStacked: boolean;
 };
 
-export function findMatchingTvItem(
+function findMatchingTvItem(
   items: BacklogItem[],
   result: TmdbSearchResult,
   seasonNumber: number,

@@ -3,9 +3,4 @@
  */
 
 export { supabaseFunctionsHandlers } from "./supabase-functions";
-export {
-  supabaseRestHandlers,
-  resetMockData,
-  setMockWorks,
-  setMockBacklogItems,
-} from "./supabase-rest";
+export { supabaseRestHandlers, resetMockData } from "./supabase-rest";

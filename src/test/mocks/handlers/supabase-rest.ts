@@ -17,12 +17,12 @@ export function resetMockData() {
   mockBacklogItems.clear();
 }
 
-export function setMockWorks(works: Work[]) {
+function setMockWorks(works: Work[]) {
   mockWorks.clear();
   works.forEach((work) => mockWorks.set(work.id, work));
 }
 
-export function setMockBacklogItems(items: BacklogItem[]) {
+function setMockBacklogItems(items: BacklogItem[]) {
   mockBacklogItems.clear();
   items.forEach((item) => mockBacklogItems.set(item.id, item));
 }

@@ -2,5 +2,5 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": ["supabase/functions/*/index.ts"],
   "ignoreFiles": ["postcss.config.js"],
-  "ignoreDependencies": ["@tailwindcss/postcss", "autoprefixer", "jsr"]
+  "ignoreDependencies": ["@tailwindcss/postcss", "autoprefixer", "npm"]
 }
