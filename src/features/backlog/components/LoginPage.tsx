@@ -57,12 +57,12 @@ export function LoginPage({ isSessionLoading = false }: Props) {
 
   return (
     <AuthScreen
-      badge={isSessionLoading ? "AUTH" : "LOCAL AUTH"}
-      title="みるカン"
+      badge={isSessionLoading ? "AUTH" : undefined}
+      title={isSessionLoading ? "みるカン" : undefined}
       description={
         isSessionLoading
           ? "ローカル Supabase のセッションを確認しています。画面の準備ができるまで、このままお待ちください。"
-          : "次に見る作品を決めるための、映像作品バックログ。"
+          : undefined
       }
       sideContent={
         isSessionLoading ? (

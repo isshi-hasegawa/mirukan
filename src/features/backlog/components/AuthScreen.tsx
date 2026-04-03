@@ -2,8 +2,8 @@ import type { ReactNode } from "react";
 
 type Props = {
   badge?: string;
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
   sideContent?: ReactNode;
   children: ReactNode;
 };
@@ -17,10 +17,16 @@ export function AuthScreen({ badge, title, description, sideContent, children }:
             {badge}
           </p>
         ) : null}
-        <h1 className="text-[clamp(2.6rem,5vw,4.8rem)] leading-[0.95] tracking-[-0.05em] font-[var(--heading)] text-foreground">
-          {title}
-        </h1>
-        <p className="mt-[18px] max-w-[58ch] text-muted-foreground text-[1.02rem]">{description}</p>
+        {title ? (
+          <h1 className="text-[clamp(2.6rem,5vw,4.8rem)] leading-[0.95] tracking-[-0.05em] font-[var(--heading)] text-foreground">
+            {title}
+          </h1>
+        ) : null}
+        {description ? (
+          <p className="mt-[18px] max-w-[58ch] text-muted-foreground text-[1.02rem]">
+            {description}
+          </p>
+        ) : null}
         {sideContent ? <div className="mt-7">{sideContent}</div> : null}
       </section>
 
