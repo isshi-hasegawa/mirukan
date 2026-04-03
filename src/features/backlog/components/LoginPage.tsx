@@ -91,11 +91,11 @@ export function LoginPage({ isSessionLoading = false }: Props) {
       <h2 className="mb-2 text-[1.35rem] leading-[1.05] font-[var(--heading)] tracking-[-0.03em] text-foreground">
         {isSessionLoading ? "セッション確認中" : "ログイン"}
       </h2>
-      <p className="mb-6 text-sm leading-6 text-muted-foreground">
-        {isSessionLoading
-          ? "認証状態の復元後に backlog 画面へ移動します。"
-          : "ログインしてバックログを開きます。"}
-      </p>
+      {isSessionLoading ? (
+        <p className="mb-6 text-sm leading-6 text-muted-foreground">
+          認証状態の復元後に backlog 画面へ移動します。
+        </p>
+      ) : null}
       {isSessionLoading ? (
         <div className="grid gap-4" aria-live="polite">
           <div className="grid gap-2">
@@ -145,7 +145,7 @@ export function LoginPage({ isSessionLoading = false }: Props) {
             />
           </div>
           <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
-            {isSubmitting ? "ログインしています..." : "ログインして backlog を見る"}
+            {isSubmitting ? "ログインしています..." : "ログイン"}
           </Button>
           <p
             className={`rounded-[20px] border px-4 py-3 text-[0.94rem] ${statusClassName}`}

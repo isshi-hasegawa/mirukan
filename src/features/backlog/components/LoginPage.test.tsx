@@ -49,7 +49,7 @@ describe("LoginPage", () => {
 
     render(<LoginPage />);
 
-    await user.click(screen.getByRole("button", { name: "ログインして backlog を見る" }));
+    await user.click(screen.getByRole("button", { name: "ログイン" }));
 
     expect(screen.getByRole("button", { name: "ログインしています..." })).toBeDisabled();
     expect(screen.getByLabelText("メールアドレス")).toBeDisabled();
@@ -70,12 +70,12 @@ describe("LoginPage", () => {
 
     render(<LoginPage />);
 
-    await user.click(screen.getByRole("button", { name: "ログインして backlog を見る" }));
+    await user.click(screen.getByRole("button", { name: "ログイン" }));
 
     expect(
       await screen.findByText("ログインに失敗しました: Invalid login credentials"),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "ログインして backlog を見る" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "ログイン" })).toBeEnabled();
     expect(screen.getByLabelText("メールアドレス")).toBeEnabled();
   });
 
@@ -86,7 +86,7 @@ describe("LoginPage", () => {
     expect(screen.getByText("セッション確認中")).toBeInTheDocument();
     expect(screen.getByText("セッションを確認しています...")).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "ログインして backlog を見る" }),
+      screen.queryByRole("button", { name: "ログイン" }),
     ).not.toBeInTheDocument();
   });
 });
