@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input.tsx";
 import { Label } from "@/components/ui/label.tsx";
 import { supabase } from "../../../lib/supabase.ts";
 import { AuthScreen } from "./AuthScreen.tsx";
-import { BrandLogo } from "./BrandLogo.tsx";
+import { BrandWordmark } from "./BrandWordmark.tsx";
 
 type Props = {
   isSessionLoading?: boolean;
@@ -73,7 +73,7 @@ export function LoginPage({ isSessionLoading = false }: Props) {
         ) : (
           <div className="grid gap-7">
             <div className="grid gap-6">
-              <BrandLogo className="h-auto w-full max-w-[320px] object-contain object-left drop-shadow-[0_18px_40px_rgba(0,0,0,0.28)]" />
+              <BrandWordmark className="max-w-[320px]" />
               <div className="grid gap-4">
                 <p className="max-w-[26ch] text-[clamp(1.55rem,2.4vw,2.45rem)] leading-[1.12] tracking-[-0.05em] text-white">
                   みるカンは、その時の自分に合う 1

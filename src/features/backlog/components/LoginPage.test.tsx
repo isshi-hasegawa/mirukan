@@ -24,7 +24,8 @@ describe("LoginPage", () => {
   test("ブランドロゴと説明を表示する", () => {
     render(<LoginPage />);
 
-    expect(screen.getAllByAltText("みるカン")).toHaveLength(1);
+    expect(screen.getAllByText("みるカン")).toHaveLength(1);
+    expect(screen.getByText("mirukan")).toBeInTheDocument();
     expect(
       screen.getByText(
         "みるカンは、その時の自分に合う 1 本を決めるための、映像作品のバックログ兼意思決定アプリです",
