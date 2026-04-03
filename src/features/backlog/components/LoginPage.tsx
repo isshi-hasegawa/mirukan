@@ -10,15 +10,25 @@ type Props = {
   isSessionLoading?: boolean;
 };
 
+type AuthMode = "login" | "signUp";
+
 const DEV_EMAIL = "akari@example.com";
 const DEV_PASSWORD = "password123";
 
 function getMessageTone(message: string) {
-  if (message.startsWith("ログインに失敗")) {
+  if (
+    message.startsWith("ログインに失敗") ||
+    message.startsWith("新規登録に失敗") ||
+    message.startsWith("確認用パスワード")
+  ) {
     return "error";
   }
 
-  if (message.startsWith("ログインに成功")) {
+  if (
+    message.startsWith("ログインに成功") ||
+    message.startsWith("確認メールを送信") ||
+    message.startsWith("新規登録が完了")
+  ) {
     return "success";
   }
 
@@ -26,12 +36,19 @@ function getMessageTone(message: string) {
 }
 
 export function LoginPage({ isSessionLoading = false }: Props) {
-  const [email, setEmail] = useState(DEV_EMAIL);
-  const [password, setPassword] = useState(DEV_PASSWORD);
+  const [authMode, setAuthMode] = useState<AuthMode>("login");
+  const [loginEmail, setLoginEmail] = useState(DEV_EMAIL);
+  const [loginPassword, setLoginPassword] = useState(DEV_PASSWORD);
+  const [signUpEmail, setSignUpEmail] = useState("");
+  const [signUpPassword, setSignUpPassword] = useState("");
+  const [signUpPasswordConfirmation, setSignUpPasswordConfirmation] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const messageTone = getMessageTone(message);
+  const isSignUpMode = authMode === "signUp";
+  const email = isSignUpMode ? signUpEmail : loginEmail;
+  const password = isSignUpMode ? signUpPassword : loginPassword;
   const statusClassName =
     messageTone === "error"
       ? "border-destructive/40 bg-destructive/10 text-foreground"
@@ -41,8 +58,38 @@ export function LoginPage({ isSessionLoading = false }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isSignUpMode && password !== signUpPasswordConfirmation) {
+      setMessage("確認用パスワードが一致しません。");
+      return;
+    }
+
     setIsSubmitting(true);
-    setMessage("ログインしています...");
+    setMessage(isSignUpMode ? "確認メールを送信しています..." : "ログインしています...");
+
+    if (isSignUpMode) {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: window.location.origin,
+        },
+      });
+
+      if (error) {
+        setMessage(`新規登録に失敗しました: ${error.message}`);
+        setIsSubmitting(false);
+        return;
+      }
+
+      setMessage(
+        data.session
+          ? "新規登録が完了しました。"
+          : "確認メールを送信しました。メール内のリンクを開くとログインできます。",
+      );
+      setIsSubmitting(false);
+      return;
+    }
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
@@ -119,6 +166,38 @@ export function LoginPage({ isSessionLoading = false }: Props) {
             void handleSubmit(e);
           }}
         >
+          <div
+            className="grid grid-cols-2 gap-1 rounded-[18px] border border-border/70 bg-muted/30 p-1"
+            role="tablist"
+            aria-label="認証モード"
+          >
+            <Button
+              type="button"
+              variant={isSignUpMode ? "ghost" : "secondary"}
+              size="lg"
+              aria-pressed={!isSignUpMode}
+              disabled={isSubmitting}
+              onClick={() => {
+                setAuthMode("login");
+                setMessage("");
+              }}
+            >
+              ログイン
+            </Button>
+            <Button
+              type="button"
+              variant={isSignUpMode ? "secondary" : "ghost"}
+              size="lg"
+              aria-pressed={isSignUpMode}
+              disabled={isSubmitting}
+              onClick={() => {
+                setAuthMode("signUp");
+                setMessage("");
+              }}
+            >
+              新規登録
+            </Button>
+          </div>
           <div className="grid gap-2">
             <Label htmlFor="email">メールアドレス</Label>
             <Input
@@ -128,7 +207,14 @@ export function LoginPage({ isSessionLoading = false }: Props) {
               autoComplete="email"
               value={email}
               disabled={isSubmitting}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                if (isSignUpMode) {
+                  setSignUpEmail(e.target.value);
+                  return;
+                }
+
+                setLoginEmail(e.target.value);
+              }}
               required
             />
           </div>
@@ -138,22 +224,57 @@ export function LoginPage({ isSessionLoading = false }: Props) {
               id="password"
               name="password"
               type="password"
-              autoComplete="current-password"
+              autoComplete={isSignUpMode ? "new-password" : "current-password"}
               value={password}
               disabled={isSubmitting}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                if (isSignUpMode) {
+                  setSignUpPassword(e.target.value);
+                  return;
+                }
+
+                setLoginPassword(e.target.value);
+              }}
               required
             />
           </div>
+          {isSignUpMode ? (
+            <div className="grid gap-2">
+              <Label htmlFor="password-confirmation">確認用パスワード</Label>
+              <Input
+                id="password-confirmation"
+                name="password-confirmation"
+                type="password"
+                autoComplete="new-password"
+                value={signUpPasswordConfirmation}
+                disabled={isSubmitting}
+                onChange={(e) => setSignUpPasswordConfirmation(e.target.value)}
+                required
+              />
+            </div>
+          ) : null}
+          {isSignUpMode ? (
+            <p className="text-sm leading-6 text-muted-foreground">
+              登録後に確認メールを送信します。メール内のリンクから登録を完了してください。
+            </p>
+          ) : null}
           <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
-            {isSubmitting ? "ログインしています..." : "ログイン"}
+            {isSubmitting
+              ? isSignUpMode
+                ? "確認メールを送信しています..."
+                : "ログインしています..."
+              : isSignUpMode
+                ? "確認メールを送信して登録"
+                : "ログイン"}
           </Button>
-          <p
-            className={`rounded-[20px] border px-4 py-3 text-[0.94rem] ${statusClassName}`}
-            aria-live="polite"
-          >
-            {message}
-          </p>
+          {message ? (
+            <p
+              className={`rounded-[20px] border px-4 py-3 text-[0.94rem] ${statusClassName}`}
+              aria-live="polite"
+            >
+              {message}
+            </p>
+          ) : null}
         </form>
       )}
     </AuthScreen>

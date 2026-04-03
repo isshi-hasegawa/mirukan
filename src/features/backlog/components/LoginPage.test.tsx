@@ -6,6 +6,7 @@ import { LoginPage } from "./LoginPage.tsx";
 const supabaseMock = vi.hoisted(() => ({
   auth: {
     signInWithPassword: vi.fn(),
+    signUp: vi.fn(),
   },
 }));
 
@@ -19,6 +20,10 @@ describe("LoginPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     supabaseMock.auth.signInWithPassword.mockResolvedValue({ error: null });
+    supabaseMock.auth.signUp.mockResolvedValue({
+      data: { session: null, user: { id: "user-1" } },
+      error: null,
+    });
   });
 
   test("ブランドロゴと説明を表示する", () => {
@@ -47,7 +52,7 @@ describe("LoginPage", () => {
 
     render(<LoginPage />);
 
-    await user.click(screen.getByRole("button", { name: "ログイン" }));
+    await user.click(screen.getByText("ログイン", { selector: "button[type='submit']" }));
 
     expect(screen.getByRole("button", { name: "ログインしています..." })).toBeDisabled();
     expect(screen.getByLabelText("メールアドレス")).toBeDisabled();
@@ -68,13 +73,53 @@ describe("LoginPage", () => {
 
     render(<LoginPage />);
 
-    await user.click(screen.getByRole("button", { name: "ログイン" }));
+    await user.click(screen.getByText("ログイン", { selector: "button[type='submit']" }));
 
     expect(
       await screen.findByText("ログインに失敗しました: Invalid login credentials"),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "ログイン" })).toBeEnabled();
+    expect(screen.getByText("ログイン", { selector: "button[type='submit']" })).toBeEnabled();
     expect(screen.getByLabelText("メールアドレス")).toBeEnabled();
+  });
+
+  test("新規登録では確認メール送信前提で signUp を呼び出す", async () => {
+    const user = userEvent.setup();
+
+    render(<LoginPage />);
+
+    await user.click(screen.getByRole("button", { name: "新規登録" }));
+    await user.type(screen.getByLabelText("メールアドレス"), "new-user@example.com");
+    await user.type(screen.getByLabelText("パスワード"), "password456");
+    await user.type(screen.getByLabelText("確認用パスワード"), "password456");
+    await user.click(screen.getByRole("button", { name: "確認メールを送信して登録" }));
+
+    expect(supabaseMock.auth.signUp).toHaveBeenCalledWith({
+      email: "new-user@example.com",
+      password: "password456",
+      options: {
+        emailRedirectTo: window.location.origin,
+      },
+    });
+    expect(
+      await screen.findByText(
+        "確認メールを送信しました。メール内のリンクを開くとログインできます。",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  test("新規登録で確認用パスワードが不一致なら送信しない", async () => {
+    const user = userEvent.setup();
+
+    render(<LoginPage />);
+
+    await user.click(screen.getByRole("button", { name: "新規登録" }));
+    await user.type(screen.getByLabelText("メールアドレス"), "new-user@example.com");
+    await user.type(screen.getByLabelText("パスワード"), "password456");
+    await user.type(screen.getByLabelText("確認用パスワード"), "password789");
+    await user.click(screen.getByRole("button", { name: "確認メールを送信して登録" }));
+
+    expect(await screen.findByText("確認用パスワードが一致しません。")).toBeInTheDocument();
+    expect(supabaseMock.auth.signUp).not.toHaveBeenCalled();
   });
 
   test("セッション確認中はログイン画面と同系統のローディング表示を出す", () => {
