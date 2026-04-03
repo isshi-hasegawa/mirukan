@@ -82,9 +82,6 @@ export function LoginPage({ isSessionLoading = false }: Props) {
                   みるカンは、その時の自分に合う 1
                   本を決めるための、映像作品のバックログ兼意思決定アプリです
                 </p>
-                <p className="max-w-[42ch] text-[0.94rem] leading-6 text-white/58">
-                  積み作品を並べ替えながら、今の気分に合う 1 本へ絞り込みます。
-                </p>
               </div>
             </div>
           </div>
