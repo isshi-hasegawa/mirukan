@@ -12,7 +12,8 @@ export function Header({ session }: Props) {
       <div className="min-w-0">
         <BrandWordmark
           className="max-w-[180px]"
-          subtitleClassName="mt-0.5 block text-[0.6rem] font-medium tracking-[0.2em] text-white/38 uppercase"
+          titleClassName="block whitespace-nowrap text-[clamp(1.6rem,3vw,2.25rem)] leading-[0.9] tracking-[-0.06em] text-white"
+          subtitleClassName="mt-0.5 block whitespace-nowrap text-[0.6rem] font-medium tracking-[0.2em] text-white/38 uppercase max-[400px]:hidden"
           symbolClassName="h-10 w-10 shrink-0 object-contain"
         />
       </div>
