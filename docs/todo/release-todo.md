@@ -10,18 +10,16 @@
 - 目的
   - `みるカン` として公開して違和感のない見た目を先に固める
 - まずやること
-  - 利用中のロゴ / シンボル / favicon が brand 資産のどのファイルを正とするか整理する
-  - `index.html` の `lang` / `title` / meta description / OGP / Twitter Card / canonical を公開向けに整える
+  - `index.html` に meta description / OGP / Twitter Card / canonical を追加し、公開 URL ベースで内容を確定する
   - OGP や README など公開面で使う横長ロゴを `mirukan_logo_primary_2400.png` / `mirukan_logo_primary_tight.png` のどちらに寄せるか決める
 
-### ログイン画面の公開向け仕上げ
+### ログイン画面の本番切り替え
 
 - 目的
-  - ローカル開発用の暫定感を薄め、初見で価値が伝わる入口にする
+  - 公開時に開発用の前提が UI に残らない状態へ切り替える
 - まずやること
-  - `みるカン` / `watch / kanban` / `次に見る作品を決めるためのカンバン。` の見せ方を再設計する
-  - セッション確認中表示、補助情報、フォーム周辺の完成度を一画面として揃える
   - 開発用アカウント導線を本番公開でどう扱うかを決める
+  - セッション確認中や認証失敗時の文言で、`ローカル Supabase` 前提が残る箇所を見直す
 
 ### 本番ホスティング構成の確定
 
@@ -33,7 +31,7 @@
 - まずやること
   - Vercel を使うかを正式決定し、環境変数設定と本番 URL を確定する
   - 本番 Supabase プロジェクトを固定し、`TMDB_API_KEY` secret と Edge Functions deploy を実施する
-  - 初回公開手順を README か別運用メモへ残す
+  - README のリモート環境向け手順を、実際の本番構成と公開 URL に合わせて確定版へ寄せる
 
 ### リリース前 QA と回帰確認
 
@@ -50,7 +48,7 @@
   - リリース後に品質確認と事故検知を手動運用へ寄せすぎない
 - まずやること
   - GitHub Actions の自動実行を `pull_request` / `push` ベースに戻す
-  - `vp check` / `vp test` / `vp build` / coverage のどこまで自動で担保するかを決める
+  - すでにある `vp check` / `vp test` / `vp build` / coverage を、どのイベントで必須化するか決める
   - エラー監視や利用状況の把握をどこまで入れるか決める
 
 ## 公開後に判断でよいが、先にメモしておくこと
