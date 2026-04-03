@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Label } from "@/components/ui/label.tsx";
+import mirukanSymbolUrl from "../../../assets/brand/mirukan_symbol_primary_tight.png";
 import { supabase } from "../../../lib/supabase.ts";
 import { AuthScreen } from "./AuthScreen.tsx";
 
@@ -71,15 +72,14 @@ export function LoginPage({ isSessionLoading = false }: Props) {
             <div className="h-24 rounded-[20px] border border-border/70 bg-muted/30" />
           </div>
         ) : (
-          <div className="grid gap-5">
-            <div className="grid gap-4">
-              <div className="flex h-20 w-20 items-center justify-center rounded-[24px] border border-orange-400/40 bg-linear-to-br from-orange-400/20 via-orange-500/10 to-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-                <div
-                  className="flex h-14 w-14 items-center justify-center rounded-[18px] bg-card text-[1.45rem] font-bold tracking-[-0.06em] text-foreground"
-                  aria-label="みるカンのロゴプレースホルダー"
-                >
-                  み
-                </div>
+            <div className="grid gap-5">
+              <div className="grid gap-4">
+              <div className="flex h-20 w-20 items-center justify-center rounded-[24px] border border-orange-400/40 bg-linear-to-br from-orange-400/20 via-orange-500/10 to-white/5 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+                <img
+                  src={mirukanSymbolUrl}
+                  alt="みるカンのシンボル"
+                  className="h-full w-full rounded-[18px] object-contain"
+                />
               </div>
               <div className="grid gap-2">
                 <p className="text-[0.78rem] font-bold tracking-[0.2em] uppercase text-orange-300">

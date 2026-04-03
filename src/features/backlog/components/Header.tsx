@@ -1,4 +1,5 @@
 import type { Session } from "@supabase/supabase-js";
+import { BrandLogo } from "./BrandLogo.tsx";
 import { UserMenu } from "./UserMenu.tsx";
 
 type Props = {
@@ -12,7 +13,7 @@ export function Header({ session }: Props) {
         <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">
           Watch Backlog
         </p>
-        <h1 className="truncate text-[1.15rem] font-semibold text-foreground">mirukan</h1>
+        <BrandLogo className="mt-1 h-8 w-auto max-w-[180px] object-contain object-left" />
       </div>
 
       <div className="flex items-center shrink-0">
