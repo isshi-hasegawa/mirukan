@@ -97,10 +97,10 @@ export function LoginPage({ isSessionLoading = false }: Props) {
                 symbolClassName="h-20 w-20 shrink-0 object-contain sm:h-24 sm:w-24"
               />
               <div className="grid gap-3">
-                <p className="max-w-[14ch] text-[clamp(2rem,4.8vw,3.4rem)] leading-[0.96] tracking-[-0.06em] text-white">
-                  次に見る一本を、ちゃんと決める。
+                <p className="text-[clamp(2rem,4.8vw,3.4rem)] leading-[0.96] tracking-[-0.06em] text-white">
+                  次に見る一本を、決める。
                 </p>
-                <p className="max-w-[34ch] text-[1rem] leading-7 text-white/72">
+                <p className="text-[1rem] leading-7 text-white/72">
                   みるカンは、積んだ映画やシリーズを整理して、いま見る候補を決めるための映像作品バックログです。
                 </p>
               </div>
