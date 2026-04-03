@@ -23,18 +23,7 @@ export function BoardPage({ session }: Props) {
     useBoardPageController({ session });
 
   if (isLoading) {
-    return (
-      <main className={shellSimple}>
-        <section className={headerCard}>
-          <div>
-            <h1>backlog を読み込んでいます。</h1>
-            <p className="mt-[18px] max-w-[58ch] text-muted-foreground text-[1.02rem]">
-              ローカル Supabase の seed データを取得中です。
-            </p>
-          </div>
-        </section>
-      </main>
-    );
+    return null;
   }
 
   if (error) {

@@ -195,13 +195,12 @@ describe("BoardPage", () => {
     vi.clearAllMocks();
   });
 
-  test("初回ロード中は loading 表示を出す", () => {
+  test("初回ロード中は loading 表示を出さない", () => {
     hookMocks.isLoading = true;
 
-    renderBoardPage();
+    const { container } = renderBoardPage();
 
-    expect(screen.getByText("backlog を読み込んでいます。")).toBeInTheDocument();
-    expect(screen.getByText("ローカル Supabase の seed データを取得中です。")).toBeInTheDocument();
+    expect(container).toBeEmptyDOMElement();
   });
 
   test("取得エラー時はエラーメッセージを表示する", () => {
