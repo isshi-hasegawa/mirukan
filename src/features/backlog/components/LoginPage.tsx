@@ -73,7 +73,7 @@ export function LoginPage({ isSessionLoading = false }: Props) {
         ) : (
           <div className="grid gap-7">
             <div className="grid gap-6">
-              <BrandWordmark className="max-w-[320px]" />
+              <BrandWordmark className="max-w-[420px]" symbolClassName="h-24 w-24 shrink-0 object-contain" />
               <div className="grid gap-4">
                 <p className="max-w-[26ch] text-[clamp(1.55rem,2.4vw,2.45rem)] leading-[1.12] tracking-[-0.05em] text-white">
                   みるカンは、その時の自分に合う 1

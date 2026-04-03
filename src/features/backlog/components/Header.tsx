@@ -13,6 +13,7 @@ export function Header({ session }: Props) {
         <BrandWordmark
           className="max-w-[180px]"
           subtitleClassName="mt-0.5 block text-[0.6rem] font-medium tracking-[0.2em] text-white/38 uppercase"
+          symbolClassName="h-10 w-10 shrink-0 object-contain"
         />
       </div>
 

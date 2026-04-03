@@ -25,6 +25,7 @@ describe("LoginPage", () => {
     render(<LoginPage />);
 
     expect(screen.getAllByText("みるカン")).toHaveLength(1);
+    expect(screen.getByAltText("みるカンのシンボル")).toBeInTheDocument();
     expect(screen.getByText("mirukan")).toBeInTheDocument();
     expect(
       screen.getByText(
