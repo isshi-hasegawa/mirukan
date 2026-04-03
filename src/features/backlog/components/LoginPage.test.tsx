@@ -39,7 +39,7 @@ describe("LoginPage", () => {
     expect(screen.queryByText("LOCAL AUTH")).not.toBeInTheDocument();
   });
 
-  test("送信中は入力と送信を無効化し、成功メッセージを表示する", async () => {
+  test("送信中は入力と送信を無効化し、完了後に再入力できる", async () => {
     const user = userEvent.setup();
     let resolveSignIn: ((value: { error: null }) => void) | undefined;
 
@@ -57,11 +57,13 @@ describe("LoginPage", () => {
     expect(screen.getByRole("button", { name: "ログインしています..." })).toBeDisabled();
     expect(screen.getByLabelText("メールアドレス")).toBeDisabled();
     expect(screen.getByLabelText("パスワード")).toBeDisabled();
-    expect(screen.getByText("ログインしています...", { selector: "p" })).toBeInTheDocument();
 
     resolveSignIn?.({ error: null });
 
-    await waitFor(() => expect(screen.getByText("ログインに成功しました。")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText("ログイン", { selector: "button[type='submit']" })).toBeEnabled(),
+    );
+    expect(screen.queryByText("ログインに成功しました。")).not.toBeInTheDocument();
   });
 
   test("認証失敗時はエラーメッセージを表示して再入力できる", async () => {
@@ -82,7 +84,7 @@ describe("LoginPage", () => {
     expect(screen.getByLabelText("メールアドレス")).toBeEnabled();
   });
 
-  test("新規登録では確認メール送信前提で signUp を呼び出す", async () => {
+  test("新規登録では確認待ち状態に切り替える", async () => {
     const user = userEvent.setup();
 
     render(<LoginPage />);
@@ -100,11 +102,13 @@ describe("LoginPage", () => {
         emailRedirectTo: window.location.origin,
       },
     });
+    expect(await screen.findByText("確認メールを送信しました")).toBeInTheDocument();
     expect(
-      await screen.findByText(
-        "確認メールを送信しました。メール内のリンクを開くとログインできます。",
+      screen.getByText(
+        "new-user@example.com 宛てに確認メールを送りました。メール内のリンクから登録を完了してください。",
       ),
     ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "ログインへ戻る" })).toBeInTheDocument();
   });
 
   test("新規登録で確認用パスワードが不一致なら送信しない", async () => {

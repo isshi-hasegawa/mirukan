@@ -15,26 +15,6 @@ type AuthMode = "login" | "signUp";
 const DEV_EMAIL = "akari@example.com";
 const DEV_PASSWORD = "password123";
 
-function getMessageTone(message: string) {
-  if (
-    message.startsWith("ログインに失敗") ||
-    message.startsWith("新規登録に失敗") ||
-    message.startsWith("確認用パスワード")
-  ) {
-    return "error";
-  }
-
-  if (
-    message.startsWith("ログインに成功") ||
-    message.startsWith("確認メールを送信") ||
-    message.startsWith("新規登録が完了")
-  ) {
-    return "success";
-  }
-
-  return "muted";
-}
-
 export function LoginPage({ isSessionLoading = false }: Props) {
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [loginEmail, setLoginEmail] = useState(DEV_EMAIL);
@@ -42,30 +22,24 @@ export function LoginPage({ isSessionLoading = false }: Props) {
   const [signUpEmail, setSignUpEmail] = useState("");
   const [signUpPassword, setSignUpPassword] = useState("");
   const [signUpPasswordConfirmation, setSignUpPasswordConfirmation] = useState("");
-  const [message, setMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [hasSentConfirmationEmail, setHasSentConfirmationEmail] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const messageTone = getMessageTone(message);
   const isSignUpMode = authMode === "signUp";
   const email = isSignUpMode ? signUpEmail : loginEmail;
   const password = isSignUpMode ? signUpPassword : loginPassword;
-  const statusClassName =
-    messageTone === "error"
-      ? "border-destructive/40 bg-destructive/10 text-foreground"
-      : messageTone === "success"
-        ? "border-primary/40 bg-primary/10 text-foreground"
-        : "border-border/70 bg-muted/40 text-muted-foreground";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage("");
 
     if (isSignUpMode && password !== signUpPasswordConfirmation) {
-      setMessage("確認用パスワードが一致しません。");
+      setErrorMessage("確認用パスワードが一致しません。");
       return;
     }
 
     setIsSubmitting(true);
-    setMessage(isSignUpMode ? "確認メールを送信しています..." : "ログインしています...");
 
     if (isSignUpMode) {
       const { data, error } = await supabase.auth.signUp({
@@ -77,16 +51,14 @@ export function LoginPage({ isSessionLoading = false }: Props) {
       });
 
       if (error) {
-        setMessage(`新規登録に失敗しました: ${error.message}`);
+        setErrorMessage(`新規登録に失敗しました: ${error.message}`);
         setIsSubmitting(false);
         return;
       }
 
-      setMessage(
-        data.session
-          ? "新規登録が完了しました。"
-          : "確認メールを送信しました。メール内のリンクを開くとログインできます。",
-      );
+      setHasSentConfirmationEmail(!data.session);
+      setSignUpPassword("");
+      setSignUpPasswordConfirmation("");
       setIsSubmitting(false);
       return;
     }
@@ -94,12 +66,12 @@ export function LoginPage({ isSessionLoading = false }: Props) {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-      setMessage(`ログインに失敗しました: ${error.message}`);
+      setErrorMessage(`ログインに失敗しました: ${error.message}`);
       setIsSubmitting(false);
       return;
     }
 
-    setMessage("ログインに成功しました。");
+    setIsSubmitting(false);
   };
 
   return (
@@ -179,7 +151,8 @@ export function LoginPage({ isSessionLoading = false }: Props) {
               disabled={isSubmitting}
               onClick={() => {
                 setAuthMode("login");
-                setMessage("");
+                setErrorMessage("");
+                setHasSentConfirmationEmail(false);
               }}
             >
               ログイン
@@ -192,87 +165,116 @@ export function LoginPage({ isSessionLoading = false }: Props) {
               disabled={isSubmitting}
               onClick={() => {
                 setAuthMode("signUp");
-                setMessage("");
+                setErrorMessage("");
+                setHasSentConfirmationEmail(false);
               }}
             >
               新規登録
             </Button>
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="email">メールアドレス</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              value={email}
-              disabled={isSubmitting}
-              onChange={(e) => {
-                if (isSignUpMode) {
-                  setSignUpEmail(e.target.value);
-                  return;
-                }
+          {isSignUpMode && hasSentConfirmationEmail ? (
+            <>
+              <div className="rounded-[20px] border border-border/70 bg-muted/30 px-4 py-4">
+                <p className="text-sm font-medium text-foreground">確認メールを送信しました</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {signUpEmail} 宛てに確認メールを送りました。メール内のリンクから登録を完了してください。
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                size="lg"
+                onClick={() => {
+                  setAuthMode("login");
+                  setLoginEmail(signUpEmail);
+                  setLoginPassword("");
+                  setErrorMessage("");
+                  setHasSentConfirmationEmail(false);
+                }}
+              >
+                ログインへ戻る
+              </Button>
+            </>
+          ) : (
+            <>
+              <div className="grid gap-2">
+                <Label htmlFor="email">メールアドレス</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  disabled={isSubmitting}
+                  onChange={(e) => {
+                    if (isSignUpMode) {
+                      setSignUpEmail(e.target.value);
+                      return;
+                    }
 
-                setLoginEmail(e.target.value);
-              }}
-              required
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="password">パスワード</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete={isSignUpMode ? "new-password" : "current-password"}
-              value={password}
-              disabled={isSubmitting}
-              onChange={(e) => {
-                if (isSignUpMode) {
-                  setSignUpPassword(e.target.value);
-                  return;
-                }
+                    setLoginEmail(e.target.value);
+                  }}
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="password">パスワード</Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete={isSignUpMode ? "new-password" : "current-password"}
+                  value={password}
+                  disabled={isSubmitting}
+                  onChange={(e) => {
+                    if (isSignUpMode) {
+                      setSignUpPassword(e.target.value);
+                      return;
+                    }
 
-                setLoginPassword(e.target.value);
-              }}
-              required
-            />
-          </div>
-          {isSignUpMode ? (
-            <div className="grid gap-2">
-              <Label htmlFor="password-confirmation">確認用パスワード</Label>
-              <Input
-                id="password-confirmation"
-                name="password-confirmation"
-                type="password"
-                autoComplete="new-password"
-                value={signUpPasswordConfirmation}
-                disabled={isSubmitting}
-                onChange={(e) => setSignUpPasswordConfirmation(e.target.value)}
-                required
-              />
-            </div>
-          ) : null}
-          {isSignUpMode ? (
-            <p className="text-sm leading-6 text-muted-foreground">
-              登録後に確認メールを送信します。メール内のリンクから登録を完了してください。
-            </p>
-          ) : null}
-          <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
-            {isSubmitting
-              ? isSignUpMode
-                ? "確認メールを送信しています..."
-                : "ログインしています..."
-              : isSignUpMode
-                ? "確認メールを送信して登録"
-                : "ログイン"}
-          </Button>
-          {message ? (
+                    setLoginPassword(e.target.value);
+                  }}
+                  required
+                />
+              </div>
+              {isSignUpMode ? (
+                <div className="grid gap-2">
+                  <Label htmlFor="password-confirmation">確認用パスワード</Label>
+                  <Input
+                    id="password-confirmation"
+                    name="password-confirmation"
+                    type="password"
+                    autoComplete="new-password"
+                    value={signUpPasswordConfirmation}
+                    disabled={isSubmitting}
+                    onChange={(e) => setSignUpPasswordConfirmation(e.target.value)}
+                    required
+                  />
+                </div>
+              ) : null}
+              {isSignUpMode ? (
+                <p className="text-sm leading-6 text-muted-foreground">
+                  登録後に確認メールを送信します。メール内のリンクから登録を完了してください。
+                </p>
+              ) : null}
+              <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+                {isSubmitting
+                  ? isSignUpMode
+                    ? "確認メールを送信しています..."
+                    : "ログインしています..."
+                  : isSignUpMode
+                    ? "確認メールを送信して登録"
+                    : "ログイン"}
+              </Button>
+            </>
+          )}
+          {errorMessage ? (
             <p
-              className={`rounded-[20px] border px-4 py-3 text-[0.94rem] ${statusClassName}`}
+              className="rounded-[20px] border border-destructive/40 bg-destructive/10 px-4 py-3 text-[0.94rem] text-foreground"
               aria-live="polite"
             >
-              {message}
+              {errorMessage}
             </p>
           ) : null}
         </form>
