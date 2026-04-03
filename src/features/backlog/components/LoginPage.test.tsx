@@ -33,7 +33,7 @@ describe("LoginPage", () => {
       ),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("積みっぱなしを並べ替えながら、今の気分に合う 1 本へ絞り込みます。"),
+      screen.getByText("積み作品を並べ替えながら、今の気分に合う 1 本へ絞り込みます。"),
     ).toBeInTheDocument();
     expect(screen.queryByText("akari@example.com")).not.toBeInTheDocument();
     expect(screen.queryByText("LOCAL AUTH")).not.toBeInTheDocument();

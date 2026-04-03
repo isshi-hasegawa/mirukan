@@ -72,15 +72,18 @@ export function LoginPage({ isSessionLoading = false }: Props) {
           </div>
         ) : (
           <div className="grid gap-7">
-            <div className="grid gap-6">
-              <BrandWordmark className="max-w-[420px]" symbolClassName="h-24 w-24 shrink-0 object-contain" />
+            <div className="grid gap-7">
+              <BrandWordmark
+                className="max-w-[440px]"
+                symbolClassName="h-28 w-28 shrink-0 object-contain"
+              />
               <div className="grid gap-4">
-                <p className="max-w-[26ch] text-[clamp(1.55rem,2.4vw,2.45rem)] leading-[1.12] tracking-[-0.05em] text-white">
+                <p className="max-w-[30ch] text-[clamp(1.32rem,1.95vw,1.92rem)] leading-[1.18] tracking-[-0.04em] text-white/96">
                   みるカンは、その時の自分に合う 1
                   本を決めるための、映像作品のバックログ兼意思決定アプリです
                 </p>
-                <p className="max-w-[44ch] text-[0.98rem] leading-7 text-[rgba(255,255,255,0.7)]">
-                  積みっぱなしを並べ替えながら、今の気分に合う 1 本へ絞り込みます。
+                <p className="max-w-[42ch] text-[0.94rem] leading-6 text-white/58">
+                  積み作品を並べ替えながら、今の気分に合う 1 本へ絞り込みます。
                 </p>
               </div>
             </div>
