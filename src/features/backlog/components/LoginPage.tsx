@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Label } from "@/components/ui/label.tsx";
-import mirukanSymbolUrl from "../../../assets/brand/mirukan_symbol_primary_tight.png";
 import { supabase } from "../../../lib/supabase.ts";
 import { AuthScreen } from "./AuthScreen.tsx";
+import { BrandLogo } from "./BrandLogo.tsx";
 
 type Props = {
   isSessionLoading?: boolean;
@@ -72,19 +72,12 @@ export function LoginPage({ isSessionLoading = false }: Props) {
             <div className="h-24 rounded-[20px] border border-border/70 bg-muted/30" />
           </div>
         ) : (
-            <div className="grid gap-5">
-              <div className="grid gap-4">
-              <div className="flex h-20 w-20 items-center justify-center rounded-[24px] border border-orange-400/40 bg-linear-to-br from-orange-400/20 via-orange-500/10 to-white/5 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-                <img
-                  src={mirukanSymbolUrl}
-                  alt="みるカンのシンボル"
-                  className="h-full w-full rounded-[18px] object-contain"
-                />
+          <div className="grid gap-5">
+            <div className="grid gap-4">
+              <div className="rounded-[24px] border border-orange-400/40 bg-linear-to-br from-orange-400/20 via-orange-500/10 to-white/5 px-5 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+                <BrandLogo className="h-auto w-full max-w-[240px] object-contain object-left" />
               </div>
               <div className="grid gap-2">
-                <p className="text-[0.78rem] font-bold tracking-[0.2em] uppercase text-orange-300">
-                  watch / kanban
-                </p>
                 <p className="max-w-[20ch] text-[clamp(1.6rem,2.2vw,2.2rem)] leading-[1.08] tracking-[-0.04em] text-foreground">
                   次に見る作品を決めるためのカンバン。
                 </p>

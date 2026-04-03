@@ -27,7 +27,7 @@ describe("LoginPage", () => {
     render(<LoginPage />);
 
     expect(screen.getByText("みるカン")).toBeInTheDocument();
-    expect(screen.getByText("watch / kanban")).toBeInTheDocument();
+    expect(screen.getAllByAltText("みるカン")).toHaveLength(1);
     expect(screen.getByText("次に見る作品を決めるためのカンバン。")).toBeInTheDocument();
     expect(screen.queryByText("akari@example.com")).not.toBeInTheDocument();
 
