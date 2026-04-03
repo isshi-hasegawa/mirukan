@@ -25,7 +25,11 @@ describe("LoginPage", () => {
     render(<LoginPage />);
 
     expect(screen.getAllByAltText("みるカン")).toHaveLength(1);
-    expect(screen.getByText("次に見る作品を決めるためのカンバン。")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "みるカンは、その時の自分に合う 1 本を決めるための、映像作品のバックログ兼意思決定アプリです",
+      ),
+    ).toBeInTheDocument();
     expect(screen.queryByText("akari@example.com")).not.toBeInTheDocument();
     expect(screen.queryByText("LOCAL AUTH")).not.toBeInTheDocument();
   });

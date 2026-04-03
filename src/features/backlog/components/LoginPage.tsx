@@ -77,8 +77,9 @@ export function LoginPage({ isSessionLoading = false }: Props) {
                 <BrandLogo className="h-auto w-full max-w-[240px] object-contain object-left" />
               </div>
               <div className="grid gap-2">
-                <p className="max-w-[20ch] text-[clamp(1.6rem,2.2vw,2.2rem)] leading-[1.08] tracking-[-0.04em] text-foreground">
-                  次に見る作品を決めるためのカンバン。
+                <p className="max-w-[28ch] text-[clamp(1.45rem,2.1vw,2rem)] leading-[1.2] tracking-[-0.04em] text-foreground">
+                  みるカンは、その時の自分に合う 1
+                  本を決めるための、映像作品のバックログ兼意思決定アプリです
                 </p>
               </div>
             </div>
