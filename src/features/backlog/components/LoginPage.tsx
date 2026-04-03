@@ -79,8 +79,7 @@ export function LoginPage({ isSessionLoading = false }: Props) {
               />
               <div className="grid gap-4">
                 <p className="max-w-[30ch] text-[clamp(1.32rem,1.95vw,1.92rem)] leading-[1.18] tracking-[-0.04em] text-white/96">
-                  みるカンは、その時の自分に合う 1
-                  本を決めるための、映像作品のバックログ兼意思決定アプリです
+                  みるカンは、次に見る 1 本を決めるための映像作品バックログです
                 </p>
               </div>
             </div>

@@ -52,8 +52,7 @@ export function AboutDialog({ onClose }: Props) {
         <div className="grid gap-5 text-sm leading-7 text-muted-foreground">
           <section className="grid gap-2">
             <p className="text-base leading-7 text-foreground">
-              みるカンは、その時の自分に合う 1
-              本を決めるための、映像作品のバックログ兼意思決定アプリです。
+              みるカンは、次に見る 1 本を決めるための映像作品バックログです。
             </p>
             <ul className="grid gap-1.5 pl-5 text-sm text-muted-foreground">
               <li className="list-disc">積んだ作品を整理する</li>
