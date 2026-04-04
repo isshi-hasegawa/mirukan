@@ -10,8 +10,9 @@
 - 目的
   - `みるカン` として公開して違和感のない見た目を先に固める
 - まずやること
-  - `index.html` に meta description / OGP / Twitter Card / canonical を追加し、公開 URL ベースで内容を確定する
+  - `index.html` に meta title / description / keywords / OGP / Twitter Card / canonical を追加し、公開 URL ベースで内容を確定する
   - OGP や README など公開面で使う横長ロゴを `mirukan_logo_primary_2400.png` / `mirukan_logo_primary_tight.png` のどちらに寄せるか決める
+  - 一般公開を前提に、利用規約とプライバシーポリシーの初版を用意する
 
 ### ログイン画面の本番切り替え
 
