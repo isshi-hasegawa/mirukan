@@ -5,13 +5,6 @@
 
 ## 公開前に固めること
 
-### ブランド資産と公開面の整備
-
-- 目的
-  - `みるカン` として公開して違和感のない見た目を先に固める
-- まずやること
-  - `index.html` に meta title / description / keywords / OGP / Twitter Card / canonical を追加し、公開 URL ベースで内容を確定する
-
 ### ログイン画面の本番切り替え
 
 - 目的
