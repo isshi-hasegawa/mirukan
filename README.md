@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./public/brand/mirukan-logo.png" alt="みるカン" width="320" />
+</p>
+
 # mirukan
 
 みるカンは、積んだ映画やシリーズを整理して、次に何を見るか決めるアプリです。
