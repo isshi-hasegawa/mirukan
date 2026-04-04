@@ -1,5 +1,3 @@
-import mirukanSymbolUrl from "../../../assets/brand/mirukan_symbol_primary_tight.png";
-
 type Props = {
   className?: string;
   titleClassName?: string;
@@ -16,7 +14,7 @@ export function BrandWordmark({
   return (
     <div className={`flex items-center gap-4 ${className ?? ""}`}>
       <img
-        src={mirukanSymbolUrl}
+        src="/brand/mirukan-symbol.png"
         alt="みるカンのシンボル"
         className={symbolClassName ?? "h-18 w-18 shrink-0 object-contain"}
       />
