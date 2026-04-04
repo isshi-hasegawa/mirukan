@@ -314,7 +314,7 @@ export function LoginPage({
                 ) : null}
                 {isSignUpMode ? (
                   <p className="text-xs leading-6 text-muted-foreground">
-                    新規登録を完了すると、
+                    登録することで、
                     <button
                       type="button"
                       className="mx-1 underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
@@ -330,7 +330,7 @@ export function LoginPage({
                     >
                       プライバシーポリシー
                     </button>
-                    への同意が必要です。
+                    に同意したものとみなします。
                   </p>
                 ) : null}
                 <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>

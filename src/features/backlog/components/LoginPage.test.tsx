@@ -199,7 +199,7 @@ describe("LoginPage", () => {
     expect(
       screen.getByText((_, element) =>
         element?.textContent ===
-        "新規登録を完了すると、利用規約およびプライバシーポリシーへの同意が必要です。",
+        "登録することで、利用規約およびプライバシーポリシーに同意したものとみなします。",
       ),
     ).toBeInTheDocument();
   });
