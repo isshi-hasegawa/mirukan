@@ -253,7 +253,7 @@ export function LoginPage({
               新規登録
             </Button>
           </div>
-          <div className="grid min-h-[29rem] content-start gap-4.5">
+          <div className="grid min-h-[29rem] content-center gap-4.5">
             {isForgotPasswordMode ? (
               hasSentResetEmail ? (
                 <>

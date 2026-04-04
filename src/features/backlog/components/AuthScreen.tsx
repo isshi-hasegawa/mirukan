@@ -10,7 +10,7 @@ type Props = {
 
 export function AuthScreen({ badge, title, description, sideContent, children }: Props) {
   return (
-    <main className="mx-auto grid min-h-svh w-[min(640px,calc(100%-32px))] content-center gap-8 pt-10 pb-6 sm:pt-14 sm:pb-8">
+    <main className="mx-auto grid min-h-svh w-[min(640px,calc(100%-32px))] content-center gap-8 py-8">
       <section className="grid gap-4">
         {badge ? (
           <p className="text-[0.72rem] font-bold tracking-[0.22em] uppercase text-orange-300/90">
