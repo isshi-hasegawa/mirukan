@@ -286,7 +286,7 @@ export function LoginPage({
                 ) : null}
                 {isSignUpMode ? (
                   <p className="text-sm leading-6 text-muted-foreground">
-                    登録を送信すると、確認メールをお送りします。メール内のリンクを開くと、アカウント登録が完了します。
+                    確認メールのリンクを開くと、アカウント登録が完了します。
                   </p>
                 ) : null}
                 {shouldShowDevLoginHint ? (

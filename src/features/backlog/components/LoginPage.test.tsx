@@ -193,7 +193,7 @@ describe("LoginPage", () => {
 
     expect(
       screen.getByText(
-        "登録を送信すると、確認メールをお送りします。メール内のリンクを開くと、アカウント登録が完了します。",
+        "確認メールのリンクを開くと、アカウント登録が完了します。",
       ),
     ).toBeInTheDocument();
     expect(
