@@ -39,6 +39,7 @@ describe("LoginPage", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "利用規約を確認する" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "プライバシーポリシーを確認する" })).toBeInTheDocument();
     expect(screen.queryByText("akari@example.com")).not.toBeInTheDocument();
     expect(screen.queryByText("LOCAL AUTH")).not.toBeInTheDocument();
   });
@@ -57,6 +58,18 @@ describe("LoginPage", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("第2条（運営者）")).toBeInTheDocument();
+  });
+
+  test("ログイン画面からプライバシーポリシーを開ける", async () => {
+    const user = userEvent.setup();
+
+    render(<LoginPage />);
+
+    await user.click(screen.getByRole("button", { name: "プライバシーポリシーを確認する" }));
+
+    expect(screen.getByRole("dialog", { name: "プライバシーポリシー" })).toBeInTheDocument();
+    expect(screen.getByText("第2条（取得する情報）")).toBeInTheDocument();
+    expect(screen.getByText("Supabase: 認証、データ保存、Edge Functions 実行のため")).toBeInTheDocument();
   });
 
   test("送信中は入力と送信を無効化し、完了後に再入力できる", async () => {

@@ -8,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.tsx";
 import { AboutDialog } from "./AboutDialog.tsx";
+import { PrivacyPolicyDialog } from "./PrivacyPolicyDialog.tsx";
 import { TermsOfServiceDialog } from "./TermsOfServiceDialog.tsx";
 
 type Props = {
@@ -17,6 +18,7 @@ type Props = {
 export function UserMenu({ email }: Props) {
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isTermsOpen, setIsTermsOpen] = useState(false);
+  const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const displayEmail = email ?? "signed-in user";
   // 小画面用：最初の2文字のみ表示
   const shortEmail = displayEmail.slice(0, 2);
@@ -48,6 +50,13 @@ export function UserMenu({ email }: Props) {
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
+              setIsPrivacyOpen(true);
+            }}
+          >
+            プライバシーポリシー
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
               void supabase.auth.signOut();
             }}
           >
@@ -58,6 +67,7 @@ export function UserMenu({ email }: Props) {
 
       {isAboutOpen ? <AboutDialog onClose={() => setIsAboutOpen(false)} /> : null}
       {isTermsOpen ? <TermsOfServiceDialog onClose={() => setIsTermsOpen(false)} /> : null}
+      {isPrivacyOpen ? <PrivacyPolicyDialog onClose={() => setIsPrivacyOpen(false)} /> : null}
     </>
   );
 }

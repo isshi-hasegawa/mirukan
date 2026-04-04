@@ -59,4 +59,21 @@ describe("UserMenu", () => {
     expect(screen.getByText("第6条（禁止事項）")).toBeInTheDocument();
     expect(screen.getByText("第12条（個人情報の取扱い）")).toBeInTheDocument();
   });
+
+  test("メニューからプライバシーポリシーを開ける", async () => {
+    const user = userEvent.setup();
+
+    render(<UserMenu email="user@example.com" />);
+
+    const trigger = screen.getByRole("button", { name: /user@example.com/i });
+    trigger.focus();
+    await user.keyboard("{Enter}");
+    await user.click(await screen.findByRole("menuitem", { name: "プライバシーポリシー" }));
+
+    expect(screen.getByRole("dialog", { name: "プライバシーポリシー" })).toBeInTheDocument();
+    expect(screen.getByText("第10条（お問い合わせ窓口）")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "https://github.com/isshi-hasegawa/mirukan/issues" }),
+    ).toHaveAttribute("href", "https://github.com/isshi-hasegawa/mirukan/issues");
+  });
 });

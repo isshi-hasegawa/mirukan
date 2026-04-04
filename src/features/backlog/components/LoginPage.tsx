@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label.tsx";
 import { supabase } from "../../../lib/supabase.ts";
 import { AuthScreen } from "./AuthScreen.tsx";
 import { BrandWordmark } from "./BrandWordmark.tsx";
+import { PrivacyPolicyDialog } from "./PrivacyPolicyDialog.tsx";
 import { TermsOfServiceDialog } from "./TermsOfServiceDialog.tsx";
 
 type Props = {
@@ -27,6 +28,7 @@ export function LoginPage({ isSessionLoading = false }: Props) {
   const [hasSentConfirmationEmail, setHasSentConfirmationEmail] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isTermsOpen, setIsTermsOpen] = useState(false);
+  const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
 
   const isSignUpMode = authMode === "signUp";
   const email = isSignUpMode ? signUpEmail : loginEmail;
@@ -274,6 +276,14 @@ export function LoginPage({ isSessionLoading = false }: Props) {
                     >
                       利用規約
                     </button>
+                    および
+                    <button
+                      type="button"
+                      className="mx-1 underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
+                      onClick={() => setIsPrivacyOpen(true)}
+                    >
+                      プライバシーポリシー
+                    </button>
                     に同意したものとみなされます。
                   </p>
                 ) : null}
@@ -287,13 +297,22 @@ export function LoginPage({ isSessionLoading = false }: Props) {
                       : "ログイン"}
                 </Button>
                 <div className="flex justify-center">
-                  <button
-                    type="button"
-                    className="text-sm text-muted-foreground underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
-                    onClick={() => setIsTermsOpen(true)}
-                  >
-                    利用規約を確認する
-                  </button>
+                  <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                    <button
+                      type="button"
+                      className="underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
+                      onClick={() => setIsTermsOpen(true)}
+                    >
+                      利用規約を確認する
+                    </button>
+                    <button
+                      type="button"
+                      className="underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
+                      onClick={() => setIsPrivacyOpen(true)}
+                    >
+                      プライバシーポリシーを確認する
+                    </button>
+                  </div>
                 </div>
               </>
             )}
@@ -309,6 +328,7 @@ export function LoginPage({ isSessionLoading = false }: Props) {
         </form>
       )}
       {isTermsOpen ? <TermsOfServiceDialog onClose={() => setIsTermsOpen(false)} /> : null}
+      {isPrivacyOpen ? <PrivacyPolicyDialog onClose={() => setIsPrivacyOpen(false)} /> : null}
     </AuthScreen>
   );
 }
