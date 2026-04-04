@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label.tsx";
 import { supabase } from "../../../lib/supabase.ts";
 import { AuthScreen } from "./AuthScreen.tsx";
 import { BrandWordmark } from "./BrandWordmark.tsx";
+import { TermsOfServiceDialog } from "./TermsOfServiceDialog.tsx";
 
 type Props = {
   isSessionLoading?: boolean;
@@ -25,6 +26,7 @@ export function LoginPage({ isSessionLoading = false }: Props) {
   const [errorMessage, setErrorMessage] = useState("");
   const [hasSentConfirmationEmail, setHasSentConfirmationEmail] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isTermsOpen, setIsTermsOpen] = useState(false);
 
   const isSignUpMode = authMode === "signUp";
   const email = isSignUpMode ? signUpEmail : loginEmail;
@@ -262,6 +264,19 @@ export function LoginPage({ isSessionLoading = false }: Props) {
                     登録後に確認メールを送信します。メール内のリンクを開くと、そのまま backlog を使い始められます。
                   </p>
                 ) : null}
+                {isSignUpMode ? (
+                  <p className="text-xs leading-6 text-muted-foreground">
+                    登録することで、
+                    <button
+                      type="button"
+                      className="mx-1 underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
+                      onClick={() => setIsTermsOpen(true)}
+                    >
+                      利用規約
+                    </button>
+                    に同意したものとみなされます。
+                  </p>
+                ) : null}
                 <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
                   {isSubmitting
                     ? isSignUpMode
@@ -271,6 +286,15 @@ export function LoginPage({ isSessionLoading = false }: Props) {
                       ? "確認メールを送信して登録"
                       : "ログイン"}
                 </Button>
+                <div className="flex justify-center">
+                  <button
+                    type="button"
+                    className="text-sm text-muted-foreground underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
+                    onClick={() => setIsTermsOpen(true)}
+                  >
+                    利用規約を確認する
+                  </button>
+                </div>
               </>
             )}
           </div>
@@ -284,6 +308,7 @@ export function LoginPage({ isSessionLoading = false }: Props) {
           ) : null}
         </form>
       )}
+      {isTermsOpen ? <TermsOfServiceDialog onClose={() => setIsTermsOpen(false)} /> : null}
     </AuthScreen>
   );
 }

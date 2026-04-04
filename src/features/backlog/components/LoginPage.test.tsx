@@ -38,8 +38,25 @@ describe("LoginPage", () => {
         "みるカンは、積んだ映画やシリーズを整理して、いま見る候補を決めるための映像作品バックログです。",
       ),
     ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "利用規約を確認する" })).toBeInTheDocument();
     expect(screen.queryByText("akari@example.com")).not.toBeInTheDocument();
     expect(screen.queryByText("LOCAL AUTH")).not.toBeInTheDocument();
+  });
+
+  test("ログイン画面から利用規約を開ける", async () => {
+    const user = userEvent.setup();
+
+    render(<LoginPage />);
+
+    await user.click(screen.getByRole("button", { name: "利用規約を確認する" }));
+
+    expect(screen.getByRole("dialog", { name: "利用規約" })).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "この利用規約（以下「本規約」といいます。）は、個人開発サービスである「みるカン」の利用条件を定めるものです。ユーザーは、本規約に同意した上で本サービスを利用するものとします。",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("第2条（運営者）")).toBeInTheDocument();
   });
 
   test("送信中は入力と送信を無効化し、完了後に再入力できる", async () => {

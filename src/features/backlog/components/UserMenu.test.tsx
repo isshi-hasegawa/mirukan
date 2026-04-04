@@ -44,4 +44,19 @@ describe("UserMenu", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "TMDB" })).toBeInTheDocument();
   });
+
+  test("メニューから利用規約を開ける", async () => {
+    const user = userEvent.setup();
+
+    render(<UserMenu email="user@example.com" />);
+
+    const trigger = screen.getByRole("button", { name: /user@example.com/i });
+    trigger.focus();
+    await user.keyboard("{Enter}");
+    await user.click(await screen.findByRole("menuitem", { name: "利用規約" }));
+
+    expect(screen.getByRole("dialog", { name: "利用規約" })).toBeInTheDocument();
+    expect(screen.getByText("第6条（禁止事項）")).toBeInTheDocument();
+    expect(screen.getByText("第12条（個人情報の取扱い）")).toBeInTheDocument();
+  });
 });

@@ -8,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.tsx";
 import { AboutDialog } from "./AboutDialog.tsx";
+import { TermsOfServiceDialog } from "./TermsOfServiceDialog.tsx";
 
 type Props = {
   email: string | null | undefined;
@@ -15,6 +16,7 @@ type Props = {
 
 export function UserMenu({ email }: Props) {
   const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [isTermsOpen, setIsTermsOpen] = useState(false);
   const displayEmail = email ?? "signed-in user";
   // 小画面用：最初の2文字のみ表示
   const shortEmail = displayEmail.slice(0, 2);
@@ -39,6 +41,13 @@ export function UserMenu({ email }: Props) {
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
+              setIsTermsOpen(true);
+            }}
+          >
+            利用規約
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
               void supabase.auth.signOut();
             }}
           >
@@ -48,6 +57,7 @@ export function UserMenu({ email }: Props) {
       </DropdownMenu>
 
       {isAboutOpen ? <AboutDialog onClose={() => setIsAboutOpen(false)} /> : null}
+      {isTermsOpen ? <TermsOfServiceDialog onClose={() => setIsTermsOpen(false)} /> : null}
     </>
   );
 }
