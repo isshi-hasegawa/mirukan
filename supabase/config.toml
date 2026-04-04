@@ -10,7 +10,7 @@ max_rows = 1000
 [db]
 port = 54322
 shadow_port = 54320
-major_version = 15
+major_version = 17
 
 [studio]
 enabled = true
@@ -42,16 +42,15 @@ enable_anonymous_sign_ins = false
 enable_signup = true
 double_confirm_changes = true
 enable_confirmations = true
-password_min_length = 8
 
 [auth.email.template.confirmation]
 subject = "みるカン - メールアドレスの確認"
-content_path = "./templates/confirmation.html"
+content_path = "./supabase/templates/confirmation.html"
 
 [auth.email.template.recovery]
 subject = "みるカン - パスワードの再設定"
-content_path = "./templates/recovery.html"
+content_path = "./supabase/templates/recovery.html"
 
 [auth.email.template.email_change]
 subject = "みるカン - メールアドレス変更の確認"
-content_path = "./templates/email_change.html"
+content_path = "./supabase/templates/email_change.html"

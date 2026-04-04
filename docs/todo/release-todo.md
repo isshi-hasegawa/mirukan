@@ -9,19 +9,23 @@
 
 - 目的
   - 本番公開時に、登録導線と確認メール遷移が破綻しない状態を固める
+- 本番 URL：`https://mirukan.app`（2026-04-04 取得済み）
 - まずやること
-  - 本番 Supabase の `SITE_URL` と Redirect URLs が、本番 URL と一致しているか確認する
-  - Supabase の確認メールテンプレートを標準のまま使うか、`みるカン` 向けに調整するかを決める
+  - 本番 Supabase の `SITE_URL` を `https://mirukan.app` に設定する
+  - Supabase の Redirect URLs に `https://mirukan.app` を追加する
+  - Supabase の確認メールテンプレートを標準のまま使うか、`みるカン` 向けに日本語化するかを決める
 
 ### 本番ホスティング構成の確定
 
 - 目的
   - 公開先と責務分担を先に決め、デプロイ手順を固定する
+- 本番 URL：`https://mirukan.app`（2026-04-04 取得済み、ホスティング未設定）
 - 現時点の第一候補
   - フロントエンドは Vercel
   - データベース / Auth / Edge Functions は Supabase
 - まずやること
-  - Vercel を使うかを正式決定し、環境変数設定と本番 URL を確定する
+  - Vercel プロジェクトを作成し、カスタムドメイン `mirukan.app` を割り当てる
+  - Vercel の環境変数（`VITE_SUPABASE_URL`・`VITE_SUPABASE_PUBLISHABLE_KEY`）を本番値で設定する
   - 本番 Supabase プロジェクトを固定し、`TMDB_API_KEY` secret と Edge Functions deploy を実施する
   - README のリモート環境向け手順を、実際の本番構成と公開 URL に合わせて確定版へ寄せる
 
