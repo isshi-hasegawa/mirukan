@@ -5,9 +5,57 @@ import { LoginPage } from "./features/backlog/components/LoginPage.tsx";
 import { BoardPage } from "./features/backlog/components/BoardPage.tsx";
 import { ResetPasswordPage } from "./features/backlog/components/ResetPasswordPage.tsx";
 
+function isPasswordRecoveryLocation(location: Pick<Location, "hash" | "search">) {
+  const searchParams = new URLSearchParams(location.search);
+
+  if (searchParams.get("type") === "recovery") {
+    return true;
+  }
+
+  const hashParams = new URLSearchParams(location.hash.replace(/^#/, ""));
+  return hashParams.get("type") === "recovery";
+}
+
+function clearPasswordRecoveryLocation() {
+  const authParamNames = [
+    "access_token",
+    "refresh_token",
+    "expires_in",
+    "expires_at",
+    "token_type",
+    "type",
+    "code",
+  ];
+  const url = new URL(window.location.href);
+  let hasChanged = false;
+
+  for (const name of authParamNames) {
+    if (url.searchParams.has(name)) {
+      url.searchParams.delete(name);
+      hasChanged = true;
+    }
+  }
+
+  const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
+
+  for (const name of authParamNames) {
+    if (hashParams.has(name)) {
+      hashParams.delete(name);
+      hasChanged = true;
+    }
+  }
+
+  if (hasChanged) {
+    url.hash = hashParams.toString();
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  }
+}
+
 export function App() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
-  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(() =>
+    isPasswordRecoveryLocation(window.location),
+  );
 
   useEffect(() => {
     void supabase.auth.getSession().then(({ data }) => {
@@ -19,9 +67,16 @@ export function App() {
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY") {
         setIsPasswordRecovery(true);
-      } else if (event === "USER_UPDATED" || event === "SIGNED_IN") {
+      } else if (event === "USER_UPDATED") {
         setIsPasswordRecovery(false);
+        clearPasswordRecoveryLocation();
+      } else if (event === "SIGNED_IN") {
+        setIsPasswordRecovery(isPasswordRecoveryLocation(window.location));
+      } else if (event === "SIGNED_OUT") {
+        setIsPasswordRecovery(false);
+        clearPasswordRecoveryLocation();
       }
+
       setSession(session);
     });
 
@@ -32,7 +87,7 @@ export function App() {
     return <LoginPage isSessionLoading />;
   }
 
-  if (isPasswordRecovery) {
+  if (isPasswordRecovery && session) {
     return <ResetPasswordPage />;
   }
 
