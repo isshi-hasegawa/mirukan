@@ -70,7 +70,7 @@ function DetailModalHarness({
   items: BacklogItem[];
   initialState: DetailModalState;
   onClose: () => void;
-  onUpdate: ReturnType<typeof vi.fn>;
+  onUpdate: (item: BacklogItem) => void;
 }) {
   const [state, setState] = useState(initialState);
   const [currentItem, setCurrentItem] = useState(item);

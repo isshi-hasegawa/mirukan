@@ -56,10 +56,8 @@ function createSearchResult(
   overrides: Partial<TmdbSearchResult> & Pick<TmdbSearchResult, "tmdbId" | "title">,
 ): TmdbSearchResult {
   return {
-    tmdbId: overrides.tmdbId,
     tmdbMediaType: "movie",
     workType: "movie",
-    title: overrides.title,
     originalTitle: null,
     overview: null,
     posterPath: null,
@@ -74,8 +72,6 @@ function createSeasonOption(
   overrides: Partial<TmdbSeasonOption> & Pick<TmdbSeasonOption, "seasonNumber" | "title">,
 ): TmdbSeasonOption {
   return {
-    seasonNumber: overrides.seasonNumber,
-    title: overrides.title,
     overview: null,
     posterPath: null,
     releaseDate: "2024-01-01",
@@ -269,7 +265,7 @@ describe("AddModal", () => {
       query.includes("映画") ? [stackedMovieResult] : [stackedSeriesResult],
     );
 
-    const { user } = renderAddModal({ items: [stackedMovieItem, stackedSeriesItem] });
+    renderAddModal({ items: [stackedMovieItem, stackedSeriesItem] });
 
     expect(
       await screen.findByText("おすすめ候補が見つかりませんでした。作品名で検索できます。"),
@@ -320,7 +316,7 @@ describe("AddModal", () => {
     tmdbMocks.fetchTmdbRecommendations.mockResolvedValue([fullyStackedSeriesResult]);
     tmdbMocks.searchTmdbWorks.mockResolvedValue([fullyStackedSeriesResult]);
 
-    const { user } = renderAddModal({ items: [stackedSeriesItem, stackedSeasonItem] });
+    renderAddModal({ items: [stackedSeriesItem, stackedSeasonItem] });
 
     await waitFor(() =>
       expect(

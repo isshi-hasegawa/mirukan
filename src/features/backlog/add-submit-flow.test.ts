@@ -19,6 +19,8 @@ function createMovieResult(overrides: Partial<TmdbSearchResult> = {}): TmdbSearc
     overview: null,
     posterPath: null,
     releaseDate: "2024-01-01",
+    jpWatchPlatforms: [],
+    hasJapaneseRelease: false,
     ...overrides,
   };
 }
