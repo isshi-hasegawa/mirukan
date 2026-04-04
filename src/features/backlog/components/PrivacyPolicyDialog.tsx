@@ -44,7 +44,6 @@ const sections = [
     items: [
       "Supabase: 認証、データ保存、Edge Functions 実行のため",
       "TMDB: 作品情報、画像、関連メタデータの取得のため",
-      "GitHub: お問い合わせまたは不具合報告の受付窓口として利用する場合のため",
     ],
   },
   {
@@ -86,7 +85,7 @@ const sections = [
     title: "第10条（お問い合わせ窓口）",
     body: [
       "本ポリシーに関するお問い合わせ、不具合報告、開示等の請求は、以下の窓口で受け付けます。",
-      "GitHub Issues: https://github.com/isshi-hasegawa/mirukan/issues",
+      "メールアドレス: support@mirukan.app",
       "運営者は、必要に応じて本サービスまたはリポジトリ上で別途連絡手段を案内することがあります。",
     ],
   },
@@ -147,26 +146,14 @@ export function PrivacyPolicyDialog({ onClose }: Props) {
               <section key={section.title} className="grid gap-2">
                 <h3 className="text-base font-semibold text-foreground">{section.title}</h3>
                 {section.body.map((paragraph) =>
-                  paragraph.startsWith("https://") ? (
-                    <a
-                      key={paragraph}
-                      href={paragraph}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-fit underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
-                    >
-                      {paragraph}
-                    </a>
-                  ) : paragraph.startsWith("GitHub Issues: https://") ? (
+                  paragraph.startsWith("メールアドレス: ") ? (
                     <p key={paragraph}>
-                      GitHub Issues:{" "}
+                      メールアドレス:{" "}
                       <a
-                        href="https://github.com/isshi-hasegawa/mirukan/issues"
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        href="mailto:support@mirukan.app"
                         className="underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
                       >
-                        https://github.com/isshi-hasegawa/mirukan/issues
+                        support@mirukan.app
                       </a>
                     </p>
                   ) : (

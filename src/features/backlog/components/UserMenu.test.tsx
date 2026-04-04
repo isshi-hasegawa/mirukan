@@ -73,7 +73,7 @@ describe("UserMenu", () => {
     expect(screen.getByRole("dialog", { name: "プライバシーポリシー" })).toBeInTheDocument();
     expect(screen.getByText("第10条（お問い合わせ窓口）")).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "https://github.com/isshi-hasegawa/mirukan/issues" }),
-    ).toHaveAttribute("href", "https://github.com/isshi-hasegawa/mirukan/issues");
+      screen.getByRole("link", { name: "support@mirukan.app" }),
+    ).toHaveAttribute("href", "mailto:support@mirukan.app");
   });
 });
