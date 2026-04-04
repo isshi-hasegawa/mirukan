@@ -349,14 +349,14 @@ export function LoginPage({
                       className="underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
                       onClick={() => setIsTermsOpen(true)}
                     >
-                      利用規約を確認する
+                      利用規約
                     </button>
                     <button
                       type="button"
                       className="underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
                       onClick={() => setIsPrivacyOpen(true)}
                     >
-                      プライバシーポリシーを確認する
+                      プライバシーポリシー
                     </button>
                   </div>
                 </div>
