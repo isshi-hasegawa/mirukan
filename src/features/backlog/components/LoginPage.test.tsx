@@ -7,6 +7,7 @@ const supabaseMock = vi.hoisted(() => ({
   auth: {
     signInWithPassword: vi.fn(),
     signUp: vi.fn(),
+    resetPasswordForEmail: vi.fn(),
   },
 }));
 
@@ -24,6 +25,7 @@ describe("LoginPage", () => {
       data: { session: null, user: { id: "user-1" } },
       error: null,
     });
+    supabaseMock.auth.resetPasswordForEmail.mockResolvedValue({ error: null });
   });
 
   test("ブランドロゴと説明を表示する", () => {
@@ -217,6 +219,55 @@ describe("LoginPage", () => {
 
     expect(await screen.findByText("確認用パスワードが一致しません。")).toBeInTheDocument();
     expect(supabaseMock.auth.signUp).not.toHaveBeenCalled();
+  });
+
+  test("ログイン画面からパスワードを忘れた場合の画面に遷移できる", async () => {
+    const user = userEvent.setup();
+
+    render(<LoginPage showDevLoginHint={false} />);
+
+    await user.click(screen.getByRole("button", { name: "パスワードを忘れた場合" }));
+
+    expect(screen.getByLabelText("メールアドレス")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "リセットメールを送信" })).toBeInTheDocument();
+    expect(screen.queryByLabelText("パスワード")).not.toBeInTheDocument();
+  });
+
+  test("パスワードリセットメールを送信できる", async () => {
+    const user = userEvent.setup();
+
+    render(<LoginPage showDevLoginHint={false} />);
+
+    await user.click(screen.getByRole("button", { name: "パスワードを忘れた場合" }));
+    await user.type(screen.getByLabelText("メールアドレス"), "akari@example.com");
+    await user.click(screen.getByRole("button", { name: "リセットメールを送信" }));
+
+    expect(supabaseMock.auth.resetPasswordForEmail).toHaveBeenCalledWith("akari@example.com", {
+      redirectTo: window.location.origin,
+    });
+    expect(await screen.findByText("リセットメールを送信しました")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "akari@example.com 宛てにパスワードリセット用のリンクを送信しました。メール内のリンクを開いて、パスワードを再設定してください。",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "ログインへ戻る" })).toBeInTheDocument();
+  });
+
+  test("パスワードリセット送信後にログインへ戻るとログイン画面に遷移する", async () => {
+    const user = userEvent.setup();
+
+    render(<LoginPage showDevLoginHint={false} />);
+
+    await user.click(screen.getByRole("button", { name: "パスワードを忘れた場合" }));
+    await user.type(screen.getByLabelText("メールアドレス"), "akari@example.com");
+    await user.click(screen.getByRole("button", { name: "リセットメールを送信" }));
+    await screen.findByText("リセットメールを送信しました");
+
+    await user.click(screen.getByRole("button", { name: "ログインへ戻る" }));
+
+    expect(screen.getByLabelText("パスワード")).toBeInTheDocument();
+    expect(screen.getByLabelText("メールアドレス")).toHaveValue("akari@example.com");
   });
 
   test("セッション確認中はログイン画面と同系統のローディング表示を出す", () => {

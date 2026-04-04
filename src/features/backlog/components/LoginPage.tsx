@@ -13,7 +13,7 @@ type Props = {
   showDevLoginHint?: boolean;
 };
 
-type AuthMode = "login" | "signUp";
+type AuthMode = "login" | "signUp" | "forgotPassword";
 
 const DEV_EMAIL = "akari@example.com";
 const DEV_PASSWORD = "password123";
@@ -46,6 +46,8 @@ export function LoginPage({
   const [signUpEmail, setSignUpEmail] = useState("");
   const [signUpPassword, setSignUpPassword] = useState("");
   const [signUpPasswordConfirmation, setSignUpPasswordConfirmation] = useState("");
+  const [resetEmail, setResetEmail] = useState("");
+  const [hasSentResetEmail, setHasSentResetEmail] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [hasSentConfirmationEmail, setHasSentConfirmationEmail] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -53,9 +55,10 @@ export function LoginPage({
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
 
   const isSignUpMode = authMode === "signUp";
+  const isForgotPasswordMode = authMode === "forgotPassword";
   const email = isSignUpMode ? signUpEmail : loginEmail;
   const password = isSignUpMode ? signUpPassword : loginPassword;
-  const shouldShowDevLoginHint = showDevLoginHint && !isSignUpMode && !isSessionLoading;
+  const shouldShowDevLoginHint = showDevLoginHint && !isSignUpMode && !isForgotPasswordMode && !isSessionLoading;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,6 +101,25 @@ export function LoginPage({
       return;
     }
 
+    setIsSubmitting(false);
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage("");
+    setIsSubmitting(true);
+
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: window.location.origin,
+    });
+
+    if (error) {
+      setErrorMessage("メールの送信に失敗しました。再度お試しください。");
+      setIsSubmitting(false);
+      return;
+    }
+
+    setHasSentResetEmail(true);
     setIsSubmitting(false);
   };
 
@@ -165,7 +187,11 @@ export function LoginPage({
         <form
           className="grid gap-4.5"
           onSubmit={(e) => {
-            void handleSubmit(e);
+            if (isForgotPasswordMode) {
+              void handleForgotPassword(e);
+            } else {
+              void handleSubmit(e);
+            }
           }}
         >
           <div
@@ -177,12 +203,13 @@ export function LoginPage({
               type="button"
               variant={isSignUpMode ? "ghost" : "secondary"}
               size="lg"
-              aria-pressed={!isSignUpMode}
+              aria-pressed={!isSignUpMode && !isForgotPasswordMode}
               disabled={isSubmitting}
               onClick={() => {
                 setAuthMode("login");
                 setErrorMessage("");
                 setHasSentConfirmationEmail(false);
+                setHasSentResetEmail(false);
               }}
             >
               ログイン
@@ -197,13 +224,61 @@ export function LoginPage({
                 setAuthMode("signUp");
                 setErrorMessage("");
                 setHasSentConfirmationEmail(false);
+                setHasSentResetEmail(false);
               }}
             >
               新規登録
             </Button>
           </div>
           <div className="grid min-h-[29rem] content-start gap-4.5">
-            {isSignUpMode && hasSentConfirmationEmail ? (
+            {isForgotPasswordMode ? (
+              hasSentResetEmail ? (
+                <>
+                  <div className="rounded-[20px] border border-border/70 bg-muted/30 px-4 py-4">
+                    <p className="text-sm font-medium text-foreground">リセットメールを送信しました</p>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      {resetEmail} 宛てにパスワードリセット用のリンクを送信しました。メール内のリンクを開いて、パスワードを再設定してください。
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    size="lg"
+                    onClick={() => {
+                      setAuthMode("login");
+                      setLoginEmail(resetEmail);
+                      setErrorMessage("");
+                      setHasSentResetEmail(false);
+                    }}
+                  >
+                    ログインへ戻る
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <div className="grid gap-2">
+                    <Label htmlFor="reset-email">メールアドレス</Label>
+                    <Input
+                      id="reset-email"
+                      name="reset-email"
+                      type="email"
+                      autoComplete="email"
+                      value={resetEmail}
+                      disabled={isSubmitting}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    登録済みのメールアドレスにパスワードリセット用のリンクを送信します。
+                  </p>
+                  <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+                    {isSubmitting ? "送信しています..." : "リセットメールを送信"}
+                  </Button>
+                </>
+              )
+            ) : isSignUpMode && hasSentConfirmationEmail ? (
               <>
                 <div className="rounded-[20px] border border-border/70 bg-muted/30 px-4 py-4">
                   <p className="text-sm font-medium text-foreground">確認メールを送信しました</p>
@@ -344,6 +419,19 @@ export function LoginPage({
                 </Button>
                 <div className="flex justify-center">
                   <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                    {!isSignUpMode ? (
+                      <button
+                        type="button"
+                        className="underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
+                        onClick={() => {
+                          setResetEmail(loginEmail);
+                          setAuthMode("forgotPassword");
+                          setErrorMessage("");
+                        }}
+                      >
+                        パスワードを忘れた場合
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       className="underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
