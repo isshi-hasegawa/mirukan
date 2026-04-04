@@ -25,15 +25,10 @@
 
 ## 公開前に固めること
 
-### Auth / 確認メール設定の最終確認
+### Auth / 確認メール設定（完了済み）
 
-- 本番 URL：`https://mirukan.app`（デプロイ済み）
-- まずやること
-  - 本番 Supabase の `SITE_URL` を `https://mirukan.app` に設定する
-    → ダッシュボード: Authentication → URL Configuration
-    → `https://supabase.com/dashboard/project/gkjrgrexttthksjvbdjp/auth/url-configuration`
-  - Redirect URLs に `https://mirukan.app` を追加する（同上）
-  - 確認メールテンプレート（日本語）は `supabase/templates/` に作成済み。本番への反映は `supabase push` または手動適用が必要
+- SITE_URL・Redirect URLs を `https://mirukan.app` に設定済み
+- 確認メールテンプレート（Confirm signup / Reset password / Change Email Address）を日本語化してダッシュボードに手動適用済み
 
 ### リリース前 QA と回帰確認
 
