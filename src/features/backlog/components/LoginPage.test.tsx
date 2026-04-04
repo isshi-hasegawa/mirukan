@@ -71,7 +71,7 @@ describe("LoginPage", () => {
     expect(await screen.findByRole("dialog", { name: "利用規約" })).toBeInTheDocument();
     expect(
       screen.getByText(
-        "この利用規約（以下「本規約」といいます。）は、個人開発サービスである「みるカン」の利用条件を定めるものです。ユーザーは、本規約に同意した上で本サービスを利用するものとします。",
+        "この利用規約（以下「本規約」といいます。）は、「みるカン」の利用条件を定めるものです。ユーザーは、本規約に同意した上で本サービスを利用するものとします。",
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("第2条（運営者）")).toBeInTheDocument();

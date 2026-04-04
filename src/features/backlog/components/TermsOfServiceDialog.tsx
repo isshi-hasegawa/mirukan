@@ -17,7 +17,7 @@ const sections = [
   {
     title: "第2条（運営者）",
     body: [
-      "本サービスは、個人開発者である本サービス運営者（以下「運営者」といいます。）が提供します。",
+      "本サービスは、本サービス運営者（以下「運営者」といいます。）が提供します。",
     ],
   },
   {
@@ -164,7 +164,7 @@ export function TermsOfServiceDialog({ onClose }: Props) {
         <div className="max-h-[min(70vh,720px)] overflow-y-auto pr-1">
           <div className="grid gap-5 text-sm leading-7 text-muted-foreground">
             <p>
-              この利用規約（以下「本規約」といいます。）は、個人開発サービスである「みるカン」の利用条件を定めるものです。ユーザーは、本規約に同意した上で本サービスを利用するものとします。
+              この利用規約（以下「本規約」といいます。）は、「みるカン」の利用条件を定めるものです。ユーザーは、本規約に同意した上で本サービスを利用するものとします。
             </p>
 
             {sections.map((section) => (
