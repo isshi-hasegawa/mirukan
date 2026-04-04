@@ -202,7 +202,7 @@ export function LoginPage({
               新規登録
             </Button>
           </div>
-          <div className="grid min-h-[21rem] content-start gap-4.5">
+          <div className="grid min-h-[29rem] content-start gap-4.5">
             {isSignUpMode && hasSentConfirmationEmail ? (
               <>
                 <div className="rounded-[20px] border border-border/70 bg-muted/30 px-4 py-4">
