@@ -16,6 +16,15 @@
   - `void` は正式リリース後に、Vite / vite-plus との相性、SPA 配信、環境変数管理、Preview 運用を比較して乗り換え可否を判断する
   - 比較の観点は、デプロイ速度、Preview URL、設定の薄さ、Supabase 連携のしやすさ、障害時の切り戻しやすさ
 
+### CI と公開後の最低限運用
+
+- 目的
+  - 品質確認と事故検知を手動運用へ寄せすぎない
+- まずやること
+  - GitHub Actions の自動実行を `pull_request` / `push` ベースに戻す
+  - すでにある `vp check` / `vp test` / `vp build` / coverage を、どのイベントで必須化するか決める
+  - エラー監視や利用状況の把握をどこまで入れるか決める
+
 ### Renovate 導入検討
 
 - 目的
