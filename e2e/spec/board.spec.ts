@@ -1,19 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { login } from "../support/app.ts";
 
 /**
  * Kanban Board E2E tests
  */
-
-const TEST_USER_EMAIL = process.env.TEST_USER_EMAIL || "akari@example.com";
-const TEST_USER_PASSWORD = process.env.TEST_USER_PASSWORD || "password123";
-
-async function login(page: Parameters<typeof test>[0]["page"]) {
-  await page.goto("/");
-  await page.getByLabel("メールアドレス").fill(TEST_USER_EMAIL);
-  await page.getByLabel("パスワード").fill(TEST_USER_PASSWORD);
-  await page.getByRole("button", { name: "ログインして backlog を見る" }).click();
-  await expect(page.getByRole("heading", { name: "mirukan" })).toBeVisible();
-}
 
 test("ボードのコラムが表示される", async ({ page }) => {
   await login(page);
@@ -37,7 +27,7 @@ test("ボードが読み込まれる", async ({ page }) => {
   await expect(page.locator("main").or(page.locator("[role='main']")).first()).toBeVisible({
     timeout: 5000,
   });
-  await expect(page.getByRole("heading", { name: "mirukan" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "作品を検索してストックに追加" })).toBeVisible();
 });
 
 test("作品追加の導線が表示される", async ({ page }) => {
