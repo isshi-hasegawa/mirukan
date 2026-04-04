@@ -149,7 +149,10 @@ export function TermsOfServiceDialog({ onClose }: Props) {
             <h2 id="terms-of-service-title" className="text-xl font-semibold text-foreground">
               利用規約
             </h2>
-            <p className="text-sm text-muted-foreground">制定日: 2026年4月4日</p>
+            <div className="text-sm text-muted-foreground">
+              <p>制定日: 2026年4月4日</p>
+              <p>改定日: 2026年4月5日</p>
+            </div>
           </div>
           <button
             type="button"
