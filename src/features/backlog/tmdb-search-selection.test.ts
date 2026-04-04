@@ -17,6 +17,8 @@ function createSearchResult(overrides: Partial<TmdbSearchResult> = {}): TmdbSear
     overview: null,
     posterPath: null,
     releaseDate: "2024-01-01",
+    jpWatchPlatforms: [],
+    hasJapaneseRelease: false,
     ...overrides,
   };
 }

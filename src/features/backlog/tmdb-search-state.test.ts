@@ -14,14 +14,14 @@ function createSearchResult(
   overrides: Partial<TmdbSearchResult> & Pick<TmdbSearchResult, "tmdbId" | "title">,
 ): TmdbSearchResult {
   return {
-    tmdbId: overrides.tmdbId,
     tmdbMediaType: "tv",
     workType: "series",
-    title: overrides.title,
     originalTitle: null,
     overview: null,
     posterPath: null,
     releaseDate: "2024-01-01",
+    jpWatchPlatforms: [],
+    hasJapaneseRelease: false,
     ...overrides,
   };
 }

@@ -145,7 +145,7 @@ export const supabaseFunctionsHandlers = [
    * Returns available seasons for a TV series
    */
   http.post(`${SUPABASE_URL}/functions/v1/fetch-tmdb-season-options`, async ({ request }) => {
-    const body = (await request.json()) as { tmdbId: number };
+    await request.json();
 
     return HttpResponse.json({
       data: [

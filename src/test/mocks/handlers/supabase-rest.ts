@@ -17,16 +17,6 @@ export function resetMockData() {
   mockBacklogItems.clear();
 }
 
-function setMockWorks(works: Work[]) {
-  mockWorks.clear();
-  works.forEach((work) => mockWorks.set(work.id, work));
-}
-
-function setMockBacklogItems(items: BacklogItem[]) {
-  mockBacklogItems.clear();
-  items.forEach((item) => mockBacklogItems.set(item.id, item));
-}
-
 export const supabaseRestHandlers = [
   /**
    * GET /rest/v1/backlog_items

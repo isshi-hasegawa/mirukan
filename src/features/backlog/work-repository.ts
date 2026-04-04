@@ -112,13 +112,10 @@ export async function upsertManualWork(
     };
   }
 
-  return {
-    data: conflicted,
-    error: conflicted ? null : insertResult.error,
-    count: null,
-    status: conflicted ? 200 : 409,
-    statusText: conflicted ? "OK" : "Conflict",
-  };
+  if (conflicted) {
+    return { data: { id: conflicted.id }, error: null, count: null, status: 200, statusText: "OK" };
+  }
+  return { data: null, error: insertResult.error!, count: null, status: 409, statusText: "Conflict" };
 }
 
 export function buildSelectedSeasonTargets(
@@ -315,6 +312,8 @@ function buildTmdbSeriesTarget(target: TmdbSeasonSelectionTarget): TmdbSearchRes
     overview: target.overview,
     posterPath: target.posterPath,
     releaseDate: target.releaseDate,
+    jpWatchPlatforms: [],
+    hasJapaneseRelease: false,
   };
 }
 
