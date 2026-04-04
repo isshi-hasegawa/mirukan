@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
-import { LoginPage } from "./LoginPage.tsx";
+import { getAuthRedirectUrl, LoginPage } from "./LoginPage.tsx";
 
 const supabaseMock = vi.hoisted(() => ({
   auth: {
@@ -20,6 +20,7 @@ setupTestLifecycle();
 describe("LoginPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.history.replaceState({}, "", "/");
     supabaseMock.auth.signInWithPassword.mockResolvedValue({ error: null });
     supabaseMock.auth.signUp.mockResolvedValue({
       data: { session: null, user: { id: "user-1" } },
@@ -268,6 +269,44 @@ describe("LoginPage", () => {
 
     expect(screen.getByLabelText("パスワード")).toBeInTheDocument();
     expect(screen.getByLabelText("メールアドレス")).toHaveValue("akari@example.com");
+  });
+
+  test("www ドメインでは canonical な本番 URL を返す", () => {
+    expect(
+      getAuthRedirectUrl({
+        origin: "https://www.mirukan.app",
+        hostname: "www.mirukan.app",
+      }),
+    ).toBe("https://mirukan.app");
+  });
+
+  test("それ以外のドメインでは現在の origin を返す", () => {
+    expect(
+      getAuthRedirectUrl({
+        origin: "https://mirukan-git-main.vercel.app",
+        hostname: "mirukan-git-main.vercel.app",
+      }),
+    ).toBe("https://mirukan-git-main.vercel.app");
+  });
+
+  test("redirect URL 不一致の失敗は設定起因の文言を表示する", async () => {
+    const user = userEvent.setup();
+
+    supabaseMock.auth.resetPasswordForEmail.mockResolvedValue({
+      error: { message: "Redirect URL not allowed" },
+    });
+
+    render(<LoginPage showDevLoginHint={false} />);
+
+    await user.click(screen.getByRole("button", { name: "パスワードを忘れた場合" }));
+    await user.type(screen.getByLabelText("メールアドレス"), "akari@example.com");
+    await user.click(screen.getByRole("button", { name: "リセットメールを送信" }));
+
+    expect(
+      await screen.findByText(
+        "パスワード再設定メールの送信設定に問題があります。お手数ですが時間をおいて再度お試しください。",
+      ),
+    ).toBeInTheDocument();
   });
 
   test("セッション確認中はログイン画面と同系統のローディング表示を出す", () => {

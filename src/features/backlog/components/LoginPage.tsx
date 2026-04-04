@@ -18,6 +18,14 @@ type AuthMode = "login" | "signUp" | "forgotPassword";
 const DEV_EMAIL = "akari@example.com";
 const DEV_PASSWORD = "password123";
 
+export function getAuthRedirectUrl(location: Pick<Location, "origin" | "hostname">) {
+  if (location.hostname === "www.mirukan.app") {
+    return "https://mirukan.app";
+  }
+
+  return location.origin;
+}
+
 function getLoginErrorMessage(errorMessage: string) {
   const normalized = errorMessage.toLowerCase();
 
@@ -34,6 +42,20 @@ function getLoginErrorMessage(errorMessage: string) {
   }
 
   return "ログインに失敗しました。時間をおいて再度お試しください。";
+}
+
+function getResetPasswordErrorMessage(errorMessage: string) {
+  const normalized = errorMessage.toLowerCase();
+
+  if (normalized.includes("redirect")) {
+    return "パスワード再設定メールの送信設定に問題があります。お手数ですが時間をおいて再度お試しください。";
+  }
+
+  if (normalized.includes("too many requests")) {
+    return "試行回数が多いため、少し時間をおいてから再度お試しください。";
+  }
+
+  return "メールの送信に失敗しました。再度お試しください。";
 }
 
 export function LoginPage({
@@ -58,6 +80,7 @@ export function LoginPage({
   const isForgotPasswordMode = authMode === "forgotPassword";
   const email = isSignUpMode ? signUpEmail : loginEmail;
   const password = isSignUpMode ? signUpPassword : loginPassword;
+  const authRedirectUrl = getAuthRedirectUrl(window.location);
   const shouldShowDevLoginHint = showDevLoginHint && !isSignUpMode && !isForgotPasswordMode && !isSessionLoading;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -76,7 +99,7 @@ export function LoginPage({
         email,
         password,
         options: {
-          emailRedirectTo: window.location.origin,
+          emailRedirectTo: authRedirectUrl,
         },
       });
 
@@ -110,11 +133,11 @@ export function LoginPage({
     setIsSubmitting(true);
 
     const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-      redirectTo: window.location.origin,
+      redirectTo: authRedirectUrl,
     });
 
     if (error) {
-      setErrorMessage("メールの送信に失敗しました。再度お試しください。");
+      setErrorMessage(getResetPasswordErrorMessage(error.message));
       setIsSubmitting(false);
       return;
     }
