@@ -208,7 +208,7 @@ export function LoginPage({
                 <div className="rounded-[20px] border border-border/70 bg-muted/30 px-4 py-4">
                   <p className="text-sm font-medium text-foreground">確認メールを送信しました</p>
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    {signUpEmail} 宛てに確認メールを送りました。メール内のリンクから登録を完了してください。
+                    {signUpEmail} 宛てに確認メールを送信しました。メール内のリンクを開いて、アカウント登録を完了してください。
                   </p>
                 </div>
                 <Button
@@ -286,7 +286,7 @@ export function LoginPage({
                 ) : null}
                 {isSignUpMode ? (
                   <p className="text-sm leading-6 text-muted-foreground">
-                    登録後に確認メールを送信します。メール内のリンクを開くと、そのまま backlog を使い始められます。
+                    登録を送信すると、確認メールをお送りします。メール内のリンクを開くと、アカウント登録が完了します。
                   </p>
                 ) : null}
                 {shouldShowDevLoginHint ? (
@@ -314,7 +314,7 @@ export function LoginPage({
                 ) : null}
                 {isSignUpMode ? (
                   <p className="text-xs leading-6 text-muted-foreground">
-                    登録することで、
+                    新規登録を完了すると、
                     <button
                       type="button"
                       className="mx-1 underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
@@ -330,7 +330,7 @@ export function LoginPage({
                     >
                       プライバシーポリシー
                     </button>
-                    に同意したものとみなされます。
+                    への同意が必要です。
                   </p>
                 ) : null}
                 <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>

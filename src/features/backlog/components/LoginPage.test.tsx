@@ -178,10 +178,30 @@ describe("LoginPage", () => {
     expect(await screen.findByText("確認メールを送信しました")).toBeInTheDocument();
     expect(
       screen.getByText(
-        "new-user@example.com 宛てに確認メールを送りました。メール内のリンクから登録を完了してください。",
+        "new-user@example.com 宛てに確認メールを送信しました。メール内のリンクを開いて、アカウント登録を完了してください。",
       ),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "ログインへ戻る" })).toBeInTheDocument();
+  });
+
+  test("新規登録では確認メール送信前の案内と同意文言を表示する", async () => {
+    const user = userEvent.setup();
+
+    render(<LoginPage />);
+
+    await user.click(screen.getByRole("button", { name: "新規登録" }));
+
+    expect(
+      screen.getByText(
+        "登録を送信すると、確認メールをお送りします。メール内のリンクを開くと、アカウント登録が完了します。",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) =>
+        element?.textContent ===
+        "新規登録を完了すると、利用規約およびプライバシーポリシーへの同意が必要です。",
+      ),
+    ).toBeInTheDocument();
   });
 
   test("新規登録で確認用パスワードが不一致なら送信しない", async () => {
