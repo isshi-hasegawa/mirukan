@@ -18,6 +18,24 @@ type AuthMode = "login" | "signUp";
 const DEV_EMAIL = "akari@example.com";
 const DEV_PASSWORD = "password123";
 
+function getLoginErrorMessage(errorMessage: string) {
+  const normalized = errorMessage.toLowerCase();
+
+  if (normalized.includes("invalid login credentials")) {
+    return "メールアドレスまたはパスワードが正しくありません。";
+  }
+
+  if (normalized.includes("email not confirmed")) {
+    return "メールアドレスの確認が完了していません。確認メールのリンクを開いてからログインしてください。";
+  }
+
+  if (normalized.includes("too many requests")) {
+    return "試行回数が多いため、少し時間をおいてから再度お試しください。";
+  }
+
+  return "ログインに失敗しました。時間をおいて再度お試しください。";
+}
+
 export function LoginPage({
   isSessionLoading = false,
   showDevLoginHint = import.meta.env.DEV && import.meta.env.MODE !== "test",
@@ -75,7 +93,7 @@ export function LoginPage({
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-      setErrorMessage(`ログインに失敗しました: ${error.message}`);
+      setErrorMessage(getLoginErrorMessage(error.message));
       setIsSubmitting(false);
       return;
     }

@@ -131,10 +131,30 @@ describe("LoginPage", () => {
     await user.click(screen.getByText("ログイン", { selector: "button[type='submit']" }));
 
     expect(
-      await screen.findByText("ログインに失敗しました: Invalid login credentials"),
+      await screen.findByText("メールアドレスまたはパスワードが正しくありません。"),
     ).toBeInTheDocument();
     expect(screen.getByText("ログイン", { selector: "button[type='submit']" })).toBeEnabled();
     expect(screen.getByLabelText("メールアドレス")).toBeEnabled();
+  });
+
+  test("確認メール未完了の認証失敗は案内付き文言を表示する", async () => {
+    const user = userEvent.setup();
+
+    supabaseMock.auth.signInWithPassword.mockResolvedValue({
+      error: { message: "Email not confirmed" },
+    });
+
+    render(<LoginPage />);
+
+    await user.type(screen.getByLabelText("メールアドレス"), "akari@example.com");
+    await user.type(screen.getByLabelText("パスワード"), "password123");
+    await user.click(screen.getByText("ログイン", { selector: "button[type='submit']" }));
+
+    expect(
+      await screen.findByText(
+        "メールアドレスの確認が完了していません。確認メールのリンクを開いてからログインしてください。",
+      ),
+    ).toBeInTheDocument();
   });
 
   test("新規登録では確認待ち状態に切り替える", async () => {
