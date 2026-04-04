@@ -10,6 +10,7 @@ import { TermsOfServiceDialog } from "./TermsOfServiceDialog.tsx";
 
 type Props = {
   isSessionLoading?: boolean;
+  showDevLoginHint?: boolean;
 };
 
 type AuthMode = "login" | "signUp";
@@ -17,10 +18,13 @@ type AuthMode = "login" | "signUp";
 const DEV_EMAIL = "akari@example.com";
 const DEV_PASSWORD = "password123";
 
-export function LoginPage({ isSessionLoading = false }: Props) {
+export function LoginPage({
+  isSessionLoading = false,
+  showDevLoginHint = import.meta.env.DEV && import.meta.env.MODE !== "test",
+}: Props) {
   const [authMode, setAuthMode] = useState<AuthMode>("login");
-  const [loginEmail, setLoginEmail] = useState(DEV_EMAIL);
-  const [loginPassword, setLoginPassword] = useState(DEV_PASSWORD);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
   const [signUpEmail, setSignUpEmail] = useState("");
   const [signUpPassword, setSignUpPassword] = useState("");
   const [signUpPasswordConfirmation, setSignUpPasswordConfirmation] = useState("");
@@ -33,6 +37,7 @@ export function LoginPage({ isSessionLoading = false }: Props) {
   const isSignUpMode = authMode === "signUp";
   const email = isSignUpMode ? signUpEmail : loginEmail;
   const password = isSignUpMode ? signUpPassword : loginPassword;
+  const shouldShowDevLoginHint = showDevLoginHint && !isSignUpMode && !isSessionLoading;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,7 +89,7 @@ export function LoginPage({ isSessionLoading = false }: Props) {
       title={isSessionLoading ? "みるカン" : undefined}
       description={
         isSessionLoading
-          ? "ローカル Supabase のセッションを確認しています。画面の準備ができるまで、このままお待ちください。"
+          ? "保存済みのログイン状態を確認しています。画面の準備ができるまで、このままお待ちください。"
           : undefined
       }
       sideContent={
@@ -265,6 +270,29 @@ export function LoginPage({ isSessionLoading = false }: Props) {
                   <p className="text-sm leading-6 text-muted-foreground">
                     登録後に確認メールを送信します。メール内のリンクを開くと、そのまま backlog を使い始められます。
                   </p>
+                ) : null}
+                {shouldShowDevLoginHint ? (
+                  <div className="rounded-[20px] border border-border/70 bg-muted/30 px-4 py-4">
+                    <p className="text-sm font-medium text-foreground">開発用アカウント</p>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      ローカル検証では seed 済みアカウントを入力して利用できます。
+                    </p>
+                    <p className="mt-2 text-xs leading-6 text-muted-foreground">
+                      {DEV_EMAIL} / {DEV_PASSWORD}
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="mt-3 w-full"
+                      onClick={() => {
+                        setLoginEmail(DEV_EMAIL);
+                        setLoginPassword(DEV_PASSWORD);
+                        setErrorMessage("");
+                      }}
+                    >
+                      開発用アカウントを入力する
+                    </Button>
+                  </div>
                 ) : null}
                 {isSignUpMode ? (
                   <p className="text-xs leading-6 text-muted-foreground">

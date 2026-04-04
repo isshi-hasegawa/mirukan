@@ -27,21 +27,35 @@ describe("LoginPage", () => {
   });
 
   test("ブランドロゴと説明を表示する", () => {
-    render(<LoginPage />);
+    render(<LoginPage showDevLoginHint={false} />);
 
     expect(screen.getAllByText("みるカン")).toHaveLength(1);
     expect(screen.getByAltText("みるカンのシンボル")).toBeInTheDocument();
     expect(screen.getByText("mirukan")).toBeInTheDocument();
     expect(screen.getByText("次に見る一本を、決める。")).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "みるカンは、積んだ映画やシリーズを整理して、いま見る候補を決めるための映像作品バックログです。",
-      ),
+      screen.getByText("みるカンは、積んだ映画やシリーズを整理して、次に何を見るか決めるアプリです。"),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "利用規約を確認する" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "プライバシーポリシーを確認する" })).toBeInTheDocument();
     expect(screen.queryByText("akari@example.com")).not.toBeInTheDocument();
     expect(screen.queryByText("LOCAL AUTH")).not.toBeInTheDocument();
+  });
+
+  test("開発時だけ補助導線から開発用アカウントを入力できる", async () => {
+    const user = userEvent.setup();
+
+    render(<LoginPage showDevLoginHint />);
+
+    expect(screen.getByText("開発用アカウント")).toBeInTheDocument();
+    expect(screen.getByText("akari@example.com / password123")).toBeInTheDocument();
+    expect(screen.getByLabelText("メールアドレス")).toHaveValue("");
+    expect(screen.getByLabelText("パスワード")).toHaveValue("");
+
+    await user.click(screen.getByRole("button", { name: "開発用アカウントを入力する" }));
+
+    expect(screen.getByLabelText("メールアドレス")).toHaveValue("akari@example.com");
+    expect(screen.getByLabelText("パスワード")).toHaveValue("password123");
   });
 
   test("ログイン画面から利用規約を開ける", async () => {
@@ -85,6 +99,9 @@ describe("LoginPage", () => {
 
     render(<LoginPage />);
 
+    await user.type(screen.getByLabelText("メールアドレス"), "akari@example.com");
+    await user.type(screen.getByLabelText("パスワード"), "password123");
+
     await user.click(screen.getByText("ログイン", { selector: "button[type='submit']" }));
 
     expect(screen.getByRole("button", { name: "ログインしています..." })).toBeDisabled();
@@ -107,6 +124,9 @@ describe("LoginPage", () => {
     });
 
     render(<LoginPage />);
+
+    await user.type(screen.getByLabelText("メールアドレス"), "akari@example.com");
+    await user.type(screen.getByLabelText("パスワード"), "password123");
 
     await user.click(screen.getByText("ログイン", { selector: "button[type='submit']" }));
 
@@ -165,6 +185,9 @@ describe("LoginPage", () => {
     expect(screen.getByText("みるカン")).toBeInTheDocument();
     expect(screen.getByText("セッション確認中")).toBeInTheDocument();
     expect(screen.getByText("セッションを確認しています...")).toBeInTheDocument();
+    expect(
+      screen.getByText("保存済みのログイン状態を確認しています。画面の準備ができるまで、このままお待ちください。"),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "ログイン" }),
     ).not.toBeInTheDocument();
