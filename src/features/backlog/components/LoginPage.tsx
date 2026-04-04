@@ -105,7 +105,7 @@ export function LoginPage({ isSessionLoading = false }: Props) {
                   次に見る一本を、決める。
                 </p>
                 <p className="text-[1rem] leading-7 text-white/72">
-                  みるカンは、積んだ映画やシリーズを整理して、いま見る候補を決めるための映像作品バックログです。
+                  みるカンは、積んだ映画やシリーズを整理して、次に何を見るか決めるアプリです。
                 </p>
               </div>
             </div>
