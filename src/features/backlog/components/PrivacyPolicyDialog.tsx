@@ -6,6 +6,8 @@ type Props = {
   onClose: () => void;
 };
 
+const BUG_REPORT_URL = "https://github.com/isshi-hasegawa/mirukan/issues/new/choose";
+
 const sections = [
   {
     title: "第1条（事業者）",
@@ -85,7 +87,7 @@ const sections = [
     title: "第10条（お問い合わせ窓口）",
     body: [
       "本ポリシーに関するお問い合わせ、不具合報告、開示等の請求は、以下の窓口で受け付けます。",
-      "メールアドレス: support@mirukan.app",
+      "GitHub Issues: https://github.com/isshi-hasegawa/mirukan/issues",
     ],
   },
 ] as const;
@@ -148,14 +150,16 @@ export function PrivacyPolicyDialog({ onClose }: Props) {
               <section key={section.title} className="grid gap-2">
                 <h3 className="text-base font-semibold text-foreground">{section.title}</h3>
                 {section.body.map((paragraph) =>
-                  paragraph.startsWith("メールアドレス: ") ? (
+                  paragraph.startsWith("GitHub Issues: ") ? (
                     <p key={paragraph}>
-                      メールアドレス:{" "}
+                      GitHub Issues:{" "}
                       <a
-                        href="mailto:support@mirukan.app"
+                        href={BUG_REPORT_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
                       >
-                        support@mirukan.app
+                        github.com/isshi-hasegawa/mirukan/issues
                       </a>
                     </p>
                   ) : (

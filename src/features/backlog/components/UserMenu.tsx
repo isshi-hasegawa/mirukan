@@ -15,6 +15,8 @@ type Props = {
   email: string | null | undefined;
 };
 
+const BUG_REPORT_URL = "https://github.com/isshi-hasegawa/mirukan/issues/new/choose";
+
 export function UserMenu({ email }: Props) {
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isTermsOpen, setIsTermsOpen] = useState(false);
@@ -54,6 +56,13 @@ export function UserMenu({ email }: Props) {
             }}
           >
             プライバシーポリシー
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
+              window.open(BUG_REPORT_URL, "_blank", "noopener,noreferrer");
+            }}
+          >
+            不具合を報告
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
