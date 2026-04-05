@@ -10,9 +10,8 @@
 - `backlog/`
   - 今後やる可能性がある改善候補そのものではなく、Issue 化前の論点、実装前の調査メモ、repo 固有の判断材料をカテゴリごとに置く
   - 完了済み・不要・現状と乖離した項目は、記述を削除するか必要な場所へ移したうえで残さない
+  - 機能追加や UX 改善の候補は GitHub Issue で管理し、`docs/backlog/` には Issue 化前メモだけを残す
   - カテゴリ別の backlog ファイルを必要なときに作成・更新する
-  - `feature-backlog.md`
-    - 機能追加や UX 改善の候補に関する背景、判断軸、Issue 化前メモ
   - `release-backlog.md`
     - リリース判断、公開前チェック、公開直後の運用準備に関する論点メモ
   - `refactoring-backlog.md`
