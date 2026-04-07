@@ -38,7 +38,7 @@ export function AddModalDetailsPane({
   const noteId = useId();
 
   return (
-    <div className="flex flex-col gap-4 overflow-y-auto max-[720px]:overflow-y-visible">
+    <div className="flex w-full min-w-0 flex-col gap-4 overflow-y-auto max-[720px]:overflow-y-visible">
       <Input
         name="title"
         type="text"

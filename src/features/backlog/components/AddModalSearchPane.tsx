@@ -165,7 +165,7 @@ export function AddModalSearchPane({
   const emptyMessage = searchQuery.trim() === "" ? recommendedMessage : searchMessage;
 
   return (
-    <div className="grid gap-3.5 p-4 overflow-y-auto content-start rounded-[20px] bg-[rgba(191,90,54,0.06)] max-[720px]:p-3 max-[720px]:overflow-y-visible">
+    <div className="grid w-full min-w-0 gap-3.5 p-4 overflow-y-auto content-start rounded-[20px] bg-[rgba(191,90,54,0.06)] max-[720px]:p-3 max-[720px]:overflow-y-visible">
       <Input
         ref={searchInputRef}
         type="text"
@@ -182,7 +182,7 @@ export function AddModalSearchPane({
         }}
       />
 
-      <div className="modal-scrollable grid gap-2.5 overflow-y-auto max-[720px]:h-[min(40svh,320px)]">
+      <div className="modal-scrollable grid w-full min-w-0 gap-2.5 overflow-y-auto max-[720px]:h-[min(40svh,320px)]">
         {displayResults.length > 0
           ? displayResults.map((result) => {
               const isSelected = selectedTmdbResult?.tmdbId === result.tmdbId;
