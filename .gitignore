@@ -17,7 +17,6 @@ supabase/.branches/
 supabase/.temp/
 
 .claude/*
-!.claude/launch.json
 !.claude/skills
 
 # Editor directories and files
