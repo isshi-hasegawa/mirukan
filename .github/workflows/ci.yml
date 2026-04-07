@@ -76,12 +76,17 @@ jobs:
           vp test --coverage | tee coverage/vitest-coverage.txt
 
       - name: Append coverage summary
+        if: always()
         shell: bash
         run: |
           {
             echo "## Vitest Coverage"
             echo
-            sed -n '/^% Coverage report from v8/,$p' coverage/vitest-coverage.txt
+            if [ -f coverage/vitest-coverage.txt ]; then
+              sed -n '/^% Coverage report from v8/,$p' coverage/vitest-coverage.txt
+            else
+              echo "Coverage summary unavailable because the test step did not produce coverage output."
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
 
   build:
