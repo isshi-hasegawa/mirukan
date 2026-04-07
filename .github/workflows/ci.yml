@@ -10,6 +10,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   VITE_SUPABASE_URL: http://127.0.0.1:54321
   VITE_SUPABASE_PUBLISHABLE_KEY: ci-publishable-key
+  VP_BOOTSTRAP_VERSION: 0.1.14
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -35,7 +36,7 @@ jobs:
           corepack install
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm --package="vite-plus@${VP_BOOTSTRAP_VERSION}" dlx vp install --frozen-lockfile
 
       - name: Add local binaries to PATH
         run: echo "${GITHUB_WORKSPACE}/node_modules/.bin" >> "$GITHUB_PATH"
@@ -62,7 +63,7 @@ jobs:
           corepack install
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm --package="vite-plus@${VP_BOOTSTRAP_VERSION}" dlx vp install --frozen-lockfile
 
       - name: Add local binaries to PATH
         run: echo "${GITHUB_WORKSPACE}/node_modules/.bin" >> "$GITHUB_PATH"
@@ -102,7 +103,7 @@ jobs:
           corepack install
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm --package="vite-plus@${VP_BOOTSTRAP_VERSION}" dlx vp install --frozen-lockfile
 
       - name: Add local binaries to PATH
         run: echo "${GITHUB_WORKSPACE}/node_modules/.bin" >> "$GITHUB_PATH"
