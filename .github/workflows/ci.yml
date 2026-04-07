@@ -25,10 +25,11 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: 22
-          cache: pnpm
 
       - name: Enable Corepack
-        run: corepack enable
+        run: |
+          corepack enable
+          corepack install
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -50,10 +51,11 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: 22
-          cache: pnpm
 
       - name: Enable Corepack
-        run: corepack enable
+        run: |
+          corepack enable
+          corepack install
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -75,10 +77,11 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: 22
-          cache: pnpm
 
       - name: Enable Corepack
-        run: corepack enable
+        run: |
+          corepack enable
+          corepack install
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
