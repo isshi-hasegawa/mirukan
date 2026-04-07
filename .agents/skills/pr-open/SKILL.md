@@ -1,6 +1,6 @@
 ---
 name: pr-open
-description: 現在の作業ブランチから、実際の git diff に基づいて Pull Request を作成または更新する。PR 作成、既存 PR 本文の更新、差分に合った PR タイトルと本文の生成を求められたときに使う。
+description: PR を作成したいときに使う。現在の作業ブランチと git diff を確認し、関連 Issue、PR タイトル、PR 本文を整えて Pull Request を作成または更新する。
 ---
 
 # PR Open
