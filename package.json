@@ -51,6 +51,9 @@
   },
   "packageManager": "pnpm@10.33.0",
   "pnpm": {
+    "allowBuilds": {
+      "msw": true
+    },
     "overrides": {
       "vite": "npm:@voidzero-dev/vite-plus-core@latest",
       "vitest": "npm:@voidzero-dev/vite-plus-test@latest"
