@@ -86,7 +86,7 @@ importers:
         version: 29.0.2(@noble/hashes@1.8.0)
       knip:
         specifier: ^6.1.0
-        version: 6.1.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)
+        version: 6.1.1(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)
       msw:
         specifier: ^2.12.14
         version: 2.12.14(@types/node@25.5.0)(typescript@5.9.3)
@@ -2167,8 +2167,8 @@ packages:
     resolution: {integrity: sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ==}
     engines: {node: '>=6'}
 
-  knip@6.1.0:
-    resolution: {integrity: sha512-n5eVbJP7HXmwTsiJcELWJe2O1ESxyCTNxJzRTIECDYDTM465qnqk7fL2dv6ae3NUFvFWorZvGlh9mcwxwJ5Xgw==}
+  knip@6.1.1:
+    resolution: {integrity: sha512-BC/kbdxwCgv+p/3YkGbtlLxbOXhQDuR+CeKKFEpJyKb3BFwG1gZa+CMWSqAnPi+kUexz74m327d3zWxyn2fMew==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
 
@@ -4818,7 +4818,7 @@ snapshots:
 
   kleur@4.1.5: {}
 
-  knip@6.1.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1):
+  knip@6.1.1(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1):
     dependencies:
       '@nodelib/fs.walk': 1.2.8
       fast-glob: 3.3.3
