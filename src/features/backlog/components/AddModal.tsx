@@ -9,7 +9,7 @@ type Props = {
   items: BacklogItem[];
   session: Session;
   onClose: () => void;
-  onAdded: () => Promise<void>;
+  onAdded: () => void | Promise<void>;
 };
 
 export function AddModal({ items, session, onClose, onAdded }: Props) {

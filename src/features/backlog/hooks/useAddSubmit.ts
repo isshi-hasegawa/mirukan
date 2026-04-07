@@ -26,7 +26,7 @@ type UseAddSubmitOptions = {
   primaryPlatform: string;
   note: string;
   onClose: () => void;
-  onAdded: () => Promise<void>;
+  onAdded: () => void | Promise<void>;
 };
 
 type PendingStackedSave = {
@@ -76,7 +76,7 @@ export function useAddSubmit({
 
     setPendingSave(null);
     onClose();
-    await onAdded();
+    void onAdded();
   };
 
   const confirmPendingSave = async () => {
