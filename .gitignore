@@ -16,7 +16,8 @@ supabase/functions/.env
 supabase/.branches/
 supabase/.temp/
 
-.claude/
+.claude/*
+!.claude/skills
 
 # Editor directories and files
 .vscode/*
