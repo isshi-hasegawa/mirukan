@@ -244,7 +244,7 @@ async function mapWithConcurrency<TInput, TOutput>(
     return [];
   }
 
-  const results = new Array<TOutput>(items.length);
+  const results = Array.from<TOutput | undefined>({ length: items.length });
   let nextIndex = 0;
 
   async function worker() {
@@ -257,7 +257,7 @@ async function mapWithConcurrency<TInput, TOutput>(
 
   await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, () => worker()));
 
-  return results;
+  return results as TOutput[];
 }
 
 async function fetchWatchProvidersFromTmdb(
