@@ -88,7 +88,11 @@ function isObjectResponse(request: Request) {
   return request.headers.get("accept")?.includes("application/vnd.pgrst.object+json") ?? false;
 }
 
-function buildJsonResponse(request: Request, rows: unknown[], status = 200) {
+function buildJsonResponse<T extends Record<string, unknown>>(
+  request: Request,
+  rows: T[],
+  status = 200,
+) {
   if (isObjectResponse(request)) {
     if (rows.length !== 1) {
       return HttpResponse.json(
