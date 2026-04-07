@@ -13,7 +13,7 @@ type UseAddFlowOptions = {
   items: BacklogItem[];
   session: Session;
   onClose: () => void;
-  onAdded: () => Promise<void>;
+  onAdded: () => void | Promise<void>;
 };
 
 export function useAddFlow({ items, session, onClose, onAdded }: UseAddFlowOptions) {

@@ -72,9 +72,9 @@ export function useBoardPageController({ session }: UseBoardPageControllerOption
       items,
       session,
       onClose: boardPageState.handleCloseAddModal,
-      onAdded: async () => {
-        await loadItems();
+      onAdded: () => {
         boardPageState.handleAdded();
+        void loadItems();
       },
     },
     detailModal: {

@@ -169,6 +169,14 @@ function createItem(overrides: Partial<BacklogItem> = {}): BacklogItem {
   };
 }
 
+function createDeferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  const promise = new Promise<T>((res) => {
+    resolve = res;
+  });
+  return { promise, resolve };
+}
+
 function renderBoardPage() {
   return render(
     <BoardPage session={{ user: { id: "user-1", email: "test@example.com" } } as never} />,
@@ -214,6 +222,8 @@ describe("BoardPage", () => {
 
   test("モバイル時は追加完了後に stacked タブへ戻る", async () => {
     hookMocks.windowWidth = 390;
+    const deferred = createDeferred<void>();
+    hookMocks.loadItems.mockReturnValue(deferred.promise);
     const user = userEvent.setup();
 
     renderBoardPage();
@@ -225,10 +235,14 @@ describe("BoardPage", () => {
 
     await user.click(screen.getByRole("button", { name: "追加モーダルを開く" }));
     await user.click(screen.getByRole("button", { name: "追加完了" }));
-    await waitFor(() => expect(screen.getByText("selected-tab:stacked")).toBeInTheDocument());
+
+    expect(screen.getByText("selected-tab:stacked")).toBeInTheDocument();
+    deferred.resolve(undefined);
   });
 
   test("desktop 時は追加完了後に stacked 列へ scroll する", async () => {
+    const deferred = createDeferred<void>();
+    hookMocks.loadItems.mockReturnValue(deferred.promise);
     const user = userEvent.setup();
     const scrollIntoViewSpy = vi.spyOn(Element.prototype, "scrollIntoView");
 
@@ -237,13 +251,12 @@ describe("BoardPage", () => {
     await user.click(screen.getByRole("button", { name: "追加モーダルを開く" }));
     await user.click(screen.getByRole("button", { name: "追加完了" }));
 
-    await waitFor(() =>
-      expect(scrollIntoViewSpy).toHaveBeenCalledWith({
-        behavior: "smooth",
-        block: "nearest",
-        inline: "center",
-      }),
-    );
+    expect(scrollIntoViewSpy).toHaveBeenCalledWith({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "center",
+    });
+    deferred.resolve(undefined);
   });
 
   test("詳細モーダルを開いている item が削除されたらモーダルを閉じる", async () => {
