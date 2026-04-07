@@ -5,6 +5,7 @@ import { server } from "../../test/mocks/server";
 import {
   BACKLOG_ITEM_SELECT,
   fetchBacklogItems,
+  updateBacklogItem,
   upsertBacklogItemsToStatus,
 } from "./backlog-repository.ts";
 import type { BacklogItem } from "./types.ts";
@@ -251,5 +252,22 @@ describe("upsertBacklogItemsToStatus", () => {
         },
       ),
     ).resolves.toEqual({ error: "save failed" });
+  });
+});
+
+describe("updateBacklogItem", () => {
+  test("update 失敗時は 4xx のエラーボディを返す", async () => {
+    server.use(
+      http.patch(`${SUPABASE_URL}/rest/v1/backlog_items`, () => {
+        return HttpResponse.json({ message: "duplicate status transition" }, { status: 409 });
+      }),
+    );
+
+    await expect(
+      updateBacklogItem("item-1", {
+        status: "watched",
+        sort_order: 3000,
+      }),
+    ).resolves.toEqual({ error: "duplicate status transition" });
   });
 });
