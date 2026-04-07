@@ -599,4 +599,19 @@ describe("AddModal", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(onAdded).toHaveBeenCalledTimes(1);
   });
+
+  test("カード保存失敗時はエラーメッセージを出してモーダルを閉じない", async () => {
+    dataMocks.upsertBacklogItemsToStatus.mockResolvedValueOnce({ error: "duplicate row" });
+
+    const { user, onAdded, onClose } = renderAddModal();
+
+    await user.type(screen.getByLabelText("タイトル"), "失敗作品");
+    await user.click(screen.getByRole("button", { name: "ストックに追加" }));
+
+    expect(
+      await screen.findByText("カードの保存に失敗しました: duplicate row"),
+    ).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+    expect(onAdded).not.toHaveBeenCalled();
+  });
 });
