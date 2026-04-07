@@ -47,7 +47,8 @@
     "tailwindcss": "^4.2.2",
     "typescript": "~5.9.3",
     "vite": "npm:@voidzero-dev/vite-plus-core@latest",
-    "vite-plus": "latest"
+    "vite-plus": "latest",
+    "vitest": "^4.1.2"
   },
   "packageManager": "pnpm@10.33.0",
   "pnpm": {
@@ -55,8 +56,7 @@
       "msw": true
     },
     "overrides": {
-      "vite": "npm:@voidzero-dev/vite-plus-core@latest",
-      "vitest": "npm:@voidzero-dev/vite-plus-test@latest"
+      "vite": "npm:@voidzero-dev/vite-plus-core@latest"
     }
   }
 }
