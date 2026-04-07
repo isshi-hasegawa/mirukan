@@ -1,7 +1,7 @@
-## Related Issue
+## 関連 Issue
 
-Refs #123 or Closes #123
+Refs #123 または Closes #123
 
-## Changes
+## 変更内容
 
 - 
