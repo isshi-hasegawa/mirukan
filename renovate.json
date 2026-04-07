@@ -1,6 +1,70 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended"
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
+  "automergeType": "pr",
+  "separateMajorMinor": true,
+  "separateMinorPatch": true,
+  "lockFileMaintenance": {
+    "enabled": true,
+    "automerge": true
+  },
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions"
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchDepTypes": ["dependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "runtime dependencies"
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchPackageNames": [
+        "@playwright/test",
+        "@testing-library/**",
+        "@vitest/coverage-v8",
+        "jsdom",
+        "msw"
+      ],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "test dependencies"
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchPackageNames": [
+        "typescript",
+        "@vitejs/plugin-react",
+        "vite-plus",
+        "tailwindcss",
+        "@tailwindcss/postcss",
+        "autoprefixer"
+      ],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "build dependencies"
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["@types/**"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchPackageNames": [
+        "@playwright/test",
+        "@testing-library/**",
+        "@vitest/coverage-v8",
+        "jsdom",
+        "msw"
+      ],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true
+    }
   ]
 }
