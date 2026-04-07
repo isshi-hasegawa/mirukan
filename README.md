@@ -95,5 +95,6 @@ supabase functions deploy fetch-tmdb-similar
 ## 補足
 
 - 補助ドキュメントは `docs/` にあります
+- テスト方針は `docs/testing.md` を参照してください
 - 開発ルールは `AGENTS.md` を参照してください
 - GitHub Actions では Betterleaks でリポジトリ履歴全体を scan します
