@@ -1,9 +1,27 @@
 import { fileURLToPath, URL } from "url";
 import { defineConfig } from "vite-plus";
 import react from "@vitejs/plugin-react";
+import { visualizer } from "rollup-plugin-visualizer";
+
+const bundleStatsHtmlPlugin = visualizer({
+  emitFile: true,
+  filename: "bundle-stats.html",
+  template: "treemap",
+  title: "mirukan bundle stats",
+  gzipSize: true,
+  brotliSize: true,
+});
+bundleStatsHtmlPlugin.apply = (_, { mode }) => mode === "analyze";
+
+const bundleStatsJsonPlugin = visualizer({
+  emitFile: true,
+  filename: "bundle-stats.json",
+  template: "raw-data",
+});
+bundleStatsJsonPlugin.apply = (_, { mode }) => mode === "analyze";
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), bundleStatsHtmlPlugin, bundleStatsJsonPlugin],
   build: {
     chunkSizeWarningLimit: 750,
   },
