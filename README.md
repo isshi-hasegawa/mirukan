@@ -91,6 +91,9 @@ supabase functions deploy fetch-tmdb-similar
   - Edge Function を直接叩いたが、Supabase の認証ヘッダーが付いていない
 - `Missing environment variable: TMDB_API_KEY`
   - `supabase/functions/.env` または Supabase secrets に `TMDB_API_KEY` が設定されていない
+- `メールアドレスまたはパスワードが正しくありません。` が急に出る
+  - 別プロジェクトの Supabase が `54321` - `54324` を使用中で、このリポジトリのローカル Supabase ではなく別の DB に接続している可能性がある
+  - `docker ps` で `supabase_*` コンテナ名を確認し、`supabase stop --project-id <other-project-id>` で競合プロジェクトを停止してから、このリポジトリで `supabase start` を実行する
 
 ## 補足
 
