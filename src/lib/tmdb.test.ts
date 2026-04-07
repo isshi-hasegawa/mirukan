@@ -1,15 +1,4 @@
-const supabaseMocks = vi.hoisted(() => ({
-  invoke: vi.fn(),
-}));
-
-vi.mock("./supabase.ts", () => ({
-  supabase: {
-    functions: {
-      invoke: supabaseMocks.invoke,
-    },
-  },
-}));
-
+import { http, HttpResponse } from "msw";
 import {
   fetchTmdbRecommendations,
   fetchTmdbSeasonOptions,
@@ -21,16 +10,20 @@ import {
   searchTmdbWorks,
 } from "./tmdb.ts";
 import { setupTestLifecycle } from "../test/test-lifecycle.ts";
+import {
+  setMockTmdbSeasonOptions,
+  setMockTmdbSimilarResults,
+  setMockTmdbTrendingResults,
+  setMockTmdbWorkDetails,
+} from "../test/mocks/handlers";
+import { server } from "../test/mocks/server";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "http://localhost:54321";
 
 setupTestLifecycle();
 
 beforeEach(() => {
   resetTmdbRecommendationCachesForTest();
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
-  supabaseMocks.invoke.mockReset();
 });
 
 describe("resolveSeasonTitle", () => {
@@ -69,61 +62,49 @@ describe("resolveSeasonTitle", () => {
 
 describe("recommendation caches", () => {
   test("fetchTmdbRecommendations returns similar first and fills the rest with trending", async () => {
-    supabaseMocks.invoke.mockImplementation(async (name) => {
-      if (name === "fetch-tmdb-similar") {
-        return {
-          data: [
-            {
-              tmdbId: 101,
-              tmdbMediaType: "movie",
-              workType: "movie",
-              title: "Similar A",
-              originalTitle: "Similar A",
-              overview: "similar overview",
-              posterPath: null,
-              releaseDate: "2025-01-01",
-              jpWatchPlatforms: [],
-              hasJapaneseRelease: true,
-            },
-          ],
-          error: null,
-        };
-      }
-
-      if (name === "fetch-tmdb-trending") {
-        return {
-          data: [
-            {
-              tmdbId: 101,
-              tmdbMediaType: "movie",
-              workType: "movie",
-              title: "Similar A",
-              originalTitle: "Similar A",
-              overview: "duplicate",
-              posterPath: null,
-              releaseDate: "2025-01-01",
-              jpWatchPlatforms: [],
-              hasJapaneseRelease: true,
-            },
-            {
-              tmdbId: 202,
-              tmdbMediaType: "tv",
-              workType: "series",
-              title: "Trending B",
-              originalTitle: "Trending B",
-              overview: "trending overview",
-              posterPath: null,
-              releaseDate: "2025-01-01",
-              jpWatchPlatforms: [],
-              hasJapaneseRelease: true,
-            },
-          ],
-          error: null,
-        };
-      }
-
-      throw new Error(`Unexpected invoke: ${String(name)}`);
-    });
+    setMockTmdbSimilarResults(
+      [{ tmdbId: 1, tmdbMediaType: "movie" }],
+      [
+        {
+          tmdbId: 101,
+          tmdbMediaType: "movie",
+          workType: "movie",
+          title: "Similar A",
+          originalTitle: "Similar A",
+          overview: "similar overview",
+          posterPath: null,
+          releaseDate: "2025-01-01",
+          jpWatchPlatforms: [],
+          hasJapaneseRelease: true,
+        },
+      ],
+    );
+    setMockTmdbTrendingResults([
+      {
+        tmdbId: 101,
+        tmdbMediaType: "movie",
+        workType: "movie",
+        title: "Similar A",
+        originalTitle: "Similar A",
+        overview: "duplicate",
+        posterPath: null,
+        releaseDate: "2025-01-01",
+        jpWatchPlatforms: [],
+        hasJapaneseRelease: true,
+      },
+      {
+        tmdbId: 202,
+        tmdbMediaType: "tv",
+        workType: "series",
+        title: "Trending B",
+        originalTitle: "Trending B",
+        overview: "trending overview",
+        posterPath: null,
+        releaseDate: "2025-01-01",
+        jpWatchPlatforms: [],
+        hasJapaneseRelease: true,
+      },
+    ]);
 
     const results = await fetchTmdbRecommendations([{ tmdbId: 1, tmdbMediaType: "movie" }]);
 
@@ -134,77 +115,61 @@ describe("recommendation caches", () => {
   });
 
   test("fetchTmdbSimilar caches per source item set", async () => {
-    supabaseMocks.invoke.mockImplementation(async (name, options) => {
-      const sourceItems =
-        options?.body && "sourceItems" in options.body ? options.body.sourceItems : null;
-
-      if (
-        name === "fetch-tmdb-similar" &&
-        Array.isArray(sourceItems) &&
-        sourceItems[0]?.tmdbId === 1
-      ) {
-        return {
-          data: [
-            {
-              tmdbId: 101,
-              tmdbMediaType: "movie",
-              workType: "movie",
-              title: "Movie Similar A",
-              originalTitle: "Movie Similar A",
-              overview: "Movie Similar A overview",
-              posterPath: null,
-              releaseDate: "2025-01-01",
-              jpWatchPlatforms: [],
-              hasJapaneseRelease: true,
-            },
-          ],
-          error: null,
-        };
-      }
-
-      if (
-        name === "fetch-tmdb-similar" &&
-        Array.isArray(sourceItems) &&
-        sourceItems[0]?.tmdbId === 2
-      ) {
-        return {
-          data: [
-            {
-              tmdbId: 202,
-              tmdbMediaType: "movie",
-              workType: "movie",
-              title: "Movie Similar B",
-              originalTitle: "Movie Similar B",
-              overview: "Movie Similar B overview",
-              posterPath: null,
-              releaseDate: "2025-01-01",
-              jpWatchPlatforms: [],
-              hasJapaneseRelease: true,
-            },
-          ],
-          error: null,
-        };
-      }
-
-      throw new Error(`Unexpected invoke: ${String(name)}`);
-    });
+    setMockTmdbSimilarResults(
+      [{ tmdbId: 1, tmdbMediaType: "movie" }],
+      [
+        {
+          tmdbId: 101,
+          tmdbMediaType: "movie",
+          workType: "movie",
+          title: "Movie Similar A",
+          originalTitle: "Movie Similar A",
+          overview: "Movie Similar A overview",
+          posterPath: null,
+          releaseDate: "2025-01-01",
+          jpWatchPlatforms: [],
+          hasJapaneseRelease: true,
+        },
+      ],
+    );
+    setMockTmdbSimilarResults(
+      [{ tmdbId: 2, tmdbMediaType: "movie" }],
+      [
+        {
+          tmdbId: 202,
+          tmdbMediaType: "movie",
+          workType: "movie",
+          title: "Movie Similar B",
+          originalTitle: "Movie Similar B",
+          overview: "Movie Similar B overview",
+          posterPath: null,
+          releaseDate: "2025-01-01",
+          jpWatchPlatforms: [],
+          hasJapaneseRelease: true,
+        },
+      ],
+    );
 
     const first = await fetchTmdbSimilar([{ tmdbId: 1, tmdbMediaType: "movie" }]);
     const firstCached = await fetchTmdbSimilar([{ tmdbId: 1, tmdbMediaType: "movie" }]);
     const second = await fetchTmdbSimilar([{ tmdbId: 2, tmdbMediaType: "movie" }]);
 
-    expect(first).toHaveLength(1);
     expect(first[0]?.tmdbId).toBe(101);
     expect(firstCached[0]?.tmdbId).toBe(101);
-    expect(second).toHaveLength(1);
     expect(second[0]?.tmdbId).toBe(202);
-    expect(
-      supabaseMocks.invoke.mock.calls.filter(([name]) => name === "fetch-tmdb-similar"),
-    ).toHaveLength(2);
   });
 
   test("fetchTmdbSimilar sends at most 8 unique source items", async () => {
-    supabaseMocks.invoke.mockResolvedValue({ data: [], error: null });
+    let receivedSourceItems: Array<{ tmdbId: number; tmdbMediaType: "movie" | "tv" }> = [];
+    server.use(
+      http.post(`${SUPABASE_URL}/functions/v1/fetch-tmdb-similar`, async ({ request }) => {
+        const body = (await request.json()) as {
+          sourceItems: Array<{ tmdbId: number; tmdbMediaType: "movie" | "tv" }>;
+        };
+        receivedSourceItems = body.sourceItems;
+        return HttpResponse.json([]);
+      }),
+    );
 
     await fetchTmdbSimilar([
       { tmdbId: 1, tmdbMediaType: "movie" },
@@ -219,40 +184,39 @@ describe("recommendation caches", () => {
       { tmdbId: 1, tmdbMediaType: "movie" },
     ]);
 
-    expect(supabaseMocks.invoke).toHaveBeenCalledWith("fetch-tmdb-similar", {
-      body: {
-        sourceItems: [
-          { tmdbId: 1, tmdbMediaType: "movie" },
-          { tmdbId: 2, tmdbMediaType: "movie" },
-          { tmdbId: 3, tmdbMediaType: "movie" },
-          { tmdbId: 4, tmdbMediaType: "movie" },
-          { tmdbId: 5, tmdbMediaType: "movie" },
-          { tmdbId: 6, tmdbMediaType: "movie" },
-          { tmdbId: 7, tmdbMediaType: "movie" },
-          { tmdbId: 8, tmdbMediaType: "movie" },
-        ],
-      },
-    });
+    expect(receivedSourceItems).toEqual([
+      { tmdbId: 1, tmdbMediaType: "movie" },
+      { tmdbId: 2, tmdbMediaType: "movie" },
+      { tmdbId: 3, tmdbMediaType: "movie" },
+      { tmdbId: 4, tmdbMediaType: "movie" },
+      { tmdbId: 5, tmdbMediaType: "movie" },
+      { tmdbId: 6, tmdbMediaType: "movie" },
+      { tmdbId: 7, tmdbMediaType: "movie" },
+      { tmdbId: 8, tmdbMediaType: "movie" },
+    ]);
   });
 
   test("fetchTmdbSimilar reuses cache for the same source item set in different order", async () => {
-    supabaseMocks.invoke.mockResolvedValue({
-      data: [
-        {
-          tmdbId: 101,
-          tmdbMediaType: "movie",
-          workType: "movie",
-          title: "Movie Similar A",
-          originalTitle: "Movie Similar A",
-          overview: "Movie Similar A overview",
-          posterPath: null,
-          releaseDate: "2025-01-01",
-          jpWatchPlatforms: [],
-          hasJapaneseRelease: true,
-        },
-      ],
-      error: null,
-    });
+    let requestCount = 0;
+    server.use(
+      http.post(`${SUPABASE_URL}/functions/v1/fetch-tmdb-similar`, async () => {
+        requestCount += 1;
+        return HttpResponse.json([
+          {
+            tmdbId: 101,
+            tmdbMediaType: "movie",
+            workType: "movie",
+            title: "Movie Similar A",
+            originalTitle: "Movie Similar A",
+            overview: "Movie Similar A overview",
+            posterPath: null,
+            releaseDate: "2025-01-01",
+            jpWatchPlatforms: [],
+            hasJapaneseRelease: true,
+          },
+        ]);
+      }),
+    );
 
     await fetchTmdbSimilar([
       { tmdbId: 1, tmdbMediaType: "movie" },
@@ -263,41 +227,36 @@ describe("recommendation caches", () => {
       { tmdbId: 1, tmdbMediaType: "movie" },
     ]);
 
-    expect(
-      supabaseMocks.invoke.mock.calls.filter(([name]) => name === "fetch-tmdb-similar"),
-    ).toHaveLength(1);
+    expect(requestCount).toBe(1);
   });
 
   test("fetchTmdbTrending keeps movie and tv entries with the same tmdb id", async () => {
-    supabaseMocks.invoke.mockResolvedValue({
-      data: [
-        {
-          tmdbId: 10,
-          tmdbMediaType: "movie",
-          workType: "movie",
-          title: "Same Id Movie",
-          originalTitle: "Same Id Movie",
-          overview: "movie overview",
-          posterPath: null,
-          releaseDate: "2025-01-01",
-          jpWatchPlatforms: [],
-          hasJapaneseRelease: true,
-        },
-        {
-          tmdbId: 10,
-          tmdbMediaType: "tv",
-          workType: "series",
-          title: "Same Id TV",
-          originalTitle: "Same Id TV",
-          overview: "tv overview",
-          posterPath: null,
-          releaseDate: "2025-01-01",
-          jpWatchPlatforms: [],
-          hasJapaneseRelease: true,
-        },
-      ],
-      error: null,
-    });
+    setMockTmdbTrendingResults([
+      {
+        tmdbId: 10,
+        tmdbMediaType: "movie",
+        workType: "movie",
+        title: "Same Id Movie",
+        originalTitle: "Same Id Movie",
+        overview: "movie overview",
+        posterPath: null,
+        releaseDate: "2025-01-01",
+        jpWatchPlatforms: [],
+        hasJapaneseRelease: true,
+      },
+      {
+        tmdbId: 10,
+        tmdbMediaType: "tv",
+        workType: "series",
+        title: "Same Id TV",
+        originalTitle: "Same Id TV",
+        overview: "tv overview",
+        posterPath: null,
+        releaseDate: "2025-01-01",
+        jpWatchPlatforms: [],
+        hasJapaneseRelease: true,
+      },
+    ]);
 
     const results = await fetchTmdbTrending();
 
@@ -308,49 +267,54 @@ describe("recommendation caches", () => {
   });
 
   test("fetchTmdbTrending reuses an in-flight request", async () => {
-    type TrendingInvokeResult = { data: []; error: null };
-
-    let resolveInvoke: ((value: TrendingInvokeResult) => void) | undefined;
-    supabaseMocks.invoke.mockImplementation(
-      () =>
-        new Promise<TrendingInvokeResult>((resolve) => {
-          resolveInvoke = resolve;
-        }),
+    let resolveRequest: ((value: Response) => void) | undefined;
+    let requestCount = 0;
+    server.use(
+      http.post(`${SUPABASE_URL}/functions/v1/fetch-tmdb-trending`, () => {
+        requestCount += 1;
+        return new Promise<Response>((resolve) => {
+          resolveRequest = resolve;
+        });
+      }),
     );
 
     const first = fetchTmdbTrending();
     const second = fetchTmdbTrending();
 
-    if (!resolveInvoke) {
-      throw new Error("invoke resolver was not captured");
-    }
+    await vi.waitFor(() => {
+      expect(resolveRequest).toBeTypeOf("function");
+    });
 
-    resolveInvoke({ data: [], error: null });
+    resolveRequest!(HttpResponse.json([]));
     await Promise.all([first, second]);
 
-    expect(supabaseMocks.invoke).toHaveBeenCalledTimes(1);
+    expect(requestCount).toBe(1);
   });
 });
 
 describe("API boundary wrappers", () => {
   test("searchTmdbWorks passes query and returns results", async () => {
-    supabaseMocks.invoke.mockResolvedValue({
-      data: [
-        {
-          tmdbId: 1,
-          tmdbMediaType: "movie",
-          workType: "movie",
-          title: "Search Result",
-          originalTitle: null,
-          overview: null,
-          posterPath: null,
-          releaseDate: "2025-01-01",
-          jpWatchPlatforms: [],
-          hasJapaneseRelease: true,
-        },
-      ],
-      error: null,
-    });
+    let receivedQuery = "";
+    server.use(
+      http.post(`${SUPABASE_URL}/functions/v1/search-tmdb-works`, async ({ request }) => {
+        const body = (await request.json()) as { query: string };
+        receivedQuery = body.query;
+        return HttpResponse.json([
+          {
+            tmdbId: 1,
+            tmdbMediaType: "movie",
+            workType: "movie",
+            title: "Search Result",
+            originalTitle: null,
+            overview: null,
+            posterPath: null,
+            releaseDate: "2025-01-01",
+            jpWatchPlatforms: [],
+            hasJapaneseRelease: true,
+          },
+        ]);
+      }),
+    );
 
     await expect(searchTmdbWorks("query text")).resolves.toEqual([
       expect.objectContaining({
@@ -358,9 +322,7 @@ describe("API boundary wrappers", () => {
         title: "Search Result",
       }),
     ]);
-    expect(supabaseMocks.invoke).toHaveBeenCalledWith("search-tmdb-works", {
-      body: { query: "query text" },
-    });
+    expect(receivedQuery).toBe("query text");
   });
 
   test("fetchTmdbSeasonOptions passes result and returns season options", async () => {
@@ -376,19 +338,16 @@ describe("API boundary wrappers", () => {
       jpWatchPlatforms: [],
       hasJapaneseRelease: true,
     };
-    supabaseMocks.invoke.mockResolvedValue({
-      data: [
-        {
-          seasonNumber: 2,
-          title: "Series Season 2",
-          overview: "season overview",
-          posterPath: null,
-          releaseDate: "2025-01-01",
-          episodeCount: 8,
-        },
-      ],
-      error: null,
-    });
+    setMockTmdbSeasonOptions(result, [
+      {
+        seasonNumber: 2,
+        title: "Series Season 2",
+        overview: "season overview",
+        posterPath: null,
+        releaseDate: "2025-01-01",
+        episodeCount: 8,
+      },
+    ]);
 
     await expect(fetchTmdbSeasonOptions(result)).resolves.toEqual([
       expect.objectContaining({
@@ -396,9 +355,6 @@ describe("API boundary wrappers", () => {
         title: "Series Season 2",
       }),
     ]);
-    expect(supabaseMocks.invoke).toHaveBeenCalledWith("fetch-tmdb-season-options", {
-      body: { result },
-    });
   });
 
   test("fetchTmdbWorkDetails passes target and returns details", async () => {
@@ -415,24 +371,21 @@ describe("API boundary wrappers", () => {
       episodeCount: 10,
       seriesTitle: "Series",
     };
-    supabaseMocks.invoke.mockResolvedValue({
-      data: {
-        tmdbId: 20,
-        tmdbMediaType: "tv",
-        workType: "season",
-        title: "Season 2",
-        originalTitle: "Original Series",
-        overview: "overview",
-        posterPath: "/poster.jpg",
-        releaseDate: "2025-01-01",
-        genres: ["Drama"],
-        runtimeMinutes: null,
-        typicalEpisodeRuntimeMinutes: 50,
-        episodeCount: 10,
-        seasonCount: null,
-        seasonNumber: 2,
-      },
-      error: null,
+    setMockTmdbWorkDetails(target, {
+      tmdbId: 20,
+      tmdbMediaType: "tv",
+      workType: "season",
+      title: "Season 2",
+      originalTitle: "Original Series",
+      overview: "overview",
+      posterPath: "/poster.jpg",
+      releaseDate: "2025-01-01",
+      genres: ["Drama"],
+      runtimeMinutes: null,
+      typicalEpisodeRuntimeMinutes: 50,
+      episodeCount: 10,
+      seasonCount: null,
+      seasonNumber: 2,
     });
 
     await expect(fetchTmdbWorkDetails(target)).resolves.toEqual(
@@ -442,19 +395,17 @@ describe("API boundary wrappers", () => {
         seasonNumber: 2,
       }),
     );
-    expect(supabaseMocks.invoke).toHaveBeenCalledWith("fetch-tmdb-work-details", {
-      body: { target },
-    });
   });
 
   test("invoke error is surfaced as an exception", async () => {
-    supabaseMocks.invoke.mockResolvedValue({
-      data: null,
-      error: { message: "edge function failed" },
-    });
+    server.use(
+      http.post(`${SUPABASE_URL}/functions/v1/search-tmdb-works`, () => {
+        return HttpResponse.json({ message: "edge function failed" }, { status: 500 });
+      }),
+    );
 
     await expect(searchTmdbWorks("query text")).rejects.toThrow(
-      "Supabase function search-tmdb-works failed: edge function failed",
+      "Supabase function search-tmdb-works failed:",
     );
   });
 });

@@ -1,14 +1,7 @@
-const supabaseMocks = vi.hoisted(() => ({
-  from: vi.fn(),
-}));
-
-vi.mock("../../lib/supabase.ts", () => ({
-  supabase: {
-    from: supabaseMocks.from,
-  },
-}));
-
+import { http, HttpResponse } from "msw";
 import { setupTestLifecycle } from "../../test/test-lifecycle.ts";
+import { getMockBacklogItems, setMockBacklogItems } from "../../test/mocks/handlers";
+import { server } from "../../test/mocks/server";
 import {
   BACKLOG_ITEM_SELECT,
   fetchBacklogItems,
@@ -16,27 +9,16 @@ import {
 } from "./backlog-repository.ts";
 import type { BacklogItem } from "./types.ts";
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "http://localhost:54321";
+
 setupTestLifecycle();
 
-function createSelectChain(result: { data: unknown[] | null; error: { message: string } | null }) {
-  const chain = {
-    order: vi.fn(),
-  };
-
-  chain.order.mockImplementation((column: string) => {
-    if (column === "created_at") {
-      return Promise.resolve(result);
-    }
-    return chain;
-  });
-
-  return chain;
+function normalizeSelect(value: string) {
+  return value.replaceAll(/\s+/g, "");
 }
 
-function createBacklogItemsTableMock(error: { message: string } | null = null) {
-  return {
-    upsert: vi.fn(async () => ({ error })),
-  };
+function normalizeOrder(values: string[]) {
+  return values.flatMap((value) => value.split(","));
 }
 
 function createItem(
@@ -76,55 +58,54 @@ function createItem(
 }
 
 describe("fetchBacklogItems", () => {
-  beforeEach(() => {
-    supabaseMocks.from.mockReset();
-  });
-
   test("query 定義を repository に集約し、works を正規化して返す", async () => {
-    const selectChain = createSelectChain({
-      data: [
-        {
-          id: "item-1",
-          status: "stacked",
-          primary_platform: null,
-          note: null,
-          sort_order: 1000,
-          works: [
-            {
-              id: "work-1",
-              title: "作品1",
-              work_type: "movie",
-              source_type: "tmdb",
-              tmdb_id: 1,
-              tmdb_media_type: "movie",
-              original_title: null,
-              overview: null,
-              poster_path: null,
-              release_date: null,
-              runtime_minutes: null,
-              typical_episode_runtime_minutes: null,
-              duration_bucket: null,
-              genres: [],
-              season_count: null,
-              season_number: null,
-              focus_required_score: null,
-              background_fit_score: null,
-              completion_load_score: null,
-            },
-          ],
-        },
-      ],
-      error: null,
-    });
-    const select = vi.fn(() => selectChain);
-    supabaseMocks.from.mockReturnValue({ select });
+    let receivedSelect = "";
+    let receivedOrder: string[] = [];
+    server.use(
+      http.get(`${SUPABASE_URL}/rest/v1/backlog_items`, ({ request }) => {
+        const url = new URL(request.url);
+        receivedSelect = url.searchParams.get("select") ?? "";
+        receivedOrder = url.searchParams.getAll("order");
+
+        return HttpResponse.json([
+          {
+            id: "item-1",
+            status: "stacked",
+            primary_platform: null,
+            note: null,
+            sort_order: 1000,
+            works: [
+              {
+                id: "work-1",
+                title: "作品1",
+                work_type: "movie",
+                source_type: "tmdb",
+                tmdb_id: 1,
+                tmdb_media_type: "movie",
+                original_title: null,
+                overview: null,
+                poster_path: null,
+                release_date: null,
+                runtime_minutes: null,
+                typical_episode_runtime_minutes: null,
+                duration_bucket: null,
+                genres: [],
+                season_count: null,
+                season_number: null,
+                focus_required_score: null,
+                background_fit_score: null,
+                completion_load_score: null,
+              },
+            ],
+          },
+        ]);
+      }),
+    );
 
     const result = await fetchBacklogItems();
 
-    expect(supabaseMocks.from).toHaveBeenCalledWith("backlog_items");
-    expect(select).toHaveBeenCalledWith(BACKLOG_ITEM_SELECT);
-    expect(selectChain.order).toHaveBeenNthCalledWith(1, "sort_order");
-    expect(selectChain.order).toHaveBeenNthCalledWith(2, "created_at");
+    expect(normalizeSelect(receivedSelect)).toBe(normalizeSelect(BACKLOG_ITEM_SELECT));
+    expect(normalizeOrder(receivedOrder)).toEqual(["sort_order.asc", "created_at.asc"]);
     expect(result).toEqual({
       data: [
         expect.objectContaining({
@@ -137,13 +118,11 @@ describe("fetchBacklogItems", () => {
   });
 
   test("取得失敗時は空配列と error を返す", async () => {
-    const selectChain = createSelectChain({
-      data: null,
-      error: { message: "network failed" },
-    });
-    supabaseMocks.from.mockReturnValue({
-      select: vi.fn(() => selectChain),
-    });
+    server.use(
+      http.get(`${SUPABASE_URL}/rest/v1/backlog_items`, () => {
+        return HttpResponse.json({ message: "network failed" }, { status: 500 });
+      }),
+    );
 
     await expect(fetchBacklogItems()).resolves.toEqual({
       data: [],
@@ -153,11 +132,17 @@ describe("fetchBacklogItems", () => {
 });
 
 describe("upsertBacklogItemsToStatus", () => {
-  beforeEach(() => {
-    supabaseMocks.from.mockReset();
-  });
-
   test("空入力または action なしなら no-op", async () => {
+    setMockBacklogItems([
+      {
+        id: "existing",
+        user_id: "user-1",
+        work_id: "work-1",
+        status: "stacked",
+        sort_order: 1000,
+      },
+    ]);
+
     await expect(
       upsertBacklogItemsToStatus("user-1", [], [], "stacked", {
         note: null,
@@ -178,61 +163,81 @@ describe("upsertBacklogItemsToStatus", () => {
       ),
     ).resolves.toEqual({ error: null });
 
-    expect(supabaseMocks.from).not.toHaveBeenCalled();
+    expect(getMockBacklogItems()).toHaveLength(1);
   });
 
   test("insert と move が混在しても先頭側から sort_order を振る", async () => {
-    const backlogItemsTable = createBacklogItemsTableMock();
-    supabaseMocks.from.mockImplementation((table: string) => {
-      if (table !== "backlog_items") {
-        throw new Error(`Unexpected table: ${table}`);
-      }
-      return backlogItemsTable;
-    });
-
-    const items = [
-      createItem("existing-top", "stacked", 3000, "work-top"),
-      createItem("move-me", "watching", 1000, "work-move"),
-    ];
+    setMockBacklogItems([
+      {
+        id: "existing-top",
+        user_id: "user-1",
+        work_id: "work-top",
+        status: "stacked",
+        sort_order: 3000,
+      },
+      {
+        id: "move-me",
+        user_id: "user-1",
+        work_id: "work-move",
+        status: "watching",
+        sort_order: 1000,
+      },
+    ]);
 
     await expect(
-      upsertBacklogItemsToStatus("user-1", items, ["work-move", "work-new"], "stacked", {
-        note: "新規メモ",
-        primaryPlatform: "netflix",
-      }),
+      upsertBacklogItemsToStatus(
+        "user-1",
+        [
+          createItem("existing-top", "stacked", 3000, "work-top"),
+          createItem("move-me", "watching", 1000, "work-move"),
+        ],
+        ["work-move", "work-new"],
+        "stacked",
+        {
+          note: "新規メモ",
+          primaryPlatform: "netflix",
+        },
+      ),
     ).resolves.toEqual({ error: null });
 
-    expect(backlogItemsTable.upsert).toHaveBeenCalledWith(
-      [
-        {
-          user_id: "user-1",
-          work_id: "work-move",
-          status: "stacked",
-          primary_platform: null,
-          note: null,
-          sort_order: 2000,
-        },
-        {
-          user_id: "user-1",
-          work_id: "work-new",
-          status: "stacked",
-          primary_platform: "netflix",
-          note: "新規メモ",
-          sort_order: 3000,
-        },
-      ],
-      { onConflict: "user_id,work_id" },
-    );
+    expect(
+      getMockBacklogItems()
+        .filter((item) => item.status === "stacked")
+        .sort((left, right) => left.sort_order - right.sort_order)
+        .map((item) => ({
+          work_id: item.work_id,
+          primary_platform: item.primary_platform,
+          note: item.note,
+          sort_order: item.sort_order,
+        })),
+    ).toEqual([
+      {
+        work_id: "work-move",
+        primary_platform: null,
+        note: null,
+        sort_order: 2000,
+      },
+      {
+        work_id: "work-top",
+        primary_platform: null,
+        note: null,
+        sort_order: 3000,
+      },
+      {
+        work_id: "work-new",
+        primary_platform: "netflix",
+        note: "新規メモ",
+        sort_order: 3000,
+      },
+    ]);
   });
 
   test("upsert 失敗時はエラーを返す", async () => {
-    const backlogItemsTable = createBacklogItemsTableMock({ message: "save failed" });
-    supabaseMocks.from.mockImplementation((table: string) => {
-      if (table !== "backlog_items") {
-        throw new Error(`Unexpected table: ${table}`);
-      }
-      return backlogItemsTable;
-    });
+    server.use(
+      http.post(`${SUPABASE_URL}/rest/v1/backlog_items`, () => {
+        return HttpResponse.json({ message: "save failed" }, { status: 500 });
+      }),
+    );
 
     await expect(
       upsertBacklogItemsToStatus(
