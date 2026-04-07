@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vp dev",
     "build": "tsc && vp build",
+    "build:analyze": "tsc && vp build --mode analyze",
     "preview": "vp preview",
     "prepare": "vp config",
     "test": "vp exec vitest",
@@ -44,6 +45,7 @@
     "jsdom": "^29.0.1",
     "knip": "^6.1.0",
     "msw": "^2.12.14",
+    "rollup-plugin-visualizer": "^7.0.1",
     "tailwindcss": "^4.2.2",
     "typescript": "~5.9.3",
     "vite": "npm:@voidzero-dev/vite-plus-core@latest",

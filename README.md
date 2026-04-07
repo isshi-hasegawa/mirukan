@@ -18,9 +18,12 @@
 ```bash
 vp dev
 vp build
+vp run build:analyze
 vp check --fix
 vp test
 ```
+
+`vp run build:analyze` を実行すると、`dist/bundle-stats.html` と `dist/bundle-stats.json` が出力されます。`@supabase/supabase-js` や icon / UI 系依存の重さ、初期チャンクへの混入状況の確認に使います。
 
 クライアント側の環境変数は `.env.example` を参照してください。
 
