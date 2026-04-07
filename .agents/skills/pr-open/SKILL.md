@@ -1,3 +1,8 @@
+---
+name: pr-open
+description: Create or update a pull request from the current working branch based on the actual git diff. Use when the user asks to open a PR, update an existing PR body, or prepare a PR title and body that match the current changes.
+---
+
 # PR Open
 
 ## 目的
