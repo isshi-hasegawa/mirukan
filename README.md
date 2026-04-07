@@ -33,7 +33,7 @@ cp supabase/functions/.env.example supabase/functions/.env
 
 `supabase/functions/.env` にはローカル開発用の `TMDB_API_KEY` を設定してください。リモート環境は `supabase secrets set TMDB_API_KEY=...` で管理します。
 
-コミット時は Betterleaks で staged changes の secret scan を実行します。`betterleaks` が未導入でも `docker` が使えれば hook 内でコンテナ実行されます。ローカルにバイナリを入れる場合は `brew install betterleaks` を使ってください。
+コミット時の pre-commit では `vp check --fix` を実行します。secret scan は GitHub Actions の Betterleaks workflow で実行します。
 
 ## TMDB Attribution
 
@@ -100,4 +100,4 @@ supabase functions deploy fetch-tmdb-similar
 - 補助ドキュメントは `docs/` にあります
 - テスト方針は `docs/testing.md` を参照してください
 - 開発ルールは `AGENTS.md` を参照してください
-- GitHub Actions では Betterleaks でリポジトリ履歴全体を scan します
+- GitHub Actions の Betterleaks workflow ではリポジトリ履歴全体を scan します
