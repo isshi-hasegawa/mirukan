@@ -96,3 +96,43 @@ jobs:
 
       - name: Run build
         run: vp build
+
+  coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Enable Corepack
+        run: |
+          corepack enable
+          corepack install
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Add local binaries to PATH
+        run: echo "${GITHUB_WORKSPACE}/node_modules/.bin" >> "$GITHUB_PATH"
+
+      - name: Run coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p coverage
+          vp run test:coverage | tee coverage/vitest-coverage.txt
+
+      - name: Append coverage summary
+        shell: bash
+        run: |
+          {
+            echo "## Vitest Coverage"
+            echo
+            sed -n '/^% Coverage report from v8/,$p' coverage/vitest-coverage.txt
+          } >> "$GITHUB_STEP_SUMMARY"
