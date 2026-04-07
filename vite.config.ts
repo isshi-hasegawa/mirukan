@@ -29,7 +29,7 @@ export default defineConfig({
     },
   },
   staged: {
-    "*": "./scripts/check-staged-secrets.sh && vp check --fix",
+    "*": ["./scripts/check-staged-secrets.sh", "vp check --fix"],
   },
   lint: { options: { typeAware: true, typeCheck: false } },
 });
