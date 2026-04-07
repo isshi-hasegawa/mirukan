@@ -182,7 +182,7 @@ export function AddModalSearchPane({
         }}
       />
 
-      <div className="modal-scrollable grid w-full min-w-0 gap-2.5 overflow-y-auto max-[720px]:h-[min(40svh,320px)]">
+      <div className="modal-scrollable grid w-full min-w-0 gap-2.5 overflow-y-auto max-[720px]:h-[min(56svh,480px)]">
         {displayResults.length > 0
           ? displayResults.map((result) => {
               const isSelected = selectedTmdbResult?.tmdbId === result.tmdbId;
