@@ -1,9 +1,9 @@
 ---
-name: worktree-close
+name: worktree-cleanup
 description: 作業を完全に畳みたいときに使う。何も走っていない前提で、元のリポジトリの main を最新化し、本体 main を残して他の worktree とローカル branch をまとめて破壊的に削除する。
 ---
 
-# Worktree Close
+# Worktree Cleanup
 
 ## 目的
 
