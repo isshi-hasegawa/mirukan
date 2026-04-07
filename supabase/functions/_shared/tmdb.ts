@@ -255,9 +255,7 @@ async function mapWithConcurrency<TInput, TOutput>(
     }
   }
 
-  await Promise.all(
-    Array.from({ length: Math.min(concurrency, items.length) }, () => worker()),
-  );
+  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, () => worker()));
 
   return results;
 }
@@ -423,12 +421,13 @@ function normalizeCachedLocalizedSearchMetadata(
     return null;
   }
 
-  const title = "title" in payload && (typeof payload.title === "string" || payload.title === null)
-    ? payload.title
-    : null;
+  const title =
+    "title" in payload && (typeof payload.title === "string" || payload.title === null)
+      ? payload.title
+      : null;
   const originalTitle =
     "originalTitle" in payload &&
-      (typeof payload.originalTitle === "string" || payload.originalTitle === null)
+    (typeof payload.originalTitle === "string" || payload.originalTitle === null)
       ? payload.originalTitle
       : null;
   const overview =
@@ -498,25 +497,25 @@ async function fetchLocalizedSearchMetadata(
 
 async function enrichWithWatchProviders(results: TmdbSearchResult[]): Promise<TmdbSearchResult[]> {
   return mapWithConcurrency(results, TMDB_ENRICH_CONCURRENCY, async (result) => {
-      const [jpWatchPlatforms, hasJapaneseRelease, localizedMetadata] = await Promise.all([
-        fetchWatchProvidersJP(result.tmdbId, result.tmdbMediaType),
-        result.workType === "movie"
-          ? checkJapaneseReleaseCached(result.tmdbId)
-          : Promise.resolve(true),
-        shouldEnrichLocalizedMetadata(result)
-          ? fetchLocalizedSearchMetadata(result.tmdbId, result.tmdbMediaType)
-          : Promise.resolve(null),
-      ]);
+    const [jpWatchPlatforms, hasJapaneseRelease, localizedMetadata] = await Promise.all([
+      fetchWatchProvidersJP(result.tmdbId, result.tmdbMediaType),
+      result.workType === "movie"
+        ? checkJapaneseReleaseCached(result.tmdbId)
+        : Promise.resolve(true),
+      shouldEnrichLocalizedMetadata(result)
+        ? fetchLocalizedSearchMetadata(result.tmdbId, result.tmdbMediaType)
+        : Promise.resolve(null),
+    ]);
 
-      return {
-        ...result,
-        title: firstNonBlank(localizedMetadata?.title, result.title),
-        originalTitle: firstNonBlank(localizedMetadata?.originalTitle, result.originalTitle) || null,
-        overview: firstNonBlank(localizedMetadata?.overview, result.overview) || null,
-        jpWatchPlatforms,
-        hasJapaneseRelease,
-      };
-    });
+    return {
+      ...result,
+      title: firstNonBlank(localizedMetadata?.title, result.title),
+      originalTitle: firstNonBlank(localizedMetadata?.originalTitle, result.originalTitle) || null,
+      overview: firstNonBlank(localizedMetadata?.overview, result.overview) || null,
+      jpWatchPlatforms,
+      hasJapaneseRelease,
+    };
+  });
 }
 
 function mapMultiSearchResult(

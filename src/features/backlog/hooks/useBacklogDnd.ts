@@ -96,9 +96,7 @@ export function useBacklogDnd({
       .eq("id", draggedId);
 
     if (updateError) {
-      await Promise.resolve(
-        feedback.alert(`ドラッグ移動に失敗しました: ${updateError.message}`),
-      );
+      await Promise.resolve(feedback.alert(`ドラッグ移動に失敗しました: ${updateError.message}`));
       return;
     }
 

@@ -37,7 +37,9 @@ describe("LoginPage", () => {
     expect(screen.getByText("mirukan")).toBeInTheDocument();
     expect(screen.getByText("次に見る一本を、決める。")).toBeInTheDocument();
     expect(
-      screen.getByText("みるカンは、積んだ映画やシリーズを整理して、次に何を見るか決めるアプリです。"),
+      screen.getByText(
+        "みるカンは、積んだ映画やシリーズを整理して、次に何を見るか決めるアプリです。",
+      ),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "利用規約" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "プライバシーポリシー" })).toBeInTheDocument();
@@ -86,7 +88,9 @@ describe("LoginPage", () => {
 
     expect(await screen.findByRole("dialog", { name: "プライバシーポリシー" })).toBeInTheDocument();
     expect(screen.getByText("第2条（取得する情報）")).toBeInTheDocument();
-    expect(screen.getByText("Supabase: 認証、データ保存、Edge Functions 実行のため")).toBeInTheDocument();
+    expect(
+      screen.getByText("Supabase: 認証、データ保存、Edge Functions 実行のため"),
+    ).toBeInTheDocument();
   });
 
   test("送信中は入力と送信を無効化し、完了後に再入力できる", async () => {
@@ -195,14 +199,13 @@ describe("LoginPage", () => {
     await user.click(screen.getByRole("button", { name: "新規登録" }));
 
     expect(
-      screen.getByText(
-        "確認メールのリンクを開くと、アカウント登録が完了します。",
-      ),
+      screen.getByText("確認メールのリンクを開くと、アカウント登録が完了します。"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText((_, element) =>
-        element?.textContent ===
-        "登録することで、利用規約およびプライバシーポリシーに同意したものとみなします。",
+      screen.getByText(
+        (_, element) =>
+          element?.textContent ===
+          "登録することで、利用規約およびプライバシーポリシーに同意したものとみなします。",
       ),
     ).toBeInTheDocument();
   });
@@ -316,10 +319,10 @@ describe("LoginPage", () => {
     expect(screen.getByText("セッション確認中")).toBeInTheDocument();
     expect(screen.getByText("セッションを確認しています...")).toBeInTheDocument();
     expect(
-      screen.getByText("保存済みのログイン状態を確認しています。画面の準備ができるまで、このままお待ちください。"),
+      screen.getByText(
+        "保存済みのログイン状態を確認しています。画面の準備ができるまで、このままお待ちください。",
+      ),
     ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "ログイン" }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "ログイン" })).not.toBeInTheDocument();
   });
 });

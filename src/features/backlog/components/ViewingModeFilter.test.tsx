@@ -29,7 +29,9 @@ describe("ViewingModeFilter", () => {
     const user = userEvent.setup();
     const onViewingModeToggle = vi.fn();
 
-    render(<ViewingModeFilter activeViewingMode={null} onViewingModeToggle={onViewingModeToggle} />);
+    render(
+      <ViewingModeFilter activeViewingMode={null} onViewingModeToggle={onViewingModeToggle} />,
+    );
 
     await user.click(screen.getByRole("button", { name: /サクッと/ }));
 

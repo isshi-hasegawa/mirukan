@@ -119,9 +119,7 @@ export function PrivacyPolicyDialog({ onClose }: Props) {
       >
         <div className="mb-5 flex items-start justify-between gap-4">
           <div className="grid gap-1">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-              Privacy
-            </p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Privacy</p>
             <h2 id="privacy-policy-title" className="text-xl font-semibold text-foreground">
               プライバシーポリシー
             </h2>

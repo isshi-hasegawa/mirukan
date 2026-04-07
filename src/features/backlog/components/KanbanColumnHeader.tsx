@@ -9,12 +9,7 @@ type Props = {
   onOpenAddModal: () => void;
 };
 
-export function KanbanColumnHeader({
-  status,
-  itemCount,
-  isMobileLayout,
-  onOpenAddModal,
-}: Props) {
+export function KanbanColumnHeader({ status, itemCount, isMobileLayout, onOpenAddModal }: Props) {
   return (
     <header className="flex items-center justify-between gap-[10px] border-b border-[rgba(92,59,35,0.08)] px-[14px] pb-[10px] min-w-0 max-[500px]:gap-2 max-[500px]:px-3 max-[400px]:gap-1.5 max-[400px]:px-2 max-[400px]:pb-2">
       <div className="flex items-center gap-2 max-[500px]:gap-1.5 max-[400px]:gap-1 min-w-0 flex-1">

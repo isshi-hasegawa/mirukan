@@ -31,8 +31,9 @@ vi.mock("../../../lib/tmdb.ts", async () => {
 });
 
 vi.mock("../backlog-repository.ts", async () => {
-  const actual =
-    await vi.importActual<typeof import("../backlog-repository.ts")>("../backlog-repository.ts");
+  const actual = await vi.importActual<typeof import("../backlog-repository.ts")>(
+    "../backlog-repository.ts",
+  );
   return {
     ...actual,
     upsertBacklogItemsToStatus: dataMocks.upsertBacklogItemsToStatus,
@@ -162,33 +163,29 @@ describe("AddModal", () => {
     vi.clearAllMocks();
   });
 
-  test(
-    "空検索では trending、入力後は search results を表示し、映画選択ではシーズン UI を出さない",
-    async () => {
-      const trendingResult = createSearchResult({ tmdbId: 10, title: "トレンド映画" });
-      const searchResult = createSearchResult({ tmdbId: 20, title: "検索映画" });
-      tmdbMocks.fetchTmdbRecommendations.mockResolvedValue([trendingResult]);
-      tmdbMocks.searchTmdbWorks.mockResolvedValue([searchResult]);
+  test("空検索では trending、入力後は search results を表示し、映画選択ではシーズン UI を出さない", async () => {
+    const trendingResult = createSearchResult({ tmdbId: 10, title: "トレンド映画" });
+    const searchResult = createSearchResult({ tmdbId: 20, title: "検索映画" });
+    tmdbMocks.fetchTmdbRecommendations.mockResolvedValue([trendingResult]);
+    tmdbMocks.searchTmdbWorks.mockResolvedValue([searchResult]);
 
-      const { user } = renderAddModal();
+    const { user } = renderAddModal();
 
-      expect(await screen.findByRole("button", { name: /トレンド映画/ })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /トレンド映画/ })).toBeInTheDocument();
 
-      await search("検索映画");
+    await search("検索映画");
 
-      expect(await screen.findByRole("button", { name: /検索映画/ })).toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: /トレンド映画/ })).not.toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /検索映画/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /トレンド映画/ })).not.toBeInTheDocument();
 
-      await user.click(screen.getByRole("button", { name: /検索映画/ }));
+    await user.click(screen.getByRole("button", { name: /検索映画/ }));
 
-      expect(screen.getByLabelText("タイトル")).toHaveValue("検索映画");
-      expect(screen.queryByRole("button", { name: "シーズン1" })).not.toBeInTheDocument();
-      expect(screen.getAllByRole("button", { name: "ストックに追加" })).toHaveLength(1);
-      expect(document.querySelector('[data-footer-layout="inline"]')).toBeInTheDocument();
-      expect(document.querySelector('[data-footer-layout="panel"]')).not.toBeInTheDocument();
-    },
-    10_000,
-  );
+    expect(screen.getByLabelText("タイトル")).toHaveValue("検索映画");
+    expect(screen.queryByRole("button", { name: "シーズン1" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "ストックに追加" })).toHaveLength(1);
+    expect(document.querySelector('[data-footer-layout="inline"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-footer-layout="panel"]')).not.toBeInTheDocument();
+  }, 10_000);
 
   test("検索結果とおすすめは日本語情報がある作品を優先表示する", async () => {
     const originalOnlyResult = createSearchResult({
@@ -223,7 +220,8 @@ describe("AddModal", () => {
     const searchedLocalized = await screen.findByRole("button", { name: /邦題あり作品/ });
 
     expect(
-      searchedLocalized.compareDocumentPosition(searchedOriginal) & Node.DOCUMENT_POSITION_FOLLOWING,
+      searchedLocalized.compareDocumentPosition(searchedOriginal) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
 
@@ -257,10 +255,7 @@ describe("AddModal", () => {
         season_count: 2,
       },
     });
-    tmdbMocks.fetchTmdbRecommendations.mockResolvedValue([
-      stackedMovieResult,
-      stackedSeriesResult,
-    ]);
+    tmdbMocks.fetchTmdbRecommendations.mockResolvedValue([stackedMovieResult, stackedSeriesResult]);
     tmdbMocks.searchTmdbWorks.mockImplementation(async (query: string) =>
       query.includes("映画") ? [stackedMovieResult] : [stackedSeriesResult],
     );
@@ -433,9 +428,7 @@ describe("AddModal", () => {
     await user.click(screen.getByRole("button", { name: "ストックに追加" }));
 
     expect(
-      await screen.findByText(
-        "「既存映画」はすでに「視聴済み」にあります。ストックに戻しますか？",
-      ),
+      await screen.findByText("「既存映画」はすでに「視聴済み」にあります。ストックに戻しますか？"),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "キャンセル" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "ストックへ戻す" })).toBeInTheDocument();

@@ -40,17 +40,19 @@ describe("App", () => {
     window.history.replaceState({}, "", "/");
 
     supabaseMock.auth.getSession.mockResolvedValue({ data: { session: null } });
-    supabaseMock.auth.onAuthStateChange.mockImplementation((callback: (event: string, session: unknown) => void) => {
-      authState.callback = callback;
+    supabaseMock.auth.onAuthStateChange.mockImplementation(
+      (callback: (event: string, session: unknown) => void) => {
+        authState.callback = callback;
 
-      return {
-        data: {
-          subscription: {
-            unsubscribe: vi.fn(),
+        return {
+          data: {
+            subscription: {
+              unsubscribe: vi.fn(),
+            },
           },
-        },
-      };
-    });
+        };
+      },
+    );
   });
 
   test("recovery リンク経由でセッションが復元されたら再設定画面を優先する", async () => {

@@ -1,13 +1,7 @@
 import { useEffect, useReducer, useRef, useState } from "react";
-import {
-  fetchTmdbRecommendations,
-  searchTmdbWorks,
-} from "../../../lib/tmdb.ts";
+import { fetchTmdbRecommendations, searchTmdbWorks } from "../../../lib/tmdb.ts";
 import type { TmdbSearchResult } from "../../../lib/tmdb.ts";
-import {
-  initialTmdbSearchRequestState,
-  tmdbSearchRequestReducer,
-} from "../tmdb-search-request.ts";
+import { initialTmdbSearchRequestState, tmdbSearchRequestReducer } from "../tmdb-search-request.ts";
 import { getStackedSeasonNumbers } from "../tmdb-search-state.ts";
 import type { BacklogItem } from "../types.ts";
 

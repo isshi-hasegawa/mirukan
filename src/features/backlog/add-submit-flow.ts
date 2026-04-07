@@ -1,8 +1,5 @@
 import { normalizePrimaryPlatform } from "./helpers.ts";
-import {
-  buildMoveToStatusConfirmMessage,
-  planBacklogItemUpserts,
-} from "./backlog-item-utils.ts";
+import { buildMoveToStatusConfirmMessage, planBacklogItemUpserts } from "./backlog-item-utils.ts";
 import type { BacklogItem } from "./types.ts";
 import type { TmdbSearchResult } from "../../lib/tmdb.ts";
 

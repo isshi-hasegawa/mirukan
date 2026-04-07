@@ -1,15 +1,6 @@
-import {
-  BoltIcon,
-  ClockIcon,
-  FireIcon,
-  SpeakerWaveIcon,
-} from "@heroicons/react/24/outline";
+import { BoltIcon, ClockIcon, FireIcon, SpeakerWaveIcon } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils";
-import {
-  viewingModeDescriptions,
-  viewingModeLabels,
-  viewingModeOrder,
-} from "../constants.ts";
+import { viewingModeDescriptions, viewingModeLabels, viewingModeOrder } from "../constants.ts";
 import type { ViewingMode } from "../types.ts";
 
 const viewingModeIcons: Record<

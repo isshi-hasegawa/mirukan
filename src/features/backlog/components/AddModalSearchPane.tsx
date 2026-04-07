@@ -183,58 +183,56 @@ export function AddModalSearchPane({
       />
 
       <div className="modal-scrollable grid gap-2.5 overflow-y-auto max-[720px]:h-[min(40svh,320px)]">
-        {displayResults.length > 0 ? (
-          displayResults.map((result) => {
-            const isSelected = selectedTmdbResult?.tmdbId === result.tmdbId;
-            const useInlineFooter =
-              isSelected && !isTvSelection && !formMessage && !pendingSaveMessage;
+        {displayResults.length > 0
+          ? displayResults.map((result) => {
+              const isSelected = selectedTmdbResult?.tmdbId === result.tmdbId;
+              const useInlineFooter =
+                isSelected && !isTvSelection && !formMessage && !pendingSaveMessage;
 
-            return (
-              <TmdbWorkCard
-                key={`${result.tmdbMediaType}-${result.tmdbId}`}
-                result={result}
-                isSelected={isSelected}
-                onSelect={() => onSelectResult(result)}
-                footerLayout={useInlineFooter ? "inline" : "panel"}
-                footer={
-                  isSelected ? (
-                    useInlineFooter ? (
-                      <Button
-                        type="submit"
-                        disabled={isSelectedTmdbSubmitDisabled}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                        }}
-                      >
-                        {selectedTmdbSubmitLabel}
-                      </Button>
-                    ) : (
-                      <SelectedResultFooter
-                        isTvSelection={isTvSelection}
-                        seasonOptions={seasonOptions}
-                        selectedSeasonNumbers={selectedSeasonNumbers}
-                        stackedSeasonNumbers={stackedSeasonNumbers}
-                        isLoadingSeasons={isLoadingSeasons}
-                        canToggleAllSeasons={canToggleAllSeasons}
-                        hasAllSeasonsSelected={hasAllSeasonsSelected}
-                        formMessage={formMessage}
-                        pendingSaveMessage={pendingSaveMessage}
-                        isSelectedTmdbSubmitDisabled={isSelectedTmdbSubmitDisabled}
-                        selectedTmdbSubmitLabel={selectedTmdbSubmitLabel}
-                        onToggleSeason={onToggleSeason}
-                        onToggleAllSeasons={onToggleAllSeasons}
-                        onConfirmPendingSave={onConfirmPendingSave}
-                        onCancelPendingSave={onCancelPendingSave}
-                      />
-                    )
-                  ) : null
-                }
-              />
-            );
-          })
-        ) : (
-          emptyMessage && <p className="text-muted-foreground text-[0.88rem]">{emptyMessage}</p>
-        )}
+              return (
+                <TmdbWorkCard
+                  key={`${result.tmdbMediaType}-${result.tmdbId}`}
+                  result={result}
+                  isSelected={isSelected}
+                  onSelect={() => onSelectResult(result)}
+                  footerLayout={useInlineFooter ? "inline" : "panel"}
+                  footer={
+                    isSelected ? (
+                      useInlineFooter ? (
+                        <Button
+                          type="submit"
+                          disabled={isSelectedTmdbSubmitDisabled}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                          }}
+                        >
+                          {selectedTmdbSubmitLabel}
+                        </Button>
+                      ) : (
+                        <SelectedResultFooter
+                          isTvSelection={isTvSelection}
+                          seasonOptions={seasonOptions}
+                          selectedSeasonNumbers={selectedSeasonNumbers}
+                          stackedSeasonNumbers={stackedSeasonNumbers}
+                          isLoadingSeasons={isLoadingSeasons}
+                          canToggleAllSeasons={canToggleAllSeasons}
+                          hasAllSeasonsSelected={hasAllSeasonsSelected}
+                          formMessage={formMessage}
+                          pendingSaveMessage={pendingSaveMessage}
+                          isSelectedTmdbSubmitDisabled={isSelectedTmdbSubmitDisabled}
+                          selectedTmdbSubmitLabel={selectedTmdbSubmitLabel}
+                          onToggleSeason={onToggleSeason}
+                          onToggleAllSeasons={onToggleAllSeasons}
+                          onConfirmPendingSave={onConfirmPendingSave}
+                          onCancelPendingSave={onCancelPendingSave}
+                        />
+                      )
+                    ) : null
+                  }
+                />
+              );
+            })
+          : emptyMessage && <p className="text-muted-foreground text-[0.88rem]">{emptyMessage}</p>}
       </div>
     </div>
   );

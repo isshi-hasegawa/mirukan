@@ -1,8 +1,5 @@
 import { setupTestLifecycle } from "../../test/test-lifecycle.ts";
-import {
-  initialTmdbSearchRequestState,
-  tmdbSearchRequestReducer,
-} from "./tmdb-search-request.ts";
+import { initialTmdbSearchRequestState, tmdbSearchRequestReducer } from "./tmdb-search-request.ts";
 import type { TmdbSearchResult } from "../../lib/tmdb.ts";
 
 setupTestLifecycle();
@@ -46,9 +43,7 @@ describe("tmdbSearchRequestReducer", () => {
       results: [createSearchResult()],
     });
 
-    expect(
-      tmdbSearchRequestReducer(withSearchResults, { type: "reset_search_results" }),
-    ).toEqual({
+    expect(tmdbSearchRequestReducer(withSearchResults, { type: "reset_search_results" })).toEqual({
       searchResults: [],
       recommendedResults: [createSearchResult({ tmdbId: 2 })],
       recommendedMessage: "おすすめあり",

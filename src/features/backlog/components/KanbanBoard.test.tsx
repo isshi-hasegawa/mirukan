@@ -65,10 +65,7 @@ function createItem(
 function renderKanbanBoard(overrides: Partial<React.ComponentProps<typeof KanbanBoard>> = {}) {
   return render(
     <KanbanBoard
-      items={[
-        createItem("item-1", "stacked", "作品1"),
-        createItem("item-2", "watching", "作品2"),
-      ]}
+      items={[createItem("item-1", "stacked", "作品1"), createItem("item-2", "watching", "作品2")]}
       dropIndicator={null}
       isMobileLayout={false}
       isMobileDragging={false}

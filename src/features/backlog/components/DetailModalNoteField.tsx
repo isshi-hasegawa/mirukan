@@ -5,9 +5,7 @@ import type { DetailModalState } from "../types.ts";
 type Props = {
   note: string | null;
   state: DetailModalState;
-  inputRef: MutableRefObject<
-    HTMLTextAreaElement | HTMLInputElement | HTMLSelectElement | null
-  >;
+  inputRef: MutableRefObject<HTMLTextAreaElement | HTMLInputElement | HTMLSelectElement | null>;
   onStartEditing: () => void;
   onCancelEditing: () => void;
   onChangeDraft: (value: string) => void;
