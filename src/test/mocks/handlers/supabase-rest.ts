@@ -1,279 +1,310 @@
 import { http, HttpResponse } from "msw";
-import type { BacklogItem, PostgrestResponse, Work } from "../types";
+import type { BacklogItem, Work } from "../types";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "http://localhost:54321";
 
-/**
- * MSW handlers for Supabase PostgREST API
- * These intercept REST API calls to Supabase database
- */
+const mockWorks = new Map<string, Work>();
+const mockBacklogItems = new Map<string, BacklogItem>();
+let nextWorkId = 1;
+let nextBacklogItemId = 1;
 
-// Mock data storage for test state management
-let mockWorks: Map<string, Work> = new Map();
-let mockBacklogItems: Map<string, BacklogItem> = new Map();
+function clone<T>(value: T): T {
+  return structuredClone(value);
+}
+
+function ensureWorkDefaults(work: Partial<Work>): Work {
+  return {
+    id: work.id ?? `mock-work-${nextWorkId++}`,
+    created_by: work.created_by,
+    source_type: work.source_type,
+    work_type: work.work_type,
+    search_text: work.search_text,
+    tmdb_id: work.tmdb_id ?? null,
+    tmdb_media_type: work.tmdb_media_type ?? null,
+    title: work.title ?? "",
+    original_title: work.original_title ?? null,
+    overview: work.overview ?? null,
+    poster_path: work.poster_path ?? null,
+    release_date: work.release_date ?? null,
+    parent_work_id: work.parent_work_id ?? null,
+    runtime_minutes: work.runtime_minutes ?? null,
+    typical_episode_runtime_minutes: work.typical_episode_runtime_minutes ?? null,
+    duration_bucket: work.duration_bucket ?? null,
+    genres: work.genres ?? [],
+    season_count: work.season_count ?? null,
+    season_number: work.season_number ?? null,
+    episode_count: work.episode_count ?? null,
+    focus_required_score: work.focus_required_score ?? null,
+    background_fit_score: work.background_fit_score ?? null,
+    completion_load_score: work.completion_load_score ?? null,
+    last_tmdb_synced_at: work.last_tmdb_synced_at ?? null,
+    series_title: work.series_title ?? null,
+  };
+}
+
+function ensureBacklogItemDefaults(item: Partial<BacklogItem>): BacklogItem {
+  return {
+    id: item.id ?? `mock-backlog-item-${nextBacklogItemId++}`,
+    user_id: item.user_id ?? "mock-user",
+    work_id: item.work_id ?? "mock-work",
+    status: item.status ?? "stacked",
+    sort_order: item.sort_order ?? 1000,
+    display_title: item.display_title ?? "",
+    primary_platform: item.primary_platform ?? null,
+    note: item.note ?? null,
+  };
+}
 
 export function resetMockData() {
   mockWorks.clear();
   mockBacklogItems.clear();
+  nextWorkId = 1;
+  nextBacklogItemId = 1;
+}
+
+export function setMockWorks(works: Partial<Work>[]) {
+  mockWorks.clear();
+  works.map(ensureWorkDefaults).forEach((work) => {
+    mockWorks.set(work.id, work);
+  });
+}
+
+export function setMockBacklogItems(items: Partial<BacklogItem>[]) {
+  mockBacklogItems.clear();
+  items.map(ensureBacklogItemDefaults).forEach((item) => {
+    mockBacklogItems.set(item.id, item);
+  });
+}
+
+export function getMockWorks() {
+  return Array.from(mockWorks.values()).map(clone);
+}
+
+export function getMockBacklogItems() {
+  return Array.from(mockBacklogItems.values()).map(clone);
+}
+
+function isObjectResponse(request: Request) {
+  return request.headers.get("accept")?.includes("application/vnd.pgrst.object+json") ?? false;
+}
+
+function buildJsonResponse(request: Request, rows: unknown[], status = 200) {
+  if (isObjectResponse(request)) {
+    if (rows.length !== 1) {
+      return HttpResponse.json(
+        { message: "JSON object requested, multiple (or no) rows returned" },
+        { status: 406 },
+      );
+    }
+
+    return HttpResponse.json(rows[0], { status });
+  }
+
+  return HttpResponse.json(rows, { status });
+}
+
+function selectedFields(selectValue: string | null) {
+  return (selectValue ?? "")
+    .split(",")
+    .map((field) => field.trim())
+    .filter((field) => field && !field.includes("("));
+}
+
+function pickSelectedFields<T extends Record<string, unknown>>(row: T, selectValue: string | null) {
+  const fields = selectedFields(selectValue);
+  if (fields.length === 0) {
+    return row;
+  }
+
+  return Object.fromEntries(
+    fields.filter((field) => field in row).map((field) => [field, row[field]]),
+  );
+}
+
+function matchesFilters<T extends Record<string, unknown>>(row: T, url: URL) {
+  for (const [key, value] of url.searchParams.entries()) {
+    if (["select", "order", "limit", "offset", "columns", "on_conflict"].includes(key)) {
+      continue;
+    }
+
+    if (!value.startsWith("eq.")) {
+      continue;
+    }
+
+    const expected = value.slice(3);
+    const actual = row[key];
+    if (String(actual) !== expected) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function sortByOrderParams<T extends Record<string, unknown>>(rows: T[], url: URL) {
+  const orderParams = url.searchParams.getAll("order");
+  if (orderParams.length === 0) {
+    return rows;
+  }
+
+  return [...rows].sort((left, right) => {
+    for (const orderParam of orderParams) {
+      const [column, direction = "asc"] = orderParam.split(".");
+      const leftValue = left[column];
+      const rightValue = right[column];
+      if (leftValue === rightValue) {
+        continue;
+      }
+
+      if (leftValue === null || leftValue === undefined) return direction === "desc" ? 1 : -1;
+      if (rightValue === null || rightValue === undefined) return direction === "desc" ? -1 : 1;
+
+      if (leftValue < rightValue) return direction === "desc" ? 1 : -1;
+      if (leftValue > rightValue) return direction === "desc" ? -1 : 1;
+    }
+
+    return 0;
+  });
+}
+
+function materializeBacklogRows(url: URL) {
+  return sortByOrderParams(Array.from(mockBacklogItems.values()), url).map((item) => ({
+    ...item,
+    works: mockWorks.get(item.work_id) ? clone(mockWorks.get(item.work_id)!) : null,
+  }));
+}
+
+function shouldReturnRepresentation(request: Request) {
+  return request.headers.get("prefer")?.includes("return=representation") ?? false;
+}
+
+function jsonNoContent(status = 201) {
+  return new HttpResponse(null, { status });
 }
 
 export const supabaseRestHandlers = [
-  /**
-   * GET /rest/v1/backlog_items
-   * Retrieve backlog items (with optional filtering)
-   */
   http.get(`${SUPABASE_URL}/rest/v1/backlog_items`, ({ request }) => {
     const url = new URL(request.url);
-    const order = url.searchParams.get("order");
+    const rows = materializeBacklogRows(url);
+    return buildJsonResponse(request, rows);
+  }),
 
-    const items = Array.from(mockBacklogItems.values());
+  http.get(`${SUPABASE_URL}/rest/v1/works`, ({ request }) => {
+    const url = new URL(request.url);
+    const rows = Array.from(mockWorks.values())
+      .filter((work) => matchesFilters(work, url))
+      .map((work) => pickSelectedFields(work, url.searchParams.get("select")));
 
-    // Simple ordering support
-    if (order?.includes("sort_order")) {
-      items.sort((a, b) => {
-        if (order.includes("desc")) {
-          return b.sort_order - a.sort_order;
-        }
-        return a.sort_order - b.sort_order;
+    return buildJsonResponse(request, rows);
+  }),
+
+  http.post(`${SUPABASE_URL}/rest/v1/backlog_items`, async ({ request }) => {
+    const url = new URL(request.url);
+    const payload = (await request.json()) as Partial<BacklogItem> | Array<Partial<BacklogItem>>;
+    const rows = (Array.isArray(payload) ? payload : [payload]).map(ensureBacklogItemDefaults);
+
+    if (url.searchParams.get("on_conflict") === "user_id,work_id") {
+      rows.forEach((row) => {
+        const existing = Array.from(mockBacklogItems.values()).find(
+          (item) => item.user_id === row.user_id && item.work_id === row.work_id,
+        );
+        const merged = ensureBacklogItemDefaults({
+          ...existing,
+          ...row,
+          id: existing?.id ?? row.id,
+        });
+        mockBacklogItems.set(merged.id, merged);
+      });
+    } else {
+      rows.forEach((row) => {
+        mockBacklogItems.set(row.id, row);
       });
     }
 
-    return HttpResponse.json<PostgrestResponse<BacklogItem>>({
-      data: items,
-      error: null,
-    });
+    if (!shouldReturnRepresentation(request)) {
+      return jsonNoContent();
+    }
+
+    return buildJsonResponse(request, rows, 201);
   }),
 
-  /**
-   * GET /rest/v1/works
-   * Retrieve works with optional filtering
-   */
-  http.get(`${SUPABASE_URL}/rest/v1/works`, () => {
-    const works = Array.from(mockWorks.values());
-
-    return HttpResponse.json<PostgrestResponse<Work>>({
-      data: works,
-      error: null,
-    });
-  }),
-
-  /**
-   * POST /rest/v1/backlog_items
-   * Create a new backlog item
-   */
-  http.post(`${SUPABASE_URL}/rest/v1/backlog_items`, async ({ request }) => {
-    const body = (await request.json()) as Partial<BacklogItem>;
-
-    const newItem: BacklogItem = {
-      id: `mock-${Date.now()}`,
-      user_id: body.user_id || "mock-user",
-      work_id: body.work_id || "mock-work",
-      status: body.status || "stacked",
-      sort_order: body.sort_order || 1000,
-      display_title: body.display_title || "",
-      primary_platform: body.primary_platform || null,
-      note: body.note || null,
-    };
-
-    mockBacklogItems.set(newItem.id, newItem);
-
-    return HttpResponse.json<PostgrestResponse<BacklogItem>>({
-      data: [newItem],
-      error: null,
-    });
-  }),
-
-  /**
-   * POST /rest/v1/works
-   * Create a new work
-   */
   http.post(`${SUPABASE_URL}/rest/v1/works`, async ({ request }) => {
-    const body = (await request.json()) as Partial<Work>;
-
-    const newWork: Work = {
-      id: `mock-work-${Date.now()}`,
-      tmdb_id: body.tmdb_id || null,
-      tmdb_media_type: body.tmdb_media_type || null,
-      title: body.title || "",
-      original_title: body.original_title || null,
-      overview: body.overview || null,
-      poster_path: body.poster_path || null,
-      release_date: body.release_date || null,
-      season_number: body.season_number || null,
-      episode_count: body.episode_count || null,
-      series_title: body.series_title || null,
-    };
-
-    mockWorks.set(newWork.id, newWork);
-
-    return HttpResponse.json<PostgrestResponse<Work>>({
-      data: [newWork],
-      error: null,
-    });
-  }),
-
-  /**
-   * PATCH /rest/v1/backlog_items
-   * Update backlog item by ID
-   */
-  http.patch(`${SUPABASE_URL}/rest/v1/backlog_items`, async ({ request }) => {
     const url = new URL(request.url);
-    const id = url.searchParams.get("id");
-    const body = (await request.json()) as Partial<BacklogItem>;
+    const payload = (await request.json()) as Partial<Work> | Array<Partial<Work>>;
+    const rows = (Array.isArray(payload) ? payload : [payload]).map(ensureWorkDefaults);
 
-    if (!id) {
-      return HttpResponse.json<PostgrestResponse<BacklogItem>>(
-        {
-          data: null,
-          error: { message: "Missing id filter" },
-        },
-        { status: 400 },
+    if (url.searchParams.get("on_conflict")) {
+      rows.forEach((row) => {
+        mockWorks.set(row.id, row);
+      });
+    } else {
+      const hasConflict = rows.some((row) =>
+        Array.from(mockWorks.values()).some(
+          (work) =>
+            work.created_by === row.created_by &&
+            work.source_type === row.source_type &&
+            work.work_type === row.work_type &&
+            work.search_text === row.search_text,
+        ),
       );
+
+      if (hasConflict) {
+        return HttpResponse.json(
+          { message: "duplicate key value", code: "23505" },
+          { status: 409 },
+        );
+      }
+
+      rows.forEach((row) => {
+        mockWorks.set(row.id, row);
+      });
     }
 
-    const existing = mockBacklogItems.get(id);
-    if (!existing) {
-      return HttpResponse.json<PostgrestResponse<BacklogItem>>(
-        {
-          data: null,
-          error: { message: `Item ${id} not found` },
-        },
-        { status: 404 },
-      );
+    if (!shouldReturnRepresentation(request)) {
+      return jsonNoContent();
     }
 
-    const updated: BacklogItem = { ...existing, ...body };
-    mockBacklogItems.set(id, updated);
-
-    return HttpResponse.json<PostgrestResponse<BacklogItem>>({
-      data: [updated],
-      error: null,
-    });
+    const selected = rows.map((row) => pickSelectedFields(row, url.searchParams.get("select")));
+    return buildJsonResponse(request, selected, 201);
   }),
 
-  /**
-   * PATCH /rest/v1/works
-   * Update work by ID
-   */
   http.patch(`${SUPABASE_URL}/rest/v1/works`, async ({ request }) => {
     const url = new URL(request.url);
-    const id = url.searchParams.get("id");
     const body = (await request.json()) as Partial<Work>;
+    const target = Array.from(mockWorks.values()).find((work) => matchesFilters(work, url));
 
-    if (!id) {
-      return HttpResponse.json<PostgrestResponse<Work>>(
-        {
-          data: null,
-          error: { message: "Missing id filter" },
-        },
-        { status: 400 },
-      );
+    if (!target) {
+      return HttpResponse.json({ message: "Work not found" }, { status: 404 });
     }
 
-    const existing = mockWorks.get(id);
-    if (!existing) {
-      return HttpResponse.json<PostgrestResponse<Work>>(
-        {
-          data: null,
-          error: { message: `Work ${id} not found` },
-        },
-        { status: 404 },
-      );
+    const updated = ensureWorkDefaults({ ...target, ...body });
+    mockWorks.set(updated.id, updated);
+
+    if (!shouldReturnRepresentation(request)) {
+      return new HttpResponse(null, { status: 204 });
     }
 
-    const updated: Work = { ...existing, ...body };
-    mockWorks.set(id, updated);
-
-    return HttpResponse.json<PostgrestResponse<Work>>({
-      data: [updated],
-      error: null,
-    });
+    return buildJsonResponse(request, [
+      pickSelectedFields(updated, url.searchParams.get("select")),
+    ]);
   }),
 
-  /**
-   * UPSERT /rest/v1/backlog_items
-   * Insert or update backlog items
-   */
-  http.post(`${SUPABASE_URL}/rest/v1/backlog_items`, async ({ request }) => {
+  http.patch(`${SUPABASE_URL}/rest/v1/backlog_items`, async ({ request }) => {
     const url = new URL(request.url);
-    if (url.searchParams.get("on_conflict") !== "id") {
-      return;
+    const body = (await request.json()) as Partial<BacklogItem>;
+    const target = Array.from(mockBacklogItems.values()).find((item) => matchesFilters(item, url));
+
+    if (!target) {
+      return HttpResponse.json({ message: "Backlog item not found" }, { status: 404 });
     }
 
-    const body = (await request.json()) as BacklogItem | BacklogItem[];
-    const items = Array.isArray(body) ? body : [body];
+    const updated = ensureBacklogItemDefaults({ ...target, ...body });
+    mockBacklogItems.set(updated.id, updated);
 
-    items.forEach((item) => {
-      const existing = mockBacklogItems.get(item.id);
-      const toStore = existing ? { ...existing, ...item } : item;
-      mockBacklogItems.set(item.id, toStore);
-    });
-
-    return HttpResponse.json<PostgrestResponse<BacklogItem>>({
-      data: items,
-      error: null,
-    });
-  }),
-
-  /**
-   * UPSERT /rest/v1/works
-   * Insert or update works
-   */
-  http.post(`${SUPABASE_URL}/rest/v1/works`, async ({ request }) => {
-    const url = new URL(request.url);
-    if (url.searchParams.get("on_conflict") !== "id") {
-      return;
+    if (!shouldReturnRepresentation(request)) {
+      return new HttpResponse(null, { status: 204 });
     }
 
-    const body = (await request.json()) as Work | Work[];
-    const works = Array.isArray(body) ? body : [body];
-
-    works.forEach((work) => {
-      const existing = mockWorks.get(work.id);
-      const toStore = existing ? { ...existing, ...work } : work;
-      mockWorks.set(work.id, toStore);
-    });
-
-    return HttpResponse.json<PostgrestResponse<Work>>({
-      data: works,
-      error: null,
-    });
-  }),
-
-  /**
-   * DELETE /rest/v1/backlog_items
-   * Delete backlog item by ID
-   */
-  http.delete(`${SUPABASE_URL}/rest/v1/backlog_items`, ({ request }) => {
-    const url = new URL(request.url);
-    const id = url.searchParams.get("id");
-
-    if (!id) {
-      return HttpResponse.json<PostgrestResponse<BacklogItem>>(
-        {
-          data: null,
-          error: { message: "Missing id filter" },
-        },
-        { status: 400 },
-      );
-    }
-
-    const existing = mockBacklogItems.get(id);
-    if (!existing) {
-      return HttpResponse.json<PostgrestResponse<BacklogItem>>(
-        {
-          data: null,
-          error: { message: `Item ${id} not found` },
-        },
-        { status: 404 },
-      );
-    }
-
-    mockBacklogItems.delete(id);
-
-    return HttpResponse.json<PostgrestResponse<BacklogItem>>({
-      data: [existing],
-      error: null,
-    });
+    return buildJsonResponse(request, [updated]);
   }),
 ];

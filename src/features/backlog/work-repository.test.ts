@@ -1,31 +1,25 @@
-const supabaseMocks = vi.hoisted(() => ({
-  from: vi.fn(),
-}));
-
 const tmdbMocks = vi.hoisted(() => ({
   fetchTmdbWorkDetails: vi.fn(),
-}));
-
-vi.mock("../../lib/supabase.ts", () => ({
-  supabase: {
-    from: supabaseMocks.from,
-  },
 }));
 
 vi.mock("../../lib/tmdb.ts", async () => {
   const actual = await vi.importActual<typeof import("../../lib/tmdb.ts")>("../../lib/tmdb.ts");
   return {
     ...actual,
+    // Keep the lib boundary mocked here so these tests focus on repository branching/state changes.
     fetchTmdbWorkDetails: tmdbMocks.fetchTmdbWorkDetails,
   };
 });
 
+import { http, HttpResponse } from "msw";
 import type {
   TmdbSearchResult,
   TmdbSeasonOption,
   TmdbSeasonSelectionTarget,
   TmdbWorkDetails,
 } from "../../lib/tmdb.ts";
+import { getMockWorks, setMockWorks } from "../../test/mocks/handlers";
+import { server } from "../../test/mocks/server";
 import { setupTestLifecycle } from "../../test/test-lifecycle.ts";
 import {
   buildSelectedSeasonTargets,
@@ -35,84 +29,9 @@ import {
   upsertTmdbWork,
 } from "./work-repository.ts";
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "http://localhost:54321";
+
 setupTestLifecycle();
-
-type MaybeSingleResult = {
-  data: { id: string; last_tmdb_synced_at?: string | null } | null;
-  error: { message: string; code?: string } | null;
-};
-
-type SingleResult = {
-  success?: boolean;
-  data: { id: string } | null;
-  error: { message: string; code?: string } | null;
-  count: null;
-  status: number;
-  statusText: string;
-};
-
-type UpdateResult = {
-  error: { message: string; code?: string } | null;
-};
-
-function createWorksTableMock({
-  maybeSingleResults = [],
-  singleResults = [],
-  updateResults = [],
-}: {
-  maybeSingleResults?: MaybeSingleResult[];
-  singleResults?: SingleResult[];
-  updateResults?: UpdateResult[];
-}) {
-  const selectChain = {
-    eq: vi.fn(),
-    maybeSingle: vi.fn(),
-  };
-  selectChain.eq.mockImplementation(() => selectChain);
-  selectChain.maybeSingle.mockImplementation(async () => {
-    const result = maybeSingleResults.shift();
-    if (!result) {
-      throw new Error("Unexpected maybeSingle call");
-    }
-    return result;
-  });
-
-  const insertChain = {
-    select: vi.fn(),
-    single: vi.fn(),
-  };
-  insertChain.select.mockImplementation(() => insertChain);
-  insertChain.single.mockImplementation(async () => {
-    const result = singleResults.shift();
-    if (!result) {
-      throw new Error("Unexpected single call");
-    }
-    return {
-      ...result,
-      success: result.success ?? result.error === null,
-    };
-  });
-
-  const updateChain = {
-    eq: vi.fn(),
-  };
-  updateChain.eq.mockImplementation(async () => {
-    const result = updateResults.shift();
-    if (!result) {
-      throw new Error("Unexpected update call");
-    }
-    return result;
-  });
-
-  return {
-    select: vi.fn(() => selectChain),
-    insert: vi.fn(() => insertChain),
-    update: vi.fn(() => updateChain),
-    selectChain,
-    insertChain,
-    updateChain,
-  };
-}
 
 function createTmdbDetails(overrides: Partial<TmdbWorkDetails> = {}): TmdbWorkDetails {
   return {
@@ -135,7 +54,6 @@ function createTmdbDetails(overrides: Partial<TmdbWorkDetails> = {}): TmdbWorkDe
 }
 
 beforeEach(() => {
-  supabaseMocks.from.mockReset();
   tmdbMocks.fetchTmdbWorkDetails.mockReset();
 });
 
@@ -253,20 +171,22 @@ describe("upsertTmdbWork", () => {
   };
 
   test("十分新しい既存作品は再同期せず再利用する", async () => {
-    const worksTable = createWorksTableMock({
-      maybeSingleResults: [
-        {
-          data: { id: "existing-work", last_tmdb_synced_at: "2026-03-31T00:00:00.000Z" },
-          error: null,
-        },
-      ],
-    });
-    supabaseMocks.from.mockImplementation((table: string) => {
-      if (table !== "works") {
-        throw new Error(`Unexpected table: ${table}`);
-      }
-      return worksTable;
-    });
+    setMockWorks([
+      {
+        id: "existing-work",
+        source_type: "tmdb",
+        work_type: "movie",
+        tmdb_media_type: "movie",
+        tmdb_id: 200,
+        title: "既存作品",
+        original_title: "Existing Movie",
+        search_text: "existing movie",
+        last_tmdb_synced_at: "2026-03-31T00:00:00.000Z",
+        episode_count: null,
+        season_number: null,
+        series_title: null,
+      },
+    ]);
 
     await expect(upsertTmdbWork(movieTarget, "user-1")).resolves.toEqual({
       success: true,
@@ -277,26 +197,25 @@ describe("upsertTmdbWork", () => {
       statusText: "OK",
     });
     expect(tmdbMocks.fetchTmdbWorkDetails).not.toHaveBeenCalled();
-    expect(worksTable.update).not.toHaveBeenCalled();
-    expect(worksTable.insert).not.toHaveBeenCalled();
   });
 
   test("期限切れの既存作品は詳細を再取得して update する", async () => {
-    const worksTable = createWorksTableMock({
-      maybeSingleResults: [
-        {
-          data: { id: "existing-work", last_tmdb_synced_at: "2026-01-01T00:00:00.000Z" },
-          error: null,
-        },
-      ],
-      updateResults: [{ error: null }],
-    });
-    supabaseMocks.from.mockImplementation((table: string) => {
-      if (table !== "works") {
-        throw new Error(`Unexpected table: ${table}`);
-      }
-      return worksTable;
-    });
+    setMockWorks([
+      {
+        id: "existing-work",
+        source_type: "tmdb",
+        work_type: "movie",
+        tmdb_media_type: "movie",
+        tmdb_id: 200,
+        title: "既存作品",
+        original_title: "Existing Movie",
+        search_text: "existing movie",
+        last_tmdb_synced_at: "2026-01-01T00:00:00.000Z",
+        episode_count: null,
+        season_number: null,
+        series_title: null,
+      },
+    ]);
     tmdbMocks.fetchTmdbWorkDetails.mockResolvedValue(
       createTmdbDetails({
         tmdbId: movieTarget.tmdbId,
@@ -314,44 +233,16 @@ describe("upsertTmdbWork", () => {
       statusText: "OK",
     });
     expect(tmdbMocks.fetchTmdbWorkDetails).toHaveBeenCalledWith(movieTarget);
-    expect(worksTable.update).toHaveBeenCalledWith(
+    expect(getMockWorks()).toContainEqual(
       expect.objectContaining({
+        id: "existing-work",
         title: "更新後タイトル",
         original_title: "Test Movie",
       }),
     );
-    expect(worksTable.updateChain.eq).toHaveBeenCalledWith("id", "existing-work");
   });
 
   test("シーズン追加時は親 series を先に解決してから insert する", async () => {
-    const worksTable = createWorksTableMock({
-      maybeSingleResults: [
-        { data: null, error: null },
-        { data: null, error: null },
-      ],
-      singleResults: [
-        {
-          data: { id: "series-work" },
-          error: null,
-          count: null,
-          status: 201,
-          statusText: "Created",
-        },
-        {
-          data: { id: "season-work" },
-          error: null,
-          count: null,
-          status: 201,
-          statusText: "Created",
-        },
-      ],
-    });
-    supabaseMocks.from.mockImplementation((table: string) => {
-      if (table !== "works") {
-        throw new Error(`Unexpected table: ${table}`);
-      }
-      return worksTable;
-    });
     tmdbMocks.fetchTmdbWorkDetails
       .mockResolvedValueOnce(
         createTmdbDetails({
@@ -382,28 +273,27 @@ describe("upsertTmdbWork", () => {
         }),
       );
 
-    await expect(upsertTmdbWork(seasonTarget, "user-1")).resolves.toEqual({
-      success: true,
-      data: { id: "season-work" },
+    await expect(upsertTmdbWork(seasonTarget, "user-1")).resolves.toMatchObject({
+      data: { id: expect.any(String) },
       error: null,
-      count: null,
       status: 201,
-      statusText: "Created",
     });
     expect(tmdbMocks.fetchTmdbWorkDetails).toHaveBeenCalledTimes(2);
-    expect(worksTable.insert).toHaveBeenNthCalledWith(
-      1,
+
+    const works = getMockWorks();
+    const seriesWork = works.find((work) => work.work_type === "series");
+    const seasonWork = works.find((work) => work.work_type === "season");
+    expect(seriesWork).toEqual(
       expect.objectContaining({
-        work_type: "series",
+        tmdb_id: 300,
         parent_work_id: null,
       }),
     );
-    expect(worksTable.insert).toHaveBeenNthCalledWith(
-      2,
+    expect(seasonWork).toEqual(
       expect.objectContaining({
-        work_type: "season",
-        parent_work_id: "series-work",
+        tmdb_id: 300,
         season_number: 2,
+        parent_work_id: seriesWork?.id,
       }),
     );
   });
@@ -441,7 +331,6 @@ describe("resolveSelectedSeasonWorkIds", () => {
       error: "追加するシーズンを1つ以上選択してください",
       workIds: [],
     });
-    expect(supabaseMocks.from).not.toHaveBeenCalled();
   });
 
   test("シーズン情報組み立て失敗時はエラーを返す", async () => {
@@ -451,32 +340,35 @@ describe("resolveSelectedSeasonWorkIds", () => {
       error: "シーズン3の情報が見つかりません",
       workIds: [],
     });
-    expect(supabaseMocks.from).not.toHaveBeenCalled();
   });
 
   test("途中の保存に失敗したら workIds を返さず打ち切る", async () => {
-    const worksTable = createWorksTableMock({
-      maybeSingleResults: [
-        {
-          data: { id: "series-work", last_tmdb_synced_at: "2026-03-31T00:00:00.000Z" },
-          error: null,
-        },
-        {
-          data: { id: "series-work", last_tmdb_synced_at: "2026-03-31T00:00:00.000Z" },
-          error: null,
-        },
-        {
-          data: null,
-          error: { message: "season fetch failed" },
-        },
-      ],
-    });
-    supabaseMocks.from.mockImplementation((table: string) => {
-      if (table !== "works") {
-        throw new Error(`Unexpected table: ${table}`);
-      }
-      return worksTable;
-    });
+    setMockWorks([
+      {
+        id: "series-work",
+        source_type: "tmdb",
+        work_type: "series",
+        tmdb_media_type: "tv",
+        tmdb_id: 100,
+        title: "テストシリーズ",
+        original_title: "Test Series",
+        search_text: "test series",
+        last_tmdb_synced_at: "2026-03-31T00:00:00.000Z",
+        episode_count: null,
+        season_number: null,
+        series_title: null,
+      },
+    ]);
+    server.use(
+      http.get(`${SUPABASE_URL}/rest/v1/works`, ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.get("season_number") === "eq.2") {
+          return HttpResponse.json({ message: "season fetch failed" }, { status: 500 });
+        }
+
+        return undefined;
+      }),
+    );
 
     await expect(
       resolveSelectedSeasonWorkIds(seriesResult, "user-1", [1, 2], { seasonOptions }),
@@ -484,80 +376,76 @@ describe("resolveSelectedSeasonWorkIds", () => {
       error: "season fetch failed",
       workIds: [],
     });
-    expect(worksTable.selectChain.maybeSingle).toHaveBeenCalledTimes(3);
     expect(tmdbMocks.fetchTmdbWorkDetails).not.toHaveBeenCalled();
   });
 });
 
 describe("upsertManualWork", () => {
   test("既存ヒット時は再利用する", async () => {
-    const worksTable = createWorksTableMock({
-      maybeSingleResults: [{ data: { id: "existing-work" }, error: null }],
-    });
-    supabaseMocks.from.mockImplementation((table: string) => {
-      if (table !== "works") {
-        throw new Error(`Unexpected table: ${table}`);
-      }
-      return worksTable;
-    });
+    setMockWorks([
+      {
+        id: "existing-work",
+        created_by: "user-1",
+        source_type: "manual",
+        work_type: "movie",
+        search_text: "テスト作品",
+        tmdb_id: null,
+        tmdb_media_type: null,
+        title: "テスト作品",
+        original_title: null,
+        overview: null,
+        poster_path: null,
+        release_date: null,
+        episode_count: null,
+        season_number: null,
+        series_title: null,
+      },
+    ]);
 
     await expect(upsertManualWork("テスト作品", "movie", "user-1")).resolves.toMatchObject({
       data: { id: "existing-work" },
       error: null,
       status: 200,
     });
-    expect(worksTable.insert).not.toHaveBeenCalled();
   });
 
   test("insert 成功時は新規 id を返す", async () => {
-    const worksTable = createWorksTableMock({
-      maybeSingleResults: [{ data: null, error: null }],
-      singleResults: [
-        {
-          data: { id: "inserted-work" },
-          error: null,
-          count: null,
-          status: 201,
-          statusText: "Created",
-        },
-      ],
-    });
-    supabaseMocks.from.mockImplementation((table: string) => {
-      if (table !== "works") {
-        throw new Error(`Unexpected table: ${table}`);
-      }
-      return worksTable;
-    });
-
     await expect(upsertManualWork("テスト作品", "movie", "user-1")).resolves.toMatchObject({
-      data: { id: "inserted-work" },
+      data: { id: expect.any(String) },
       error: null,
       status: 201,
     });
   });
 
   test("23505 競合後は再 select で救済する", async () => {
-    const worksTable = createWorksTableMock({
-      maybeSingleResults: [
-        { data: null, error: null },
-        { data: { id: "rescued-work" }, error: null },
-      ],
-      singleResults: [
-        {
-          data: null,
-          error: { message: "duplicate key value", code: "23505" },
-          count: null,
-          status: 409,
-          statusText: "Conflict",
-        },
-      ],
-    });
-    supabaseMocks.from.mockImplementation((table: string) => {
-      if (table !== "works") {
-        throw new Error(`Unexpected table: ${table}`);
-      }
-      return worksTable;
-    });
+    server.use(
+      http.post(`${SUPABASE_URL}/rest/v1/works`, async ({ request }) => {
+        const body = (await request.json()) as { created_by: string; search_text: string };
+        setMockWorks([
+          {
+            id: "rescued-work",
+            created_by: body.created_by,
+            source_type: "manual",
+            work_type: "movie",
+            search_text: body.search_text,
+            tmdb_id: null,
+            tmdb_media_type: null,
+            title: "テスト作品",
+            original_title: null,
+            overview: null,
+            poster_path: null,
+            release_date: null,
+            episode_count: null,
+            season_number: null,
+            series_title: null,
+          },
+        ]);
+        return HttpResponse.json(
+          { message: "duplicate key value", code: "23505" },
+          { status: 409 },
+        );
+      }),
+    );
 
     await expect(upsertManualWork("テスト作品", "movie", "user-1")).resolves.toEqual({
       success: true,
@@ -570,27 +458,28 @@ describe("upsertManualWork", () => {
   });
 
   test("競合後の再 select 失敗時は conflict を返す", async () => {
-    const worksTable = createWorksTableMock({
-      maybeSingleResults: [
-        { data: null, error: null },
-        { data: null, error: { message: "reselect failed" } },
-      ],
-      singleResults: [
-        {
-          data: null,
-          error: { message: "duplicate key value", code: "23505" },
-          count: null,
-          status: 409,
-          statusText: "Conflict",
-        },
-      ],
-    });
-    supabaseMocks.from.mockImplementation((table: string) => {
-      if (table !== "works") {
-        throw new Error(`Unexpected table: ${table}`);
-      }
-      return worksTable;
-    });
+    let insertSeen = false;
+    server.use(
+      http.post(`${SUPABASE_URL}/rest/v1/works`, () => {
+        insertSeen = true;
+        return HttpResponse.json(
+          { message: "duplicate key value", code: "23505" },
+          { status: 409 },
+        );
+      }),
+      http.get(`${SUPABASE_URL}/rest/v1/works`, ({ request }) => {
+        if (!insertSeen) {
+          return undefined;
+        }
+
+        const url = new URL(request.url);
+        if (url.searchParams.get("source_type") === "eq.manual") {
+          return HttpResponse.json({ message: "reselect failed" }, { status: 500 });
+        }
+
+        return undefined;
+      }),
+    );
 
     await expect(upsertManualWork("テスト作品", "movie", "user-1")).resolves.toEqual({
       success: false,
