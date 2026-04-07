@@ -43,6 +43,7 @@ type MaybeSingleResult = {
 };
 
 type SingleResult = {
+  success?: boolean;
   data: { id: string } | null;
   error: { message: string; code?: string } | null;
   count: null;
@@ -86,7 +87,10 @@ function createWorksTableMock({
     if (!result) {
       throw new Error("Unexpected single call");
     }
-    return result;
+    return {
+      ...result,
+      success: result.success ?? result.error === null,
+    };
   });
 
   const updateChain = {
@@ -265,6 +269,7 @@ describe("upsertTmdbWork", () => {
     });
 
     await expect(upsertTmdbWork(movieTarget, "user-1")).resolves.toEqual({
+      success: true,
       data: { id: "existing-work" },
       error: null,
       count: null,
@@ -301,6 +306,7 @@ describe("upsertTmdbWork", () => {
     );
 
     await expect(upsertTmdbWork(movieTarget, "user-1")).resolves.toEqual({
+      success: true,
       data: { id: "existing-work" },
       error: null,
       count: null,
@@ -377,6 +383,7 @@ describe("upsertTmdbWork", () => {
       );
 
     await expect(upsertTmdbWork(seasonTarget, "user-1")).resolves.toEqual({
+      success: true,
       data: { id: "season-work" },
       error: null,
       count: null,
@@ -553,6 +560,7 @@ describe("upsertManualWork", () => {
     });
 
     await expect(upsertManualWork("テスト作品", "movie", "user-1")).resolves.toEqual({
+      success: true,
       data: { id: "rescued-work" },
       error: null,
       count: null,
@@ -585,6 +593,7 @@ describe("upsertManualWork", () => {
     });
 
     await expect(upsertManualWork("テスト作品", "movie", "user-1")).resolves.toEqual({
+      success: false,
       data: null,
       error: { message: "reselect failed" },
       count: null,
