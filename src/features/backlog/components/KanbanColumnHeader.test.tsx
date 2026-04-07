@@ -55,6 +55,8 @@ describe("KanbanColumnHeader", () => {
     );
 
     expect(screen.getByText("視聴中")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "作品を検索してストックに追加" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "作品を検索してストックに追加" }),
+    ).not.toBeInTheDocument();
   });
 });

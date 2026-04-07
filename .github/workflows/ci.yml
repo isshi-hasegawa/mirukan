@@ -1,100 +1,117 @@
 name: CI
 
 on:
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  VITE_SUPABASE_URL: http://127.0.0.1:54321
+  VITE_SUPABASE_PUBLISHABLE_KEY: ci-publishable-key
+  VP_BOOTSTRAP_VERSION: 0.1.14
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  check_and_test:
+  check:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
-          cache: pnpm
+          package-manager-cache: false
+
+      - name: Enable Corepack
+        run: |
+          corepack enable
+          corepack install
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm --package="vite-plus@${VP_BOOTSTRAP_VERSION}" dlx vp install --frozen-lockfile
+
+      - name: Add local binaries to PATH
+        run: echo "${GITHUB_WORKSPACE}/node_modules/.bin" >> "$GITHUB_PATH"
 
       - name: Run checks
         run: vp check
 
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Enable Corepack
+        run: |
+          corepack enable
+          corepack install
+
+      - name: Install dependencies
+        run: pnpm --package="vite-plus@${VP_BOOTSTRAP_VERSION}" dlx vp install --frozen-lockfile
+
+      - name: Add local binaries to PATH
+        run: echo "${GITHUB_WORKSPACE}/node_modules/.bin" >> "$GITHUB_PATH"
+
       - name: Run unit tests
-        run: vp test
-
-  build:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    needs: check_and_test
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run build
-        run: vp build
-
-  coverage:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    needs: check_and_test
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run coverage
         shell: bash
         run: |
           set -euo pipefail
-          vp exec vitest --coverage | tee coverage/vitest-coverage.txt
+          mkdir -p coverage
+          vp test --coverage | tee coverage/vitest-coverage.txt
 
       - name: Append coverage summary
+        if: always()
+        shell: bash
         run: |
           {
             echo "## Vitest Coverage"
             echo
-            sed -n '/^% Coverage report from v8/,$p' coverage/vitest-coverage.txt
+            if [ -f coverage/vitest-coverage.txt ]; then
+              sed -n '/^% Coverage report from v8/,$p' coverage/vitest-coverage.txt
+            else
+              echo "Coverage summary unavailable because the test step did not produce coverage output."
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
         with:
-          name: coverage-report
-          path: coverage/
-          if-no-files-found: error
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Enable Corepack
+        run: |
+          corepack enable
+          corepack install
+
+      - name: Install dependencies
+        run: pnpm --package="vite-plus@${VP_BOOTSTRAP_VERSION}" dlx vp install --frozen-lockfile
+
+      - name: Add local binaries to PATH
+        run: echo "${GITHUB_WORKSPACE}/node_modules/.bin" >> "$GITHUB_PATH"
+
+      - name: Run build
+        run: vp build

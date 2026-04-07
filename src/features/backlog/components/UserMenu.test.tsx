@@ -16,9 +16,16 @@ vi.mock("../../../lib/supabase.ts", () => ({
 setupTestLifecycle();
 
 describe("UserMenu", () => {
+  const openMock = vi.fn();
+
   beforeEach(() => {
     vi.clearAllMocks();
     supabaseMock.auth.signOut.mockResolvedValue({ error: null });
+    vi.stubGlobal("open", openMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   test("About からアプリの説明と TMDB attribution を確認できる", async () => {
@@ -73,7 +80,24 @@ describe("UserMenu", () => {
     expect(screen.getByRole("dialog", { name: "プライバシーポリシー" })).toBeInTheDocument();
     expect(screen.getByText("第10条（お問い合わせ窓口）")).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "support@mirukan.app" }),
-    ).toHaveAttribute("href", "mailto:support@mirukan.app");
+      screen.getByRole("link", { name: "github.com/isshi-hasegawa/mirukan/issues" }),
+    ).toHaveAttribute("href", "https://github.com/isshi-hasegawa/mirukan/issues/new/choose");
+  });
+
+  test("メニューから GitHub Issues の不具合報告導線を開ける", async () => {
+    const user = userEvent.setup();
+
+    render(<UserMenu email="user@example.com" />);
+
+    const trigger = screen.getByRole("button", { name: /user@example.com/i });
+    trigger.focus();
+    await user.keyboard("{Enter}");
+    await user.click(await screen.findByRole("menuitem", { name: "不具合を報告" }));
+
+    expect(openMock).toHaveBeenCalledWith(
+      "https://github.com/isshi-hasegawa/mirukan/issues/new/choose",
+      "_blank",
+      "noopener,noreferrer",
+    );
   });
 });

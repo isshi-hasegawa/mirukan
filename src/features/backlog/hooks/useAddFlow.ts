@@ -16,12 +16,7 @@ type UseAddFlowOptions = {
   onAdded: () => Promise<void>;
 };
 
-export function useAddFlow({
-  items,
-  session,
-  onClose,
-  onAdded,
-}: UseAddFlowOptions) {
+export function useAddFlow({ items, session, onClose, onAdded }: UseAddFlowOptions) {
   const [draftState, dispatchDraft] = useReducer(addFlowDraftReducer, initialAddFlowDraftState);
   const {
     searchQuery,

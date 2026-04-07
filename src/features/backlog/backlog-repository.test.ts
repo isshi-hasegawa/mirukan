@@ -18,10 +18,7 @@ import type { BacklogItem } from "./types.ts";
 
 setupTestLifecycle();
 
-function createSelectChain(result: {
-  data: unknown[] | null;
-  error: { message: string } | null;
-}) {
+function createSelectChain(result: { data: unknown[] | null; error: { message: string } | null }) {
   const chain = {
     order: vi.fn(),
   };

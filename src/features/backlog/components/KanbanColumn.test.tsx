@@ -89,7 +89,10 @@ describe("KanbanColumn", () => {
     render(
       <KanbanColumn
         status="watching"
-        items={[createItem({ status: "watching" }), createItem({ id: "item-2", status: "watching" })]}
+        items={[
+          createItem({ status: "watching" }),
+          createItem({ id: "item-2", status: "watching" }),
+        ]}
         activeViewingMode={null}
         isMobileLayout={false}
         dropIndicator={null}

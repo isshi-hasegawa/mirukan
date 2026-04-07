@@ -7,11 +7,7 @@ import { TmdbLink } from "./TmdbLink.tsx";
 import { useDetailModalActions } from "../hooks/useDetailModalActions.ts";
 import { DetailModalNoteField } from "./DetailModalNoteField.tsx";
 import { DetailModalPlatformField } from "./DetailModalPlatformField.tsx";
-import type {
-  BacklogItem,
-  BacklogStatus,
-  DetailModalState,
-} from "../types.ts";
+import type { BacklogItem, BacklogStatus, DetailModalState } from "../types.ts";
 
 type Props = {
   item: BacklogItem | null;
@@ -24,19 +20,14 @@ type Props = {
 
 export function DetailModal({ item, state, items, onStateChange, onClose, onUpdate }: Props) {
   const inputRef = useRef<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null>(null);
-  const {
-    cancelEditing,
-    handlePlatformSelect,
-    handleStatusSelect,
-    saveField,
-    startEditing,
-  } = useDetailModalActions({
-    item,
-    items,
-    state,
-    onStateChange,
-    onUpdate,
-  });
+  const { cancelEditing, handlePlatformSelect, handleStatusSelect, saveField, startEditing } =
+    useDetailModalActions({
+      item,
+      items,
+      state,
+      onStateChange,
+      onUpdate,
+    });
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

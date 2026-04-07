@@ -5,11 +5,7 @@ type DuplicateState = {
   canAddToStacked: boolean;
 };
 
-function findMatchingTvItem(
-  items: BacklogItem[],
-  result: TmdbSearchResult,
-  seasonNumber: number,
-) {
+function findMatchingTvItem(items: BacklogItem[], result: TmdbSearchResult, seasonNumber: number) {
   return items.find((item) => {
     const work = item.works;
     if (work?.tmdb_id !== result.tmdbId || work.tmdb_media_type !== result.tmdbMediaType) {

@@ -115,7 +115,13 @@ export async function upsertManualWork(
   if (conflicted) {
     return { data: { id: conflicted.id }, error: null, count: null, status: 200, statusText: "OK" };
   }
-  return { data: null, error: insertResult.error!, count: null, status: 409, statusText: "Conflict" };
+  return {
+    data: null,
+    error: insertResult.error!,
+    count: null,
+    status: 409,
+    statusText: "Conflict",
+  };
 }
 
 export function buildSelectedSeasonTargets(
@@ -286,7 +292,10 @@ async function upsertFetchedTmdbWork(
         };
 
   if (existing) {
-    const { error: updateError } = await supabase.from("works").update(updatePayload).eq("id", existing.id);
+    const { error: updateError } = await supabase
+      .from("works")
+      .update(updatePayload)
+      .eq("id", existing.id);
 
     if (updateError) {
       return buildBadRequestResponse(updateError);

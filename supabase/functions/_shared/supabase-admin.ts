@@ -1,6 +1,15 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-let cachedClient: ReturnType<typeof createClient> | null = null;
+function createSupabaseAdminClient(supabaseUrl: string, serviceRoleKey: string) {
+  return createClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+}
+
+let cachedClient = null;
 
 export function getSupabaseAdminClient() {
   if (cachedClient) {
@@ -14,12 +23,7 @@ export function getSupabaseAdminClient() {
     return null;
   }
 
-  cachedClient = createClient(supabaseUrl, serviceRoleKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
+  cachedClient = createSupabaseAdminClient(supabaseUrl, serviceRoleKey);
 
   return cachedClient;
 }

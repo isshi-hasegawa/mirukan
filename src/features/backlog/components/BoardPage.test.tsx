@@ -226,7 +226,6 @@ describe("BoardPage", () => {
     await user.click(screen.getByRole("button", { name: "追加モーダルを開く" }));
     await user.click(screen.getByRole("button", { name: "追加完了" }));
     await waitFor(() => expect(screen.getByText("selected-tab:stacked")).toBeInTheDocument());
-
   });
 
   test("desktop 時は追加完了後に stacked 列へ scroll する", async () => {

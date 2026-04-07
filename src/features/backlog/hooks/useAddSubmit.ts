@@ -132,7 +132,7 @@ export function useAddSubmit({
         return;
       }
 
-      const confirmResult = await confirmStackedSave({
+      const confirmResult = confirmStackedSave({
         items,
         workIds: result.workIds,
         subject,
@@ -189,7 +189,7 @@ export function useAddSubmit({
       return;
     }
 
-    const confirmResult = await confirmStackedSave({
+    const confirmResult = confirmStackedSave({
       items,
       workIds: [work.id],
       subject,

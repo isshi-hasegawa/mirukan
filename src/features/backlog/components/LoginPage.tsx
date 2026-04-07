@@ -81,7 +81,8 @@ export function LoginPage({
   const email = isSignUpMode ? signUpEmail : loginEmail;
   const password = isSignUpMode ? signUpPassword : loginPassword;
   const authRedirectUrl = getAuthRedirectUrl(window.location);
-  const shouldShowDevLoginHint = showDevLoginHint && !isSignUpMode && !isForgotPasswordMode && !isSessionLoading;
+  const shouldShowDevLoginHint =
+    showDevLoginHint && !isSignUpMode && !isForgotPasswordMode && !isSessionLoading;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -258,9 +259,12 @@ export function LoginPage({
               hasSentResetEmail ? (
                 <>
                   <div className="rounded-[20px] border border-border/70 bg-muted/30 px-4 py-4">
-                    <p className="text-sm font-medium text-foreground">リセットメールを送信しました</p>
+                    <p className="text-sm font-medium text-foreground">
+                      リセットメールを送信しました
+                    </p>
                     <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      {resetEmail} 宛てにパスワードリセット用のリンクを送信しました。メール内のリンクを開いて、パスワードを再設定してください。
+                      {resetEmail}{" "}
+                      宛てにパスワードリセット用のリンクを送信しました。メール内のリンクを開いて、パスワードを再設定してください。
                     </p>
                   </div>
                   <Button
@@ -306,7 +310,8 @@ export function LoginPage({
                 <div className="rounded-[20px] border border-border/70 bg-muted/30 px-4 py-4">
                   <p className="text-sm font-medium text-foreground">確認メールを送信しました</p>
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    {signUpEmail} 宛てに確認メールを送信しました。メール内のリンクを開いて、アカウント登録を完了してください。
+                    {signUpEmail}{" "}
+                    宛てに確認メールを送信しました。メール内のリンクを開いて、アカウント登録を完了してください。
                   </p>
                 </div>
                 <Button
