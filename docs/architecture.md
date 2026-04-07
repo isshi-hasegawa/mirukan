@@ -22,10 +22,11 @@
 ### `src/features/backlog/`
 
 - `types.ts` — 型定義（`BacklogItem`, `BacklogStatus`, `WorkSummary` など）
-- `data.ts` — Supabase 操作（CRUD）、`sort_order` 計算
+- `backlog-repository.ts` — バックログ項目の Supabase 操作（取得・更新・並び替え付き upsert）
+- `work-repository.ts` — 作品データの Supabase/TMDb 操作（手動登録・TMDb 作品保存）
 - `helpers.ts` — フォーム処理、検索テキスト生成
 - `constants.ts` — ステータス／プラットフォームのラベルと表示順
-- `data.test.ts` — ユニットテスト
+- `backlog-repository.test.ts` / `work-repository.test.ts` — repository 層のユニットテスト
 
 ### `src/lib/`
 
