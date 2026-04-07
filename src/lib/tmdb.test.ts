@@ -293,6 +293,33 @@ describe("recommendation caches", () => {
 });
 
 describe("API boundary wrappers", () => {
+  const seasonResult = {
+    tmdbId: 10,
+    tmdbMediaType: "tv" as const,
+    workType: "series" as const,
+    title: "Series",
+    originalTitle: "Series",
+    overview: "overview",
+    posterPath: null,
+    releaseDate: "2024-01-01",
+    jpWatchPlatforms: [],
+    hasJapaneseRelease: true,
+  };
+
+  const workDetailsTarget = {
+    tmdbId: 20,
+    tmdbMediaType: "tv" as const,
+    workType: "season" as const,
+    title: "Season 2",
+    originalTitle: "Original Series",
+    overview: "overview",
+    posterPath: "/poster.jpg",
+    releaseDate: "2025-01-01",
+    seasonNumber: 2,
+    episodeCount: 10,
+    seriesTitle: "Series",
+  };
+
   test("searchTmdbWorks passes query and returns results", async () => {
     let receivedQuery = "";
     server.use(
@@ -326,19 +353,7 @@ describe("API boundary wrappers", () => {
   });
 
   test("fetchTmdbSeasonOptions passes result and returns season options", async () => {
-    const result = {
-      tmdbId: 10,
-      tmdbMediaType: "tv" as const,
-      workType: "series" as const,
-      title: "Series",
-      originalTitle: "Series",
-      overview: "overview",
-      posterPath: null,
-      releaseDate: "2024-01-01",
-      jpWatchPlatforms: [],
-      hasJapaneseRelease: true,
-    };
-    setMockTmdbSeasonOptions(result, [
+    setMockTmdbSeasonOptions(seasonResult, [
       {
         seasonNumber: 2,
         title: "Series Season 2",
@@ -349,7 +364,7 @@ describe("API boundary wrappers", () => {
       },
     ]);
 
-    await expect(fetchTmdbSeasonOptions(result)).resolves.toEqual([
+    await expect(fetchTmdbSeasonOptions(seasonResult)).resolves.toEqual([
       expect.objectContaining({
         seasonNumber: 2,
         title: "Series Season 2",
@@ -358,20 +373,7 @@ describe("API boundary wrappers", () => {
   });
 
   test("fetchTmdbWorkDetails passes target and returns details", async () => {
-    const target = {
-      tmdbId: 20,
-      tmdbMediaType: "tv" as const,
-      workType: "season" as const,
-      title: "Season 2",
-      originalTitle: "Original Series",
-      overview: "overview",
-      posterPath: "/poster.jpg",
-      releaseDate: "2025-01-01",
-      seasonNumber: 2,
-      episodeCount: 10,
-      seriesTitle: "Series",
-    };
-    setMockTmdbWorkDetails(target, {
+    setMockTmdbWorkDetails(workDetailsTarget, {
       tmdbId: 20,
       tmdbMediaType: "tv",
       workType: "season",
@@ -388,7 +390,7 @@ describe("API boundary wrappers", () => {
       seasonNumber: 2,
     });
 
-    await expect(fetchTmdbWorkDetails(target)).resolves.toEqual(
+    await expect(fetchTmdbWorkDetails(workDetailsTarget)).resolves.toEqual(
       expect.objectContaining({
         tmdbId: 20,
         workType: "season",
@@ -397,7 +399,7 @@ describe("API boundary wrappers", () => {
     );
   });
 
-  test("invoke error is surfaced as an exception", async () => {
+  test("non-2xx response is surfaced as an exception", async () => {
     server.use(
       http.post(`${SUPABASE_URL}/functions/v1/search-tmdb-works`, () => {
         return HttpResponse.json({ message: "edge function failed" }, { status: 500 });
@@ -405,7 +407,58 @@ describe("API boundary wrappers", () => {
     );
 
     await expect(searchTmdbWorks("query text")).rejects.toThrow(
-      "Supabase function search-tmdb-works failed:",
+      "Supabase function search-tmdb-works failed: Edge Function returned a non-2xx status code",
+    );
+  });
+
+  test("relay error message is surfaced as an exception", async () => {
+    server.use(
+      http.post(`${SUPABASE_URL}/functions/v1/search-tmdb-works`, () => {
+        return new HttpResponse(null, {
+          status: 503,
+          headers: { "x-relay-error": "true" },
+        });
+      }),
+    );
+
+    await expect(searchTmdbWorks("query text")).rejects.toThrow(
+      "Supabase function search-tmdb-works failed: Relay Error invoking the Edge Function",
+    );
+  });
+
+  test("searchTmdbWorks rejects malformed response data", async () => {
+    server.use(
+      http.post(`${SUPABASE_URL}/functions/v1/search-tmdb-works`, () => {
+        return HttpResponse.json({ results: [] });
+      }),
+    );
+
+    await expect(searchTmdbWorks("query text")).rejects.toThrow(
+      "Supabase function search-tmdb-works returned invalid data",
+    );
+  });
+
+  test("fetchTmdbSeasonOptions rejects empty response data", async () => {
+    server.use(
+      http.post(`${SUPABASE_URL}/functions/v1/fetch-tmdb-season-options`, () => {
+        return HttpResponse.json(null);
+      }),
+    );
+
+    await expect(fetchTmdbSeasonOptions(seasonResult)).rejects.toThrow(
+      "Supabase function fetch-tmdb-season-options returned invalid data",
+    );
+  });
+
+  test("fetchTmdbWorkDetails rejects empty response data", async () => {
+    server.use(
+      http.post(`${SUPABASE_URL}/functions/v1/fetch-tmdb-work-details`, () => {
+        return HttpResponse.json(null);
+      }),
+    );
+
+    await expect(fetchTmdbWorkDetails(workDetailsTarget)).rejects.toThrow(
+      "Supabase function fetch-tmdb-work-details returned invalid data",
     );
   });
 });

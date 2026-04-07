@@ -65,6 +65,8 @@ type RecommendationCacheEntry = {
   fetchedAt: number;
 };
 
+type ResponseValidator<TResponse> = (data: unknown) => data is TResponse;
+
 const RECOMMENDATIONS_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MAX_RECOMMENDATION_SOURCE_ITEMS = 8;
 
@@ -76,6 +78,7 @@ const similarCachePromises = new Map<string, Promise<TmdbSearchResult[]>>();
 async function invokeTmdbFunction<TResponse>(
   functionName: string,
   body?: Record<string, unknown>,
+  validate?: ResponseValidator<TResponse>,
 ): Promise<TResponse> {
   const { data, error } = await supabase.functions.invoke(functionName, { body });
 
@@ -83,7 +86,97 @@ async function invokeTmdbFunction<TResponse>(
     throw new Error(`Supabase function ${functionName} failed: ${error.message}`);
   }
 
+  if (validate && !validate(data)) {
+    throw new Error(`Supabase function ${functionName} returned invalid data`);
+  }
+
   return data as TResponse;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isNullableString(value: unknown): value is string | null {
+  return typeof value === "string" || value === null;
+}
+
+function isNullableNumber(value: unknown): value is number | null {
+  return typeof value === "number" || value === null;
+}
+
+function isTmdbMediaType(value: unknown): value is "movie" | "tv" {
+  return value === "movie" || value === "tv";
+}
+
+function isTmdbSearchWorkType(value: unknown): value is "movie" | "series" {
+  return value === "movie" || value === "series";
+}
+
+function isTmdbWorkType(value: unknown): value is "movie" | "series" | "season" {
+  return value === "movie" || value === "series" || value === "season";
+}
+
+function isTmdbWatchPlatform(value: unknown): value is TmdbWatchPlatform {
+  return isRecord(value) && typeof value.key === "string" && isNullableString(value.logoPath);
+}
+
+function isTmdbSearchResult(value: unknown): value is TmdbSearchResult {
+  return (
+    isRecord(value) &&
+    typeof value.tmdbId === "number" &&
+    isTmdbMediaType(value.tmdbMediaType) &&
+    isTmdbSearchWorkType(value.workType) &&
+    typeof value.title === "string" &&
+    isNullableString(value.originalTitle) &&
+    isNullableString(value.overview) &&
+    isNullableString(value.posterPath) &&
+    isNullableString(value.releaseDate) &&
+    Array.isArray(value.jpWatchPlatforms) &&
+    value.jpWatchPlatforms.every(isTmdbWatchPlatform) &&
+    typeof value.hasJapaneseRelease === "boolean"
+  );
+}
+
+function isTmdbSearchResultArray(value: unknown): value is TmdbSearchResult[] {
+  return Array.isArray(value) && value.every(isTmdbSearchResult);
+}
+
+function isTmdbSeasonOption(value: unknown): value is TmdbSeasonOption {
+  return (
+    isRecord(value) &&
+    typeof value.seasonNumber === "number" &&
+    typeof value.title === "string" &&
+    isNullableString(value.overview) &&
+    isNullableString(value.posterPath) &&
+    isNullableString(value.releaseDate) &&
+    isNullableNumber(value.episodeCount)
+  );
+}
+
+function isTmdbSeasonOptionArray(value: unknown): value is TmdbSeasonOption[] {
+  return Array.isArray(value) && value.every(isTmdbSeasonOption);
+}
+
+function isTmdbWorkDetails(value: unknown): value is TmdbWorkDetails {
+  return (
+    isRecord(value) &&
+    typeof value.tmdbId === "number" &&
+    isTmdbMediaType(value.tmdbMediaType) &&
+    isTmdbWorkType(value.workType) &&
+    typeof value.title === "string" &&
+    isNullableString(value.originalTitle) &&
+    isNullableString(value.overview) &&
+    isNullableString(value.posterPath) &&
+    isNullableString(value.releaseDate) &&
+    Array.isArray(value.genres) &&
+    value.genres.every((genre) => typeof genre === "string") &&
+    isNullableNumber(value.runtimeMinutes) &&
+    isNullableNumber(value.typicalEpisodeRuntimeMinutes) &&
+    isNullableNumber(value.episodeCount) &&
+    isNullableNumber(value.seasonCount) &&
+    isNullableNumber(value.seasonNumber)
+  );
 }
 
 function shuffleArray<T>(arr: T[]): T[] {
@@ -145,9 +238,13 @@ export async function fetchTmdbSimilar(
   }
 
   const request = (async () => {
-    const results = await invokeTmdbFunction<TmdbSearchResult[]>("fetch-tmdb-similar", {
-      sourceItems: normalizedSourceItems,
-    });
+    const results = await invokeTmdbFunction<TmdbSearchResult[]>(
+      "fetch-tmdb-similar",
+      {
+        sourceItems: normalizedSourceItems,
+      },
+      isTmdbSearchResultArray,
+    );
 
     similarCache.set(cacheKey, { results, fetchedAt: Date.now() });
     return results;
@@ -197,7 +294,11 @@ export async function fetchTmdbTrending(): Promise<TmdbSearchResult[]> {
   }
 
   const request = (async () => {
-    const results = await invokeTmdbFunction<TmdbSearchResult[]>("fetch-tmdb-trending");
+    const results = await invokeTmdbFunction<TmdbSearchResult[]>(
+      "fetch-tmdb-trending",
+      undefined,
+      isTmdbSearchResultArray,
+    );
     trendingCache = { results, fetchedAt: Date.now() };
     return results;
   })();
@@ -217,15 +318,27 @@ export function resetTmdbRecommendationCachesForTest() {
 }
 
 export function searchTmdbWorks(query: string) {
-  return invokeTmdbFunction<TmdbSearchResult[]>("search-tmdb-works", { query });
+  return invokeTmdbFunction<TmdbSearchResult[]>(
+    "search-tmdb-works",
+    { query },
+    isTmdbSearchResultArray,
+  );
 }
 
 export function fetchTmdbSeasonOptions(result: TmdbSearchResult): Promise<TmdbSeasonOption[]> {
-  return invokeTmdbFunction<TmdbSeasonOption[]>("fetch-tmdb-season-options", { result });
+  return invokeTmdbFunction<TmdbSeasonOption[]>(
+    "fetch-tmdb-season-options",
+    { result },
+    isTmdbSeasonOptionArray,
+  );
 }
 
 export function fetchTmdbWorkDetails(target: TmdbSelectionTarget): Promise<TmdbWorkDetails> {
-  return invokeTmdbFunction<TmdbWorkDetails>("fetch-tmdb-work-details", { target });
+  return invokeTmdbFunction<TmdbWorkDetails>(
+    "fetch-tmdb-work-details",
+    { target },
+    isTmdbWorkDetails,
+  );
 }
 
 function firstNonBlank(...values: Array<string | null | undefined>) {
