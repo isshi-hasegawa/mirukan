@@ -25,6 +25,7 @@ type UpsertFetchedTmdbWorkOptions = {
   seasonNumber?: number;
   workType?: WorkType;
 };
+type OkResponseData = { id: string };
 
 export function shouldRefreshTmdbWork(
   lastSyncedAt: string | null,
@@ -70,11 +71,11 @@ export async function upsertManualWork(
     .maybeSingle();
 
   if (selectError) {
-    return { data: null, error: selectError, count: null, status: 400, statusText: "Bad Request" };
+    return buildErrorIdResponse(selectError);
   }
 
   if (existing) {
-    return { data: existing, error: null, count: null, status: 200, statusText: "OK" };
+    return buildOkIdResponse(existing.id);
   }
 
   const insertResult = await supabase
@@ -103,25 +104,13 @@ export async function upsertManualWork(
     .maybeSingle();
 
   if (conflictError) {
-    return {
-      data: null,
-      error: conflictError,
-      count: null,
-      status: 409,
-      statusText: "Conflict",
-    };
+    return buildErrorIdResponse(conflictError, 409, "Conflict");
   }
 
   if (conflicted) {
-    return { data: { id: conflicted.id }, error: null, count: null, status: 200, statusText: "OK" };
+    return buildOkIdResponse(conflicted.id);
   }
-  return {
-    data: null,
-    error: insertResult.error!,
-    count: null,
-    status: 409,
-    statusText: "Conflict",
-  };
+  return buildErrorIdResponse(insertResult.error!, 409, "Conflict");
 }
 
 export function buildSelectedSeasonTargets(
@@ -275,7 +264,7 @@ async function upsertFetchedTmdbWork(
   });
 
   if (selectError) {
-    return buildBadRequestResponse(selectError);
+    return buildErrorIdResponse(selectError);
   }
 
   if (existing && !shouldRefreshTmdbWork(existing.last_tmdb_synced_at)) {
@@ -298,7 +287,7 @@ async function upsertFetchedTmdbWork(
       .eq("id", existing.id);
 
     if (updateError) {
-      return buildBadRequestResponse(updateError);
+      return buildErrorIdResponse(updateError);
     }
 
     return buildOkIdResponse(existing.id);
@@ -326,10 +315,15 @@ function buildTmdbSeriesTarget(target: TmdbSeasonSelectionTarget): TmdbSearchRes
   };
 }
 
-function buildBadRequestResponse(error: PostgrestError): TmdbWorkIdResponse {
-  return { data: null, error, count: null, status: 400, statusText: "Bad Request" };
+function buildErrorIdResponse(
+  error: PostgrestError,
+  status = 400,
+  statusText = "Bad Request",
+): TmdbWorkIdResponse {
+  return { success: false, data: null, error, count: null, status, statusText };
 }
 
 function buildOkIdResponse(id: string): TmdbWorkIdResponse {
-  return { data: { id }, error: null, count: null, status: 200, statusText: "OK" };
+  const data: OkResponseData = { id };
+  return { success: true, data, error: null, count: null, status: 200, statusText: "OK" };
 }
