@@ -544,7 +544,7 @@ function mapMultiSearchResult(
   };
 }
 
-export async function searchTmdbWorks(query: string) {
+async function fetchSearchResults(query: string): Promise<TmdbSearchResult[]> {
   const json = await fetchTmdbJson<TmdbMultiSearchResponse>("/search/multi", {
     query,
     language: "ja-JP",
@@ -561,6 +561,32 @@ export async function searchTmdbWorks(query: string) {
   });
 
   return enrichWithWatchProviders(base);
+}
+
+function buildFallbackQueries(query: string): string[] {
+  const variants: string[] = [];
+
+  // ・をスペースに置換（例: "インディ・ジョーンズ" → "インディ ジョーンズ"）
+  const withSpace = query.replace(/・/g, " ").replace(/\s+/g, " ").trim();
+  if (withSpace !== query) variants.push(withSpace);
+
+  // ・を除去（例: "インディ・ジョーンズ" → "インディジョーンズ"）
+  const withoutDot = query.replace(/・/g, "").trim();
+  if (withoutDot !== query && withoutDot !== withSpace) variants.push(withoutDot);
+
+  return variants;
+}
+
+export async function searchTmdbWorks(query: string): Promise<TmdbSearchResult[]> {
+  const results = await fetchSearchResults(query);
+  if (results.length > 0) return results;
+
+  for (const fallback of buildFallbackQueries(query)) {
+    const fallbackResults = await fetchSearchResults(fallback);
+    if (fallbackResults.length > 0) return fallbackResults;
+  }
+
+  return results;
 }
 
 async function fetchTrendingPage(page: number): Promise<TmdbSearchResult[]> {
