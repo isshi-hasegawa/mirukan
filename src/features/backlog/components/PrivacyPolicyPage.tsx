@@ -81,7 +81,9 @@ const sections = [
     title: "第10条（お問い合わせ窓口）",
     body: [
       "本ポリシーに関するお問い合わせ、不具合報告、開示等の請求は、以下の窓口で受け付けます。",
+      "メールアドレス: support@mirukan.app",
       "GitHub Issues: https://github.com/isshi-hasegawa/mirukan/issues",
+      "運営者は、必要に応じて本サービスまたはリポジトリ上で別途連絡手段を案内することがあります。",
     ],
   },
 ] as const;
@@ -100,7 +102,7 @@ export function PrivacyPolicyPage() {
 
         <header className="mb-8 grid gap-1">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Privacy</p>
-          <h1 className="text-2xl font-semibold text-foreground">プライバシーポリシー</h1>
+          <h1 className="text-xl font-semibold text-foreground">プライバシーポリシー</h1>
           <div className="text-sm text-muted-foreground">
             <p>制定日: 2026年4月4日</p>
             <p>改定日: 2026年4月5日</p>
@@ -116,7 +118,17 @@ export function PrivacyPolicyPage() {
             <section key={section.title} className="grid gap-2">
               <h2 className="text-base font-semibold text-foreground">{section.title}</h2>
               {section.body.map((paragraph) =>
-                paragraph.startsWith("GitHub Issues: ") ? (
+                paragraph.startsWith("メールアドレス: ") ? (
+                  <p key={paragraph}>
+                    メールアドレス:{" "}
+                    <a
+                      href="mailto:support@mirukan.app"
+                      className="underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
+                    >
+                      support@mirukan.app
+                    </a>
+                  </p>
+                ) : paragraph.startsWith("GitHub Issues: ") ? (
                   <p key={paragraph}>
                     GitHub Issues:{" "}
                     <a
