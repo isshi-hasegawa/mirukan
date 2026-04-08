@@ -1,10 +1,4 @@
-import { XMarkIcon } from "@heroicons/react/24/outline";
-import { useEffect } from "react";
-import { createPortal } from "react-dom";
-
-type Props = {
-  onClose: () => void;
-};
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
 const sections = [
   {
@@ -116,77 +110,49 @@ const sections = [
   },
 ] as const;
 
-export function TermsOfServiceDialog({ onClose }: Props) {
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    };
+export function TermsOfServicePage() {
+  return (
+    <div className="min-h-dvh bg-background text-foreground">
+      <div className="mx-auto max-w-[760px] px-6 py-10 max-[720px]:px-5 max-[720px]:py-8">
+        <a
+          href="/"
+          className="mb-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeftIcon className="h-4 w-4" />
+          みるカンに戻る
+        </a>
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-50 grid place-items-center bg-[rgba(51,34,23,0.45)] p-5 backdrop-blur-[10px]"
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      <section
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="terms-of-service-title"
-        className="w-[min(calc(100%-32px),760px)] rounded-[28px] border border-border bg-[#2a2a2a] p-6 shadow-[0_24px_60px_rgba(0,0,0,0.5)] max-[720px]:rounded-[22px] max-[720px]:p-5"
-      >
-        <div className="mb-5 flex items-start justify-between gap-4">
-          <div className="grid gap-1">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Terms</p>
-            <h2 id="terms-of-service-title" className="text-xl font-semibold text-foreground">
-              利用規約
-            </h2>
-            <div className="text-sm text-muted-foreground">
-              <p>制定日: 2026年4月4日</p>
-              <p>改定日: 2026年4月5日</p>
-            </div>
+        <header className="mb-8 grid gap-1">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Terms</p>
+          <h1 className="text-lg font-semibold text-foreground">利用規約</h1>
+          <div className="text-sm text-muted-foreground">
+            <p>制定日: 2026年4月4日</p>
+            <p>改定日: 2026年4月5日</p>
           </div>
-          <button
-            type="button"
-            aria-label="利用規約を閉じる"
-            className="rounded-full border border-border bg-background/40 p-2 text-muted-foreground transition-colors hover:text-foreground"
-            onClick={onClose}
-          >
-            <XMarkIcon className="h-5 w-5" />
-          </button>
-        </div>
+        </header>
 
-        <div className="max-h-[min(70vh,720px)] overflow-y-auto pr-1">
-          <div className="grid gap-5 text-sm leading-7 text-muted-foreground">
-            <p>
-              この利用規約（以下「本規約」といいます。）は、「みるカン」の利用条件を定めるものです。ユーザーは、本規約に同意した上で本サービスを利用するものとします。
-            </p>
+        <div className="grid gap-5 text-sm leading-7 text-muted-foreground">
+          <p>
+            この利用規約（以下「本規約」といいます。）は、「みるカン」の利用条件を定めるものです。ユーザーは、本規約に同意した上で本サービスを利用するものとします。
+          </p>
 
-            {sections.map((section) => (
-              <section key={section.title} className="grid gap-2">
-                <h3 className="text-base font-semibold text-foreground">{section.title}</h3>
-                {section.body.map((paragraph) => (
-                  <p key={paragraph}>{paragraph}</p>
-                ))}
-                {"items" in section ? (
-                  <ul className="grid gap-2 pl-5 list-disc">
-                    {section.items.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                ) : null}
-              </section>
-            ))}
-          </div>
+          {sections.map((section) => (
+            <section key={section.title} className="grid gap-2">
+              <h2 className="text-base font-semibold text-foreground">{section.title}</h2>
+              {section.body.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
+              {"items" in section ? (
+                <ul className="grid gap-2 pl-5 list-disc">
+                  {section.items.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              ) : null}
+            </section>
+          ))}
         </div>
-      </section>
-    </div>,
-    document.body,
+      </div>
+    </div>
   );
 }

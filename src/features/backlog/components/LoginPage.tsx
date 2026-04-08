@@ -5,8 +5,6 @@ import { Label } from "@/components/ui/label.tsx";
 import { supabase } from "../../../lib/supabase.ts";
 import { AuthScreen } from "./AuthScreen.tsx";
 import { BrandWordmark } from "./BrandWordmark.tsx";
-import { PrivacyPolicyDialog } from "./PrivacyPolicyDialog.tsx";
-import { TermsOfServiceDialog } from "./TermsOfServiceDialog.tsx";
 
 type Props = {
   isSessionLoading?: boolean;
@@ -73,8 +71,6 @@ export function LoginPage({
   const [errorMessage, setErrorMessage] = useState("");
   const [hasSentConfirmationEmail, setHasSentConfirmationEmail] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isTermsOpen, setIsTermsOpen] = useState(false);
-  const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
 
   const isSignUpMode = authMode === "signUp";
   const isForgotPasswordMode = authMode === "forgotPassword";
@@ -418,21 +414,23 @@ export function LoginPage({
                 {isSignUpMode ? (
                   <p className="text-xs leading-6 text-muted-foreground">
                     登録することで、
-                    <button
-                      type="button"
+                    <a
+                      href="/terms"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="mx-1 underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
-                      onClick={() => setIsTermsOpen(true)}
                     >
                       利用規約
-                    </button>
+                    </a>
                     および
-                    <button
-                      type="button"
+                    <a
+                      href="/privacy"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="mx-1 underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
-                      onClick={() => setIsPrivacyOpen(true)}
                     >
                       プライバシーポリシー
-                    </button>
+                    </a>
                     に同意したものとみなします。
                   </p>
                 ) : null}
@@ -460,20 +458,22 @@ export function LoginPage({
                         パスワードを忘れた場合
                       </button>
                     ) : null}
-                    <button
-                      type="button"
+                    <a
+                      href="/terms"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
-                      onClick={() => setIsTermsOpen(true)}
                     >
                       利用規約
-                    </button>
-                    <button
-                      type="button"
+                    </a>
+                    <a
+                      href="/privacy"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
-                      onClick={() => setIsPrivacyOpen(true)}
                     >
                       プライバシーポリシー
-                    </button>
+                    </a>
                   </div>
                 </div>
               </>
@@ -489,8 +489,6 @@ export function LoginPage({
           ) : null}
         </form>
       )}
-      {isTermsOpen ? <TermsOfServiceDialog onClose={() => setIsTermsOpen(false)} /> : null}
-      {isPrivacyOpen ? <PrivacyPolicyDialog onClose={() => setIsPrivacyOpen(false)} /> : null}
     </AuthScreen>
   );
 }

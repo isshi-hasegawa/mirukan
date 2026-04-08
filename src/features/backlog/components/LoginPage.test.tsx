@@ -41,8 +41,8 @@ describe("LoginPage", () => {
         "みるカンは、積んだ映画やシリーズを整理して、次に何を見るか決めるアプリです。",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "利用規約" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "プライバシーポリシー" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "利用規約" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "プライバシーポリシー" })).toBeInTheDocument();
     expect(screen.queryByText("akari@example.com")).not.toBeInTheDocument();
     expect(screen.queryByText("LOCAL AUTH")).not.toBeInTheDocument();
   });
@@ -63,34 +63,26 @@ describe("LoginPage", () => {
     expect(screen.getByLabelText("パスワード")).toHaveValue("password123");
   });
 
-  test("ログイン画面から利用規約を開ける", async () => {
-    const user = userEvent.setup();
-
+  test("ログイン画面に利用規約リンクが表示される", () => {
     render(<LoginPage />);
 
-    await user.click(screen.getByRole("button", { name: "利用規約" }));
-
-    expect(await screen.findByRole("dialog", { name: "利用規約" })).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "この利用規約（以下「本規約」といいます。）は、「みるカン」の利用条件を定めるものです。ユーザーは、本規約に同意した上で本サービスを利用するものとします。",
-      ),
-    ).toBeInTheDocument();
-    expect(screen.getByText("第2条（運営者）")).toBeInTheDocument();
+    const links = screen.getAllByRole("link", { name: "利用規約" });
+    expect(links.length).toBeGreaterThan(0);
+    for (const link of links) {
+      expect(link).toHaveAttribute("href", "/terms");
+      expect(link).toHaveAttribute("target", "_blank");
+    }
   });
 
-  test("ログイン画面からプライバシーポリシーを開ける", async () => {
-    const user = userEvent.setup();
-
+  test("ログイン画面にプライバシーポリシーリンクが表示される", () => {
     render(<LoginPage />);
 
-    await user.click(screen.getByRole("button", { name: "プライバシーポリシー" }));
-
-    expect(await screen.findByRole("dialog", { name: "プライバシーポリシー" })).toBeInTheDocument();
-    expect(screen.getByText("第2条（取得する情報）")).toBeInTheDocument();
-    expect(
-      screen.getByText("Supabase: 認証、データ保存、Edge Functions 実行のため"),
-    ).toBeInTheDocument();
+    const links = screen.getAllByRole("link", { name: "プライバシーポリシー" });
+    expect(links.length).toBeGreaterThan(0);
+    for (const link of links) {
+      expect(link).toHaveAttribute("href", "/privacy");
+      expect(link).toHaveAttribute("target", "_blank");
+    }
   });
 
   test("送信中は入力と送信を無効化し、完了後に再入力できる", async () => {
