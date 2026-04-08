@@ -343,7 +343,12 @@ export function LoginPage({
                   <p className="text-sm leading-6 text-muted-foreground">
                     登録済みのメールアドレスにパスワードリセット用のリンクを送信します。
                   </p>
-                  <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+                  <Button
+                    type="submit"
+                    className="mx-auto w-full max-w-[400px]"
+                    size="lg"
+                    disabled={isSubmitting}
+                  >
                     {isSubmitting ? "送信しています..." : "リセットメールを送信"}
                   </Button>
                 </>
@@ -396,7 +401,22 @@ export function LoginPage({
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="password">パスワード</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password">パスワード</Label>
+                    {!isSignUpMode ? (
+                      <button
+                        type="button"
+                        className="text-sm text-muted-foreground underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
+                        onClick={() => {
+                          setResetEmail(loginEmail);
+                          setAuthMode("forgotPassword");
+                          setErrorMessage("");
+                        }}
+                      >
+                        パスワードを忘れた場合
+                      </button>
+                    ) : null}
+                  </div>
                   <Input
                     id="password"
                     name="password"
@@ -481,7 +501,12 @@ export function LoginPage({
                     に同意したものとみなします。
                   </p>
                 ) : null}
-                <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+                <Button
+                  type="submit"
+                  className="mx-auto w-full max-w-[400px]"
+                  size="lg"
+                  disabled={isSubmitting}
+                >
                   {isSubmitting
                     ? isSignUpMode
                       ? "確認メールを送信しています..."
@@ -498,7 +523,7 @@ export function LoginPage({
                 <button
                   type="button"
                   aria-label="Googleでログイン"
-                  className="group relative box-border h-10 w-full max-w-[400px] overflow-hidden rounded-[20px] border border-[#747775] bg-white px-3 text-center align-middle font-['Roboto',Arial,sans-serif] text-sm tracking-[0.25px] text-[#1f1f1f] whitespace-nowrap outline-none transition-[background-color,border-color,box-shadow] duration-[218ms] ease-in-out hover:shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] focus-visible:shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] disabled:cursor-default disabled:border-[#1f1f1f1f] disabled:bg-[#ffffff61]"
+                  className="group relative box-border mx-auto h-10 w-full max-w-[400px] overflow-hidden rounded-[20px] border border-[#747775] bg-white px-3 text-center align-middle font-['Roboto',Arial,sans-serif] text-sm tracking-[0.25px] text-[#1f1f1f] whitespace-nowrap outline-none transition-[background-color,border-color,box-shadow] duration-[218ms] ease-in-out hover:shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] focus-visible:shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] disabled:cursor-default disabled:border-[#1f1f1f1f] disabled:bg-[#ffffff61]"
                   disabled={isSubmitting}
                   onClick={() => void handleGoogleLogin()}
                 >
@@ -518,19 +543,6 @@ export function LoginPage({
                 </button>
                 <div className="flex justify-center">
                   <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                    {!isSignUpMode ? (
-                      <button
-                        type="button"
-                        className="underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
-                        onClick={() => {
-                          setResetEmail(loginEmail);
-                          setAuthMode("forgotPassword");
-                          setErrorMessage("");
-                        }}
-                      >
-                        パスワードを忘れた場合
-                      </button>
-                    ) : null}
                     <a
                       href="/terms"
                       target="_blank"
