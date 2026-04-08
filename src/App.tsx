@@ -4,6 +4,8 @@ import { supabase } from "./lib/supabase.ts";
 import { LoginPage } from "./features/backlog/components/LoginPage.tsx";
 import { BoardPage } from "./features/backlog/components/BoardPage.tsx";
 import { ResetPasswordPage } from "./features/backlog/components/ResetPasswordPage.tsx";
+import { PrivacyPolicyPage } from "./features/backlog/components/PrivacyPolicyPage.tsx";
+import { TermsOfServicePage } from "./features/backlog/components/TermsOfServicePage.tsx";
 
 function isPasswordRecoveryLocation(location: Pick<Location, "hash" | "search">) {
   const searchParams = new URLSearchParams(location.search);
@@ -55,7 +57,7 @@ function clearPasswordRecoveryLocation() {
   }
 }
 
-export function App() {
+function AuthenticatedApp() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(() =>
     isPasswordRecoveryLocation(window.location),
@@ -100,4 +102,11 @@ export function App() {
   }
 
   return <BoardPage session={session} />;
+}
+
+export function App() {
+  const pathname = window.location.pathname;
+  if (pathname === "/privacy") return <PrivacyPolicyPage />;
+  if (pathname === "/terms") return <TermsOfServicePage />;
+  return <AuthenticatedApp />;
 }
