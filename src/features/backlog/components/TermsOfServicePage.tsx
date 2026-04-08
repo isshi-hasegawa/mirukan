@@ -124,7 +124,7 @@ export function TermsOfServicePage() {
 
         <header className="mb-8 grid gap-1">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Terms</p>
-          <h1 className="text-xl font-semibold text-foreground">利用規約</h1>
+          <h1 className="text-lg font-semibold text-foreground">利用規約</h1>
           <div className="text-sm text-muted-foreground">
             <p>制定日: 2026年4月4日</p>
             <p>改定日: 2026年4月5日</p>
