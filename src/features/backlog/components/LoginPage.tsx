@@ -15,23 +15,30 @@ type AuthMode = "login" | "signUp" | "forgotPassword";
 
 function GoogleIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 48 48"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
       <path
-        d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z"
-        fill="#4285F4"
-      />
-      <path
-        d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18Z"
-        fill="#34A853"
-      />
-      <path
-        d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332Z"
-        fill="#FBBC05"
-      />
-      <path
-        d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58Z"
         fill="#EA4335"
+        d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
       />
+      <path
+        fill="#4285F4"
+        d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+      />
+      <path
+        fill="#34A853"
+        d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+      />
+      <path fill="none" d="M0 0h48v48H0z" />
     </svg>
   );
 }
@@ -488,19 +495,27 @@ export function LoginPage({
                   または
                   <div className="h-px flex-1 bg-border/60" />
                 </div>
-                <Button
+                <button
                   type="button"
-                  variant="outline"
-                  className="relative w-full justify-center rounded-full border-[#dadce0] bg-white px-4 font-medium text-[#1f1f1f] shadow-[0_1px_2px_rgba(60,64,67,0.16),0_1px_3px_1px_rgba(60,64,67,0.08)] hover:bg-[#f8fafd] hover:text-[#1f1f1f] focus-visible:border-[#4285f4] focus-visible:ring-[#4285f4]/25 dark:border-[#dadce0] dark:bg-white dark:text-[#1f1f1f] dark:hover:bg-[#f8fafd] disabled:bg-white disabled:text-[#1f1f1f]"
-                  size="lg"
+                  aria-label="Googleでログイン"
+                  className="group relative box-border h-10 w-full max-w-[400px] overflow-hidden rounded-[20px] border border-[#747775] bg-white px-3 text-center align-middle font-['Roboto',Arial,sans-serif] text-sm tracking-[0.25px] text-[#1f1f1f] whitespace-nowrap outline-none transition-[background-color,border-color,box-shadow] duration-[218ms] ease-in-out hover:shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] focus-visible:shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] disabled:cursor-default disabled:border-[#1f1f1f1f] disabled:bg-[#ffffff61]"
                   disabled={isSubmitting}
                   onClick={() => void handleGoogleLogin()}
                 >
-                  <span className="absolute left-4 flex size-[18px] items-center justify-center">
-                    <GoogleIcon />
+                  <span
+                    aria-hidden="true"
+                    className="absolute inset-0 bg-[#303030] opacity-0 transition-opacity duration-[218ms] group-hover:opacity-[0.08] group-focus-visible:opacity-[0.12] group-active:opacity-[0.12]"
+                  />
+                  <span className="relative flex h-full w-full items-center justify-between">
+                    <span className="mr-2.5 flex h-5 min-w-5 w-5 items-center justify-center">
+                      <GoogleIcon />
+                    </span>
+                    <span className="grow overflow-hidden text-ellipsis align-top font-medium opacity-100 group-disabled:opacity-[0.38]">
+                      Googleでログイン
+                    </span>
+                    <span className="sr-only">Googleでログイン</span>
                   </span>
-                  <span>Googleでログイン</span>
-                </Button>
+                </button>
                 <div className="flex justify-center">
                   <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                     {!isSignUpMode ? (
