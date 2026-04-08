@@ -401,7 +401,22 @@ export function LoginPage({
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="password">パスワード</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password">パスワード</Label>
+                    {!isSignUpMode ? (
+                      <button
+                        type="button"
+                        className="text-sm text-muted-foreground underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
+                        onClick={() => {
+                          setResetEmail(loginEmail);
+                          setAuthMode("forgotPassword");
+                          setErrorMessage("");
+                        }}
+                      >
+                        パスワードを忘れた場合
+                      </button>
+                    ) : null}
+                  </div>
                   <Input
                     id="password"
                     name="password"
@@ -528,19 +543,6 @@ export function LoginPage({
                 </button>
                 <div className="flex justify-center">
                   <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                    {!isSignUpMode ? (
-                      <button
-                        type="button"
-                        className="underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
-                        onClick={() => {
-                          setResetEmail(loginEmail);
-                          setAuthMode("forgotPassword");
-                          setErrorMessage("");
-                        }}
-                      >
-                        パスワードを忘れた場合
-                      </button>
-                    ) : null}
                     <a
                       href="/terms"
                       target="_blank"
