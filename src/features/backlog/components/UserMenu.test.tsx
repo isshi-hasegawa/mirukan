@@ -52,7 +52,7 @@ describe("UserMenu", () => {
     expect(screen.getByRole("img", { name: "TMDB" })).toBeInTheDocument();
   });
 
-  test("メニューから利用規約を開ける", async () => {
+  test("メニューから利用規約ページを新しいタブで開ける", async () => {
     const user = userEvent.setup();
 
     render(<UserMenu email="user@example.com" />);
@@ -62,12 +62,10 @@ describe("UserMenu", () => {
     await user.keyboard("{Enter}");
     await user.click(await screen.findByRole("menuitem", { name: "利用規約" }));
 
-    expect(screen.getByRole("dialog", { name: "利用規約" })).toBeInTheDocument();
-    expect(screen.getByText("第6条（禁止事項）")).toBeInTheDocument();
-    expect(screen.getByText("第12条（個人情報の取扱い）")).toBeInTheDocument();
+    expect(openMock).toHaveBeenCalledWith("/terms", "_blank", "noopener,noreferrer");
   });
 
-  test("メニューからプライバシーポリシーを開ける", async () => {
+  test("メニューからプライバシーポリシーページを新しいタブで開ける", async () => {
     const user = userEvent.setup();
 
     render(<UserMenu email="user@example.com" />);
@@ -77,11 +75,7 @@ describe("UserMenu", () => {
     await user.keyboard("{Enter}");
     await user.click(await screen.findByRole("menuitem", { name: "プライバシーポリシー" }));
 
-    expect(screen.getByRole("dialog", { name: "プライバシーポリシー" })).toBeInTheDocument();
-    expect(screen.getByText("第10条（お問い合わせ窓口）")).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "github.com/isshi-hasegawa/mirukan/issues" }),
-    ).toHaveAttribute("href", "https://github.com/isshi-hasegawa/mirukan/issues/new/choose");
+    expect(openMock).toHaveBeenCalledWith("/privacy", "_blank", "noopener,noreferrer");
   });
 
   test("メニューから GitHub Issues の不具合報告導線を開ける", async () => {
