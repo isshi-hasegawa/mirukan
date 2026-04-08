@@ -28,10 +28,10 @@ export function getNextSortOrder(items: BacklogItem[], status: BacklogStatus) {
   return currentMax + 1000;
 }
 
-export function getTopSortOrder(items: BacklogItem[], status: BacklogStatus): number {
+export function getTopSortOrder(items: BacklogItem[], status: BacklogStatus, count = 1): number {
   const statusItems = items.filter((item) => item.status === status);
   if (statusItems.length === 0) return 1000;
-  return Math.min(...statusItems.map((item) => item.sort_order)) - 1000;
+  return Math.min(...statusItems.map((item) => item.sort_order)) - count * 1000;
 }
 
 type BacklogUpsertAction = { type: "insert"; workId: string } | { type: "move"; item: BacklogItem };

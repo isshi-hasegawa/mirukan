@@ -60,7 +60,7 @@ export async function upsertBacklogItemsToStatus(
     return { error: null };
   }
 
-  let sortOrder = getTopSortOrder(items, targetStatus);
+  let sortOrder = getTopSortOrder(items, targetStatus, plan.actions.length);
   const rows = plan.actions.map((action) => {
     const row =
       action.type === "move"
