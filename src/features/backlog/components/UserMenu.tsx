@@ -8,8 +8,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.tsx";
 import { AboutDialog } from "./AboutDialog.tsx";
-import { PrivacyPolicyDialog } from "./PrivacyPolicyDialog.tsx";
-import { TermsOfServiceDialog } from "./TermsOfServiceDialog.tsx";
 
 type Props = {
   email: string | null | undefined;
@@ -19,8 +17,6 @@ const BUG_REPORT_URL = "https://github.com/isshi-hasegawa/mirukan/issues/new/cho
 
 export function UserMenu({ email }: Props) {
   const [isAboutOpen, setIsAboutOpen] = useState(false);
-  const [isTermsOpen, setIsTermsOpen] = useState(false);
-  const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const displayEmail = email ?? "signed-in user";
   // 小画面用：最初の2文字のみ表示
   const shortEmail = displayEmail.slice(0, 2);
@@ -45,14 +41,14 @@ export function UserMenu({ email }: Props) {
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
-              setIsTermsOpen(true);
+              window.open("/terms", "_blank", "noopener,noreferrer");
             }}
           >
             利用規約
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
-              setIsPrivacyOpen(true);
+              window.open("/privacy", "_blank", "noopener,noreferrer");
             }}
           >
             プライバシーポリシー
@@ -75,8 +71,6 @@ export function UserMenu({ email }: Props) {
       </DropdownMenu>
 
       {isAboutOpen ? <AboutDialog onClose={() => setIsAboutOpen(false)} /> : null}
-      {isTermsOpen ? <TermsOfServiceDialog onClose={() => setIsTermsOpen(false)} /> : null}
-      {isPrivacyOpen ? <PrivacyPolicyDialog onClose={() => setIsPrivacyOpen(false)} /> : null}
     </>
   );
 }
