@@ -491,13 +491,15 @@ export function LoginPage({
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full gap-2"
+                  className="relative w-full justify-center rounded-full border-[#dadce0] bg-white px-4 font-medium text-[#1f1f1f] shadow-[0_1px_2px_rgba(60,64,67,0.16),0_1px_3px_1px_rgba(60,64,67,0.08)] hover:bg-[#f8fafd] hover:text-[#1f1f1f] focus-visible:border-[#4285f4] focus-visible:ring-[#4285f4]/25 dark:border-[#dadce0] dark:bg-white dark:text-[#1f1f1f] dark:hover:bg-[#f8fafd] disabled:bg-white disabled:text-[#1f1f1f]"
                   size="lg"
                   disabled={isSubmitting}
                   onClick={() => void handleGoogleLogin()}
                 >
-                  <GoogleIcon />
-                  Googleでログイン
+                  <span className="absolute left-4 flex size-[18px] items-center justify-center">
+                    <GoogleIcon />
+                  </span>
+                  <span>Googleでログイン</span>
                 </Button>
                 <div className="flex justify-center">
                   <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground">

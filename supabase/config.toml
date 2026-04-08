@@ -54,11 +54,3 @@ content_path = "./supabase/templates/recovery.html"
 [auth.email.template.email_change]
 subject = "みるカン - メールアドレス変更の確認"
 content_path = "./supabase/templates/email_change.html"
-
-# Google OAuth プロバイダー設定
-# client_id / secret は Google Cloud Console で取得し、環境変数または Supabase ダッシュボードで設定する
-[auth.external.google]
-enabled = true
-client_id = "env(SUPABASE_AUTH_GOOGLE_CLIENT_ID)"
-secret = "env(SUPABASE_AUTH_GOOGLE_SECRET)"
-# redirect_uri はローカル開発では空のままで可（Supabase が自動補完）
