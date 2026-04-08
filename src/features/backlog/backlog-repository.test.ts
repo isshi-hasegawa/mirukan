@@ -216,18 +216,18 @@ describe("upsertBacklogItemsToStatus", () => {
         work_id: "work-move",
         primary_platform: null,
         note: null,
+        sort_order: 1000,
+      },
+      {
+        work_id: "work-new",
+        primary_platform: "netflix",
+        note: "新規メモ",
         sort_order: 2000,
       },
       {
         work_id: "work-top",
         primary_platform: null,
         note: null,
-        sort_order: 3000,
-      },
-      {
-        work_id: "work-new",
-        primary_platform: "netflix",
-        note: "新規メモ",
         sort_order: 3000,
       },
     ]);

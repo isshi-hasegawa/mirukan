@@ -4,6 +4,7 @@ import {
   buildDetailFieldUpdate,
   buildMoveToStatusConfirmMessage,
   getNextSortOrder,
+  getTopSortOrder,
   getSortOrderForDrop,
   getSortOrderForStatusChange,
   normalizeBacklogItems,
@@ -84,6 +85,25 @@ describe("getNextSortOrder", () => {
 
     expect(getNextSortOrder(items, "stacked")).toBe(3000);
     expect(getNextSortOrder(items, "watching")).toBe(1000);
+  });
+});
+
+describe("getTopSortOrder", () => {
+  test("空列なら 1000 を返す", () => {
+    expect(getTopSortOrder([], "stacked")).toBe(1000);
+    expect(getTopSortOrder([], "stacked", 3)).toBe(1000);
+  });
+
+  test("1件挿入では最小 sort_order の 1000 前を返す", () => {
+    const items = [createItem("a", "stacked", 1000), createItem("b", "stacked", 2000)];
+    expect(getTopSortOrder(items, "stacked")).toBe(0);
+  });
+
+  test("複数件挿入では count 分手前から開始することで衝突を防ぐ", () => {
+    const items = [createItem("a", "stacked", 1000), createItem("b", "stacked", 2000)];
+    // 3件追加: 開始 sort_order は 1000 - 3*1000 = -2000
+    // → -2000, -1000, 0 が割り当てられ、既存の 1000, 2000 と衝突しない
+    expect(getTopSortOrder(items, "stacked", 3)).toBe(-2000);
   });
 });
 
