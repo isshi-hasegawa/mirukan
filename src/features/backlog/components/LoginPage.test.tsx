@@ -8,6 +8,7 @@ const supabaseMock = vi.hoisted(() => ({
     signInWithPassword: vi.fn(),
     signUp: vi.fn(),
     resetPasswordForEmail: vi.fn(),
+    signInWithOAuth: vi.fn(),
   },
 }));
 
@@ -27,6 +28,7 @@ describe("LoginPage", () => {
       error: null,
     });
     supabaseMock.auth.resetPasswordForEmail.mockResolvedValue({ error: null });
+    supabaseMock.auth.signInWithOAuth.mockResolvedValue({ error: null });
   });
 
   test("ブランドロゴと説明を表示する", () => {
@@ -316,5 +318,63 @@ describe("LoginPage", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "ログイン" })).not.toBeInTheDocument();
+  });
+
+  test("ログイン画面に Google ログインボタンを表示する", () => {
+    render(<LoginPage showDevLoginHint={false} />);
+
+    expect(screen.getByRole("button", { name: "Googleでログイン" })).toBeInTheDocument();
+  });
+
+  test("新規登録画面にも Google ログインボタンを表示する", async () => {
+    const user = userEvent.setup();
+
+    render(<LoginPage showDevLoginHint={false} />);
+
+    await user.click(screen.getByRole("button", { name: "新規登録" }));
+
+    expect(screen.getByRole("button", { name: "Googleでログイン" })).toBeInTheDocument();
+  });
+
+  test("Google ログインボタンをクリックすると signInWithOAuth を呼び出す", async () => {
+    const user = userEvent.setup();
+
+    render(<LoginPage showDevLoginHint={false} />);
+
+    await user.click(screen.getByRole("button", { name: "Googleでログイン" }));
+
+    expect(supabaseMock.auth.signInWithOAuth).toHaveBeenCalledWith({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
+  });
+
+  test("Google ログイン失敗時はエラーメッセージを表示する", async () => {
+    const user = userEvent.setup();
+
+    supabaseMock.auth.signInWithOAuth.mockResolvedValue({
+      error: { message: "OAuth error" },
+    });
+
+    render(<LoginPage showDevLoginHint={false} />);
+
+    await user.click(screen.getByRole("button", { name: "Googleでログイン" }));
+
+    expect(
+      await screen.findByText("Googleログインに失敗しました。再度お試しください。"),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Googleでログイン" })).toBeEnabled();
+  });
+
+  test("パスワードリセット画面では Google ログインボタンを表示しない", async () => {
+    const user = userEvent.setup();
+
+    render(<LoginPage showDevLoginHint={false} />);
+
+    await user.click(screen.getByRole("button", { name: "パスワードを忘れた場合" }));
+
+    expect(screen.queryByRole("button", { name: "Googleでログイン" })).not.toBeInTheDocument();
   });
 });
