@@ -343,7 +343,12 @@ export function LoginPage({
                   <p className="text-sm leading-6 text-muted-foreground">
                     登録済みのメールアドレスにパスワードリセット用のリンクを送信します。
                   </p>
-                  <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+                  <Button
+                    type="submit"
+                    className="mx-auto w-full max-w-[400px]"
+                    size="lg"
+                    disabled={isSubmitting}
+                  >
                     {isSubmitting ? "送信しています..." : "リセットメールを送信"}
                   </Button>
                 </>
@@ -481,7 +486,12 @@ export function LoginPage({
                     に同意したものとみなします。
                   </p>
                 ) : null}
-                <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+                <Button
+                  type="submit"
+                  className="mx-auto w-full max-w-[400px]"
+                  size="lg"
+                  disabled={isSubmitting}
+                >
                   {isSubmitting
                     ? isSignUpMode
                       ? "確認メールを送信しています..."
