@@ -2,6 +2,7 @@ import { useId } from "react";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { DocumentTextIcon, FilmIcon, TvIcon } from "@heroicons/react/24/outline";
+import type { PrimaryPlatform } from "../types.ts";
 import { PlatformPicker } from "./PlatformPicker.tsx";
 
 type Props = {
@@ -9,12 +10,12 @@ type Props = {
   resolvedTitle: string;
   resolvedWorkType: "movie" | "series";
   note: string;
-  primaryPlatform: string;
+  primaryPlatform: PrimaryPlatform;
   formMessage: string;
   pendingSaveMessage: string | null;
   onChangeTitle: (title: string) => void;
   onChangeWorkType: (workType: "movie" | "series") => void;
-  onChangePrimaryPlatform: (platform: string) => void;
+  onChangePrimaryPlatform: (platform: PrimaryPlatform) => void;
   onChangeNote: (note: string) => void;
   onConfirmPendingSave: () => void;
   onCancelPendingSave: () => void;

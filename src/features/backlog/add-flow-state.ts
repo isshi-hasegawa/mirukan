@@ -1,21 +1,21 @@
 import type { TmdbSearchResult } from "../../lib/tmdb.ts";
-import type { WorkType } from "./types.ts";
+import type { PrimaryPlatform, WorkType } from "./types.ts";
 
 type AddFlowDraftState = {
-  primaryPlatform: string;
+  primaryPlatform: PrimaryPlatform;
   note: string;
   manualTitle: string;
   workType: Extract<WorkType, "movie" | "series">;
 };
 
 type AddFlowDraftAction =
-  | { type: "set_primary_platform"; primaryPlatform: string }
+  | { type: "set_primary_platform"; primaryPlatform: PrimaryPlatform }
   | { type: "set_note"; note: string }
   | { type: "set_manual_title"; manualTitle: string }
   | { type: "set_work_type"; workType: Extract<WorkType, "movie" | "series"> };
 
 export const initialAddFlowDraftState: AddFlowDraftState = {
-  primaryPlatform: "",
+  primaryPlatform: null,
   note: "",
   manualTitle: "",
   workType: "movie",

@@ -2,13 +2,13 @@ import type { PrimaryPlatform } from "../types.ts";
 import { platformBackgrounds, platformIcons, platformKeys, platformLabels } from "../constants.ts";
 
 type Props = {
-  value: string;
-  onChange: (value: string) => void;
+  value: PrimaryPlatform;
+  onChange: (value: PrimaryPlatform) => void;
 };
 
 export function PlatformPicker({ value, onChange }: Props) {
   const handlePlatformClick = (platform: Exclude<PrimaryPlatform, null>) => {
-    onChange(value === platform ? "" : platform);
+    onChange(value === platform ? null : platform);
   };
 
   return (

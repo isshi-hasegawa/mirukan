@@ -7,7 +7,7 @@ import {
   upsertManualWork,
   upsertTmdbWork,
 } from "../work-repository.ts";
-import type { BacklogItem, WorkType } from "../types.ts";
+import type { BacklogItem, PrimaryPlatform, WorkType } from "../types.ts";
 import {
   buildSelectedSubject,
   buildStackedBacklogOptions,
@@ -23,7 +23,7 @@ type UseAddSubmitOptions = {
   isTvSelection: boolean;
   resolvedTitle: string;
   resolvedWorkType: WorkType;
-  primaryPlatform: string;
+  primaryPlatform: PrimaryPlatform;
   note: string;
   onClose: () => void;
   onAdded: () => void | Promise<void>;
@@ -34,7 +34,7 @@ type PendingStackedSave = {
   workIds: string[];
   backlogOptions: {
     note: string | null;
-    primaryPlatform: string | null;
+    primaryPlatform: PrimaryPlatform;
   };
 };
 

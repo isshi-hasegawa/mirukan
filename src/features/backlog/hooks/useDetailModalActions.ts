@@ -5,16 +5,13 @@ import {
   type BacklogItemUpdate,
 } from "../backlog-item-utils.ts";
 import { updateBacklogItem } from "../backlog-repository.ts";
-import {
-  createDetailEditingState,
-  createDetailModalState,
-  normalizePrimaryPlatform,
-} from "../helpers.ts";
+import { createDetailEditingState, createDetailModalState } from "../helpers.ts";
 import type {
   BacklogItem,
   BacklogStatus,
   DetailModalEditableField,
   DetailModalState,
+  PrimaryPlatform,
 } from "../types.ts";
 
 type UseDetailModalActionsOptions = {
@@ -78,8 +75,8 @@ export function useDetailModalActions({
     onStateChange(createDetailModalState(item.id));
   };
 
-  const handlePlatformSelect = async (value: string) => {
-    await saveUpdate({ primary_platform: normalizePrimaryPlatform(value) });
+  const handlePlatformSelect = async (value: PrimaryPlatform) => {
+    await saveUpdate({ primary_platform: value });
   };
 
   return {
