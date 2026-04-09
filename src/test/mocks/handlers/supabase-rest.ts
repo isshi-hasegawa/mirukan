@@ -39,6 +39,11 @@ function ensureWorkDefaults(work: Partial<Work>): Work {
     background_fit_score: work.background_fit_score ?? null,
     completion_load_score: work.completion_load_score ?? null,
     last_tmdb_synced_at: work.last_tmdb_synced_at ?? null,
+    omdb_fetched_at: work.omdb_fetched_at ?? null,
+    rotten_tomatoes_score: work.rotten_tomatoes_score ?? null,
+    imdb_rating: work.imdb_rating ?? null,
+    imdb_votes: work.imdb_votes ?? null,
+    metacritic_score: work.metacritic_score ?? null,
     series_title: work.series_title ?? null,
   };
 }

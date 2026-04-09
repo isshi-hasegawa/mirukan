@@ -1,5 +1,6 @@
 export type OmdbApiResponse = {
   Response: string;
+  Error?: string;
   Ratings?: Array<{
     Source: string;
     Value: string;
@@ -49,9 +50,27 @@ export function parseMetacriticScore(value: string): number | null {
   return score >= 0 && score <= 100 ? score : null;
 }
 
+export function isDefinitiveOmdbMiss(errorMessage: string): boolean {
+  const normalized = errorMessage.trim().toLowerCase();
+  return (
+    normalized === "movie not found!" ||
+    normalized === "series not found!" ||
+    normalized === "episode not found!" ||
+    normalized === "incorrect imdb id."
+  );
+}
+
 export function extractRatings(json: OmdbApiResponse): OmdbWorkDetails {
   if (json.Response === "False") {
-    return { rottenTomatoesScore: null, imdbRating: null, imdbVotes: null, metacriticScore: null };
+    if (json.Error && isDefinitiveOmdbMiss(json.Error)) {
+      return {
+        rottenTomatoesScore: null,
+        imdbRating: null,
+        imdbVotes: null,
+        metacriticScore: null,
+      };
+    }
+    throw new Error(json.Error ?? "OMDb returned an error response");
   }
 
   let rottenTomatoesScore: number | null = null;

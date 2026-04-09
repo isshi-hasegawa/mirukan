@@ -556,6 +556,23 @@ function normalizeCachedOmdbWorkDetails(payload: unknown): OmdbWorkDetails | nul
   };
 }
 
+export type ImdbIdLookupResult =
+  | { kind: "found"; imdbId: string }
+  | { kind: "missing" }
+  | { kind: "unavailable" };
+
+export function classifyImdbIdLookupResult(imdbId: string | null | undefined): ImdbIdLookupResult {
+  if (typeof imdbId === "string" && imdbId.trim() !== "") {
+    return { kind: "found", imdbId };
+  }
+
+  if (imdbId === null) {
+    return { kind: "missing" };
+  }
+
+  return { kind: "unavailable" };
+}
+
 async function fetchOmdbDetailsByTmdbId(
   tmdbId: number,
   mediaType: TmdbMediaType,
@@ -569,8 +586,12 @@ async function fetchOmdbDetailsByTmdbId(
   }
 
   try {
-    const imdbId = await fetchImdbId(tmdbId, mediaType);
-    if (!imdbId) {
+    const imdbLookup = classifyImdbIdLookupResult(await fetchImdbId(tmdbId, mediaType));
+    if (imdbLookup.kind === "unavailable") {
+      return cachedValue;
+    }
+
+    if (imdbLookup.kind === "missing") {
       const emptyResult = {
         rottenTomatoesScore: null,
         imdbRating: null,
@@ -581,7 +602,7 @@ async function fetchOmdbDetailsByTmdbId(
       return emptyResult;
     }
 
-    const fresh = await fetchOmdbDetails(imdbId);
+    const fresh = await fetchOmdbDetails(imdbLookup.imdbId);
     await writeTmdbMetadataCache(cacheKey, fresh).catch(() => undefined);
     return fresh;
   } catch {
