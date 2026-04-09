@@ -16,6 +16,7 @@ export type TmdbSearchResult = {
   releaseDate: string | null;
   jpWatchPlatforms: TmdbWatchPlatform[];
   hasJapaneseRelease: boolean;
+  rottenTomatoesScore?: number | null;
 };
 
 export type TmdbSeasonSelectionTarget = {
@@ -58,6 +59,7 @@ export type TmdbWorkDetails = {
   episodeCount: number | null;
   seasonCount: number | null;
   seasonNumber: number | null;
+  imdbId?: string | null;
 };
 
 type RecommendationCacheEntry = {
@@ -134,7 +136,8 @@ function isTmdbSearchResult(value: unknown): value is TmdbSearchResult {
     isNullableString(value.releaseDate) &&
     Array.isArray(value.jpWatchPlatforms) &&
     value.jpWatchPlatforms.every(isTmdbWatchPlatform) &&
-    typeof value.hasJapaneseRelease === "boolean"
+    typeof value.hasJapaneseRelease === "boolean" &&
+    (value.rottenTomatoesScore === undefined || isNullableNumber(value.rottenTomatoesScore))
   );
 }
 
@@ -175,7 +178,8 @@ function isTmdbWorkDetails(value: unknown): value is TmdbWorkDetails {
     isNullableNumber(value.typicalEpisodeRuntimeMinutes) &&
     isNullableNumber(value.episodeCount) &&
     isNullableNumber(value.seasonCount) &&
-    isNullableNumber(value.seasonNumber)
+    isNullableNumber(value.seasonNumber) &&
+    (value.imdbId === undefined || isNullableString(value.imdbId))
   );
 }
 

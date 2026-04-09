@@ -17,6 +17,7 @@ function createResult(overrides: Partial<TmdbSearchResult> = {}): TmdbSearchResu
     releaseDate: "2024-01-01",
     jpWatchPlatforms: [],
     hasJapaneseRelease: true,
+    rottenTomatoesScore: null,
     ...overrides,
   };
 }
@@ -39,5 +40,11 @@ describe("TmdbWorkCard", () => {
     );
 
     expect(screen.queryByText("あらすじはまだ取得できていません。")).not.toBeInTheDocument();
+  });
+
+  test("Rotten Tomatoes スコアがある場合は年の横にバッジを表示する", () => {
+    render(<TmdbWorkCard result={createResult({ rottenTomatoesScore: 93 })} />);
+
+    expect(screen.getByLabelText("Rotten Tomatoes Fresh 93%")).toBeInTheDocument();
   });
 });

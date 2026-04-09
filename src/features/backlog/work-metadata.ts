@@ -117,5 +117,6 @@ export function buildTmdbWorkUpdate(details: TmdbWorkDetails, syncedAt = new Dat
     background_fit_score: calcBackgroundFitScore(details.genres),
     completion_load_score: calcCompletionLoadScore(details),
     last_tmdb_synced_at: syncedAt,
+    ...(details.imdbId !== undefined ? { imdb_id: details.imdbId } : {}),
   };
 }

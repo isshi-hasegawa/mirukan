@@ -33,6 +33,10 @@ export type WorkSummary = {
   focus_required_score: number | null;
   background_fit_score: number | null;
   completion_load_score: number | null;
+  rotten_tomatoes_score: number | null;
+  imdb_rating: number | null;
+  imdb_votes: number | null;
+  metacritic_score: number | null;
 };
 
 export type BacklogItem = {

@@ -49,6 +49,10 @@ function createItem(overrides: Partial<BacklogItem> = {}): BacklogItem {
       focus_required_score: null,
       background_fit_score: null,
       completion_load_score: null,
+      rotten_tomatoes_score: null,
+      imdb_rating: null,
+      imdb_votes: null,
+      metacritic_score: null,
     },
     ...overrides,
   };
@@ -244,5 +248,31 @@ describe("DetailModal", () => {
     await user.keyboard("{Escape}");
 
     await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
+  });
+
+  test("Rotten Tomatoes スコアが Fresh のときはトマトバッジを表示する", () => {
+    renderDetailModal({
+      item: createItem({
+        works: {
+          ...createItem().works!,
+          rotten_tomatoes_score: 87,
+        },
+      }),
+    });
+
+    expect(screen.getByLabelText("Rotten Tomatoes Fresh 87%")).toBeInTheDocument();
+  });
+
+  test("Rotten Tomatoes スコアが 60 未満のときは Rotten バッジを表示する", () => {
+    renderDetailModal({
+      item: createItem({
+        works: {
+          ...createItem().works!,
+          rotten_tomatoes_score: 42,
+        },
+      }),
+    });
+
+    expect(screen.getByLabelText("Rotten Tomatoes Rotten 42%")).toBeInTheDocument();
   });
 });

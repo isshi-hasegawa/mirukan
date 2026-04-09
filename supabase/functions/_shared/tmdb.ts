@@ -1,4 +1,5 @@
 import "./edge-runtime.d.ts";
+import { fetchOmdbDetails, type OmdbWorkDetails } from "./omdb.ts";
 import { getSupabaseAdminClient } from "./supabase-admin.ts";
 
 type TmdbMediaType = "movie" | "tv";
@@ -61,6 +62,10 @@ type TmdbSeasonDetailsResponse = {
   }>;
 };
 
+type TmdbExternalIdsResponse = {
+  imdb_id?: string | null;
+};
+
 type TmdbWatchProvidersResponse = {
   results?: {
     JP?: {
@@ -111,6 +116,7 @@ export type TmdbSearchResult = {
   releaseDate: string | null;
   jpWatchPlatforms: TmdbWatchPlatform[];
   hasJapaneseRelease: boolean;
+  rottenTomatoesScore?: number | null;
 };
 
 type TmdbLocalizedSearchMetadata = {
@@ -159,6 +165,7 @@ type TmdbWorkDetails = {
   episodeCount: number | null;
   seasonCount: number | null;
   seasonNumber: number | null;
+  imdbId?: string | null;
 };
 
 const TMDB_PROVIDER_ID_MAP: Record<number, string> = {
@@ -179,6 +186,8 @@ const TMDB_RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
 const TMDB_MAX_RETRY_ATTEMPTS = 3;
 const TMDB_RETRY_BASE_DELAY_MS = 400;
 const TMDB_ENRICH_CONCURRENCY = 6;
+const OMDB_ENRICH_CONCURRENCY = 2;
+const MAX_OMDB_ENRICH_RESULTS = 8;
 const MAX_RECOMMENDATION_SOURCE_ITEMS = 8;
 const MAX_SIMILAR_RESULTS_PER_SOURCE = 40;
 const MAX_SIMILAR_RESULTS = 60;
@@ -518,6 +527,87 @@ async function enrichWithWatchProviders(results: TmdbSearchResult[]): Promise<Tm
   });
 }
 
+function buildOmdbCacheKey(tmdbId: number, mediaType: TmdbMediaType) {
+  return `omdb-by-tmdb:${mediaType}:${tmdbId}`;
+}
+
+function normalizeCachedOmdbWorkDetails(payload: unknown): OmdbWorkDetails | null {
+  if (!payload || typeof payload !== "object") {
+    return null;
+  }
+
+  const record = payload as Record<string, unknown>;
+
+  return {
+    rottenTomatoesScore:
+      typeof record.rottenTomatoesScore === "number" || record.rottenTomatoesScore === null
+        ? record.rottenTomatoesScore
+        : null,
+    imdbRating:
+      typeof record.imdbRating === "number" || record.imdbRating === null
+        ? record.imdbRating
+        : null,
+    imdbVotes:
+      typeof record.imdbVotes === "number" || record.imdbVotes === null ? record.imdbVotes : null,
+    metacriticScore:
+      typeof record.metacriticScore === "number" || record.metacriticScore === null
+        ? record.metacriticScore
+        : null,
+  };
+}
+
+async function fetchOmdbDetailsByTmdbId(
+  tmdbId: number,
+  mediaType: TmdbMediaType,
+): Promise<OmdbWorkDetails | null> {
+  const cacheKey = buildOmdbCacheKey(tmdbId, mediaType);
+  const cached = await readTmdbMetadataCache(cacheKey).catch(() => null);
+  const cachedValue = normalizeCachedOmdbWorkDetails(cached?.payload);
+
+  if (cached?.fresh && cachedValue) {
+    return cachedValue;
+  }
+
+  try {
+    const imdbId = await fetchImdbId(tmdbId, mediaType);
+    if (!imdbId) {
+      const emptyResult = {
+        rottenTomatoesScore: null,
+        imdbRating: null,
+        imdbVotes: null,
+        metacriticScore: null,
+      };
+      await writeTmdbMetadataCache(cacheKey, emptyResult).catch(() => undefined);
+      return emptyResult;
+    }
+
+    const fresh = await fetchOmdbDetails(imdbId);
+    await writeTmdbMetadataCache(cacheKey, fresh).catch(() => undefined);
+    return fresh;
+  } catch {
+    return cachedValue;
+  }
+}
+
+async function enrichWithCachedOmdbScores(
+  results: TmdbSearchResult[],
+): Promise<TmdbSearchResult[]> {
+  const targets = results.slice(0, MAX_OMDB_ENRICH_RESULTS);
+  const enrichedTargets = await mapWithConcurrency(
+    targets,
+    OMDB_ENRICH_CONCURRENCY,
+    async (result) => {
+      const omdb = await fetchOmdbDetailsByTmdbId(result.tmdbId, result.tmdbMediaType);
+      return {
+        ...result,
+        rottenTomatoesScore: omdb?.rottenTomatoesScore ?? null,
+      };
+    },
+  );
+
+  return results.map((result, index) => enrichedTargets[index] ?? result);
+}
+
 function mapMultiSearchResult(
   result: TmdbMultiSearchResponse["results"][number],
   mediaType: TmdbMediaType,
@@ -541,6 +631,7 @@ function mapMultiSearchResult(
       mediaType === "movie" ? (result.release_date ?? null) : (result.first_air_date ?? null),
     jpWatchPlatforms: [],
     hasJapaneseRelease: true,
+    rottenTomatoesScore: null,
   };
 }
 
@@ -560,7 +651,7 @@ async function fetchSearchResults(query: string): Promise<TmdbSearchResult[]> {
     return mapped ? [mapped] : [];
   });
 
-  return enrichWithWatchProviders(base);
+  return enrichWithCachedOmdbScores(await enrichWithWatchProviders(base));
 }
 
 function buildFallbackQueries(query: string): string[] {
@@ -613,16 +704,18 @@ async function fetchFreshTmdbTrending(): Promise<TmdbSearchResult[]> {
   ]);
   const seen = new Set<string>();
 
-  return enrichWithWatchProviders(
-    pages.flat().filter((item) => {
-      const key = `${item.tmdbMediaType}-${item.tmdbId}`;
-      if (seen.has(key)) {
-        return false;
-      }
+  return enrichWithCachedOmdbScores(
+    await enrichWithWatchProviders(
+      pages.flat().filter((item) => {
+        const key = `${item.tmdbMediaType}-${item.tmdbId}`;
+        if (seen.has(key)) {
+          return false;
+        }
 
-      seen.add(key);
-      return true;
-    }),
+        seen.add(key);
+        return true;
+      }),
+    ),
   );
 }
 
@@ -888,10 +981,12 @@ async function refreshSimilarCacheForSource(sourceItem: {
   tmdbId: number;
   tmdbMediaType: TmdbMediaType;
 }) {
-  const fresh = await enrichWithWatchProviders(
-    dedupeRecommendationResults(
-      await fetchSimilarPage(sourceItem.tmdbId, sourceItem.tmdbMediaType),
-    ).slice(0, MAX_SIMILAR_RESULTS_PER_SOURCE),
+  const fresh = await enrichWithCachedOmdbScores(
+    await enrichWithWatchProviders(
+      dedupeRecommendationResults(
+        await fetchSimilarPage(sourceItem.tmdbId, sourceItem.tmdbMediaType),
+      ).slice(0, MAX_SIMILAR_RESULTS_PER_SOURCE),
+    ),
   );
   const admin = getSupabaseAdminClient();
 
@@ -960,6 +1055,21 @@ export async function fetchTmdbSeasonOptions(
     }));
 }
 
+async function fetchImdbId(
+  tmdbId: number,
+  mediaType: TmdbMediaType,
+): Promise<string | null | undefined> {
+  try {
+    const json = await fetchTmdbJson<TmdbExternalIdsResponse>(
+      `/${mediaType}/${tmdbId}/external_ids`,
+      {},
+    );
+    return json.imdb_id ?? null;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function fetchTmdbWorkDetails(target: TmdbSelectionTarget): Promise<TmdbWorkDetails> {
   const path =
     target.tmdbMediaType === "movie"
@@ -968,10 +1078,14 @@ export async function fetchTmdbWorkDetails(target: TmdbSelectionTarget): Promise
         ? `/tv/${target.tmdbId}/season/${target.seasonNumber}`
         : `/tv/${target.tmdbId}`;
 
-  const response = await fetchTmdbJson<
-    TmdbMovieDetailsResponse | TmdbTvDetailsResponse | TmdbSeasonDetailsResponse
-  >(path, { language: "ja-JP" });
-  const translatedTitle = await fetchPreferredJapaneseTitle(target);
+  const [response, translatedTitle, imdbId] = await Promise.all([
+    fetchTmdbJson<TmdbMovieDetailsResponse | TmdbTvDetailsResponse | TmdbSeasonDetailsResponse>(
+      path,
+      { language: "ja-JP" },
+    ),
+    fetchPreferredJapaneseTitle(target),
+    fetchImdbId(target.tmdbId, target.tmdbMediaType),
+  ]);
 
   if (target.tmdbMediaType === "movie") {
     const json = response as TmdbMovieDetailsResponse;
@@ -991,6 +1105,7 @@ export async function fetchTmdbWorkDetails(target: TmdbSelectionTarget): Promise
       episodeCount: null,
       seasonCount: null,
       seasonNumber: null,
+      imdbId,
     };
   }
 
@@ -1028,6 +1143,7 @@ export async function fetchTmdbWorkDetails(target: TmdbSelectionTarget): Promise
           : (seasonJson.episodes?.length ?? null),
       seasonCount: null,
       seasonNumber: target.seasonNumber,
+      imdbId,
     };
   }
 
@@ -1061,6 +1177,7 @@ export async function fetchTmdbWorkDetails(target: TmdbSelectionTarget): Promise
         ? json.number_of_seasons
         : null,
     seasonNumber: null,
+    imdbId,
   };
 }
 

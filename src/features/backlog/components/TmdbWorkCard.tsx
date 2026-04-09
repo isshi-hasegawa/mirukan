@@ -2,6 +2,7 @@ import { FilmIcon, TvIcon, CheckIcon } from "@heroicons/react/24/outline";
 import type { ReactNode } from "react";
 import type { TmdbSearchResult } from "../../../lib/tmdb.ts";
 import { platformLabels } from "../constants.ts";
+import { RottenTomatoesBadge } from "./RottenTomatoesBadge.tsx";
 import { TmdbLink } from "./TmdbLink.tsx";
 
 type Props = {
@@ -26,6 +27,8 @@ export function TmdbWorkCard({
   const posterUrl = result.posterPath
     ? `https://image.tmdb.org/t/p/w185${result.posterPath}`
     : null;
+  const rtScore = result.rottenTomatoesScore ?? null;
+  const rtVariant = rtScore === null ? null : rtScore >= 60 ? "fresh" : "rotten";
 
   const checkButton = onAddToStacked ? (
     <button
@@ -83,6 +86,16 @@ export function TmdbWorkCard({
           )}
           {result.workType === "movie" ? "映画" : "シリーズ"}
           {result.releaseDate && ` · ${result.releaseDate.slice(0, 4)}`}
+          {rtScore !== null && rtVariant && (
+            <>
+              <span aria-hidden="true">·</span>
+              <RottenTomatoesBadge
+                score={rtScore}
+                variant={rtVariant}
+                className="px-1.5 py-0 text-[0.74rem]"
+              />
+            </>
+          )}
         </span>
         {result.jpWatchPlatforms.length > 0 && (
           <span className="flex flex-wrap gap-1">

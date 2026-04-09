@@ -7,13 +7,20 @@ import {
   type TmdbSearchResult,
   type TmdbSelectionTarget,
 } from "../../lib/tmdb.ts";
+import { fetchOmdbWorkDetails } from "../../lib/omdb.ts";
 import { buildSearchText } from "./helpers.ts";
 import type { WorkType } from "./types.ts";
 import { buildTmdbWorkUpdate } from "./work-metadata.ts";
 
 const TMDB_WORK_REFRESH_INTERVAL_MS = 30 * 24 * 60 * 60 * 1000;
+const OMDB_WORK_REFRESH_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000;
 type TmdbWorkIdResponse = PostgrestSingleResponse<{ id: string }>;
-type ExistingTmdbWorkRow = { id: string; last_tmdb_synced_at: string | null };
+type ExistingTmdbWorkRow = {
+  id: string;
+  last_tmdb_synced_at: string | null;
+  omdb_fetched_at: string | null;
+  imdb_id: string | null;
+};
 type TmdbWorkLookup = {
   tmdbMediaType: "movie" | "tv";
   tmdbId: number;
@@ -26,6 +33,23 @@ type UpsertFetchedTmdbWorkOptions = {
   workType?: WorkType;
 };
 type OkResponseData = { id: string };
+
+export function shouldRefreshOmdbWork(
+  omdbFetchedAt: string | null,
+  now = Date.now(),
+  refreshIntervalMs = OMDB_WORK_REFRESH_INTERVAL_MS,
+) {
+  if (!omdbFetchedAt) {
+    return true;
+  }
+
+  const fetchedAtMs = Date.parse(omdbFetchedAt);
+  if (Number.isNaN(fetchedAtMs)) {
+    return true;
+  }
+
+  return now - fetchedAtMs >= refreshIntervalMs;
+}
 
 export function shouldRefreshTmdbWork(
   lastSyncedAt: string | null,
@@ -235,7 +259,7 @@ async function findExistingTmdbWork({
 }: TmdbWorkLookup): Promise<{ data: ExistingTmdbWorkRow | null; error: PostgrestError | null }> {
   let query = supabase
     .from("works")
-    .select("id, last_tmdb_synced_at")
+    .select("id, last_tmdb_synced_at, omdb_fetched_at, imdb_id")
     .eq("source_type", "tmdb")
     .eq("tmdb_media_type", tmdbMediaType)
     .eq("tmdb_id", tmdbId)
@@ -268,15 +292,51 @@ async function upsertFetchedTmdbWork(
   }
 
   if (existing && !shouldRefreshTmdbWork(existing.last_tmdb_synced_at)) {
+    if (existing.imdb_id && shouldRefreshOmdbWork(existing.omdb_fetched_at)) {
+      try {
+        const omdb = await fetchOmdbWorkDetails(existing.imdb_id);
+        await supabase
+          .from("works")
+          .update({
+            rotten_tomatoes_score: omdb.rottenTomatoesScore,
+            imdb_rating: omdb.imdbRating,
+            imdb_votes: omdb.imdbVotes,
+            metacritic_score: omdb.metacriticScore,
+            omdb_fetched_at: new Date().toISOString(),
+          })
+          .eq("id", existing.id);
+      } catch {
+        // OMDb 更新の失敗は TMDb の early return をブロックしない
+      }
+    }
     return buildOkIdResponse(existing.id);
   }
 
   const details = await fetchTmdbWorkDetails(target);
+
+  const omdbFields = await (async () => {
+    if (!details.imdbId) return {};
+    if (existing && !shouldRefreshOmdbWork(existing.omdb_fetched_at)) return {};
+    try {
+      const omdb = await fetchOmdbWorkDetails(details.imdbId);
+      return {
+        rotten_tomatoes_score: omdb.rottenTomatoesScore,
+        imdb_rating: omdb.imdbRating,
+        imdb_votes: omdb.imdbVotes,
+        metacritic_score: omdb.metacriticScore,
+        omdb_fetched_at: new Date().toISOString(),
+      };
+    } catch {
+      return {};
+    }
+  })();
+
   const updatePayload =
     options.parentWorkId === undefined
-      ? buildTmdbWorkUpdate(details)
+      ? { ...buildTmdbWorkUpdate(details), ...omdbFields }
       : {
           ...buildTmdbWorkUpdate(details),
+          ...omdbFields,
           parent_work_id: options.parentWorkId,
         };
 
@@ -295,7 +355,10 @@ async function upsertFetchedTmdbWork(
 
   return supabase
     .from("works")
-    .insert(buildTmdbWorkInsert(details, userId, workType, options.parentWorkId ?? null))
+    .insert({
+      ...buildTmdbWorkInsert(details, userId, workType, options.parentWorkId ?? null),
+      ...omdbFields,
+    })
     .select("id")
     .single();
 }

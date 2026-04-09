@@ -3,6 +3,7 @@ import { FilmIcon, TvIcon } from "@heroicons/react/24/outline";
 import { createDetailModalState, getWorkTypeLabel } from "../helpers.ts";
 import { statusLabels, statusOrder } from "../constants.ts";
 import { PosterImage } from "./PosterImage.tsx";
+import { RottenTomatoesBadge } from "./RottenTomatoesBadge.tsx";
 import { TmdbLink } from "./TmdbLink.tsx";
 import { useDetailModalActions } from "../hooks/useDetailModalActions.ts";
 import { DetailModalNoteField } from "./DetailModalNoteField.tsx";
@@ -68,6 +69,9 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
     work.season_count ? `${work.season_count}シーズン` : null,
   ].filter(Boolean);
 
+  const rtScore = work.rotten_tomatoes_score;
+  const rtVariant = rtScore === null ? null : rtScore >= 60 ? "fresh" : "rotten";
+
   return (
     <div
       className="fixed inset-0 z-10 grid place-items-center p-5 bg-[rgba(51,34,23,0.4)] backdrop-blur-[10px]"
@@ -119,6 +123,11 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
               {workTypeLabel}
               {metadataRest.length > 0 && ` · ${metadataRest.join(" · ")}`}
             </p>
+            {rtScore !== null && (
+              <p className="text-[0.85rem]">
+                <RottenTomatoesBadge score={rtScore} variant={rtVariant} />
+              </p>
+            )}
           </div>
           <div className="grid gap-3.5 content-start max-[720px]:col-[1/-1] max-[720px]:row-[2]">
             <div className="flex flex-wrap gap-1.5 mb-3">
