@@ -1,9 +1,17 @@
 import type { ReactNode } from "react";
 import { useDroppable } from "@dnd-kit/core";
+import type { BacklogStatus } from "../types.ts";
 import type { KanbanColumnProps } from "./kanban-board-shared.ts";
+import type { DropIndicator } from "./kanban-board-shared.ts";
 import { BacklogCard } from "./BacklogCard.tsx";
 import { KanbanColumnHeader } from "./KanbanColumnHeader.tsx";
 import { ViewingModeFilter } from "./ViewingModeFilter.tsx";
+
+function TopSlot({ status }: { status: BacklogStatus }) {
+  const { setNodeRef } = useDroppable({ id: `top-slot:${status}` });
+  return <div ref={setNodeRef} className="h-2" />;
+}
+
 type Props = KanbanColumnProps & {
   extra?: ReactNode;
 };
@@ -33,6 +41,12 @@ export function KanbanColumn({
       }
     : undefined;
 
+  const firstItemId = items[0]?.id;
+  const effectiveDropIndicator: DropIndicator | null =
+    dropIndicator?.type === "top-slot" && dropIndicator.status === status && firstItemId
+      ? { type: "card", itemId: firstItemId, side: "before" }
+      : dropIndicator;
+
   return (
     <section
       className="flex h-full min-h-0 w-full min-w-0 flex-col rounded-[24px] border border-[var(--border)] bg-[var(--surface)] py-[14px] shadow-[var(--shadow)] backdrop-blur-[20px] max-[500px]:rounded-[18px] max-[500px]:py-3 max-[400px]:rounded-[14px] max-[400px]:py-2"
@@ -58,13 +72,14 @@ export function KanbanColumn({
               onViewingModeToggle={onViewingModeToggle}
             />
           ) : null}
+          <TopSlot status={status} />
           {items.length > 0 ? (
             items.map((item) => (
               <BacklogCard
                 key={item.id}
                 item={item}
                 showModeBadge={status === "stacked"}
-                dropIndicator={dropIndicator}
+                dropIndicator={effectiveDropIndicator}
                 onOpenDetail={() => onOpenDetail(item.id)}
                 onDeleteItem={onDeleteItem}
                 onMarkAsWatched={onMarkAsWatched}

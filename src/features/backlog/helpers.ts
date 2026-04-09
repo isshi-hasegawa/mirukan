@@ -97,6 +97,13 @@ export function getDropIndicator(overId: string, rect: RectLike, clientY: number
     };
   }
 
+  if (overId.startsWith("top-slot:")) {
+    return {
+      type: "top-slot",
+      status: overId.replace("top-slot:", "") as BacklogStatus,
+    };
+  }
+
   return {
     type: "card",
     itemId: overId,
@@ -110,12 +117,22 @@ export function resolveDropTarget(
   rect: RectLike,
   clientY: number,
 ): ResolvedDropTarget | null {
+  if (overId.startsWith("top-slot:")) {
+    const status = overId.replace("top-slot:", "") as BacklogStatus;
+    const columnItems = items
+      .filter((item) => item.status === status)
+      .sort((a, b) => a.sort_order - b.sort_order);
+    if (columnItems.length > 0) {
+      return { status, targetItemId: columnItems[0].id, side: "before" };
+    }
+    return { status, targetItemId: null, side: "after" };
+  }
+
   if (overId.startsWith("column:")) {
-    return {
-      status: overId.replace("column:", "") as BacklogStatus,
-      targetItemId: null,
-      side: "after",
-    };
+    const status = overId.replace("column:", "") as BacklogStatus;
+    const hasItems = items.some((item) => item.status === status);
+    if (hasItems) return null;
+    return { status, targetItemId: null, side: "after" };
   }
 
   const targetItem = items.find((item) => item.id === overId);
