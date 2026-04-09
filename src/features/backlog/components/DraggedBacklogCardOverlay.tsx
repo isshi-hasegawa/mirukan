@@ -10,8 +10,8 @@ export function DraggedBacklogCardOverlay({ item }: Props) {
   }
 
   return (
-    <div className="opacity-60">
-      <div className="grid gap-[10px] pt-[18px] pr-11 pb-4 pl-4 rounded-[18px] bg-[var(--surface-strong)] border border-[rgba(92,59,35,0.08)] cursor-grabbing pointer-events-none">
+    <div className="rotate-[1.5deg] scale-[1.04] opacity-90 shadow-[0_24px_48px_rgba(0,0,0,0.28)] rounded-[18px]">
+      <div className="grid gap-[10px] pt-[18px] pr-11 pb-4 pl-4 rounded-[18px] bg-[var(--surface-strong)] border border-primary/20 cursor-grabbing pointer-events-none">
         <div className="grid grid-cols-[64px_minmax(0,1fr)] gap-3 items-start">
           <div className="relative aspect-[2/3] overflow-hidden rounded-[14px] border border-[rgba(92,59,35,0.08)]">
             {item.works.poster_path && (

@@ -135,6 +135,44 @@ describe("useBacklogDnd", () => {
     expect(onAfterDrop).not.toHaveBeenCalled();
   });
 
+  test("非空列の column エリアへのドロップは supabase を呼ばない", async () => {
+    const { result } = renderHook(() =>
+      useBacklogDnd({ items: stackedItems, isMobileLayout: false, onAfterDrop, feedback }),
+    );
+    const rect = makeRect(100, 200);
+
+    await act(async () => {
+      await result.current.handleDragEnd({
+        active: { id: "item-1" },
+        over: { id: "column:stacked", rect },
+        activatorEvent: null,
+      } as unknown as DragEndEvent);
+    });
+
+    expect(supabaseMocks.update).not.toHaveBeenCalled();
+    expect(onAfterDrop).not.toHaveBeenCalled();
+  });
+
+  test("top-slot へのドロップは先頭アイテムの前に挿入する", async () => {
+    const { result } = renderHook(() =>
+      useBacklogDnd({ items: stackedItems, isMobileLayout: false, onAfterDrop, feedback }),
+    );
+    const rect = makeRect(100, 8);
+
+    await act(async () => {
+      await result.current.handleDragEnd({
+        active: { id: "item-2" },
+        over: { id: "top-slot:stacked", rect },
+        activatorEvent: null,
+      } as unknown as DragEndEvent);
+    });
+
+    expect(supabaseMocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "stacked" }),
+    );
+    expect(onAfterDrop).toHaveBeenCalledTimes(1);
+  });
+
   test("モバイルレイアウトでは列間ドラッグをブロックする", async () => {
     const crossColumnItems = [
       createItem({ id: "item-1", status: "stacked", sort_order: 1000 }),

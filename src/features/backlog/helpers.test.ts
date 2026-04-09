@@ -178,6 +178,20 @@ describe("getDropIndicator", () => {
       side: "before",
     });
   });
+
+  test("top-slot ターゲットには top-slot インジケーターを返す", () => {
+    expect(getDropIndicator("top-slot:stacked", { top: 100, height: 80 }, 140)).toEqual({
+      type: "top-slot",
+      status: "stacked",
+    });
+  });
+
+  test("bottom-slot ターゲットには bottom-slot インジケーターを返す", () => {
+    expect(getDropIndicator("bottom-slot:stacked", { top: 100, height: 80 }, 140)).toEqual({
+      type: "bottom-slot",
+      status: "stacked",
+    });
+  });
 });
 
 describe("resolveDropTarget", () => {
@@ -210,6 +224,54 @@ describe("resolveDropTarget", () => {
 
   test("returns null when the over item does not exist", () => {
     expect(resolveDropTarget(items, "missing", { top: 0, height: 100 }, 20)).toBeNull();
+  });
+
+  test("アイテムのある列への column ドロップは null を返す", () => {
+    const watchingItems: BacklogItem[] = [
+      {
+        id: "item-2",
+        status: "watching",
+        primary_platform: null,
+        note: null,
+        sort_order: 100,
+        works: null,
+      },
+    ];
+    expect(
+      resolveDropTarget(watchingItems, "column:watching", { top: 0, height: 100 }, 50),
+    ).toBeNull();
+  });
+
+  test("空列への column ドロップは先頭挿入を返す", () => {
+    expect(resolveDropTarget(items, "column:stacked", { top: 0, height: 100 }, 50)).toEqual({
+      status: "stacked",
+      targetItemId: null,
+      side: "after",
+    });
+  });
+
+  test("top-slot ドロップは先頭アイテムの before を返す", () => {
+    expect(resolveDropTarget(items, "top-slot:watching", { top: 0, height: 100 }, 50)).toEqual({
+      status: "watching",
+      targetItemId: "item-1",
+      side: "before",
+    });
+  });
+
+  test("空列への top-slot ドロップは先頭挿入を返す", () => {
+    expect(resolveDropTarget(items, "top-slot:stacked", { top: 0, height: 100 }, 50)).toEqual({
+      status: "stacked",
+      targetItemId: null,
+      side: "after",
+    });
+  });
+
+  test("bottom-slot ドロップは末尾挿入を返す", () => {
+    expect(resolveDropTarget(items, "bottom-slot:watching", { top: 0, height: 100 }, 50)).toEqual({
+      status: "watching",
+      targetItemId: null,
+      side: "after",
+    });
   });
 });
 

@@ -1,5 +1,5 @@
 import type { Session } from "@supabase/supabase-js";
-import { DndContext, DragOverlay } from "@dnd-kit/core";
+import { DndContext, DragOverlay, pointerWithin } from "@dnd-kit/core";
 import { Button } from "@/components/ui/button.tsx";
 import { supabase } from "../../../lib/supabase.ts";
 import { useBoardPageController } from "../hooks/useBoardPageController.ts";
@@ -53,6 +53,7 @@ export function BoardPage({ session }: Props) {
 
       <DndContext
         sensors={dnd.sensors}
+        collisionDetection={pointerWithin}
         onDragStart={dnd.handleDragStart}
         onDragOver={dnd.handleDragOver}
         onDragEnd={(e) => void dnd.handleDragEnd(e)}
