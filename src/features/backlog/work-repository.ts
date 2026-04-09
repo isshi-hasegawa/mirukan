@@ -19,6 +19,7 @@ type ExistingTmdbWorkRow = {
   id: string;
   last_tmdb_synced_at: string | null;
   omdb_fetched_at: string | null;
+  imdb_id: string | null;
 };
 type TmdbWorkLookup = {
   tmdbMediaType: "movie" | "tv";
@@ -258,7 +259,7 @@ async function findExistingTmdbWork({
 }: TmdbWorkLookup): Promise<{ data: ExistingTmdbWorkRow | null; error: PostgrestError | null }> {
   let query = supabase
     .from("works")
-    .select("id, last_tmdb_synced_at, omdb_fetched_at")
+    .select("id, last_tmdb_synced_at, omdb_fetched_at, imdb_id")
     .eq("source_type", "tmdb")
     .eq("tmdb_media_type", tmdbMediaType)
     .eq("tmdb_id", tmdbId)
@@ -291,6 +292,23 @@ async function upsertFetchedTmdbWork(
   }
 
   if (existing && !shouldRefreshTmdbWork(existing.last_tmdb_synced_at)) {
+    if (existing.imdb_id && shouldRefreshOmdbWork(existing.omdb_fetched_at)) {
+      try {
+        const omdb = await fetchOmdbWorkDetails(existing.imdb_id);
+        await supabase
+          .from("works")
+          .update({
+            rotten_tomatoes_score: omdb.rottenTomatoesScore,
+            imdb_rating: omdb.imdbRating,
+            imdb_votes: omdb.imdbVotes,
+            metacritic_score: omdb.metacriticScore,
+            omdb_fetched_at: new Date().toISOString(),
+          })
+          .eq("id", existing.id);
+      } catch {
+        // OMDb 更新の失敗は TMDb の early return をブロックしない
+      }
+    }
     return buildOkIdResponse(existing.id);
   }
 
