@@ -104,6 +104,13 @@ export function getDropIndicator(overId: string, rect: RectLike, clientY: number
     };
   }
 
+  if (overId.startsWith("bottom-slot:")) {
+    return {
+      type: "bottom-slot",
+      status: overId.replace("bottom-slot:", "") as BacklogStatus,
+    };
+  }
+
   return {
     type: "card",
     itemId: overId,
@@ -125,6 +132,11 @@ export function resolveDropTarget(
     if (columnItems.length > 0) {
       return { status, targetItemId: columnItems[0].id, side: "before" };
     }
+    return { status, targetItemId: null, side: "after" };
+  }
+
+  if (overId.startsWith("bottom-slot:")) {
+    const status = overId.replace("bottom-slot:", "") as BacklogStatus;
     return { status, targetItemId: null, side: "after" };
   }
 

@@ -12,6 +12,11 @@ function TopSlot({ status }: { status: BacklogStatus }) {
   return <div ref={setNodeRef} className="h-6" />;
 }
 
+function BottomSlot({ status }: { status: BacklogStatus }) {
+  const { setNodeRef } = useDroppable({ id: `bottom-slot:${status}` });
+  return <div ref={setNodeRef} className="h-6" />;
+}
+
 type Props = KanbanColumnProps & {
   extra?: ReactNode;
 };
@@ -43,10 +48,13 @@ export function KanbanColumn({
     : undefined;
 
   const firstItemId = items[0]?.id;
+  const lastItemId = items.at(-1)?.id;
   const effectiveDropIndicator: DropIndicator | null =
     dropIndicator?.type === "top-slot" && dropIndicator.status === status && firstItemId
       ? { type: "card", itemId: firstItemId, side: "before" }
-      : dropIndicator;
+      : dropIndicator?.type === "bottom-slot" && dropIndicator.status === status && lastItemId
+        ? { type: "card", itemId: lastItemId, side: "after" }
+        : dropIndicator;
 
   return (
     <section
@@ -75,17 +83,20 @@ export function KanbanColumn({
           ) : null}
           <TopSlot status={status} />
           {items.length > 0 ? (
-            items.map((item) => (
-              <BacklogCard
-                key={item.id}
-                item={item}
-                showModeBadge={status === "stacked"}
-                dropIndicator={effectiveDropIndicator}
-                onOpenDetail={() => onOpenDetail(item.id)}
-                onDeleteItem={onDeleteItem}
-                onMarkAsWatched={onMarkAsWatched}
-              />
-            ))
+            <>
+              {items.map((item) => (
+                <BacklogCard
+                  key={item.id}
+                  item={item}
+                  showModeBadge={status === "stacked"}
+                  dropIndicator={effectiveDropIndicator}
+                  onOpenDetail={() => onOpenDetail(item.id)}
+                  onDeleteItem={onDeleteItem}
+                  onMarkAsWatched={onMarkAsWatched}
+                />
+              ))}
+              <BottomSlot status={status} />
+            </>
           ) : (
             <p className="text-[var(--text-muted)] pt-[18px] text-[0.92rem]">
               この列にはまだカードがありません。

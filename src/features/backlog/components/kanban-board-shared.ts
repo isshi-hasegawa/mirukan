@@ -4,7 +4,8 @@ import type { BacklogItem, BacklogStatus, ViewingMode } from "../types.ts";
 export type DropIndicator =
   | { type: "card"; itemId: string; side: "before" | "after" }
   | { type: "column"; status: BacklogStatus }
-  | { type: "top-slot"; status: BacklogStatus };
+  | { type: "top-slot"; status: BacklogStatus }
+  | { type: "bottom-slot"; status: BacklogStatus };
 
 export type KanbanColumnProps = {
   status: BacklogStatus;

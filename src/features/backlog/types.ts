@@ -60,7 +60,8 @@ export type DetailModalState = {
 export type DropIndicator =
   | { type: "card"; itemId: string; side: "before" | "after" }
   | { type: "column"; status: BacklogStatus }
-  | { type: "top-slot"; status: BacklogStatus };
+  | { type: "top-slot"; status: BacklogStatus }
+  | { type: "bottom-slot"; status: BacklogStatus };
 
 export type ResolvedDropTarget = {
   status: BacklogStatus;

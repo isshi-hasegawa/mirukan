@@ -185,6 +185,13 @@ describe("getDropIndicator", () => {
       status: "stacked",
     });
   });
+
+  test("bottom-slot ターゲットには bottom-slot インジケーターを返す", () => {
+    expect(getDropIndicator("bottom-slot:stacked", { top: 100, height: 80 }, 140)).toEqual({
+      type: "bottom-slot",
+      status: "stacked",
+    });
+  });
 });
 
 describe("resolveDropTarget", () => {
@@ -254,6 +261,14 @@ describe("resolveDropTarget", () => {
   test("空列への top-slot ドロップは先頭挿入を返す", () => {
     expect(resolveDropTarget(items, "top-slot:stacked", { top: 0, height: 100 }, 50)).toEqual({
       status: "stacked",
+      targetItemId: null,
+      side: "after",
+    });
+  });
+
+  test("bottom-slot ドロップは末尾挿入を返す", () => {
+    expect(resolveDropTarget(items, "bottom-slot:watching", { top: 0, height: 100 }, 50)).toEqual({
+      status: "watching",
       targetItemId: null,
       side: "after",
     });
