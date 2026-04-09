@@ -388,6 +388,7 @@ describe("API boundary wrappers", () => {
       episodeCount: 10,
       seasonCount: null,
       seasonNumber: 2,
+      imdbId: null,
     });
 
     await expect(fetchTmdbWorkDetails(workDetailsTarget)).resolves.toEqual(

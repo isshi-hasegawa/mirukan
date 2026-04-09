@@ -61,6 +61,10 @@ type TmdbSeasonDetailsResponse = {
   }>;
 };
 
+type TmdbExternalIdsResponse = {
+  imdb_id?: string | null;
+};
+
 type TmdbWatchProvidersResponse = {
   results?: {
     JP?: {
@@ -159,6 +163,7 @@ type TmdbWorkDetails = {
   episodeCount: number | null;
   seasonCount: number | null;
   seasonNumber: number | null;
+  imdbId: string | null;
 };
 
 const TMDB_PROVIDER_ID_MAP: Record<number, string> = {
@@ -960,6 +965,18 @@ export async function fetchTmdbSeasonOptions(
     }));
 }
 
+async function fetchImdbId(tmdbId: number, mediaType: TmdbMediaType): Promise<string | null> {
+  try {
+    const json = await fetchTmdbJson<TmdbExternalIdsResponse>(
+      `/${mediaType}/${tmdbId}/external_ids`,
+      {},
+    );
+    return json.imdb_id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchTmdbWorkDetails(target: TmdbSelectionTarget): Promise<TmdbWorkDetails> {
   const path =
     target.tmdbMediaType === "movie"
@@ -968,10 +985,14 @@ export async function fetchTmdbWorkDetails(target: TmdbSelectionTarget): Promise
         ? `/tv/${target.tmdbId}/season/${target.seasonNumber}`
         : `/tv/${target.tmdbId}`;
 
-  const response = await fetchTmdbJson<
-    TmdbMovieDetailsResponse | TmdbTvDetailsResponse | TmdbSeasonDetailsResponse
-  >(path, { language: "ja-JP" });
-  const translatedTitle = await fetchPreferredJapaneseTitle(target);
+  const [response, translatedTitle, imdbId] = await Promise.all([
+    fetchTmdbJson<TmdbMovieDetailsResponse | TmdbTvDetailsResponse | TmdbSeasonDetailsResponse>(
+      path,
+      { language: "ja-JP" },
+    ),
+    fetchPreferredJapaneseTitle(target),
+    fetchImdbId(target.tmdbId, target.tmdbMediaType),
+  ]);
 
   if (target.tmdbMediaType === "movie") {
     const json = response as TmdbMovieDetailsResponse;
@@ -991,6 +1012,7 @@ export async function fetchTmdbWorkDetails(target: TmdbSelectionTarget): Promise
       episodeCount: null,
       seasonCount: null,
       seasonNumber: null,
+      imdbId,
     };
   }
 
@@ -1028,6 +1050,7 @@ export async function fetchTmdbWorkDetails(target: TmdbSelectionTarget): Promise
           : (seasonJson.episodes?.length ?? null),
       seasonCount: null,
       seasonNumber: target.seasonNumber,
+      imdbId,
     };
   }
 
@@ -1061,6 +1084,7 @@ export async function fetchTmdbWorkDetails(target: TmdbSelectionTarget): Promise
         ? json.number_of_seasons
         : null,
     seasonNumber: null,
+    imdbId,
   };
 }
 

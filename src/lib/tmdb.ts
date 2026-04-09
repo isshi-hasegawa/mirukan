@@ -58,6 +58,7 @@ export type TmdbWorkDetails = {
   episodeCount: number | null;
   seasonCount: number | null;
   seasonNumber: number | null;
+  imdbId: string | null;
 };
 
 type RecommendationCacheEntry = {
@@ -175,7 +176,8 @@ function isTmdbWorkDetails(value: unknown): value is TmdbWorkDetails {
     isNullableNumber(value.typicalEpisodeRuntimeMinutes) &&
     isNullableNumber(value.episodeCount) &&
     isNullableNumber(value.seasonCount) &&
-    isNullableNumber(value.seasonNumber)
+    isNullableNumber(value.seasonNumber) &&
+    isNullableString(value.imdbId)
   );
 }
 
