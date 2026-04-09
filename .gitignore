@@ -15,6 +15,7 @@ coverage
 supabase/functions/.env
 supabase/.branches/
 supabase/.temp/
+e2e/.auth/
 
 .claude/*
 !.claude/skills

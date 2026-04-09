@@ -3,7 +3,9 @@ import { login } from "../support/app.ts";
 
 /**
  * Authentication flow E2E tests
+ * storageState を空にして未ログイン状態でテストする
  */
+test.use({ storageState: { cookies: [], origins: [] } });
 
 test("ログインページが表示される", async ({ page }) => {
   await page.goto("/");

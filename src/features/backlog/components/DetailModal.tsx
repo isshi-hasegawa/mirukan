@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type Dispatch, type SetStateAction } from "react";
 import { FilmIcon, TvIcon } from "@heroicons/react/24/outline";
 import { createDetailModalState, getWorkTypeLabel } from "../helpers.ts";
 import { statusLabels, statusOrder } from "../constants.ts";
@@ -14,7 +14,7 @@ type Props = {
   item: BacklogItem | null;
   state: DetailModalState;
   items: BacklogItem[];
-  onStateChange: (state: DetailModalState) => void;
+  onStateChange: Dispatch<SetStateAction<DetailModalState>>;
   onClose: () => void;
   onUpdate: (item: BacklogItem) => void;
 };
