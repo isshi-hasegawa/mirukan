@@ -42,7 +42,7 @@ export function buildSelectedSubject({
 
 export function buildStackedBacklogOptions(primaryPlatform: PrimaryPlatform, note: string) {
   return {
-    primaryPlatform,
+    primary_platform: primaryPlatform,
     note: note.trim() || null,
   };
 }

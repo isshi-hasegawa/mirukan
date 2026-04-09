@@ -45,7 +45,7 @@ export async function updateBacklogItem(
 
 type UpsertBacklogItemsToStatusOptions = {
   note: string | null;
-  primaryPlatform: PrimaryPlatform;
+  primary_platform: PrimaryPlatform;
 };
 
 export async function upsertBacklogItemsToStatus(
@@ -76,7 +76,7 @@ export async function upsertBacklogItemsToStatus(
             user_id: userId,
             work_id: action.workId,
             status: targetStatus,
-            primary_platform: options.primaryPlatform,
+            primary_platform: options.primary_platform,
             note: options.note,
             sort_order: sortOrder,
           };

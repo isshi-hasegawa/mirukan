@@ -107,14 +107,14 @@ describe("buildSelectedSubject", () => {
 describe("buildStackedBacklogOptions", () => {
   test("platform と note を保存用の形へ正規化する", () => {
     expect(buildStackedBacklogOptions("netflix", "  メモ  ")).toEqual({
-      primaryPlatform: "netflix",
+      primary_platform: "netflix",
       note: "メモ",
     });
   });
 
   test("platform 未選択は null のまま保持する", () => {
     expect(buildStackedBacklogOptions(null, "  メモ  ")).toEqual({
-      primaryPlatform: null,
+      primary_platform: null,
       note: "メモ",
     });
   });
