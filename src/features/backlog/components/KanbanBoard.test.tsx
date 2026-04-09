@@ -57,6 +57,10 @@ function createItem(
       focus_required_score: null,
       background_fit_score: null,
       completion_load_score: null,
+      rotten_tomatoes_score: null,
+      imdb_rating: null,
+      imdb_votes: null,
+      metacritic_score: null,
     },
     ...overrides,
   };

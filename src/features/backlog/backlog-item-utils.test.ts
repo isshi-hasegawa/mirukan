@@ -46,12 +46,16 @@ function createItem(
       focus_required_score: null,
       background_fit_score: null,
       completion_load_score: null,
+      rotten_tomatoes_score: null,
+      imdb_rating: null,
+      imdb_votes: null,
+      metacritic_score: null,
     },
   };
 }
 
 function createWork(overrides: Partial<WorkSummary> = {}): WorkSummary {
-  return {
+  const baseWork: WorkSummary = {
     id: "w1",
     title: "Test",
     work_type: "movie",
@@ -71,7 +75,22 @@ function createWork(overrides: Partial<WorkSummary> = {}): WorkSummary {
     focus_required_score: null,
     background_fit_score: null,
     completion_load_score: null,
+    rotten_tomatoes_score: null,
+    imdb_rating: null,
+    imdb_votes: null,
+    metacritic_score: null,
+  };
+  const work = {
+    ...baseWork,
     ...overrides,
+  };
+
+  return {
+    ...work,
+    rotten_tomatoes_score: work.rotten_tomatoes_score ?? null,
+    imdb_rating: work.imdb_rating ?? null,
+    imdb_votes: work.imdb_votes ?? null,
+    metacritic_score: work.metacritic_score ?? null,
   };
 }
 

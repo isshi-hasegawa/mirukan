@@ -56,6 +56,7 @@ export type TmdbWorkDetails = {
   episodeCount: number | null;
   seasonCount: number | null;
   seasonNumber: number | null;
+  imdbId?: string | null;
 };
 
 export type BacklogItem = {
