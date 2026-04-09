@@ -31,6 +31,14 @@ vi.mock("./features/backlog/components/ResetPasswordPage.tsx", () => ({
   ResetPasswordPage: () => <div>RESET_PASSWORD_PAGE</div>,
 }));
 
+vi.mock("./features/backlog/components/PrivacyPolicyPage.tsx", () => ({
+  PrivacyPolicyPage: () => <div>PRIVACY_POLICY_PAGE</div>,
+}));
+
+vi.mock("./features/backlog/components/TermsOfServicePage.tsx", () => ({
+  TermsOfServicePage: () => <div>TERMS_OF_SERVICE_PAGE</div>,
+}));
+
 setupTestLifecycle();
 
 describe("App", () => {
@@ -117,5 +125,23 @@ describe("App", () => {
     expect(consoleErrorSpy).toHaveBeenCalledWith("セッション取得に失敗しました", expect.any(Error));
 
     consoleErrorSpy.mockRestore();
+  });
+
+  test("/privacy では認証処理を通さずプライバシーポリシーを表示する", () => {
+    window.history.replaceState({}, "", "/privacy");
+
+    render(<App />);
+
+    expect(screen.getByText("PRIVACY_POLICY_PAGE")).toBeInTheDocument();
+    expect(supabaseMock.auth.getSession).not.toHaveBeenCalled();
+  });
+
+  test("/terms では認証処理を通さず利用規約を表示する", () => {
+    window.history.replaceState({}, "", "/terms");
+
+    render(<App />);
+
+    expect(screen.getByText("TERMS_OF_SERVICE_PAGE")).toBeInTheDocument();
+    expect(supabaseMock.auth.getSession).not.toHaveBeenCalled();
   });
 });

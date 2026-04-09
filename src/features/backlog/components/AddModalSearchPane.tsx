@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import type { MutableRefObject, RefObject } from "react";
 import type { TmdbSearchResult, TmdbSeasonOption } from "../../../lib/tmdb.ts";
+import { PendingSaveNotice } from "./PendingSaveNotice.tsx";
 import { SeasonPicker } from "./SeasonPicker.tsx";
 import { TmdbWorkCard } from "./TmdbWorkCard.tsx";
 
@@ -48,30 +49,6 @@ type SelectedResultFooterProps = Omit<
   | "onCompositionEnd"
   | "onSelectResult"
 >;
-
-function PendingSaveNotice({
-  message,
-  onConfirm,
-  onCancel,
-}: {
-  message: string;
-  onConfirm: () => void;
-  onCancel: () => void;
-}) {
-  return (
-    <div className="rounded-[20px] border border-[rgba(191,90,54,0.35)] bg-[rgba(191,90,54,0.08)] px-3.5 py-3">
-      <p className="text-sm leading-6 text-foreground">{message}</p>
-      <div className="mt-3 flex justify-end gap-2.5">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          キャンセル
-        </Button>
-        <Button type="button" onClick={onConfirm}>
-          ストックへ戻す
-        </Button>
-      </div>
-    </div>
-  );
-}
 
 function SelectedResultFooter({
   isTvSelection,

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { DocumentTextIcon, FilmIcon, TvIcon } from "@heroicons/react/24/outline";
 import type { PrimaryPlatform } from "../types.ts";
+import { PendingSaveNotice } from "./PendingSaveNotice.tsx";
 import { PlatformPicker } from "./PlatformPicker.tsx";
 
 type Props = {
@@ -104,17 +105,11 @@ export function AddModalDetailsPane({
         />
       </div>
       {pendingSaveMessage && !selectedTmdbResult ? (
-        <div className="rounded-[20px] border border-[rgba(191,90,54,0.35)] bg-[rgba(191,90,54,0.08)] px-3.5 py-3">
-          <p className="text-sm leading-6 text-foreground">{pendingSaveMessage}</p>
-          <div className="mt-3 flex justify-end gap-2.5">
-            <Button type="button" variant="outline" onClick={onCancelPendingSave}>
-              キャンセル
-            </Button>
-            <Button type="button" onClick={onConfirmPendingSave}>
-              ストックへ戻す
-            </Button>
-          </div>
-        </div>
+        <PendingSaveNotice
+          message={pendingSaveMessage}
+          onConfirm={onConfirmPendingSave}
+          onCancel={onCancelPendingSave}
+        />
       ) : null}
       {!selectedTmdbResult && !pendingSaveMessage && (
         <div className="flex justify-end items-center gap-3 pt-1">

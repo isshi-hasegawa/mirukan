@@ -1,32 +1,16 @@
 import { useEffect, useRef } from "react";
-import type { BacklogStatus, ViewingMode } from "../types.ts";
+import type { BacklogStatus } from "../types.ts";
 import { statusLabels, statusOrder } from "../constants.ts";
 import { KanbanColumn } from "./KanbanColumn.tsx";
+import type { KanbanColumnProps } from "./kanban-board-shared.ts";
 
 const SWIPE_THRESHOLD_PX = 50;
-
-type DropIndicator =
-  | { type: "card"; itemId: string; side: "before" | "after" }
-  | { type: "column"; status: BacklogStatus };
-
-type ColumnProps = {
-  status: BacklogStatus;
-  items: Parameters<typeof KanbanColumn>[0]["items"];
-  activeViewingMode: ViewingMode | null;
-  isMobileLayout: boolean;
-  dropIndicator: DropIndicator | null;
-  onOpenAddModal: () => void;
-  onOpenDetail: (itemId: string) => void;
-  onDeleteItem: (itemId: string) => void;
-  onMarkAsWatched: (itemId: string) => void;
-  onViewingModeToggle?: (mode: ViewingMode) => void;
-};
 
 type Props = {
   selectedTabStatus: BacklogStatus;
   isMobileDragging: boolean;
   onTabChange: (status: BacklogStatus) => void;
-  getColumnProps: (status: BacklogStatus) => ColumnProps;
+  getColumnProps: (status: BacklogStatus) => KanbanColumnProps;
   columnRef: (status: BacklogStatus, el: HTMLElement | null) => void;
 };
 
