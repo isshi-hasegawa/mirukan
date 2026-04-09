@@ -155,7 +155,7 @@ describe("upsertBacklogItemsToStatus", () => {
     await expect(
       upsertBacklogItemsToStatus("user-1", [], [], "stacked", {
         note: null,
-        primaryPlatform: null,
+        primary_platform: null,
       }),
     ).resolves.toEqual({ error: null });
 
@@ -167,7 +167,7 @@ describe("upsertBacklogItemsToStatus", () => {
         "stacked",
         {
           note: "ignored",
-          primaryPlatform: "netflix",
+          primary_platform: "netflix",
         },
       ),
     ).resolves.toEqual({ error: null });
@@ -204,7 +204,7 @@ describe("upsertBacklogItemsToStatus", () => {
         "stacked",
         {
           note: "新規メモ",
-          primaryPlatform: "netflix",
+          primary_platform: "netflix",
         },
       ),
     ).resolves.toEqual({ error: null });
@@ -256,7 +256,7 @@ describe("upsertBacklogItemsToStatus", () => {
         "stacked",
         {
           note: null,
-          primaryPlatform: null,
+          primary_platform: null,
         },
       ),
     ).resolves.toEqual({ error: "save failed" });

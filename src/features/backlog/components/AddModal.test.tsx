@@ -490,7 +490,7 @@ describe("AddModal", () => {
         [duplicateItem],
         ["existing-work-41"],
         "stacked",
-        { note: null, primaryPlatform: null },
+        { note: null, primary_platform: null },
       ),
     );
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -576,7 +576,7 @@ describe("AddModal", () => {
       [],
       ["manual-work-1"],
       "stacked",
-      { note: null, primaryPlatform: null },
+      { note: null, primary_platform: null },
     );
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(onAdded).toHaveBeenCalledTimes(1);
@@ -598,7 +598,7 @@ describe("AddModal", () => {
       [],
       ["tmdb-work-1"],
       "stacked",
-      { note: null, primaryPlatform: null },
+      { note: null, primary_platform: null },
     );
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(onAdded).toHaveBeenCalledTimes(1);

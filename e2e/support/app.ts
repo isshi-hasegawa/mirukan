@@ -1,7 +1,7 @@
 import { expect, type Locator, type Page, type TestInfo } from "@playwright/test";
 
-export const TEST_USER_EMAIL = process.env.TEST_USER_EMAIL || "akari@example.com";
-export const TEST_USER_PASSWORD = process.env.TEST_USER_PASSWORD || "password123";
+const TEST_USER_EMAIL = process.env.TEST_USER_EMAIL || "akari@example.com";
+const TEST_USER_PASSWORD = process.env.TEST_USER_PASSWORD || "password123";
 
 export async function login(page: Page) {
   await page.goto("/");
@@ -17,11 +17,11 @@ export async function openAddModal(page: Page) {
   await expect(page.getByRole("dialog", { name: "作品を追加" })).toBeVisible();
 }
 
-export function getColumn(page: Page, status: string) {
+function getColumn(page: Page, status: string) {
   return page.locator(`[data-column-status="${status}"]`);
 }
 
-export function getDropzone(page: Page, status: string) {
+function getDropzone(page: Page, status: string) {
   return page.locator(`[data-dropzone-status="${status}"]`);
 }
 

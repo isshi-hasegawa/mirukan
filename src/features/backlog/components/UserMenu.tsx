@@ -17,7 +17,7 @@ const BUG_REPORT_URL = "https://github.com/isshi-hasegawa/mirukan/issues/new/cho
 
 export function UserMenu({ email }: Props) {
   const [isAboutOpen, setIsAboutOpen] = useState(false);
-  const displayEmail = email ?? "signed-in user";
+  const displayEmail = email ?? "ログイン中のユーザー";
   // 小画面用：最初の2文字のみ表示
   const shortEmail = displayEmail.slice(0, 2);
 

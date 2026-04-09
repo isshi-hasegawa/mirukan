@@ -209,7 +209,7 @@ describe("useBacklogActions", () => {
         [],
         ["work-1"],
         "stacked",
-        { primaryPlatform: null, note: null },
+        { primary_platform: null, note: null },
       ),
     );
     expect(loadItems).toHaveBeenCalled();

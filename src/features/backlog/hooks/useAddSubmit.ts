@@ -34,7 +34,7 @@ type PendingStackedSave = {
   workIds: string[];
   backlogOptions: {
     note: string | null;
-    primaryPlatform: PrimaryPlatform;
+    primary_platform: PrimaryPlatform;
   };
 };
 
