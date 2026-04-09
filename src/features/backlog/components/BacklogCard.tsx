@@ -71,19 +71,6 @@ export function BacklogCard({
   const cardDropIndicator =
     dropIndicator?.type === "card" && dropIndicator.itemId === item.id ? dropIndicator : null;
 
-  const dropStyle: React.CSSProperties | undefined =
-    cardDropIndicator?.side === "before"
-      ? {
-          borderTop: "3px solid var(--primary)",
-          boxShadow: "inset 0 8px 0 -5px rgba(191,90,54,0.18)",
-        }
-      : cardDropIndicator?.side === "after"
-        ? {
-            borderBottom: "3px solid var(--primary)",
-            boxShadow: "inset 0 -8px 0 -5px rgba(191,90,54,0.18)",
-          }
-        : undefined;
-
   return (
     <article
       ref={(node) => {
@@ -91,10 +78,7 @@ export function BacklogCard({
         setDropRef(node);
       }}
       className="relative grid w-full min-w-0 cursor-grab gap-[10px] rounded-[18px] border border-[rgba(92,59,35,0.08)] bg-[var(--surface-strong)] pt-[18px] pr-11 pb-4 pl-4 transition-[opacity,box-shadow,border-color] duration-[140ms] ease-[ease] active:cursor-grabbing hover:border-primary/[0.18] hover:shadow-[0_14px_32px_rgba(75,48,30,0.08)] focus-visible:outline-2 focus-visible:outline-primary/45 focus-visible:border-primary/[0.18] focus-visible:shadow-[0_14px_32px_rgba(75,48,30,0.08)]"
-      style={{
-        ...dropStyle,
-        opacity: isDragging ? 0.4 : 1,
-      }}
+      style={{ opacity: isDragging ? 0.4 : 1 }}
       data-card-id={item.id}
       data-card-status={item.status}
       onClick={onOpenDetail}
@@ -107,6 +91,26 @@ export function BacklogCard({
       {...listeners}
       {...attributes}
     >
+      {cardDropIndicator?.side === "before" && (
+        <div
+          aria-hidden
+          className="animate-in fade-in duration-100 pointer-events-none absolute inset-x-0 flex items-center gap-1.5 px-1"
+          style={{ top: "-5px" }}
+        >
+          <div className="h-[6px] w-[6px] shrink-0 rounded-full bg-primary" />
+          <div className="h-[2px] flex-1 rounded-full bg-primary" />
+        </div>
+      )}
+      {cardDropIndicator?.side === "after" && (
+        <div
+          aria-hidden
+          className="animate-in fade-in duration-100 pointer-events-none absolute inset-x-0 flex items-center gap-1.5 px-1"
+          style={{ bottom: "-5px" }}
+        >
+          <div className="h-[6px] w-[6px] shrink-0 rounded-full bg-primary" />
+          <div className="h-[2px] flex-1 rounded-full bg-primary" />
+        </div>
+      )}
       <div className="absolute top-[10px] right-[10px]">
         <DropdownMenu>
           <DropdownMenuTrigger

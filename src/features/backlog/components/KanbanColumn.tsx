@@ -9,7 +9,7 @@ import { ViewingModeFilter } from "./ViewingModeFilter.tsx";
 
 function TopSlot({ status }: { status: BacklogStatus }) {
   const { setNodeRef } = useDroppable({ id: `top-slot:${status}` });
-  return <div ref={setNodeRef} className="h-2" />;
+  return <div ref={setNodeRef} className="h-6" />;
 }
 
 type Props = KanbanColumnProps & {
@@ -30,7 +30,8 @@ export function KanbanColumn({
   onViewingModeToggle,
 }: Props) {
   const { setNodeRef } = useDroppable({ id: `column:${status}` });
-  const isColumnActive = dropIndicator?.type === "column" && dropIndicator.status === status;
+  const isColumnActive =
+    dropIndicator?.type === "column" && dropIndicator.status === status && items.length === 0;
 
   const dropzoneStyle: React.CSSProperties | undefined = isColumnActive
     ? {
