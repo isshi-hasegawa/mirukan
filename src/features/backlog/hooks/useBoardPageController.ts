@@ -1,9 +1,7 @@
 import type { Session } from "@supabase/supabase-js";
-import { useWindowSize } from "./useWindowSize.ts";
-import { useBacklogItems } from "./useBacklogItems.ts";
-import { useBacklogDnd } from "./useBacklogDnd.ts";
-import { useBacklogActions } from "./useBacklogActions.ts";
-import { useBacklogFeedback } from "./useBacklogFeedback.tsx";
+import { useBoardPageInteractions } from "./useBoardPageInteractions.ts";
+import { useBoardPageLayout } from "./useBoardPageLayout.ts";
+import { useBoardPageResources } from "./useBoardPageResources.ts";
 import { useBoardPageState } from "./useBoardPageState.ts";
 
 type UseBoardPageControllerOptions = {
@@ -11,25 +9,18 @@ type UseBoardPageControllerOptions = {
 };
 
 export function useBoardPageController({ session }: UseBoardPageControllerOptions) {
-  const windowWidth = useWindowSize();
-  const isMobileLayout = windowWidth <= 720;
-  const { feedback, feedbackUi } = useBacklogFeedback();
-  const { items, setItems, isLoading, error, loadItems } = useBacklogItems();
+  const { isMobileLayout } = useBoardPageLayout();
+  const { feedback, feedbackUi, items, setItems, isLoading, error, loadItems } =
+    useBoardPageResources();
   const boardPageState = useBoardPageState({
     isMobileLayout,
     setItems,
   });
 
-  const dnd = useBacklogDnd({
-    items,
-    isMobileLayout,
-    onAfterDrop: loadItems,
-    feedback,
-  });
-
-  const actions = useBacklogActions({
+  const { dnd, actions } = useBoardPageInteractions({
     items,
     session,
+    isMobileLayout,
     loadItems,
     onItemDeleted: boardPageState.handleItemDeleted,
     onWorksAdded: boardPageState.handleWorksAdded,
