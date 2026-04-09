@@ -58,6 +58,10 @@ describe("normalizePrimaryPlatform", () => {
   test("returns the platform value as-is for non-empty string", () => {
     expect(normalizePrimaryPlatform("netflix")).toBe("netflix");
   });
+
+  test("returns null for unsupported platform values", () => {
+    expect(normalizePrimaryPlatform("unsupported")).toBeNull();
+  });
 });
 
 describe("createDetailModalState", () => {

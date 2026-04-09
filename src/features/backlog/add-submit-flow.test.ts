@@ -96,6 +96,13 @@ describe("buildStackedBacklogOptions", () => {
       note: "メモ",
     });
   });
+
+  test("platform 未選択は null のまま保持する", () => {
+    expect(buildStackedBacklogOptions(null, "  メモ  ")).toEqual({
+      primaryPlatform: null,
+      note: "メモ",
+    });
+  });
 });
 
 describe("confirmStackedSave", () => {

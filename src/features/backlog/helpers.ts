@@ -8,6 +8,7 @@ import type {
   ResolvedDropTarget,
   WorkType,
 } from "./types.ts";
+import { isPrimaryPlatformValue } from "./constants.ts";
 
 type RectLike = Pick<DOMRect, "top" | "height">;
 
@@ -21,12 +22,12 @@ export function getNullableStringField(formData: FormData, key: string) {
   return value ? value : null;
 }
 
-export function normalizePrimaryPlatform(value: string): PrimaryPlatform {
-  if (!value) {
-    return null;
-  }
+export function isPrimaryPlatform(value: unknown): value is PrimaryPlatform {
+  return value === null || isPrimaryPlatformValue(value);
+}
 
-  return value as Exclude<PrimaryPlatform, null>;
+export function normalizePrimaryPlatform(value: string | null): PrimaryPlatform {
+  return isPrimaryPlatformValue(value) ? value : null;
 }
 
 export function createDetailModalState(

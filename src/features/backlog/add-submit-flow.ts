@@ -1,6 +1,5 @@
-import { normalizePrimaryPlatform } from "./helpers.ts";
 import { buildMoveToStatusConfirmMessage, planBacklogItemUpserts } from "./backlog-item-utils.ts";
-import type { BacklogItem } from "./types.ts";
+import type { BacklogItem, PrimaryPlatform } from "./types.ts";
 import type { TmdbSearchResult } from "../../lib/tmdb.ts";
 
 type SelectedSubjectOptions = {
@@ -41,9 +40,9 @@ export function buildSelectedSubject({
   return `${selectedSeasonNumbers.length}シーズン`;
 }
 
-export function buildStackedBacklogOptions(primaryPlatform: string, note: string) {
+export function buildStackedBacklogOptions(primaryPlatform: PrimaryPlatform, note: string) {
   return {
-    primaryPlatform: normalizePrimaryPlatform(primaryPlatform),
+    primaryPlatform,
     note: note.trim() || null,
   };
 }

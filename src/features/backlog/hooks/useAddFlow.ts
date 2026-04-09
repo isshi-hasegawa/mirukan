@@ -5,7 +5,7 @@ import {
   initialAddFlowDraftState,
   resolveAddFlowDraft,
 } from "../add-flow-state.ts";
-import type { BacklogItem } from "../types.ts";
+import type { BacklogItem, PrimaryPlatform } from "../types.ts";
 import { useAddSubmit } from "./useAddSubmit.ts";
 import { useTmdbSearch } from "./useTmdbSearch.ts";
 
@@ -104,7 +104,7 @@ export function useAddFlow({ items, session, onClose, onAdded }: UseAddFlowOptio
     dispatchDraft({ type: "set_work_type", workType });
   };
 
-  const setPrimaryPlatform = (primaryPlatform: string) => {
+  const setPrimaryPlatform = (primaryPlatform: PrimaryPlatform) => {
     clearSubmissionState();
     dispatchDraft({ type: "set_primary_platform", primaryPlatform });
   };

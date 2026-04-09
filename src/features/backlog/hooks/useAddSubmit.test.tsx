@@ -100,7 +100,7 @@ function HookHarness({
     isTvSelection,
     resolvedTitle,
     resolvedWorkType: "movie",
-    primaryPlatform: "",
+    primaryPlatform: null,
     note: "",
     onClose,
     onAdded,

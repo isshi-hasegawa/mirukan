@@ -277,4 +277,19 @@ describe("normalizeBacklogItems", () => {
 
     expect(normalizeBacklogItems(rows)).toHaveLength(0);
   });
+
+  test("excludes rows with invalid platform values", () => {
+    const rows = [
+      {
+        id: "1",
+        status: "stacked",
+        primary_platform: "unsupported",
+        note: null,
+        sort_order: 1000,
+        works: createWork({ id: "w1" }),
+      },
+    ];
+
+    expect(normalizeBacklogItems(rows)).toHaveLength(0);
+  });
 });

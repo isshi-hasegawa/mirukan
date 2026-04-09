@@ -7,6 +7,18 @@ import huluUrl from "../../assets/icons/hulu.svg?url";
 import appleTvPlusUrl from "../../assets/icons/apple_tv_plus.svg?url";
 import appleTvUrl from "../../assets/icons/apple_tv.svg?url";
 
+export const platformKeys = [
+  "netflix",
+  "prime_video",
+  "u_next",
+  "disney_plus",
+  "hulu",
+  "apple_tv_plus",
+  "apple_tv",
+] as const satisfies readonly Exclude<PrimaryPlatform, null>[];
+
+type PlatformKey = (typeof platformKeys)[number];
+
 export const statusOrder: BacklogStatus[] = [
   "stacked",
   "want_to_watch",
@@ -23,7 +35,7 @@ export const statusLabels: Record<BacklogStatus, string> = {
   watched: "視聴済み",
 };
 
-export const platformLabels: Record<Exclude<PrimaryPlatform, null>, string> = {
+export const platformLabels: Record<PlatformKey, string> = {
   netflix: "Netflix",
   prime_video: "Prime Video",
   u_next: "U-NEXT",
@@ -33,7 +45,7 @@ export const platformLabels: Record<Exclude<PrimaryPlatform, null>, string> = {
   apple_tv: "Apple TV",
 };
 
-export const platformIcons: Record<Exclude<PrimaryPlatform, null>, string> = {
+export const platformIcons: Record<PlatformKey, string> = {
   netflix: netflixUrl,
   prime_video: primeVideoUrl,
   u_next: unextUrl,
@@ -43,9 +55,7 @@ export const platformIcons: Record<Exclude<PrimaryPlatform, null>, string> = {
   apple_tv: appleTvUrl,
 };
 
-export const platformKeys = Object.keys(platformIcons) as Exclude<PrimaryPlatform, null>[];
-
-export const platformBackgrounds: Record<Exclude<PrimaryPlatform, null>, string> = {
+export const platformBackgrounds: Record<PlatformKey, string> = {
   netflix: "#000",
   prime_video: "#fff",
   u_next: "#000",
@@ -54,6 +64,10 @@ export const platformBackgrounds: Record<Exclude<PrimaryPlatform, null>, string>
   apple_tv_plus: "#000",
   apple_tv: "#1d1d1f",
 };
+
+export function isPrimaryPlatformValue(value: unknown): value is PlatformKey {
+  return typeof value === "string" && platformKeys.some((platform) => platform === value);
+}
 
 export const viewingModeOrder: ViewingMode[] = ["focus", "thoughtful", "quick", "background"];
 

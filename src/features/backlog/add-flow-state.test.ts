@@ -40,7 +40,7 @@ describe("addFlowDraftReducer", () => {
       manualTitle: "手動作品",
       note: "メモ",
       workType: "movie",
-      primaryPlatform: "",
+      primaryPlatform: null,
     });
   });
 
@@ -67,7 +67,7 @@ describe("resolveAddFlowDraft", () => {
     expect(
       resolveAddFlowDraft(
         {
-          primaryPlatform: "",
+          primaryPlatform: null,
           note: "",
           manualTitle: "手動作品",
           workType: "series",
