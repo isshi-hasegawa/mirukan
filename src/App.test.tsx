@@ -105,4 +105,17 @@ describe("App", () => {
     expect(await screen.findByText("BOARD_PAGE")).toBeInTheDocument();
     expect(window.location.search).toBe("");
   });
+
+  test("getSession が失敗してもローディング状態で止まらずログイン画面に戻る", async () => {
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    supabaseMock.auth.getSession.mockRejectedValueOnce(new Error("network error"));
+
+    render(<App />);
+
+    expect(await screen.findByText("LOGIN_PAGE")).toBeInTheDocument();
+    expect(screen.queryByText("LOGIN_LOADING")).not.toBeInTheDocument();
+    expect(consoleErrorSpy).toHaveBeenCalledWith("セッション取得に失敗しました", expect.any(Error));
+
+    consoleErrorSpy.mockRestore();
+  });
 });

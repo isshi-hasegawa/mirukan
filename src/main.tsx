@@ -5,6 +5,7 @@ import "./style.css";
 import { App } from "./App.tsx";
 import { PrivacyPolicyPage } from "./features/backlog/components/PrivacyPolicyPage.tsx";
 import { TermsOfServicePage } from "./features/backlog/components/TermsOfServicePage.tsx";
+import { getAppRootElement } from "./getAppRootElement.ts";
 
 function Root() {
   const { pathname } = window.location;
@@ -13,8 +14,7 @@ function Root() {
   return <App />;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-createRoot(document.getElementById("app")!).render(
+createRoot(getAppRootElement()).render(
   <StrictMode>
     <Root />
   </StrictMode>,

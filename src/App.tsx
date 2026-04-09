@@ -64,9 +64,15 @@ function AuthenticatedApp() {
   );
 
   useEffect(() => {
-    void supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-    });
+    void supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        setSession(data.session);
+      })
+      .catch((error: unknown) => {
+        console.error("セッション取得に失敗しました", error);
+        setSession(null);
+      });
 
     const {
       data: { subscription },
