@@ -3,6 +3,7 @@ import { FilmIcon, TvIcon } from "@heroicons/react/24/outline";
 import { createDetailModalState, getWorkTypeLabel } from "../helpers.ts";
 import { statusLabels, statusOrder } from "../constants.ts";
 import { PosterImage } from "./PosterImage.tsx";
+import { RottenTomatoesBadge } from "./RottenTomatoesBadge.tsx";
 import { TmdbLink } from "./TmdbLink.tsx";
 import { useDetailModalActions } from "../hooks/useDetailModalActions.ts";
 import { DetailModalNoteField } from "./DetailModalNoteField.tsx";
@@ -69,7 +70,7 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
   ].filter(Boolean);
 
   const rtScore = work.rotten_tomatoes_score;
-  const rtFresh = rtScore !== null && rtScore >= 60;
+  const rtVariant = rtScore === null ? null : rtScore >= 60 ? "fresh" : "rotten";
 
   return (
     <div
@@ -124,16 +125,7 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
             </p>
             {rtScore !== null && (
               <p className="flex items-center gap-1.5 text-[0.85rem]">
-                <span
-                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-medium ${
-                    rtFresh
-                      ? "bg-[rgba(34,197,94,0.15)] text-[#4ade80]"
-                      : "bg-[rgba(239,68,68,0.15)] text-[#f87171]"
-                  }`}
-                  title="Rotten Tomatoes"
-                >
-                  {rtFresh ? "Fresh" : "Rotten"} {rtScore}%
-                </span>
+                <RottenTomatoesBadge score={rtScore} variant={rtVariant} />
                 <span className="text-muted-foreground">Rotten Tomatoes</span>
               </p>
             )}
