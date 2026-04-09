@@ -5,6 +5,20 @@ description: Renovate の PR を見たいときに使う。Renovate の非 auto-
 
 # Renovate Risk Review
 
+## いつ使うか
+
+- Renovate が作成した non-automerge PR のリスクを評価するとき
+
+## いつ使わないか
+
+- 自作の PR を確認するとき（[self-review](../self-review/SKILL.md) を使う）
+- Renovate の automerge 対象 PR を確認するとき
+
+## 前後関係
+
+- 通常の作業フローとは独立した例外 skill
+- リスク評価の観点は [self-review](../self-review/SKILL.md) を踏襲する
+
 ## 目的
 
 Renovate が作成した non-automerge PR について、差分ベースのリスク評価を行う。
