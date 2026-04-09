@@ -265,7 +265,7 @@ describe("useBacklogActions", () => {
           createItem({
             status: "watching",
             works: {
-              ...createItem().works,
+              ...createItem().works!,
               id: "work-1",
             },
           }),
