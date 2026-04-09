@@ -1,12 +1,11 @@
 import { test, expect } from "@playwright/test";
-import { login } from "../support/app.ts";
 
 /**
  * Kanban Board E2E tests
  */
 
 test("ボードのコラムが表示される", async ({ page }) => {
-  await login(page);
+  await page.goto("/");
 
   const columnText = ["ストック", "見たい", "視聴中", "中断", "視聴済み"];
   const isMobileLayout = page.viewportSize()?.width !== null && page.viewportSize()!.width <= 720;
@@ -22,7 +21,7 @@ test("ボードのコラムが表示される", async ({ page }) => {
 });
 
 test("ボードが読み込まれる", async ({ page }) => {
-  await login(page);
+  await page.goto("/");
 
   await expect(page.locator("main").or(page.locator("[role='main']")).first()).toBeVisible({
     timeout: 5000,
@@ -31,7 +30,7 @@ test("ボードが読み込まれる", async ({ page }) => {
 });
 
 test("作品追加の導線が表示される", async ({ page }) => {
-  await login(page);
+  await page.goto("/");
 
   await expect(page.getByRole("button", { name: "作品を検索してストックに追加" })).toBeVisible();
 });

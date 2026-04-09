@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { login, openAddModal } from "../support/app.ts";
+import { openAddModal } from "../support/app.ts";
 
 test("TMDb 検索結果を選ぶと詳細ペインへ反映される", async ({ page }) => {
   await page.route("**/functions/v1/fetch-tmdb-similar", async (route) => {
@@ -56,7 +56,7 @@ test("TMDb 検索結果を選ぶと詳細ペインへ反映される", async ({ 
     });
   });
 
-  await login(page);
+  await page.goto("/");
   await openAddModal(page);
 
   await expect(page.getByRole("button", { name: /おすすめ作品/ })).toBeVisible();
