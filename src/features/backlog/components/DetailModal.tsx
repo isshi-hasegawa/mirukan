@@ -70,7 +70,6 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
   ].filter(Boolean);
 
   const rtScore = work.rotten_tomatoes_score;
-  const rtVariant = rtScore === null ? null : rtScore >= 60 ? "fresh" : "rotten";
 
   return (
     <div
@@ -125,7 +124,7 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
             </p>
             {rtScore !== null && (
               <p className="text-[0.85rem]">
-                <RottenTomatoesBadge score={rtScore} variant={rtVariant} />
+                <RottenTomatoesBadge score={rtScore} variant={rtScore >= 60 ? "fresh" : "rotten"} />
               </p>
             )}
           </div>
