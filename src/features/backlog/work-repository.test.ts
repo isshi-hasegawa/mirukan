@@ -1,6 +1,9 @@
 const tmdbMocks = vi.hoisted(() => ({
   fetchTmdbWorkDetails: vi.fn(),
 }));
+const omdbMocks = vi.hoisted(() => ({
+  fetchOmdbWorkDetails: vi.fn(),
+}));
 
 vi.mock("../../lib/tmdb.ts", async () => {
   const actual = await vi.importActual<typeof import("../../lib/tmdb.ts")>("../../lib/tmdb.ts");
@@ -10,6 +13,9 @@ vi.mock("../../lib/tmdb.ts", async () => {
     fetchTmdbWorkDetails: tmdbMocks.fetchTmdbWorkDetails,
   };
 });
+vi.mock("../../lib/omdb.ts", () => ({
+  fetchOmdbWorkDetails: omdbMocks.fetchOmdbWorkDetails,
+}));
 
 import { http, HttpResponse } from "msw";
 import type {
@@ -55,8 +61,18 @@ function createTmdbDetails(overrides: Partial<TmdbWorkDetails> = {}): TmdbWorkDe
   };
 }
 
+function createOmdbDetails() {
+  return {
+    rottenTomatoesScore: 93,
+    imdbRating: 8.4,
+    imdbVotes: 120000,
+    metacriticScore: 78,
+  };
+}
+
 beforeEach(() => {
   tmdbMocks.fetchTmdbWorkDetails.mockReset();
+  omdbMocks.fetchOmdbWorkDetails.mockReset();
 });
 
 afterEach(() => {
@@ -208,6 +224,8 @@ describe("upsertTmdbWork", () => {
         original_title: "Existing Movie",
         search_text: "existing movie",
         last_tmdb_synced_at: "2026-03-31T00:00:00.000Z",
+        omdb_fetched_at: "2026-04-08T00:00:00.000Z",
+        imdb_id: "tt0123456",
         episode_count: null,
         season_number: null,
         series_title: null,
@@ -308,6 +326,157 @@ describe("upsertTmdbWork", () => {
       expect.objectContaining({
         id: "existing-work",
         imdb_id: "tt0123456",
+      }),
+    );
+  });
+
+  test("TMDb が新しくても imdb_id 未保存かつ OMDb 未取得なら詳細を再取得して OMDb を保存する", async () => {
+    setMockWorks([
+      {
+        id: "existing-work",
+        source_type: "tmdb",
+        work_type: "movie",
+        tmdb_media_type: "movie",
+        tmdb_id: 200,
+        title: "既存作品",
+        original_title: "Existing Movie",
+        search_text: "existing movie",
+        last_tmdb_synced_at: "2026-04-08T00:00:00.000Z",
+        omdb_fetched_at: null,
+        imdb_id: null,
+        episode_count: null,
+        season_number: null,
+        series_title: null,
+      },
+    ]);
+    tmdbMocks.fetchTmdbWorkDetails.mockResolvedValue(
+      createTmdbDetails({
+        tmdbId: movieTarget.tmdbId,
+        title: "更新後タイトル",
+        originalTitle: movieTarget.originalTitle,
+        imdbId: "tt7654321",
+      }),
+    );
+    omdbMocks.fetchOmdbWorkDetails.mockResolvedValue(createOmdbDetails());
+
+    await expect(upsertTmdbWork(movieTarget, "user-1")).resolves.toEqual({
+      success: true,
+      data: { id: "existing-work" },
+      error: null,
+      count: null,
+      status: 200,
+      statusText: "OK",
+    });
+
+    expect(tmdbMocks.fetchTmdbWorkDetails).toHaveBeenCalledWith(movieTarget);
+    expect(omdbMocks.fetchOmdbWorkDetails).toHaveBeenCalledWith("tt7654321");
+    expect(getMockWorks()).toContainEqual(
+      expect.objectContaining({
+        id: "existing-work",
+        imdb_id: "tt7654321",
+        rotten_tomatoes_score: 93,
+        imdb_rating: 8.4,
+        imdb_votes: 120000,
+        metacritic_score: 78,
+      }),
+    );
+  });
+
+  test("IMDb ID が無い作品でも OMDb 未取得時の確認結果を記録する", async () => {
+    setMockWorks([
+      {
+        id: "existing-work",
+        source_type: "tmdb",
+        work_type: "movie",
+        tmdb_media_type: "movie",
+        tmdb_id: 200,
+        title: "既存作品",
+        original_title: "Existing Movie",
+        search_text: "existing movie",
+        last_tmdb_synced_at: "2026-04-08T00:00:00.000Z",
+        omdb_fetched_at: null,
+        imdb_id: null,
+        episode_count: null,
+        season_number: null,
+        series_title: null,
+      },
+    ]);
+    tmdbMocks.fetchTmdbWorkDetails.mockResolvedValue(
+      createTmdbDetails({
+        tmdbId: movieTarget.tmdbId,
+        title: "更新後タイトル",
+        originalTitle: movieTarget.originalTitle,
+        imdbId: null,
+      }),
+    );
+
+    await expect(upsertTmdbWork(movieTarget, "user-1")).resolves.toEqual({
+      success: true,
+      data: { id: "existing-work" },
+      error: null,
+      count: null,
+      status: 200,
+      statusText: "OK",
+    });
+
+    expect(omdbMocks.fetchOmdbWorkDetails).not.toHaveBeenCalled();
+    expect(getMockWorks()).toContainEqual(
+      expect.objectContaining({
+        id: "existing-work",
+        imdb_id: null,
+        rotten_tomatoes_score: null,
+        imdb_rating: null,
+        imdb_votes: null,
+        metacritic_score: null,
+        omdb_fetched_at: expect.any(String),
+      }),
+    );
+  });
+
+  test("TMDb 再同期で imdb_id が変わったら OMDb を即時再取得する", async () => {
+    setMockWorks([
+      {
+        id: "existing-work",
+        source_type: "tmdb",
+        work_type: "movie",
+        tmdb_media_type: "movie",
+        tmdb_id: 200,
+        title: "既存作品",
+        original_title: "Existing Movie",
+        search_text: "existing movie",
+        last_tmdb_synced_at: "2026-01-01T00:00:00.000Z",
+        omdb_fetched_at: "2026-04-08T00:00:00.000Z",
+        imdb_id: "tt0123456",
+        episode_count: null,
+        season_number: null,
+        series_title: null,
+      },
+    ]);
+    tmdbMocks.fetchTmdbWorkDetails.mockResolvedValue(
+      createTmdbDetails({
+        tmdbId: movieTarget.tmdbId,
+        title: "更新後タイトル",
+        originalTitle: movieTarget.originalTitle,
+        imdbId: "tt7654321",
+      }),
+    );
+    omdbMocks.fetchOmdbWorkDetails.mockResolvedValue(createOmdbDetails());
+
+    await expect(upsertTmdbWork(movieTarget, "user-1")).resolves.toEqual({
+      success: true,
+      data: { id: "existing-work" },
+      error: null,
+      count: null,
+      status: 200,
+      statusText: "OK",
+    });
+
+    expect(omdbMocks.fetchOmdbWorkDetails).toHaveBeenCalledWith("tt7654321");
+    expect(getMockWorks()).toContainEqual(
+      expect.objectContaining({
+        id: "existing-work",
+        imdb_id: "tt7654321",
+        rotten_tomatoes_score: 93,
       }),
     );
   });
@@ -424,6 +593,8 @@ describe("resolveSelectedSeasonWorkIds", () => {
         original_title: "Test Series",
         search_text: "test series",
         last_tmdb_synced_at: "2026-03-31T00:00:00.000Z",
+        omdb_fetched_at: "2026-04-08T00:00:00.000Z",
+        imdb_id: "tt0123456",
         episode_count: null,
         season_number: null,
         series_title: null,

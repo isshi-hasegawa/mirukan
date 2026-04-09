@@ -95,5 +95,10 @@ export type Work = {
   background_fit_score?: number | null;
   completion_load_score?: number | null;
   last_tmdb_synced_at?: string | null;
+  omdb_fetched_at?: string | null;
+  rotten_tomatoes_score?: number | null;
+  imdb_rating?: number | null;
+  imdb_votes?: number | null;
+  metacritic_score?: number | null;
   series_title: string | null;
 };

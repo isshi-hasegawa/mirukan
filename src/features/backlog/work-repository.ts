@@ -291,8 +291,12 @@ async function upsertFetchedTmdbWork(
     return buildErrorIdResponse(selectError);
   }
 
-  if (existing && !shouldRefreshTmdbWork(existing.last_tmdb_synced_at)) {
-    if (existing.imdb_id && shouldRefreshOmdbWork(existing.omdb_fetched_at)) {
+  const shouldRefreshTmdb = !existing || shouldRefreshTmdbWork(existing.last_tmdb_synced_at);
+  const shouldRefreshOmdb = !existing || shouldRefreshOmdbWork(existing.omdb_fetched_at);
+  const shouldSyncTmdbForOmdb = Boolean(existing && shouldRefreshOmdb && !existing.imdb_id);
+
+  if (existing && !shouldRefreshTmdb && !shouldSyncTmdbForOmdb) {
+    if (existing.imdb_id && shouldRefreshOmdb) {
       try {
         const omdb = await fetchOmdbWorkDetails(existing.imdb_id);
         await supabase
@@ -315,8 +319,34 @@ async function upsertFetchedTmdbWork(
   const details = await fetchTmdbWorkDetails(target);
 
   const omdbFields = await (async () => {
+    const omdbFetchedAt = new Date().toISOString();
+
+    if (details.imdbId === null) {
+      if (
+        existing &&
+        !shouldRefreshOmdbWork(existing.omdb_fetched_at) &&
+        existing.imdb_id === null
+      ) {
+        return {};
+      }
+
+      return {
+        rotten_tomatoes_score: null,
+        imdb_rating: null,
+        imdb_votes: null,
+        metacritic_score: null,
+        omdb_fetched_at: omdbFetchedAt,
+      };
+    }
+
     if (!details.imdbId) return {};
-    if (existing && !shouldRefreshOmdbWork(existing.omdb_fetched_at)) return {};
+    if (
+      existing &&
+      !shouldRefreshOmdbWork(existing.omdb_fetched_at) &&
+      existing.imdb_id === details.imdbId
+    ) {
+      return {};
+    }
     try {
       const omdb = await fetchOmdbWorkDetails(details.imdbId);
       return {
@@ -324,7 +354,7 @@ async function upsertFetchedTmdbWork(
         imdb_rating: omdb.imdbRating,
         imdb_votes: omdb.imdbVotes,
         metacritic_score: omdb.metacriticScore,
-        omdb_fetched_at: new Date().toISOString(),
+        omdb_fetched_at: omdbFetchedAt,
       };
     } catch {
       return {};
