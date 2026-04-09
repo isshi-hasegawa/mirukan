@@ -13,6 +13,7 @@ export type TmdbSearchResult = {
   releaseDate: string | null;
   jpWatchPlatforms: { key: string; logoPath: string | null }[];
   hasJapaneseRelease: boolean;
+  rottenTomatoesScore?: number | null;
 };
 
 export type TmdbSeasonOption = {

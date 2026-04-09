@@ -261,7 +261,6 @@ describe("DetailModal", () => {
     });
 
     expect(screen.getByLabelText("Rotten Tomatoes Fresh 87%")).toBeInTheDocument();
-    expect(screen.getByText("Rotten Tomatoes")).toBeInTheDocument();
   });
 
   test("Rotten Tomatoes スコアが 60 未満のときは Rotten バッジを表示する", () => {

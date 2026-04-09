@@ -16,6 +16,7 @@ export type TmdbSearchResult = {
   releaseDate: string | null;
   jpWatchPlatforms: TmdbWatchPlatform[];
   hasJapaneseRelease: boolean;
+  rottenTomatoesScore?: number | null;
 };
 
 export type TmdbSeasonSelectionTarget = {
@@ -135,7 +136,8 @@ function isTmdbSearchResult(value: unknown): value is TmdbSearchResult {
     isNullableString(value.releaseDate) &&
     Array.isArray(value.jpWatchPlatforms) &&
     value.jpWatchPlatforms.every(isTmdbWatchPlatform) &&
-    typeof value.hasJapaneseRelease === "boolean"
+    typeof value.hasJapaneseRelease === "boolean" &&
+    (value.rottenTomatoesScore === undefined || isNullableNumber(value.rottenTomatoesScore))
   );
 }
 

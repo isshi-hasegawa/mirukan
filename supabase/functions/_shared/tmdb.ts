@@ -115,6 +115,7 @@ export type TmdbSearchResult = {
   releaseDate: string | null;
   jpWatchPlatforms: TmdbWatchPlatform[];
   hasJapaneseRelease: boolean;
+  rottenTomatoesScore?: number | null;
 };
 
 type TmdbLocalizedSearchMetadata = {
@@ -523,6 +524,71 @@ async function enrichWithWatchProviders(results: TmdbSearchResult[]): Promise<Tm
   });
 }
 
+async function enrichWithStoredScores(results: TmdbSearchResult[]): Promise<TmdbSearchResult[]> {
+  const admin = getSupabaseAdminClient();
+  if (!admin || results.length === 0) {
+    return results;
+  }
+
+  const movieIds = [
+    ...new Set(
+      results.filter((result) => result.tmdbMediaType === "movie").map((result) => result.tmdbId),
+    ),
+  ];
+  const tvIds = [
+    ...new Set(
+      results.filter((result) => result.tmdbMediaType === "tv").map((result) => result.tmdbId),
+    ),
+  ];
+  const rows: Array<{
+    tmdb_media_type: TmdbMediaType;
+    tmdb_id: number;
+    rotten_tomatoes_score: number | null;
+  }> = [];
+
+  if (movieIds.length > 0) {
+    const { data, error } = await admin
+      .from("works")
+      .select("tmdb_media_type, tmdb_id, rotten_tomatoes_score")
+      .eq("source_type", "tmdb")
+      .eq("tmdb_media_type", "movie")
+      .in("tmdb_id", movieIds)
+      .not("rotten_tomatoes_score", "is", null);
+
+    if (error) {
+      throw new Error(`Failed to read stored movie scores: ${error.message}`);
+    }
+
+    rows.push(...(data ?? []));
+  }
+
+  if (tvIds.length > 0) {
+    const { data, error } = await admin
+      .from("works")
+      .select("tmdb_media_type, tmdb_id, rotten_tomatoes_score")
+      .eq("source_type", "tmdb")
+      .eq("tmdb_media_type", "tv")
+      .in("tmdb_id", tvIds)
+      .is("season_number", null)
+      .not("rotten_tomatoes_score", "is", null);
+
+    if (error) {
+      throw new Error(`Failed to read stored TV scores: ${error.message}`);
+    }
+
+    rows.push(...(data ?? []));
+  }
+
+  const scoreByKey = new Map(
+    rows.map((row) => [`${row.tmdb_media_type}-${row.tmdb_id}`, row.rotten_tomatoes_score]),
+  );
+
+  return results.map((result) => ({
+    ...result,
+    rottenTomatoesScore: scoreByKey.get(`${result.tmdbMediaType}-${result.tmdbId}`) ?? null,
+  }));
+}
+
 function mapMultiSearchResult(
   result: TmdbMultiSearchResponse["results"][number],
   mediaType: TmdbMediaType,
@@ -546,6 +612,7 @@ function mapMultiSearchResult(
       mediaType === "movie" ? (result.release_date ?? null) : (result.first_air_date ?? null),
     jpWatchPlatforms: [],
     hasJapaneseRelease: true,
+    rottenTomatoesScore: null,
   };
 }
 
@@ -565,7 +632,7 @@ async function fetchSearchResults(query: string): Promise<TmdbSearchResult[]> {
     return mapped ? [mapped] : [];
   });
 
-  return enrichWithWatchProviders(base);
+  return enrichWithStoredScores(await enrichWithWatchProviders(base));
 }
 
 function buildFallbackQueries(query: string): string[] {
@@ -618,16 +685,18 @@ async function fetchFreshTmdbTrending(): Promise<TmdbSearchResult[]> {
   ]);
   const seen = new Set<string>();
 
-  return enrichWithWatchProviders(
-    pages.flat().filter((item) => {
-      const key = `${item.tmdbMediaType}-${item.tmdbId}`;
-      if (seen.has(key)) {
-        return false;
-      }
+  return enrichWithStoredScores(
+    await enrichWithWatchProviders(
+      pages.flat().filter((item) => {
+        const key = `${item.tmdbMediaType}-${item.tmdbId}`;
+        if (seen.has(key)) {
+          return false;
+        }
 
-      seen.add(key);
-      return true;
-    }),
+        seen.add(key);
+        return true;
+      }),
+    ),
   );
 }
 
@@ -893,10 +962,12 @@ async function refreshSimilarCacheForSource(sourceItem: {
   tmdbId: number;
   tmdbMediaType: TmdbMediaType;
 }) {
-  const fresh = await enrichWithWatchProviders(
-    dedupeRecommendationResults(
-      await fetchSimilarPage(sourceItem.tmdbId, sourceItem.tmdbMediaType),
-    ).slice(0, MAX_SIMILAR_RESULTS_PER_SOURCE),
+  const fresh = await enrichWithStoredScores(
+    await enrichWithWatchProviders(
+      dedupeRecommendationResults(
+        await fetchSimilarPage(sourceItem.tmdbId, sourceItem.tmdbMediaType),
+      ).slice(0, MAX_SIMILAR_RESULTS_PER_SOURCE),
+    ),
   );
   const admin = getSupabaseAdminClient();
 

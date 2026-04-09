@@ -124,9 +124,8 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
               {metadataRest.length > 0 && ` · ${metadataRest.join(" · ")}`}
             </p>
             {rtScore !== null && (
-              <p className="flex items-center gap-1.5 text-[0.85rem]">
+              <p className="text-[0.85rem]">
                 <RottenTomatoesBadge score={rtScore} variant={rtVariant} />
-                <span className="text-muted-foreground">Rotten Tomatoes</span>
               </p>
             )}
           </div>
