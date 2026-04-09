@@ -122,7 +122,9 @@ jobs:
           version: latest
 
       - name: Start Supabase local stack
-        run: supabase start
+        run: >-
+          supabase start
+          --exclude studio,mailpit,imgproxy,storage-api,realtime,postgres-meta,logflare,vector,supavisor,edge-runtime
 
       - name: Run E2E tests (chromium)
         run: playwright test --project chromium
