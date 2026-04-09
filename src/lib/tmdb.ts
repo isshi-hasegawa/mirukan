@@ -1,3 +1,8 @@
+import {
+  FunctionsFetchError,
+  FunctionsHttpError,
+  FunctionsRelayError,
+} from "@supabase/supabase-js";
 import { supabase } from "./supabase.ts";
 
 export type TmdbWatchPlatform = {
@@ -77,6 +82,54 @@ let trendingCachePromise: Promise<TmdbSearchResult[]> | null = null;
 const similarCache = new Map<string, RecommendationCacheEntry>();
 const similarCachePromises = new Map<string, Promise<TmdbSearchResult[]>>();
 
+async function readSupabaseFunctionErrorDetail(response: Response): Promise<string | null> {
+  const contentType = response.headers.get("content-type") ?? "";
+
+  try {
+    if (contentType.includes("application/json")) {
+      const json = (await response.clone().json()) as unknown;
+
+      if (isRecord(json)) {
+        if (typeof json.error === "string" && json.error.trim()) {
+          return json.error.trim();
+        }
+
+        if (typeof json.message === "string" && json.message.trim()) {
+          return json.message.trim();
+        }
+      }
+    }
+
+    const text = (await response.clone().text()).trim();
+    return text || null;
+  } catch {
+    return null;
+  }
+}
+
+async function formatSupabaseFunctionError(functionName: string, error: unknown): Promise<string> {
+  if (error instanceof FunctionsHttpError && error.context instanceof Response) {
+    const detail = await readSupabaseFunctionErrorDetail(error.context);
+    if (detail) {
+      return `Supabase function ${functionName} failed: ${detail}`;
+    }
+  }
+
+  if (error instanceof FunctionsHttpError) {
+    return `Supabase function ${functionName} failed: ${error.message}`;
+  }
+
+  if (error instanceof FunctionsRelayError || error instanceof FunctionsFetchError) {
+    return `Supabase function ${functionName} failed: ${error.message}`;
+  }
+
+  if (error instanceof Error) {
+    return `Supabase function ${functionName} failed: ${error.message}`;
+  }
+
+  return `Supabase function ${functionName} failed`;
+}
+
 async function invokeTmdbFunction<TResponse>(
   functionName: string,
   body?: Record<string, unknown>,
@@ -85,7 +138,7 @@ async function invokeTmdbFunction<TResponse>(
   const { data, error } = await supabase.functions.invoke(functionName, { body });
 
   if (error) {
-    throw new Error(`Supabase function ${functionName} failed: ${error.message}`);
+    throw new Error(await formatSupabaseFunctionError(functionName, error));
   }
 
   if (validate && !validate(data)) {

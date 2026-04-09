@@ -408,7 +408,7 @@ describe("API boundary wrappers", () => {
     );
 
     await expect(searchTmdbWorks("query text")).rejects.toThrow(
-      "Supabase function search-tmdb-works failed: Edge Function returned a non-2xx status code",
+      "Supabase function search-tmdb-works failed: edge function failed",
     );
   });
 
