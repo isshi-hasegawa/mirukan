@@ -75,13 +75,18 @@ TMDb 検索系の API は Supabase Edge Functions 経由で実行します。
 
 リモート環境を使う場合は、関数コードの配置だけではなく、secret 設定と関数の deploy が必要です。
 
+`main` へのマージ後は GitHub Actions の [deploy-functions.yml](./.github/workflows/deploy-functions.yml) が Edge Functions を自動 deploy します。
+初回セットアップ時に、GitHub 側で以下を設定してください。
+
+- Repository secret: `SUPABASE_ACCESS_TOKEN`
+- Repository variable: `SUPABASE_PROJECT_REF`
+
+この workflow は `supabase/functions/**` または `supabase/config.toml` の変更時だけ動きます。
+なお、`TMDB_API_KEY` などの Supabase secret 自体は GitHub から同期せず、引き続き Supabase 側で管理します。
+
 ```bash
 supabase secrets set TMDB_API_KEY=...
-supabase functions deploy search-tmdb-works
-supabase functions deploy fetch-tmdb-season-options
-supabase functions deploy fetch-tmdb-work-details
-supabase functions deploy fetch-tmdb-trending
-supabase functions deploy fetch-tmdb-similar
+supabase functions deploy
 ```
 
 ### トラブルシュート
