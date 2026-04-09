@@ -25,6 +25,7 @@ setupTestLifecycle();
 vi.mock("@dnd-kit/core", () => ({
   DndContext: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   DragOverlay: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  pointerWithin: () => [],
 }));
 
 vi.mock("../../../lib/supabase.ts", () => ({
