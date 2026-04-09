@@ -1,9 +1,9 @@
 ---
-name: renovate-risk-review
+name: renovate-review
 description: Renovate の PR を見たいときに使う。Renovate の非 auto-merge 対象 PR について、PR URL または番号から GitHub 上の PR メタデータと diff を取得し、回帰リスク・運用リスク・未確認事項を整理する。コメント投稿が必要な場合だけ GitHub に反映する。
 ---
 
-# Renovate Risk Review
+# Renovate Review
 
 ## いつ使うか
 

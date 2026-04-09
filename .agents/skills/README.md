@@ -16,9 +16,9 @@
 
 通常フローとは別系統で、特定の対象に限定して使う skill。
 
-| Skill                                                 | 使う場面                                  | 使わない場面                            |
-| ----------------------------------------------------- | ----------------------------------------- | --------------------------------------- |
-| [renovate-risk-review](renovate-risk-review/SKILL.md) | Renovate の non-automerge PR のリスク評価 | 自作の PR、automerge 対象の Renovate PR |
+| Skill                                       | 使う場面                                  | 使わない場面                            |
+| ------------------------------------------- | ----------------------------------------- | --------------------------------------- |
+| [renovate-review](renovate-review/SKILL.md) | Renovate の non-automerge PR のリスク評価 | 自作の PR、automerge 対象の Renovate PR |
 
 ## 命名規則
 
