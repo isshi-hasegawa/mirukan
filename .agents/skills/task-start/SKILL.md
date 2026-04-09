@@ -1,6 +1,6 @@
 ---
 name: task-start
-description: 作業を始めたいときに使う。現在の clone とブランチが継続作業に使えるかを判定し、必要なら最新の main から作業ブランチを作成する。並行作業が必要な場合だけ worktree を使う。
+description: 作業を始めたいときに使う。現在の clone とブランチが継続作業に使えるかを判定し、必要なら最新の main から作業ブランチを作成する。画面確認が明らかに不要な並行作業でだけ worktree を使う。
 ---
 
 # Task Start
@@ -19,7 +19,7 @@ description: 作業を始めたいときに使う。現在の clone とブラン
 - 本体側 `main` の確認と最新化
 - ブランチ名の決定
 - 作業ブランチの作成
-- 必要に応じた worktree 作成
+- 画面確認が明らかに不要な場合に限った worktree 作成
 - 必要に応じた `vp install`
 
 ## 判断ルール
@@ -28,7 +28,8 @@ description: 作業を始めたいときに使う。現在の clone とブラン
 - 新規作業では本体側 `main` を `origin/main` に fast-forward で最新化してから branch を切る
 - 継続作業でも、着手前に `origin/main` を確認して前提が古くなっていないかを見る
 - branch 名は `AGENTS.md` の命名規則に従う
-- 並行開発や隔離が必要な場合だけ worktree を作る
+- 画面確認やブラウザ操作での確認が明らかに必要な作業では、原則として現在の clone を使う
+- 並行開発や隔離が必要で、かつ画面確認が明らかに不要な場合だけ worktree を作る
 - 新しい作業場所で依存が未展開なら `vp install` を実行する
 
 ## 推奨手順
@@ -37,9 +38,10 @@ description: 作業を始めたいときに使う。現在の clone とブラン
 2. `git fetch origin` で `origin/main` を確認できる状態にする
 3. 継続作業なら、`origin/main` を見て前提が古くなっていないか確認したうえで、そのまま今回の作業場所として確定する
 4. 新規作業なら `main` を最新化する
-5. ブランチ名を決めて `git switch -c <branch>` で作業ブランチを作る
-6. 並行開発が必要な場合だけ `git worktree add <path> <branch>` を使う
-7. 依存が未展開なら `vp install` を実行する
+5. ブランチ名を決める
+6. 画面確認やブラウザ操作での確認が明らかに必要な作業、または worktree が不要な作業なら `git switch -c <branch>` で現在の clone に作業ブランチを作る
+7. 並行開発や隔離が必要で、かつ画面確認が明らかに不要な作業なら `git worktree add -b <branch> <path> main` で worktree ごと作業ブランチを作る
+8. 作業場所の依存が未展開なら `vp install` を実行する
 
 ## 停止条件
 
@@ -48,6 +50,7 @@ description: 作業を始めたいときに使う。現在の clone とブラン
 - `main` の最新化に失敗する
 - 新しい branch 名を安全に決められない
 - 既存 branch / worktree と衝突して上書きの危険がある
+- 画面確認の要否から見て、現在の clone と worktree のどちらを使うべきか整理できない
 - `vp install` が必要だが失敗して作業開始状態にできない
 
 ## 出力
