@@ -1,36 +1,12 @@
 import { cn } from "../../../lib/utils.ts";
 
-type RottenTomatoesBadgeVariant = "certified-fresh" | "fresh" | "rotten";
+type RottenTomatoesBadgeVariant = "fresh" | "rotten";
 
 type Props = {
   score: number;
   variant: RottenTomatoesBadgeVariant;
   className?: string;
 };
-
-function CertifiedFreshIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" aria-hidden="true">
-      <circle cx="12" cy="12" r="10" fill="#f59e0b" opacity="0.18" />
-      <path
-        d="M12 3.6l2.08 4.2 4.64.67-3.36 3.28.8 4.63L12 14.2l-4.16 2.18.8-4.63L5.28 8.47l4.64-.67L12 3.6z"
-        fill="#fbbf24"
-      />
-      <path
-        d="M14.84 10.23c0 2.68-1.75 4.77-3.99 4.77s-3.99-2.09-3.99-4.77c0-2.56 2.16-3.65 4.32-3.65 2.28 0 3.66 1.36 3.66 3.65z"
-        fill="#dc2626"
-      />
-      <path
-        d="M10.18 5.88c.8-.05 1.9.12 2.93.8-.84.43-1.78.61-2.7.56-.07-.48-.14-.92-.23-1.36z"
-        fill="#15803d"
-      />
-      <path
-        d="M13.06 5.8c.46-.9 1.16-1.55 2.1-1.8-.03 1-.44 1.92-1.14 2.57-.33-.29-.66-.55-.96-.77z"
-        fill="#16a34a"
-      />
-    </svg>
-  );
-}
 
 function FreshIcon() {
   return (
@@ -75,12 +51,6 @@ function RottenIcon() {
 
 function getVariantCopy(variant: RottenTomatoesBadgeVariant) {
   switch (variant) {
-    case "certified-fresh":
-      return {
-        label: "Certified Fresh",
-        className: "bg-[rgba(245,158,11,0.14)] text-[#fbbf24] border-[rgba(245,158,11,0.28)]",
-        Icon: CertifiedFreshIcon,
-      };
     case "fresh":
       return {
         label: "Fresh",
