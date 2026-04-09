@@ -31,6 +31,7 @@ function ensureWorkDefaults(work: Partial<Work>): Work {
     typical_episode_runtime_minutes: work.typical_episode_runtime_minutes ?? null,
     duration_bucket: work.duration_bucket ?? null,
     genres: work.genres ?? [],
+    imdb_id: work.imdb_id ?? null,
     season_count: work.season_count ?? null,
     season_number: work.season_number ?? null,
     episode_count: work.episode_count ?? null,

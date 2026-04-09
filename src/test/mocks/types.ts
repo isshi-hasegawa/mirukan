@@ -87,6 +87,7 @@ export type Work = {
   typical_episode_runtime_minutes?: number | null;
   duration_bucket?: "short" | "medium" | "long" | "very_long" | null;
   genres?: string[];
+  imdb_id?: string | null;
   season_count?: number | null;
   season_number: number | null;
   episode_count: number | null;

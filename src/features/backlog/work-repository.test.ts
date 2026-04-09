@@ -268,6 +268,50 @@ describe("upsertTmdbWork", () => {
     );
   });
 
+  test("external_ids 取得失敗時は既存の imdb_id を消さない", async () => {
+    setMockWorks([
+      {
+        id: "existing-work",
+        source_type: "tmdb",
+        work_type: "movie",
+        tmdb_media_type: "movie",
+        tmdb_id: 200,
+        title: "既存作品",
+        original_title: "Existing Movie",
+        search_text: "existing movie",
+        last_tmdb_synced_at: "2026-01-01T00:00:00.000Z",
+        imdb_id: "tt0123456",
+        episode_count: null,
+        season_number: null,
+        series_title: null,
+      },
+    ]);
+    tmdbMocks.fetchTmdbWorkDetails.mockResolvedValue(
+      createTmdbDetails({
+        tmdbId: movieTarget.tmdbId,
+        title: "更新後タイトル",
+        originalTitle: movieTarget.originalTitle,
+        imdbId: undefined,
+      }),
+    );
+
+    await expect(upsertTmdbWork(movieTarget, "user-1")).resolves.toEqual({
+      success: true,
+      data: { id: "existing-work" },
+      error: null,
+      count: null,
+      status: 200,
+      statusText: "OK",
+    });
+
+    expect(getMockWorks()).toContainEqual(
+      expect.objectContaining({
+        id: "existing-work",
+        imdb_id: "tt0123456",
+      }),
+    );
+  });
+
   test("シーズン追加時は親 series を先に解決してから insert する", async () => {
     tmdbMocks.fetchTmdbWorkDetails
       .mockResolvedValueOnce(

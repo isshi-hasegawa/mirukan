@@ -165,7 +165,7 @@ type TmdbWorkDetails = {
   episodeCount: number | null;
   seasonCount: number | null;
   seasonNumber: number | null;
-  imdbId: string | null;
+  imdbId?: string | null;
 };
 
 const TMDB_PROVIDER_ID_MAP: Record<number, string> = {
@@ -1055,7 +1055,10 @@ export async function fetchTmdbSeasonOptions(
     }));
 }
 
-async function fetchImdbId(tmdbId: number, mediaType: TmdbMediaType): Promise<string | null> {
+async function fetchImdbId(
+  tmdbId: number,
+  mediaType: TmdbMediaType,
+): Promise<string | null | undefined> {
   try {
     const json = await fetchTmdbJson<TmdbExternalIdsResponse>(
       `/${mediaType}/${tmdbId}/external_ids`,
@@ -1063,7 +1066,7 @@ async function fetchImdbId(tmdbId: number, mediaType: TmdbMediaType): Promise<st
     );
     return json.imdb_id ?? null;
   } catch {
-    return null;
+    return undefined;
   }
 }
 
