@@ -1,4 +1,5 @@
 import "./edge-runtime.d.ts";
+import { fetchOmdbDetails, type OmdbWorkDetails } from "./omdb.ts";
 import { getSupabaseAdminClient } from "./supabase-admin.ts";
 
 type TmdbMediaType = "movie" | "tv";
@@ -185,6 +186,8 @@ const TMDB_RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
 const TMDB_MAX_RETRY_ATTEMPTS = 3;
 const TMDB_RETRY_BASE_DELAY_MS = 400;
 const TMDB_ENRICH_CONCURRENCY = 6;
+const OMDB_ENRICH_CONCURRENCY = 2;
+const MAX_OMDB_ENRICH_RESULTS = 8;
 const MAX_RECOMMENDATION_SOURCE_ITEMS = 8;
 const MAX_SIMILAR_RESULTS_PER_SOURCE = 40;
 const MAX_SIMILAR_RESULTS = 60;
@@ -524,69 +527,85 @@ async function enrichWithWatchProviders(results: TmdbSearchResult[]): Promise<Tm
   });
 }
 
-async function enrichWithStoredScores(results: TmdbSearchResult[]): Promise<TmdbSearchResult[]> {
-  const admin = getSupabaseAdminClient();
-  if (!admin || results.length === 0) {
-    return results;
+function buildOmdbCacheKey(tmdbId: number, mediaType: TmdbMediaType) {
+  return `omdb-by-tmdb:${mediaType}:${tmdbId}`;
+}
+
+function normalizeCachedOmdbWorkDetails(payload: unknown): OmdbWorkDetails | null {
+  if (!payload || typeof payload !== "object") {
+    return null;
   }
 
-  const movieIds = [
-    ...new Set(
-      results.filter((result) => result.tmdbMediaType === "movie").map((result) => result.tmdbId),
-    ),
-  ];
-  const tvIds = [
-    ...new Set(
-      results.filter((result) => result.tmdbMediaType === "tv").map((result) => result.tmdbId),
-    ),
-  ];
-  const rows: Array<{
-    tmdb_media_type: TmdbMediaType;
-    tmdb_id: number;
-    rotten_tomatoes_score: number | null;
-  }> = [];
+  const record = payload as Record<string, unknown>;
 
-  if (movieIds.length > 0) {
-    const { data, error } = await admin
-      .from("works")
-      .select("tmdb_media_type, tmdb_id, rotten_tomatoes_score")
-      .eq("source_type", "tmdb")
-      .eq("tmdb_media_type", "movie")
-      .in("tmdb_id", movieIds)
-      .not("rotten_tomatoes_score", "is", null);
+  return {
+    rottenTomatoesScore:
+      typeof record.rottenTomatoesScore === "number" || record.rottenTomatoesScore === null
+        ? record.rottenTomatoesScore
+        : null,
+    imdbRating:
+      typeof record.imdbRating === "number" || record.imdbRating === null
+        ? record.imdbRating
+        : null,
+    imdbVotes:
+      typeof record.imdbVotes === "number" || record.imdbVotes === null ? record.imdbVotes : null,
+    metacriticScore:
+      typeof record.metacriticScore === "number" || record.metacriticScore === null
+        ? record.metacriticScore
+        : null,
+  };
+}
 
-    if (error) {
-      throw new Error(`Failed to read stored movie scores: ${error.message}`);
+async function fetchOmdbDetailsByTmdbId(
+  tmdbId: number,
+  mediaType: TmdbMediaType,
+): Promise<OmdbWorkDetails | null> {
+  const cacheKey = buildOmdbCacheKey(tmdbId, mediaType);
+  const cached = await readTmdbMetadataCache(cacheKey).catch(() => null);
+  const cachedValue = normalizeCachedOmdbWorkDetails(cached?.payload);
+
+  if (cached?.fresh && cachedValue) {
+    return cachedValue;
+  }
+
+  try {
+    const imdbId = await fetchImdbId(tmdbId, mediaType);
+    if (!imdbId) {
+      const emptyResult = {
+        rottenTomatoesScore: null,
+        imdbRating: null,
+        imdbVotes: null,
+        metacriticScore: null,
+      };
+      await writeTmdbMetadataCache(cacheKey, emptyResult).catch(() => undefined);
+      return emptyResult;
     }
 
-    rows.push(...(data ?? []));
+    const fresh = await fetchOmdbDetails(imdbId);
+    await writeTmdbMetadataCache(cacheKey, fresh).catch(() => undefined);
+    return fresh;
+  } catch {
+    return cachedValue;
   }
+}
 
-  if (tvIds.length > 0) {
-    const { data, error } = await admin
-      .from("works")
-      .select("tmdb_media_type, tmdb_id, rotten_tomatoes_score")
-      .eq("source_type", "tmdb")
-      .eq("tmdb_media_type", "tv")
-      .in("tmdb_id", tvIds)
-      .is("season_number", null)
-      .not("rotten_tomatoes_score", "is", null);
-
-    if (error) {
-      throw new Error(`Failed to read stored TV scores: ${error.message}`);
-    }
-
-    rows.push(...(data ?? []));
-  }
-
-  const scoreByKey = new Map(
-    rows.map((row) => [`${row.tmdb_media_type}-${row.tmdb_id}`, row.rotten_tomatoes_score]),
+async function enrichWithCachedOmdbScores(
+  results: TmdbSearchResult[],
+): Promise<TmdbSearchResult[]> {
+  const targets = results.slice(0, MAX_OMDB_ENRICH_RESULTS);
+  const enrichedTargets = await mapWithConcurrency(
+    targets,
+    OMDB_ENRICH_CONCURRENCY,
+    async (result) => {
+      const omdb = await fetchOmdbDetailsByTmdbId(result.tmdbId, result.tmdbMediaType);
+      return {
+        ...result,
+        rottenTomatoesScore: omdb?.rottenTomatoesScore ?? null,
+      };
+    },
   );
 
-  return results.map((result) => ({
-    ...result,
-    rottenTomatoesScore: scoreByKey.get(`${result.tmdbMediaType}-${result.tmdbId}`) ?? null,
-  }));
+  return results.map((result, index) => enrichedTargets[index] ?? result);
 }
 
 function mapMultiSearchResult(
@@ -632,7 +651,7 @@ async function fetchSearchResults(query: string): Promise<TmdbSearchResult[]> {
     return mapped ? [mapped] : [];
   });
 
-  return enrichWithStoredScores(await enrichWithWatchProviders(base));
+  return enrichWithCachedOmdbScores(await enrichWithWatchProviders(base));
 }
 
 function buildFallbackQueries(query: string): string[] {
@@ -685,7 +704,7 @@ async function fetchFreshTmdbTrending(): Promise<TmdbSearchResult[]> {
   ]);
   const seen = new Set<string>();
 
-  return enrichWithStoredScores(
+  return enrichWithCachedOmdbScores(
     await enrichWithWatchProviders(
       pages.flat().filter((item) => {
         const key = `${item.tmdbMediaType}-${item.tmdbId}`;
@@ -962,7 +981,7 @@ async function refreshSimilarCacheForSource(sourceItem: {
   tmdbId: number;
   tmdbMediaType: TmdbMediaType;
 }) {
-  const fresh = await enrichWithStoredScores(
+  const fresh = await enrichWithCachedOmdbScores(
     await enrichWithWatchProviders(
       dedupeRecommendationResults(
         await fetchSimilarPage(sourceItem.tmdbId, sourceItem.tmdbMediaType),
