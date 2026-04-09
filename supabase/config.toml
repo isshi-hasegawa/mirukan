@@ -54,3 +54,21 @@ content_path = "./supabase/templates/recovery.html"
 [auth.email.template.email_change]
 subject = "みるカン - メールアドレス変更の確認"
 content_path = "./supabase/templates/email_change.html"
+
+[functions.search-tmdb-works]
+verify_jwt = false
+
+[functions.fetch-tmdb-trending]
+verify_jwt = false
+
+[functions.fetch-tmdb-similar]
+verify_jwt = false
+
+[functions.fetch-tmdb-season-options]
+verify_jwt = false
+
+[functions.fetch-tmdb-work-details]
+verify_jwt = false
+
+[functions.fetch-omdb-work-details]
+verify_jwt = false
