@@ -113,8 +113,20 @@ jobs:
       - name: Add local binaries to PATH
         run: echo "${GITHUB_WORKSPACE}/node_modules/.bin" >> "$GITHUB_PATH"
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ hashFiles('**/pnpm-lock.yaml') }}
+
       - name: Install Playwright browsers
         run: playwright install --with-deps chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+
+      - name: Install Playwright system deps only
+        run: playwright install-deps chromium
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
 
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@b60b5899c73b63a2d2d651b1e90db8d4c9392f51 # v1.6.0

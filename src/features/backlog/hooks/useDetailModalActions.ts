@@ -1,3 +1,4 @@
+import type { Dispatch, SetStateAction } from "react";
 import {
   applyBacklogItemUpdate,
   buildDetailFieldUpdate,
@@ -18,7 +19,7 @@ type UseDetailModalActionsOptions = {
   item: BacklogItem | null;
   items: BacklogItem[];
   state: DetailModalState;
-  onStateChange: (state: DetailModalState) => void;
+  onStateChange: Dispatch<SetStateAction<DetailModalState>>;
   onUpdate: (item: BacklogItem) => void;
 };
 
@@ -30,11 +31,15 @@ export function useDetailModalActions({
   onUpdate,
 }: UseDetailModalActionsOptions) {
   const resetState = () => {
-    onStateChange(createDetailModalState(item?.id ?? state.openItemId));
+    onStateChange((prev) =>
+      prev.openItemId === null ? prev : createDetailModalState(item?.id ?? prev.openItemId),
+    );
   };
 
   const setUpdateError = (error: string) => {
-    onStateChange({ ...state, message: `更新に失敗しました: ${error}` });
+    onStateChange((prev) =>
+      prev.openItemId === null ? prev : { ...prev, message: `更新に失敗しました: ${error}` },
+    );
   };
 
   const saveUpdate = async (update: BacklogItemUpdate) => {
