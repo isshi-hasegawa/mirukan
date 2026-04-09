@@ -26,6 +26,7 @@ description: 作業を始めたいときに使う。現在の clone とブラン
 
 - 継続作業なら現在の clone / branch をそのまま使う
 - 新規作業では本体側 `main` を `origin/main` に fast-forward で最新化してから branch を切る
+- 継続作業でも、着手前に `origin/main` を確認して前提が古くなっていないかを見る
 - branch 名は `AGENTS.md` の命名規則に従う
 - 並行開発や隔離が必要な場合だけ worktree を作る
 - 新しい作業場所で依存が未展開なら `vp install` を実行する
@@ -33,11 +34,12 @@ description: 作業を始めたいときに使う。現在の clone とブラン
 ## 推奨手順
 
 1. 現在の clone / branch / status を確認する
-2. 継続作業なら、そのまま今回の作業場所として確定する
-3. 新規作業なら `main` を最新化する
-4. ブランチ名を決めて `git switch -c <branch>` で作業ブランチを作る
-5. 並行開発が必要な場合だけ `git worktree add <path> <branch>` を使う
-6. 依存が未展開なら `vp install` を実行する
+2. `git fetch origin` で `origin/main` を確認できる状態にする
+3. 継続作業なら、`origin/main` を見て前提が古くなっていないか確認したうえで、そのまま今回の作業場所として確定する
+4. 新規作業なら `main` を最新化する
+5. ブランチ名を決めて `git switch -c <branch>` で作業ブランチを作る
+6. 並行開発が必要な場合だけ `git worktree add <path> <branch>` を使う
+7. 依存が未展開なら `vp install` を実行する
 
 ## 停止条件
 
