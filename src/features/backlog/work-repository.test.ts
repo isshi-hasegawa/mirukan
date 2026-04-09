@@ -24,6 +24,7 @@ import { setupTestLifecycle } from "../../test/test-lifecycle.ts";
 import {
   buildSelectedSeasonTargets,
   resolveSelectedSeasonWorkIds,
+  shouldRefreshOmdbWork,
   shouldRefreshTmdbWork,
   upsertManualWork,
   upsertTmdbWork,
@@ -49,6 +50,7 @@ function createTmdbDetails(overrides: Partial<TmdbWorkDetails> = {}): TmdbWorkDe
     episodeCount: null,
     seasonCount: null,
     seasonNumber: null,
+    imdbId: null,
     ...overrides,
   };
 }
@@ -115,6 +117,30 @@ describe("buildSelectedSeasonTargets", () => {
     expect(() => buildSelectedSeasonTargets(seriesResult, seasonOptions, [4])).toThrow(
       "シーズン4の情報が見つかりません",
     );
+  });
+});
+
+describe("shouldRefreshOmdbWork", () => {
+  test("omdb_fetched_at が無ければ再取得する", () => {
+    expect(shouldRefreshOmdbWork(null)).toBe(true);
+  });
+
+  test("十分新しければ再取得しない", () => {
+    const now = Date.parse("2026-04-09T00:00:00.000Z");
+    const omdbFetchedAt = "2026-04-05T00:00:00.000Z";
+
+    expect(shouldRefreshOmdbWork(omdbFetchedAt, now)).toBe(false);
+  });
+
+  test("7日以上経過していれば再取得する", () => {
+    const now = Date.parse("2026-04-09T00:00:00.000Z");
+    const omdbFetchedAt = "2026-04-01T00:00:00.000Z";
+
+    expect(shouldRefreshOmdbWork(omdbFetchedAt, now)).toBe(true);
+  });
+
+  test("不正な日付なら再取得する", () => {
+    expect(shouldRefreshOmdbWork("not-a-date")).toBe(true);
   });
 });
 

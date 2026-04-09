@@ -68,6 +68,9 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
     work.season_count ? `${work.season_count}シーズン` : null,
   ].filter(Boolean);
 
+  const rtScore = work.rotten_tomatoes_score;
+  const rtFresh = rtScore !== null && rtScore >= 60;
+
   return (
     <div
       className="fixed inset-0 z-10 grid place-items-center p-5 bg-[rgba(51,34,23,0.4)] backdrop-blur-[10px]"
@@ -119,6 +122,21 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
               {workTypeLabel}
               {metadataRest.length > 0 && ` · ${metadataRest.join(" · ")}`}
             </p>
+            {rtScore !== null && (
+              <p className="flex items-center gap-1.5 text-[0.85rem]">
+                <span
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-medium ${
+                    rtFresh
+                      ? "bg-[rgba(34,197,94,0.15)] text-[#4ade80]"
+                      : "bg-[rgba(239,68,68,0.15)] text-[#f87171]"
+                  }`}
+                  title="Rotten Tomatoes"
+                >
+                  {rtFresh ? "Fresh" : "Rotten"} {rtScore}%
+                </span>
+                <span className="text-muted-foreground">Rotten Tomatoes</span>
+              </p>
+            )}
           </div>
           <div className="grid gap-3.5 content-start max-[720px]:col-[1/-1] max-[720px]:row-[2]">
             <div className="flex flex-wrap gap-1.5 mb-3">
