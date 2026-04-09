@@ -1,26 +1,11 @@
 import type { ReactNode } from "react";
 import { useDroppable } from "@dnd-kit/core";
-import type { BacklogItem, BacklogStatus, ViewingMode } from "../types.ts";
+import type { KanbanColumnProps } from "./kanban-board-shared.ts";
 import { BacklogCard } from "./BacklogCard.tsx";
 import { KanbanColumnHeader } from "./KanbanColumnHeader.tsx";
 import { ViewingModeFilter } from "./ViewingModeFilter.tsx";
-
-type DropIndicator =
-  | { type: "card"; itemId: string; side: "before" | "after" }
-  | { type: "column"; status: BacklogStatus };
-
-type Props = {
-  status: BacklogStatus;
-  items: BacklogItem[];
+type Props = KanbanColumnProps & {
   extra?: ReactNode;
-  activeViewingMode?: ViewingMode | null;
-  isMobileLayout?: boolean;
-  dropIndicator: DropIndicator | null;
-  onOpenAddModal: () => void;
-  onOpenDetail: (itemId: string) => void;
-  onDeleteItem: (itemId: string) => void;
-  onMarkAsWatched: (itemId: string) => void;
-  onViewingModeToggle?: (mode: ViewingMode) => void;
 };
 
 export function KanbanColumn({

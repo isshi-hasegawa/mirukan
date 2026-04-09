@@ -4,10 +4,7 @@ import { statusOrder } from "../constants.ts";
 import { sortStackedItemsByViewingMode } from "../viewing-mode.ts";
 import { DesktopKanbanBoard } from "./DesktopKanbanBoard.tsx";
 import { MobileKanbanBoard } from "./MobileKanbanBoard.tsx";
-
-type DropIndicator =
-  | { type: "card"; itemId: string; side: "before" | "after" }
-  | { type: "column"; status: BacklogStatus };
+import type { DropIndicator } from "./kanban-board-shared.ts";
 
 type Props = {
   items: BacklogItem[];
