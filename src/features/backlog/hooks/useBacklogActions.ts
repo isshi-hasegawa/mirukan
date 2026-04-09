@@ -20,6 +20,14 @@ type Props = {
   feedback?: BacklogFeedback;
 };
 
+function buildWorkFailureMessage(failedTitles: string[], prefix: string) {
+  if (failedTitles.length === 0) {
+    return null;
+  }
+
+  return `${prefix}: ${failedTitles.join("、")}`;
+}
+
 export function useBacklogActions({
   items,
   session,
@@ -60,17 +68,22 @@ export function useBacklogActions({
     if (results.length === 0) return;
 
     const workIds: string[] = [];
+    const failedTitles: string[] = [];
     for (const result of results) {
       const { data, error } = await upsertTmdbWork(result, session.user.id);
       if (error || !data) {
         console.error(`追加に失敗: ${result.title}`, error);
+        failedTitles.push(result.title);
         continue;
       }
       workIds.push(data.id);
     }
 
     if (workIds.length === 0) {
-      await Promise.resolve(feedback.alert("作品の追加に失敗しました"));
+      const workFailureMessage =
+        buildWorkFailureMessage(failedTitles, "作品の追加に失敗しました") ??
+        "作品の追加に失敗しました";
+      await Promise.resolve(feedback.alert(workFailureMessage));
       return;
     }
 
@@ -78,7 +91,7 @@ export function useBacklogActions({
     const confirmMessage = buildMoveToStatusConfirmMessage(
       plan.existingOtherItems,
       "stacked",
-      `${results.length}件の作品`,
+      `${workIds.length}件の作品`,
     );
     const shouldProceed =
       !confirmMessage || (await Promise.resolve(feedback.confirm(confirmMessage)));
@@ -87,7 +100,17 @@ export function useBacklogActions({
     }
 
     if (plan.actions.length === 0) {
-      await Promise.resolve(feedback.alert("選択した作品はすでにストックにあります"));
+      const workFailureMessage = buildWorkFailureMessage(
+        failedTitles,
+        "一部の作品を追加できませんでした",
+      );
+      await Promise.resolve(
+        feedback.alert(
+          workFailureMessage
+            ? `${workFailureMessage}\n選択した作品はすでにストックにあります`
+            : "選択した作品はすでにストックにあります",
+        ),
+      );
       return;
     }
 
@@ -106,6 +129,14 @@ export function useBacklogActions({
 
     await loadItems();
     onWorksAdded();
+
+    const workFailureMessage = buildWorkFailureMessage(
+      failedTitles,
+      "一部の作品を追加できませんでした",
+    );
+    if (workFailureMessage) {
+      await Promise.resolve(feedback.alert(workFailureMessage));
+    }
   };
 
   return { handleDeleteItem, handleMarkAsWatched, handleAddTmdbWorksToStacked };
