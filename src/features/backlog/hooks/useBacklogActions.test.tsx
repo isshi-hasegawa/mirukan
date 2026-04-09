@@ -264,10 +264,6 @@ describe("useBacklogActions", () => {
         items={[
           createItem({
             status: "watching",
-            works: {
-              ...createItem().works,
-              id: "work-1",
-            },
           }),
         ]}
         results={[createSearchResult(), createSearchResult({ tmdbId: 2, title: "作品2" })]}
