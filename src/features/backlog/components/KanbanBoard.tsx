@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { BacklogItem, BacklogStatus, ViewingMode } from "../types.ts";
 import { statusOrder } from "../constants.ts";
 import { sortStackedItemsByViewingMode } from "../viewing-mode.ts";
@@ -34,34 +34,63 @@ export function KanbanBoard({
   columnRef,
 }: Props) {
   const [activeViewingMode, setActiveViewingMode] = useState<ViewingMode | null>(null);
-  const grouped = new Map<BacklogStatus, BacklogItem[]>(statusOrder.map((status) => [status, []]));
+  const handleViewingModeToggle = useCallback((mode: ViewingMode) => {
+    setActiveViewingMode((current) => (current === mode ? null : mode));
+  }, []);
 
-  for (const item of items) {
-    grouped.get(item.status)?.push(item);
-  }
+  const grouped = useMemo(() => {
+    const nextGrouped = new Map<BacklogStatus, BacklogItem[]>(
+      statusOrder.map((status) => [status, []]),
+    );
 
-  grouped.set(
-    "stacked",
-    sortStackedItemsByViewingMode(grouped.get("stacked") ?? [], activeViewingMode),
+    for (const item of items) {
+      nextGrouped.get(item.status)?.push(item);
+    }
+
+    nextGrouped.set(
+      "stacked",
+      sortStackedItemsByViewingMode(nextGrouped.get("stacked") ?? [], activeViewingMode),
+    );
+
+    return nextGrouped;
+  }, [items, activeViewingMode]);
+
+  const columnPropsByStatus = useMemo(
+    () =>
+      new Map(
+        statusOrder.map((status) => [
+          status,
+          {
+            status,
+            items: grouped.get(status) ?? [],
+            activeViewingMode: status === "stacked" ? activeViewingMode : null,
+            isMobileLayout,
+            dropIndicator,
+            onOpenAddModal,
+            onOpenDetail,
+            onDeleteItem,
+            onMarkAsWatched,
+            onViewingModeToggle: status === "stacked" ? handleViewingModeToggle : undefined,
+          },
+        ]),
+      ),
+    [
+      activeViewingMode,
+      dropIndicator,
+      grouped,
+      handleViewingModeToggle,
+      isMobileLayout,
+      onDeleteItem,
+      onMarkAsWatched,
+      onOpenAddModal,
+      onOpenDetail,
+    ],
   );
 
-  const getColumnProps = (status: BacklogStatus) => ({
-    status,
-    items: grouped.get(status) ?? [],
-    activeViewingMode: status === "stacked" ? activeViewingMode : null,
-    isMobileLayout,
-    dropIndicator,
-    onOpenAddModal,
-    onOpenDetail,
-    onDeleteItem,
-    onMarkAsWatched,
-    onViewingModeToggle:
-      status === "stacked"
-        ? (mode: ViewingMode) => {
-            setActiveViewingMode((current) => (current === mode ? null : mode));
-          }
-        : undefined,
-  });
+  const getColumnProps = useCallback(
+    (status: BacklogStatus) => columnPropsByStatus.get(status)!,
+    [columnPropsByStatus],
+  );
 
   if (isMobileLayout) {
     return (
