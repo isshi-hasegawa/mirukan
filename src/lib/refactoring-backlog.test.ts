@@ -1,5 +1,6 @@
 import {
   buildRefactoringBacklogIssue,
+  filterBacklogSignals,
   normalizeComponentPath,
   parseMeasureValue,
   parseMinutes,
@@ -94,6 +95,22 @@ describe("signal ranking", () => {
       { path: "src/c.ts", value: 3.4, detail: "410 lines" },
     ]);
   });
+
+  test("backlog 出力時だけ除外パターンに一致するファイルを落とす", () => {
+    expect(
+      filterBacklogSignals([
+        ...files,
+        {
+          path: "pnpm-lock.yaml",
+          measures: { ncloc: 999 },
+        },
+        {
+          path: "supabase/templates/confirmation.html",
+          measures: { duplicated_lines_density: 88 },
+        },
+      ]),
+    ).toEqual(files);
+  });
 });
 
 describe("selectQuickWinIssues", () => {
@@ -108,6 +125,21 @@ describe("selectQuickWinIssues", () => {
       { key: "2", message: "B", component: "mirukan:src/b.ts", effortMinutes: 10 },
       { key: "1", message: "A", component: "mirukan:src/a.ts", effortMinutes: 45 },
       { key: "3", message: "C", component: "mirukan:src/c.ts" },
+    ]);
+  });
+
+  test("limit 境界と同じ effort の issue は集約用に残す", () => {
+    const issues = [
+      { key: "1", message: "A", component: "mirukan:src/a.ts", effortMinutes: 1 },
+      { key: "2", message: "A", component: "mirukan:src/b.ts", effortMinutes: 1 },
+      { key: "3", message: "B", component: "mirukan:src/c.ts", effortMinutes: 1 },
+      { key: "4", message: "C", component: "mirukan:src/d.ts", effortMinutes: 5 },
+    ];
+
+    expect(selectQuickWinIssues(issues, 2)).toEqual([
+      { key: "1", message: "A", component: "mirukan:src/a.ts", effortMinutes: 1 },
+      { key: "2", message: "A", component: "mirukan:src/b.ts", effortMinutes: 1 },
+      { key: "3", message: "B", component: "mirukan:src/c.ts", effortMinutes: 1 },
     ]);
   });
 });
@@ -131,10 +163,29 @@ describe("buildRefactoringBacklogIssue", () => {
       quickWinIssues: [
         {
           key: "issue-1",
-          message: "Extract duplicated branch",
+          message:
+            "This assertion is unnecessary since it does not change the type of the expression.",
           component: "mirukan:src/lib/example.ts",
           line: 42,
-          effortMinutes: 15,
+          rule: "typescript:S4325",
+          effortMinutes: 1,
+        },
+        {
+          key: "issue-2",
+          message:
+            "This assertion is unnecessary since it does not change the type of the expression.",
+          component: "mirukan:src/lib/example.test.ts",
+          line: 18,
+          rule: "typescript:S4325",
+          effortMinutes: 1,
+        },
+        {
+          key: "issue-3",
+          message: "'/opt/clone123/src/lib/example.ts' imported multiple times.",
+          component: "mirukan:src/lib/consumer.ts",
+          line: 7,
+          rule: "typescript:S3863",
+          effortMinutes: 1,
         },
       ],
       longFiles: [{ path: "src/lib/example.ts", value: 520, detail: "8 code smells" }],
@@ -145,7 +196,15 @@ describe("buildRefactoringBacklogIssue", () => {
     expect(result.title).toBe("refactoring backlog");
     expect(result.body).toContain("<!-- refactoring-backlog:sonarcloud -->");
     expect(result.body).toContain("maintainability debt: 2 h 15 min");
-    expect(result.body).toContain("Extract duplicated branch");
+    expect(result.body).toContain(
+      "- This assertion is unnecessary since it does not change the type of the expression. - 2件 (最短 1 min)",
+    );
+    expect(result.body).toContain("  - 例: [src/lib/example.ts:42]");
+    expect(result.body).toContain("  - 例: [src/lib/example.test.ts:18]");
+    expect(result.body).toContain(
+      "- 'src/lib/example.ts' imported multiple times. - 1件 (最短 1 min)",
+    );
+    expect(result.body).not.toContain("/opt/clone123");
     expect(result.body).toContain("| `src/lib/example.ts` | 6.5% | 520 lines |");
   });
 });
