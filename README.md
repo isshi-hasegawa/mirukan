@@ -38,6 +38,17 @@ cp supabase/functions/.env.example supabase/functions/.env
 
 コミット時の pre-commit では `vp check --fix` を実行します。secret scan は GitHub Actions の Betterleaks workflow で実行します。
 
+## Refactoring Backlog
+
+定期的な refactoring 候補の棚卸しは [refactoring-backlog.yml](./.github/workflows/refactoring-backlog.yml) で実行します。
+初期実装の仕様は [docs/refactoring-backlog.md](./docs/refactoring-backlog.md) を参照してください。
+
+セットアップ時に GitHub 側で以下を設定してください。
+
+- Repository variable: `SONAR_PROJECT_KEY`
+- Repository secret: `SONAR_TOKEN`
+- Optional repository variable: `SONAR_HOST_URL`
+
 ## TMDB Attribution
 
 This product uses the TMDB API but is not endorsed or certified by TMDB.
