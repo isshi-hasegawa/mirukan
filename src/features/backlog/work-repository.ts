@@ -10,7 +10,7 @@ import {
 import { fetchOmdbWorkDetails } from "../../lib/omdb.ts";
 import { buildSearchText } from "./helpers.ts";
 import type { WorkType } from "./types.ts";
-import { buildTmdbWorkUpdate } from "./work-metadata.ts";
+import { buildTmdbWorkUpdate, calcBackgroundFitScore, type RatingInfo } from "./work-metadata.ts";
 
 const TMDB_WORK_REFRESH_INTERVAL_MS = 30 * 24 * 60 * 60 * 1000;
 const OMDB_WORK_REFRESH_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -20,6 +20,7 @@ type ExistingTmdbWorkRow = {
   last_tmdb_synced_at: string | null;
   omdb_fetched_at: string | null;
   imdb_id: string | null;
+  genres: string[];
 };
 type TmdbWorkLookup = {
   tmdbMediaType: "movie" | "tv";
@@ -259,7 +260,7 @@ async function findExistingTmdbWork({
 }: TmdbWorkLookup): Promise<{ data: ExistingTmdbWorkRow | null; error: PostgrestError | null }> {
   let query = supabase
     .from("works")
-    .select("id, last_tmdb_synced_at, omdb_fetched_at, imdb_id")
+    .select("id, last_tmdb_synced_at, omdb_fetched_at, imdb_id, genres")
     .eq("source_type", "tmdb")
     .eq("tmdb_media_type", tmdbMediaType)
     .eq("tmdb_id", tmdbId)
@@ -299,6 +300,10 @@ async function upsertFetchedTmdbWork(
     if (existing.imdb_id && shouldRefreshOmdb) {
       try {
         const omdb = await fetchOmdbWorkDetails(existing.imdb_id);
+        const omdbRatings: RatingInfo = {
+          imdbRating: omdb.imdbRating,
+          rottenTomatoesScore: omdb.rottenTomatoesScore,
+        };
         await supabase
           .from("works")
           .update({
@@ -306,6 +311,7 @@ async function upsertFetchedTmdbWork(
             imdb_rating: omdb.imdbRating,
             imdb_votes: omdb.imdbVotes,
             metacritic_score: omdb.metacriticScore,
+            background_fit_score: calcBackgroundFitScore(existing.genres, omdbRatings),
             omdb_fetched_at: new Date().toISOString(),
           })
           .eq("id", existing.id);
@@ -361,12 +367,22 @@ async function upsertFetchedTmdbWork(
     }
   })();
 
+  const omdbRatings: RatingInfo = {
+    imdbRating: "imdb_rating" in omdbFields ? (omdbFields.imdb_rating ?? null) : null,
+    rottenTomatoesScore:
+      "rotten_tomatoes_score" in omdbFields ? (omdbFields.rotten_tomatoes_score ?? null) : null,
+  };
   const updatePayload =
     options.parentWorkId === undefined
-      ? { ...buildTmdbWorkUpdate(details), ...omdbFields }
+      ? {
+          ...buildTmdbWorkUpdate(details),
+          ...omdbFields,
+          background_fit_score: calcBackgroundFitScore(details.genres, omdbRatings),
+        }
       : {
           ...buildTmdbWorkUpdate(details),
           ...omdbFields,
+          background_fit_score: calcBackgroundFitScore(details.genres, omdbRatings),
           parent_work_id: options.parentWorkId,
         };
 
@@ -388,6 +404,7 @@ async function upsertFetchedTmdbWork(
     .insert({
       ...buildTmdbWorkInsert(details, userId, workType, options.parentWorkId ?? null),
       ...omdbFields,
+      background_fit_score: calcBackgroundFitScore(details.genres, omdbRatings),
     })
     .select("id")
     .single();

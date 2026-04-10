@@ -95,6 +95,42 @@ describe("genre score helpers", () => {
   });
 });
 
+describe("calcBackgroundFitScore: 評価による補正", () => {
+  test("高評価（RT≥80）はジャンルスコア≥50を25に抑える", () => {
+    expect(
+      calcBackgroundFitScore(["コメディ"], { imdbRating: null, rottenTomatoesScore: 80 }),
+    ).toBe(25);
+  });
+
+  test("高評価（IMDb≥8.0）はジャンルスコア≥50を25に抑える", () => {
+    expect(
+      calcBackgroundFitScore(["アクション"], { imdbRating: 8.0, rottenTomatoesScore: null }),
+    ).toBe(25);
+  });
+
+  test("高評価でもジャンルスコアが0（low genre）なら0のまま", () => {
+    expect(calcBackgroundFitScore(["ホラー"], { imdbRating: 9.0, rottenTomatoesScore: 95 })).toBe(
+      0,
+    );
+  });
+
+  test("ジャンルスコアが25（low-mid）なら高評価でも25のまま", () => {
+    expect(calcBackgroundFitScore([], { imdbRating: 9.0, rottenTomatoesScore: 95 })).toBe(25);
+  });
+
+  test("評価がそこそこ（RT<80かつIMDb<8.0）はジャンルスコアをそのまま返す", () => {
+    expect(calcBackgroundFitScore(["コメディ"], { imdbRating: 7.9, rottenTomatoesScore: 79 })).toBe(
+      75,
+    );
+  });
+
+  test("評価 null は補正なし", () => {
+    expect(
+      calcBackgroundFitScore(["コメディ"], { imdbRating: null, rottenTomatoesScore: null }),
+    ).toBe(75);
+  });
+});
+
 describe("getDurationBucket", () => {
   test("各バケット境界を判定する", () => {
     expect(getDurationBucket(null)).toBeNull();

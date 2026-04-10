@@ -67,11 +67,30 @@ export function calcFocusRequiredScore(genres: string[]): number {
   return 50;
 }
 
-export function calcBackgroundFitScore(genres: string[]): number {
+export type RatingInfo = {
+  imdbRating: number | null;
+  rottenTomatoesScore: number | null;
+};
+
+function isHighlyRated({ imdbRating, rottenTomatoesScore }: RatingInfo): boolean {
+  return (
+    (rottenTomatoesScore !== null && rottenTomatoesScore >= 80) ||
+    (imdbRating !== null && imdbRating >= 8.0)
+  );
+}
+
+export function calcBackgroundFitScore(
+  genres: string[],
+  ratings: RatingInfo = { imdbRating: null, rottenTomatoesScore: null },
+): number {
   if (genres.some((genre) => BG_LOW_GENRES.has(genre))) return 0;
-  if (genres.some((genre) => BG_HIGH_GENRES.has(genre))) return 75;
-  if (genres.some((genre) => BG_MED_GENRES.has(genre))) return 50;
-  return 25;
+  const genreScore = genres.some((genre) => BG_HIGH_GENRES.has(genre))
+    ? 75
+    : genres.some((genre) => BG_MED_GENRES.has(genre))
+      ? 50
+      : 25;
+  if (genreScore >= 50 && isHighlyRated(ratings)) return 25;
+  return genreScore;
 }
 
 export function getDurationBucket(minutes: number | null) {
