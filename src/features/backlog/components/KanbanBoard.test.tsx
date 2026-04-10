@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { withNuqsTestingAdapter } from "nuqs/adapters/testing";
+import type { OnUrlUpdateFunction } from "nuqs/adapters/testing";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
 import type { BacklogItem, BacklogStatus } from "../types.ts";
 import type { ViewingMode } from "../types.ts";
@@ -92,7 +93,7 @@ function createItem(
 
 function renderKanbanBoard(
   overrides: Partial<React.ComponentProps<typeof KanbanBoard>> = {},
-  options?: { searchParams?: string; onUrlUpdate?: ReturnType<typeof vi.fn> },
+  options?: { searchParams?: string; onUrlUpdate?: OnUrlUpdateFunction },
 ) {
   return render(
     <KanbanBoard
