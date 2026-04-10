@@ -16,7 +16,7 @@ export function useBacklogItems() {
 
   return {
     items: query.data ?? [],
-    isLoading: query.isPending,
+    isLoading: query.isPending || query.isRefetching,
     error: query.error instanceof Error ? query.error.message : null,
     loadItems,
   };
