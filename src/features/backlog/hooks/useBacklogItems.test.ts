@@ -78,6 +78,7 @@ describe("useBacklogItems", () => {
 
     void result.current.loadItems();
 
+    // 再取得中も isLoading は false のまま（画面が暗転しない）
     expect(result.current.isLoading).toBe(false);
     expect(result.current.items).toEqual([stubItem]);
 
