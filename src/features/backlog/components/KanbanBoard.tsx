@@ -1,6 +1,7 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
+import { parseAsStringLiteral, useQueryState } from "nuqs";
 import type { BacklogItem, BacklogStatus, ViewingMode } from "../types.ts";
-import { statusOrder } from "../constants.ts";
+import { statusOrder, viewingModeOrder } from "../constants.ts";
 import { sortStackedItemsByViewingMode } from "../viewing-mode.ts";
 import { DesktopKanbanBoard } from "./DesktopKanbanBoard.tsx";
 import { MobileKanbanBoard } from "./MobileKanbanBoard.tsx";
@@ -33,9 +34,14 @@ export function KanbanBoard({
   onMarkAsWatched,
   columnRef,
 }: Props) {
-  const [activeViewingMode, setActiveViewingMode] = useState<ViewingMode | null>(null);
+  const [activeViewingMode, setActiveViewingMode] = useQueryState(
+    "view",
+    parseAsStringLiteral(viewingModeOrder).withOptions({
+      history: "replace",
+    }),
+  );
   const handleViewingModeToggle = useCallback((mode: ViewingMode) => {
-    setActiveViewingMode((current) => (current === mode ? null : mode));
+    void setActiveViewingMode((current) => (current === mode ? null : mode));
   }, []);
 
   const grouped = useMemo(() => {

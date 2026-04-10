@@ -1,7 +1,9 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { withNuqsTestingAdapter } from "nuqs/adapters/testing";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
 import type { BacklogItem, BacklogStatus } from "../types.ts";
+import type { ViewingMode } from "../types.ts";
 import { KanbanBoard } from "./KanbanBoard.tsx";
 
 vi.mock("./KanbanColumn.tsx", () => ({
@@ -9,13 +11,35 @@ vi.mock("./KanbanColumn.tsx", () => ({
     status,
     items,
     extra,
+    activeViewingMode,
+    onViewingModeToggle,
   }: {
     status: BacklogStatus;
     items: BacklogItem[];
     extra?: React.ReactNode;
+    activeViewingMode?: ViewingMode | null;
+    onViewingModeToggle?: (mode: ViewingMode) => void;
   }) => (
     <div>
       {extra}
+      {status === "stacked" && onViewingModeToggle ? (
+        <div>
+          <button
+            type="button"
+            aria-pressed={activeViewingMode === "focus"}
+            onClick={() => onViewingModeToggle("focus")}
+          >
+            ガッツリ
+          </button>
+          <button
+            type="button"
+            aria-pressed={activeViewingMode === "quick"}
+            onClick={() => onViewingModeToggle("quick")}
+          >
+            サクッと
+          </button>
+        </div>
+      ) : null}
       <div>
         {status}:{items.map((item) => item.id).join(",")}
       </div>
@@ -66,7 +90,10 @@ function createItem(
   };
 }
 
-function renderKanbanBoard(overrides: Partial<React.ComponentProps<typeof KanbanBoard>> = {}) {
+function renderKanbanBoard(
+  overrides: Partial<React.ComponentProps<typeof KanbanBoard>> = {},
+  options?: { searchParams?: string; onUrlUpdate?: ReturnType<typeof vi.fn> },
+) {
   return render(
     <KanbanBoard
       items={[createItem("item-1", "stacked", "作品1"), createItem("item-2", "watching", "作品2")]}
@@ -82,6 +109,12 @@ function renderKanbanBoard(overrides: Partial<React.ComponentProps<typeof Kanban
       columnRef={vi.fn()}
       {...overrides}
     />,
+    {
+      wrapper: withNuqsTestingAdapter({
+        searchParams: options?.searchParams,
+        onUrlUpdate: options?.onUrlUpdate,
+      }),
+    },
   );
 }
 
@@ -130,5 +163,36 @@ describe("KanbanBoard", () => {
     });
 
     expect(onTabChange).toHaveBeenCalledWith("want_to_watch");
+  });
+
+  test("URL の view クエリから絞り込み状態を復元する", () => {
+    renderKanbanBoard({}, { searchParams: "?view=quick" });
+
+    expect(screen.getByRole("button", { name: /サクッと/ })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
+
+  test("絞り込み切り替えで view クエリを更新する", async () => {
+    const user = userEvent.setup();
+    const onUrlUpdate = vi.fn();
+    renderKanbanBoard({}, { onUrlUpdate });
+
+    await user.click(screen.getByRole("button", { name: /ガッツリ/ }));
+    await user.click(screen.getByRole("button", { name: /ガッツリ/ }));
+
+    expect(onUrlUpdate).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        queryString: "?view=focus",
+      }),
+    );
+    expect(onUrlUpdate).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        queryString: "",
+      }),
+    );
   });
 });
