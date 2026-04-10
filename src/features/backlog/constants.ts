@@ -69,7 +69,12 @@ export function isPrimaryPlatformValue(value: unknown): value is PlatformKey {
   return typeof value === "string" && platformKeys.some((platform) => platform === value);
 }
 
-export const viewingModeOrder: ViewingMode[] = ["focus", "thoughtful", "quick", "background"];
+export const viewingModeOrder = [
+  "focus",
+  "thoughtful",
+  "quick",
+  "background",
+] as const satisfies readonly ViewingMode[];
 
 export const viewingModeLabels: Record<ViewingMode, string> = {
   focus: "ガッツリ",
