@@ -1,6 +1,22 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "entry": ["supabase/functions/*/index.ts"],
+  "entry": ["supabase/functions/*/index.ts", "supabase/functions/**/*_test.ts"],
+  "project": [
+    "src/**/*.{ts,tsx}",
+    "supabase/functions/**/*.ts",
+    "e2e/**/*.ts",
+    "*.config.{js,ts}",
+    "!**/dist/**",
+    "!.claude/worktrees/**"
+  ],
   "ignoreFiles": ["postcss.config.js"],
-  "ignoreDependencies": ["@tailwindcss/postcss", "autoprefixer", "npm"]
+  "ignoreDependencies": [
+    "@tailwindcss/postcss",
+    "autoprefixer",
+    "jsr",
+    "npm",
+    "shadcn",
+    "tailwindcss",
+    "tw-animate-css"
+  ]
 }

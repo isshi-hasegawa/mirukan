@@ -1,4 +1,4 @@
-export type OmdbApiResponse = {
+type OmdbApiResponse = {
   Response: string;
   Error?: string;
   Ratings?: Array<{
@@ -23,27 +23,27 @@ function getOmdbApiKey(): string {
   return apiKey;
 }
 
-export function parseRottenTomatoesScore(value: string): number | null {
+function parseRottenTomatoesScore(value: string): number | null {
   const match = value.match(/^(\d+)%$/);
   if (!match) return null;
   const score = Number.parseInt(match[1], 10);
   return score >= 0 && score <= 100 ? score : null;
 }
 
-export function parseImdbRating(value: string): number | null {
+function parseImdbRating(value: string): number | null {
   const match = value.match(/^(\d+(?:\.\d+)?)\/10$/);
   if (!match) return null;
   const rating = Number.parseFloat(match[1]);
   return rating >= 0 && rating <= 10 ? rating : null;
 }
 
-export function parseImdbVotes(value: string): number | null {
+function parseImdbVotes(value: string): number | null {
   const cleaned = value.replace(/,/g, "");
   const votes = Number.parseInt(cleaned, 10);
   return Number.isNaN(votes) ? null : votes;
 }
 
-export function parseMetacriticScore(value: string): number | null {
+function parseMetacriticScore(value: string): number | null {
   const match = value.match(/^(\d+)\/100$/);
   if (!match) return null;
   const score = Number.parseInt(match[1], 10);

@@ -1,6 +1,6 @@
 import { supabase } from "./supabase.ts";
 
-export type OmdbWorkDetails = {
+type OmdbWorkDetails = {
   rottenTomatoesScore: number | null;
   imdbRating: number | null;
   imdbVotes: number | null;
