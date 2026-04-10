@@ -13,6 +13,7 @@ import {
   buildStackedBacklogOptions,
   confirmStackedSave,
 } from "../add-submit-flow.ts";
+import { type SubmitPhase, initialSubmitPhase } from "../add-flow-state.ts";
 
 type UseAddSubmitOptions = {
   items: BacklogItem[];
@@ -29,15 +30,6 @@ type UseAddSubmitOptions = {
   onAdded: () => void | Promise<void>;
 };
 
-type PendingStackedSave = {
-  message: string;
-  workIds: string[];
-  backlogOptions: {
-    note: string | null;
-    primary_platform: PrimaryPlatform;
-  };
-};
-
 export function useAddSubmit({
   items,
   session,
@@ -52,15 +44,16 @@ export function useAddSubmit({
   onClose,
   onAdded,
 }: UseAddSubmitOptions) {
-  const [formMessage, setFormMessage] = useState("");
-  const [pendingSave, setPendingSave] = useState<PendingStackedSave | null>(null);
+  const [submitPhase, setSubmitPhase] = useState<SubmitPhase>(initialSubmitPhase);
 
   const clearSubmissionState = () => {
-    setFormMessage("");
-    setPendingSave(null);
+    setSubmitPhase({ phase: "idle" });
   };
 
-  const saveToStacked = async (payload: Omit<PendingStackedSave, "message">) => {
+  const saveToStacked = async (payload: {
+    workIds: string[];
+    backlogOptions: { note: string | null; primary_platform: PrimaryPlatform };
+  }) => {
     const backlogResult = await upsertBacklogItemsToStatus(
       session.user.id,
       items,
@@ -70,30 +63,30 @@ export function useAddSubmit({
     );
 
     if (backlogResult.error) {
-      setFormMessage(`カードの保存に失敗しました: ${backlogResult.error}`);
+      setSubmitPhase({
+        phase: "error",
+        message: `カードの保存に失敗しました: ${backlogResult.error}`,
+      });
       return;
     }
 
-    setPendingSave(null);
+    setSubmitPhase({ phase: "idle" });
     onClose();
     void onAdded();
   };
 
   const confirmPendingSave = async () => {
-    if (!pendingSave) {
+    if (submitPhase.phase !== "pending_confirm") {
       return;
     }
 
-    setFormMessage("ストックへ戻しています...");
-    await saveToStacked({
-      workIds: pendingSave.workIds,
-      backlogOptions: pendingSave.backlogOptions,
-    });
+    const { workIds, backlogOptions } = submitPhase;
+    setSubmitPhase({ phase: "loading", message: "ストックへ戻しています..." });
+    await saveToStacked({ workIds, backlogOptions });
   };
 
   const cancelPendingSave = () => {
-    setPendingSave(null);
-    setFormMessage("");
+    setSubmitPhase({ phase: "idle" });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -106,20 +99,22 @@ export function useAddSubmit({
       resolvedTitle,
     });
     const backlogOptions = buildStackedBacklogOptions(primaryPlatform, note);
-    setPendingSave(null);
 
     if (!title) {
-      setFormMessage("タイトルを入力してください。");
+      setSubmitPhase({ phase: "error", message: "タイトルを入力してください。" });
       return;
     }
 
     if (isTvSelection) {
       if (selectedSeasonNumbers.length === 0 || !selectedTmdbResult) {
-        setFormMessage("追加するシーズンを1つ以上選択してください。");
+        setSubmitPhase({
+          phase: "error",
+          message: "追加するシーズンを1つ以上選択してください。",
+        });
         return;
       }
 
-      setFormMessage("シーズンをストックへ追加しています...");
+      setSubmitPhase({ phase: "loading", message: "シーズンをストックへ追加しています..." });
       const result = await resolveSelectedSeasonWorkIds(
         selectedTmdbResult,
         session.user.id,
@@ -128,7 +123,10 @@ export function useAddSubmit({
       );
 
       if (result.error) {
-        setFormMessage(`シーズンの準備に失敗しました: ${result.error}`);
+        setSubmitPhase({
+          phase: "error",
+          message: `シーズンの準備に失敗しました: ${result.error}`,
+        });
         return;
       }
 
@@ -140,13 +138,13 @@ export function useAddSubmit({
       });
 
       if (confirmResult.type === "empty") {
-        setFormMessage(confirmResult.message);
+        setSubmitPhase({ phase: "error", message: confirmResult.message });
         return;
       }
 
       if (confirmResult.type === "confirm") {
-        setFormMessage("");
-        setPendingSave({
+        setSubmitPhase({
+          phase: "pending_confirm",
           message: confirmResult.message,
           workIds: result.workIds,
           backlogOptions,
@@ -154,14 +152,11 @@ export function useAddSubmit({
         return;
       }
 
-      await saveToStacked({
-        workIds: result.workIds,
-        backlogOptions,
-      });
+      await saveToStacked({ workIds: result.workIds, backlogOptions });
       return;
     }
 
-    setFormMessage("作品をストックへ追加しています...");
+    setSubmitPhase({ phase: "loading", message: "作品をストックへ追加しています..." });
 
     let work: { id: string } | null = null;
     let workError: { message: string } | null = null;
@@ -185,7 +180,10 @@ export function useAddSubmit({
     }
 
     if (workError || !work) {
-      setFormMessage(`作品の保存に失敗しました: ${workError?.message ?? "不明なエラー"}`);
+      setSubmitPhase({
+        phase: "error",
+        message: `作品の保存に失敗しました: ${workError?.message ?? "不明なエラー"}`,
+      });
       return;
     }
 
@@ -197,13 +195,13 @@ export function useAddSubmit({
     });
 
     if (confirmResult.type === "empty") {
-      setFormMessage(confirmResult.message);
+      setSubmitPhase({ phase: "error", message: confirmResult.message });
       return;
     }
 
     if (confirmResult.type === "confirm") {
-      setFormMessage("");
-      setPendingSave({
+      setSubmitPhase({
+        phase: "pending_confirm",
         message: confirmResult.message,
         workIds: [work.id],
         backlogOptions,
@@ -211,15 +209,17 @@ export function useAddSubmit({
       return;
     }
 
-    await saveToStacked({
-      workIds: [work.id],
-      backlogOptions,
-    });
+    await saveToStacked({ workIds: [work.id], backlogOptions });
   };
+
+  // useAddFlow が参照する既存 API との互換を維持するための導出値
+  const formMessage =
+    submitPhase.phase === "loading" || submitPhase.phase === "error" ? submitPhase.message : "";
+  const pendingSaveMessage = submitPhase.phase === "pending_confirm" ? submitPhase.message : null;
 
   return {
     formMessage,
-    pendingSaveMessage: pendingSave?.message ?? null,
+    pendingSaveMessage,
     clearSubmissionState,
     confirmPendingSave,
     cancelPendingSave,

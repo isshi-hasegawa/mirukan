@@ -1,6 +1,31 @@
 import type { TmdbSearchResult } from "../../lib/tmdb.ts";
 import type { PrimaryPlatform, WorkType } from "./types.ts";
 
+// Submit フローの状態遷移:
+//   idle → loading → error      (バリデーション失敗・API エラー)
+//   idle → loading → idle       (保存完了後モーダルを閉じる)
+//   idle → loading → pending_confirm → loading → idle  (既存カード確認後に保存)
+//   pending_confirm → idle      (キャンセル)
+//   any → idle                  (clearSubmissionState)
+
+type BacklogOptions = {
+  note: string | null;
+  primary_platform: PrimaryPlatform;
+};
+
+export type SubmitPhase =
+  | { phase: "idle" }
+  | { phase: "loading"; message: string }
+  | { phase: "error"; message: string }
+  | {
+      phase: "pending_confirm";
+      message: string;
+      workIds: string[];
+      backlogOptions: BacklogOptions;
+    };
+
+export const initialSubmitPhase: SubmitPhase = { phase: "idle" };
+
 type AddFlowDraftState = {
   primaryPlatform: PrimaryPlatform;
   note: string;
