@@ -9,6 +9,7 @@ import {
   getClientYFromPointerEvent,
   getDropIndicator,
   getDropSideFromRect,
+  getWorkMetadataLabels,
   getWorkTypeLabel,
   resolveDropTarget,
 } from "./helpers.ts";
@@ -286,5 +287,62 @@ describe("getWorkTypeLabel", () => {
 
   test("returns series for season works", () => {
     expect(getWorkTypeLabel("season")).toBe("シリーズ");
+  });
+});
+
+describe("getWorkMetadataLabels", () => {
+  const baseWork: BacklogItem["works"] = {
+    id: "work-1",
+    title: "テスト作品",
+    work_type: "movie",
+    source_type: "tmdb",
+    tmdb_id: 1,
+    tmdb_media_type: "movie",
+    original_title: null,
+    overview: null,
+    poster_path: null,
+    release_date: "2024-01-01",
+    runtime_minutes: 120,
+    typical_episode_runtime_minutes: null,
+    duration_bucket: null,
+    genres: [],
+    season_count: null,
+    season_number: null,
+    focus_required_score: null,
+    background_fit_score: null,
+    completion_load_score: null,
+    rotten_tomatoes_score: null,
+    imdb_rating: null,
+    imdb_votes: null,
+    metacritic_score: null,
+  };
+
+  test("映画は公開年と上映時間をそのまま表示する", () => {
+    expect(
+      getWorkMetadataLabels(baseWork!, {
+        includeReleaseYear: true,
+        includeRuntime: true,
+      }),
+    ).toEqual(["2024年", "120分"]);
+  });
+
+  test("シリーズは平均 runtime を約表記にする", () => {
+    expect(
+      getWorkMetadataLabels(
+        {
+          ...baseWork!,
+          work_type: "series",
+          tmdb_media_type: "tv",
+          runtime_minutes: null,
+          typical_episode_runtime_minutes: 45,
+          season_count: 1,
+        },
+        {
+          includeReleaseYear: true,
+          includeRuntime: true,
+          includeSeasonCount: true,
+        },
+      ),
+    ).toEqual(["2024年", "1話約45分", "全1シーズン"]);
   });
 });
