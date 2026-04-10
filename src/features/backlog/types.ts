@@ -56,15 +56,3 @@ export type DetailModalState = {
   draftValue: string;
   message: string | null;
 };
-
-export type DropIndicator =
-  | { type: "card"; itemId: string; side: "before" | "after" }
-  | { type: "column"; status: BacklogStatus }
-  | { type: "top-slot"; status: BacklogStatus }
-  | { type: "bottom-slot"; status: BacklogStatus };
-
-export type ResolvedDropTarget = {
-  status: BacklogStatus;
-  targetItemId: string | null;
-  side: "before" | "after";
-};

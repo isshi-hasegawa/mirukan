@@ -98,7 +98,7 @@ function renderKanbanBoard(
   return render(
     <KanbanBoard
       items={[createItem("item-1", "stacked", "作品1"), createItem("item-2", "watching", "作品2")]}
-      dropIndicator={null}
+      isDragging={false}
       isMobileLayout={false}
       isMobileDragging={false}
       selectedTabStatus="stacked"

@@ -5,11 +5,10 @@ import { statusOrder, viewingModeOrder } from "../constants.ts";
 import { sortStackedItemsByViewingMode } from "../viewing-mode.ts";
 import { DesktopKanbanBoard } from "./DesktopKanbanBoard.tsx";
 import { MobileKanbanBoard } from "./MobileKanbanBoard.tsx";
-import type { DropIndicator } from "./kanban-board-shared.ts";
 
 type Props = {
   items: BacklogItem[];
-  dropIndicator: DropIndicator | null;
+  isDragging: boolean;
   isMobileLayout: boolean;
   isMobileDragging: boolean;
   selectedTabStatus: BacklogStatus;
@@ -23,7 +22,7 @@ type Props = {
 
 export function KanbanBoard({
   items,
-  dropIndicator,
+  isDragging,
   isMobileLayout,
   isMobileDragging,
   selectedTabStatus,
@@ -53,13 +52,16 @@ export function KanbanBoard({
       nextGrouped.get(item.status)?.push(item);
     }
 
-    nextGrouped.set(
-      "stacked",
-      sortStackedItemsByViewingMode(nextGrouped.get("stacked") ?? [], activeViewingMode),
-    );
+    // ドラッグ中は視聴モードによる再ソートをスキップ（localItems の順序を保持）
+    if (!isDragging) {
+      nextGrouped.set(
+        "stacked",
+        sortStackedItemsByViewingMode(nextGrouped.get("stacked") ?? [], activeViewingMode),
+      );
+    }
 
     return nextGrouped;
-  }, [items, activeViewingMode]);
+  }, [items, activeViewingMode, isDragging]);
 
   const columnPropsByStatus = useMemo(
     () =>
@@ -71,7 +73,6 @@ export function KanbanBoard({
             items: grouped.get(status) ?? [],
             activeViewingMode: status === "stacked" ? activeViewingMode : null,
             isMobileLayout,
-            dropIndicator,
             onOpenAddModal,
             onOpenDetail,
             onDeleteItem,
@@ -82,7 +83,6 @@ export function KanbanBoard({
       ),
     [
       activeViewingMode,
-      dropIndicator,
       grouped,
       handleViewingModeToggle,
       isMobileLayout,

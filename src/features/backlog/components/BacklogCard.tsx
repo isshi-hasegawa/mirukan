@@ -1,4 +1,5 @@
-import { useDraggable, useDroppable } from "@dnd-kit/core";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import {
   BoltIcon,
   ClockIcon,
@@ -19,7 +20,6 @@ import {
 } from "@/components/ui/dropdown-menu.tsx";
 import { getWorkMetadataLabels, getWorkTypeLabel } from "../helpers.ts";
 import { viewingModeLabels } from "../constants.ts";
-import type { DropIndicator } from "./kanban-board-shared.ts";
 
 const ModeIcon: Record<
   ViewingMode,
@@ -34,7 +34,6 @@ const ModeIcon: Record<
 type Props = {
   item: BacklogItem;
   showModeBadge?: boolean;
-  dropIndicator: DropIndicator | null;
   onOpenDetail: () => void;
   onDeleteItem: (itemId: string) => void;
   onMarkAsWatched: (itemId: string) => void;
@@ -43,18 +42,13 @@ type Props = {
 export function BacklogCard({
   item,
   showModeBadge = false,
-  dropIndicator,
   onOpenDetail,
   onDeleteItem,
   onMarkAsWatched,
 }: Props) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef: setDragRef,
-    isDragging,
-  } = useDraggable({ id: item.id });
-  const { setNodeRef: setDropRef } = useDroppable({ id: item.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: item.id,
+  });
 
   const work = item.works;
 
@@ -68,17 +62,15 @@ export function BacklogCard({
   const workTypeLabel = getWorkTypeLabel(work.work_type);
   const metadataLabels = getWorkMetadataLabels(work, { includeReleaseYear: true });
 
-  const cardDropIndicator =
-    dropIndicator?.type === "card" && dropIndicator.itemId === item.id ? dropIndicator : null;
-
   return (
     <article
-      ref={(node) => {
-        setDragRef(node);
-        setDropRef(node);
+      ref={setNodeRef}
+      className="relative grid w-full min-w-0 cursor-grab gap-[10px] rounded-[18px] border border-[rgba(92,59,35,0.08)] bg-[var(--surface-strong)] pt-[18px] pr-11 pb-4 pl-4 transition-[box-shadow,border-color] duration-[140ms] ease-[ease] active:cursor-grabbing hover:border-primary/[0.18] hover:shadow-[0_14px_32px_rgba(75,48,30,0.08)] focus-visible:outline-2 focus-visible:outline-primary/45 focus-visible:border-primary/[0.18] focus-visible:shadow-[0_14px_32px_rgba(75,48,30,0.08)]"
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.4 : 1,
       }}
-      className="relative grid w-full min-w-0 cursor-grab gap-[10px] rounded-[18px] border border-[rgba(92,59,35,0.08)] bg-[var(--surface-strong)] pt-[18px] pr-11 pb-4 pl-4 transition-[opacity,box-shadow,border-color] duration-[140ms] ease-[ease] active:cursor-grabbing hover:border-primary/[0.18] hover:shadow-[0_14px_32px_rgba(75,48,30,0.08)] focus-visible:outline-2 focus-visible:outline-primary/45 focus-visible:border-primary/[0.18] focus-visible:shadow-[0_14px_32px_rgba(75,48,30,0.08)]"
-      style={{ opacity: isDragging ? 0.4 : 1 }}
       data-card-id={item.id}
       data-card-status={item.status}
       onClick={onOpenDetail}
@@ -91,26 +83,6 @@ export function BacklogCard({
       {...listeners}
       {...attributes}
     >
-      {cardDropIndicator?.side === "before" && (
-        <div
-          aria-hidden
-          className="animate-in fade-in duration-100 pointer-events-none absolute inset-x-0 flex items-center gap-1.5 px-1"
-          style={{ top: "-5px" }}
-        >
-          <div className="h-[6px] w-[6px] shrink-0 rounded-full bg-primary" />
-          <div className="h-[2px] flex-1 rounded-full bg-primary" />
-        </div>
-      )}
-      {cardDropIndicator?.side === "after" && (
-        <div
-          aria-hidden
-          className="animate-in fade-in duration-100 pointer-events-none absolute inset-x-0 flex items-center gap-1.5 px-1"
-          style={{ bottom: "-5px" }}
-        >
-          <div className="h-[6px] w-[6px] shrink-0 rounded-full bg-primary" />
-          <div className="h-[2px] flex-1 rounded-full bg-primary" />
-        </div>
-      )}
       <div className="absolute top-[10px] right-[10px]">
         <DropdownMenu>
           <DropdownMenuTrigger

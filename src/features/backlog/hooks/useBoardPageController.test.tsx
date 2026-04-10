@@ -29,10 +29,11 @@ vi.mock("./useBacklogItems.ts", () => ({
 vi.mock("./useBacklogDnd.ts", () => ({
   useBacklogDnd: () => ({
     dragItemId: null,
-    dropIndicator: null,
+    localItems: hookMocks.items,
     sensors: [],
     handleDragStart: vi.fn(),
     handleDragOver: vi.fn(),
+    handleDragCancel: vi.fn(),
     handleDragEnd: vi.fn(),
   }),
 }));
