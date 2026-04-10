@@ -56,13 +56,14 @@ export function BoardPage({ session }: Props) {
         collisionDetection={pointerWithin}
         onDragStart={dnd.handleDragStart}
         onDragOver={dnd.handleDragOver}
+        onDragCancel={dnd.handleDragCancel}
         onDragEnd={(e) => void dnd.handleDragEnd(e)}
       >
         <KanbanBoard {...board} />
         <DragOverlay dropAnimation={null}>
           {dnd.dragItemId ? (
             <DraggedBacklogCardOverlay
-              item={board.items.find((candidate) => candidate.id === dnd.dragItemId) ?? null}
+              item={dnd.localItems.find((candidate) => candidate.id === dnd.dragItemId) ?? null}
             />
           ) : null}
         </DragOverlay>

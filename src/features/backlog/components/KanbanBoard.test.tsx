@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { withNuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { OnUrlUpdateFunction } from "nuqs/adapters/testing";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
-import type { BacklogItem, BacklogStatus } from "../types.ts";
+import type { BacklogItem, BacklogStatus, WorkSummary } from "../types.ts";
 import type { ViewingMode } from "../types.ts";
 import { KanbanBoard } from "./KanbanBoard.tsx";
 
@@ -91,6 +91,34 @@ function createItem(
   };
 }
 
+function createWorkSummary(id: string, title: string, runtimeMinutes: number): WorkSummary {
+  return {
+    id: `work-${id}`,
+    title,
+    work_type: "movie",
+    source_type: "tmdb",
+    tmdb_id: Number(id.replace(/\D/g, "")) || 1,
+    tmdb_media_type: "movie",
+    original_title: null,
+    overview: null,
+    poster_path: null,
+    release_date: null,
+    runtime_minutes: runtimeMinutes,
+    typical_episode_runtime_minutes: null,
+    duration_bucket: null,
+    genres: [],
+    season_count: null,
+    season_number: null,
+    focus_required_score: null,
+    background_fit_score: null,
+    completion_load_score: null,
+    rotten_tomatoes_score: null,
+    imdb_rating: null,
+    imdb_votes: null,
+    metacritic_score: null,
+  };
+}
+
 function renderKanbanBoard(
   overrides: Partial<React.ComponentProps<typeof KanbanBoard>> = {},
   options?: { searchParams?: string; onUrlUpdate?: OnUrlUpdateFunction },
@@ -98,7 +126,7 @@ function renderKanbanBoard(
   return render(
     <KanbanBoard
       items={[createItem("item-1", "stacked", "作品1"), createItem("item-2", "watching", "作品2")]}
-      dropIndicator={null}
+      isDragging={false}
       isMobileLayout={false}
       isMobileDragging={false}
       selectedTabStatus="stacked"
@@ -195,5 +223,43 @@ describe("KanbanBoard", () => {
         queryString: "",
       }),
     );
+  });
+
+  test("view 絞り込み中にドラッグ開始しても stacked 列の表示順を維持する", () => {
+    const items = [
+      createItem("item-1", "stacked", "長編", {
+        works: createWorkSummary("item-1", "長編", 120),
+      }),
+      createItem("item-2", "stacked", "短編", {
+        works: createWorkSummary("item-2", "短編", 20),
+      }),
+    ];
+
+    const { rerender } = renderKanbanBoard(
+      {
+        items,
+      },
+      { searchParams: "?view=quick" },
+    );
+
+    expect(screen.getByText("stacked:item-2,item-1")).toBeInTheDocument();
+
+    rerender(
+      <KanbanBoard
+        items={items}
+        isDragging
+        isMobileLayout={false}
+        isMobileDragging={false}
+        selectedTabStatus="stacked"
+        onTabChange={vi.fn()}
+        onOpenAddModal={vi.fn()}
+        onOpenDetail={vi.fn()}
+        onDeleteItem={vi.fn()}
+        onMarkAsWatched={vi.fn()}
+        columnRef={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("stacked:item-2,item-1")).toBeInTheDocument();
   });
 });

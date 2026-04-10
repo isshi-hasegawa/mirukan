@@ -33,8 +33,10 @@ export function useBoardPageController({ session }: UseBoardPageControllerOption
   });
 
   const detailItem = boardPageState.detailModal.openItemId
-    ? (items.find((item) => item.id === boardPageState.detailModal.openItemId) ?? null)
+    ? (dnd.localItems.find((item) => item.id === boardPageState.detailModal.openItemId) ?? null)
     : null;
+
+  const isDragging = dnd.dragItemId !== null;
 
   return {
     isMobileLayout,
@@ -44,10 +46,10 @@ export function useBoardPageController({ session }: UseBoardPageControllerOption
     feedback,
     feedbackUi,
     board: {
-      items,
-      dropIndicator: dnd.dropIndicator,
+      items: dnd.localItems,
+      isDragging,
       isMobileLayout,
-      isMobileDragging: isMobileLayout && dnd.dragItemId !== null,
+      isMobileDragging: isMobileLayout && isDragging,
       selectedTabStatus: boardPageState.selectedTabStatus,
       onTabChange: boardPageState.setSelectedTabStatus,
       onOpenAddModal: boardPageState.handleOpenAddModal,
@@ -60,8 +62,10 @@ export function useBoardPageController({ session }: UseBoardPageControllerOption
       sensors: dnd.sensors,
       handleDragStart: dnd.handleDragStart,
       handleDragOver: dnd.handleDragOver,
+      handleDragCancel: dnd.handleDragCancel,
       handleDragEnd: dnd.handleDragEnd,
       dragItemId: dnd.dragItemId,
+      localItems: dnd.localItems,
     },
     addModal: {
       isOpen: boardPageState.isAddModalOpen,
@@ -77,7 +81,7 @@ export function useBoardPageController({ session }: UseBoardPageControllerOption
       item: detailItem,
       isOpen: boardPageState.detailModal.openItemId !== null,
       state: boardPageState.detailModal,
-      items,
+      items: dnd.localItems,
       onStateChange: boardPageState.setDetailModal,
       onClose: boardPageState.handleCloseDetail,
       onReload: loadItems,

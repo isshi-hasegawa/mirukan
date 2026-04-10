@@ -1,21 +1,10 @@
 import type { ReactNode } from "react";
 import { useDroppable } from "@dnd-kit/core";
-import type { BacklogStatus } from "../types.ts";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import type { KanbanColumnProps } from "./kanban-board-shared.ts";
-import type { DropIndicator } from "./kanban-board-shared.ts";
 import { BacklogCard } from "./BacklogCard.tsx";
 import { KanbanColumnHeader } from "./KanbanColumnHeader.tsx";
 import { ViewingModeFilter } from "./ViewingModeFilter.tsx";
-
-function TopSlot({ status }: { status: BacklogStatus }) {
-  const { setNodeRef } = useDroppable({ id: `top-slot:${status}` });
-  return <div ref={setNodeRef} className="h-6" />;
-}
-
-function BottomSlot({ status }: { status: BacklogStatus }) {
-  const { setNodeRef } = useDroppable({ id: `bottom-slot:${status}` });
-  return <div ref={setNodeRef} className="h-6" />;
-}
 
 type Props = KanbanColumnProps & {
   extra?: ReactNode;
@@ -27,18 +16,16 @@ export function KanbanColumn({
   extra,
   activeViewingMode = null,
   isMobileLayout = false,
-  dropIndicator,
   onOpenAddModal,
   onOpenDetail,
   onDeleteItem,
   onMarkAsWatched,
   onViewingModeToggle,
 }: Props) {
-  const { setNodeRef } = useDroppable({ id: `column:${status}` });
-  const isColumnActive =
-    dropIndicator?.type === "column" && dropIndicator.status === status && items.length === 0;
+  const { setNodeRef, isOver } = useDroppable({ id: `column:${status}` });
+  const isEmptyColumnActive = isOver && items.length === 0;
 
-  const dropzoneStyle: React.CSSProperties | undefined = isColumnActive
+  const dropzoneStyle: React.CSSProperties | undefined = isEmptyColumnActive
     ? {
         minHeight: "120px",
         borderRadius: "20px",
@@ -47,14 +34,7 @@ export function KanbanColumn({
       }
     : undefined;
 
-  const firstItemId = items[0]?.id;
-  const lastItemId = items.at(-1)?.id;
-  const effectiveDropIndicator: DropIndicator | null =
-    dropIndicator?.type === "top-slot" && dropIndicator.status === status && firstItemId
-      ? { type: "card", itemId: firstItemId, side: "before" }
-      : dropIndicator?.type === "bottom-slot" && dropIndicator.status === status && lastItemId
-        ? { type: "card", itemId: lastItemId, side: "after" }
-        : dropIndicator;
+  const itemIds = items.map((item) => item.id);
 
   return (
     <section
@@ -81,27 +61,24 @@ export function KanbanColumn({
               onViewingModeToggle={onViewingModeToggle}
             />
           ) : null}
-          <TopSlot status={status} />
-          {items.length > 0 ? (
-            <>
-              {items.map((item) => (
+          <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
+            {items.length > 0 ? (
+              items.map((item) => (
                 <BacklogCard
                   key={item.id}
                   item={item}
                   showModeBadge={status === "stacked"}
-                  dropIndicator={effectiveDropIndicator}
                   onOpenDetail={() => onOpenDetail(item.id)}
                   onDeleteItem={onDeleteItem}
                   onMarkAsWatched={onMarkAsWatched}
                 />
-              ))}
-              <BottomSlot status={status} />
-            </>
-          ) : (
-            <p className="text-[var(--text-muted)] pt-[18px] text-[0.92rem]">
-              この列にはまだカードがありません。
-            </p>
-          )}
+              ))
+            ) : (
+              <p className="text-[var(--text-muted)] pt-[18px] text-[0.92rem]">
+                この列にはまだカードがありません。
+              </p>
+            )}
+          </SortableContext>
         </div>
       </div>
     </section>

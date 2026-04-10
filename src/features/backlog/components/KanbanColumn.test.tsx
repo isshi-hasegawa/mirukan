@@ -6,7 +6,13 @@ import { KanbanColumn } from "./KanbanColumn.tsx";
 vi.mock("@dnd-kit/core", () => ({
   useDroppable: () => ({
     setNodeRef: vi.fn(),
+    isOver: false,
   }),
+}));
+
+vi.mock("@dnd-kit/sortable", () => ({
+  SortableContext: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  verticalListSortingStrategy: {},
 }));
 
 vi.mock("./BacklogCard.tsx", () => ({
@@ -59,7 +65,6 @@ describe("KanbanColumn", () => {
         items={[createItem()]}
         activeViewingMode="thoughtful"
         isMobileLayout={false}
-        dropIndicator={null}
         onOpenAddModal={vi.fn()}
         onOpenDetail={vi.fn()}
         onDeleteItem={vi.fn()}
@@ -78,7 +83,6 @@ describe("KanbanColumn", () => {
         items={[createItem({ status: "watching" })]}
         activeViewingMode={null}
         isMobileLayout={false}
-        dropIndicator={null}
         onOpenAddModal={vi.fn()}
         onOpenDetail={vi.fn()}
         onDeleteItem={vi.fn()}
@@ -99,7 +103,6 @@ describe("KanbanColumn", () => {
         ]}
         activeViewingMode={null}
         isMobileLayout={false}
-        dropIndicator={null}
         onOpenAddModal={vi.fn()}
         onOpenDetail={vi.fn()}
         onDeleteItem={vi.fn()}

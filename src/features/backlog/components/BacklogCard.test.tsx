@@ -4,16 +4,19 @@ import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
 import type { BacklogItem } from "../types.ts";
 import { BacklogCard } from "./BacklogCard.tsx";
 
-vi.mock("@dnd-kit/core", () => ({
-  useDraggable: () => ({
+vi.mock("@dnd-kit/sortable", () => ({
+  useSortable: () => ({
     attributes: {},
     listeners: {},
     setNodeRef: () => {},
+    transform: null,
+    transition: undefined,
     isDragging: false,
   }),
-  useDroppable: () => ({
-    setNodeRef: () => {},
-  }),
+}));
+
+vi.mock("@dnd-kit/utilities", () => ({
+  CSS: { Transform: { toString: () => undefined } },
 }));
 
 setupTestLifecycle();
@@ -69,7 +72,6 @@ async function renderCard(): Promise<RenderResult> {
   render(
     <BacklogCard
       item={createItem()}
-      dropIndicator={null}
       onOpenDetail={onOpenDetail}
       onDeleteItem={onDeleteItem}
       onMarkAsWatched={onMarkAsWatched}

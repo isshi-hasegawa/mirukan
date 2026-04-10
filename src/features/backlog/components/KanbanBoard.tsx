@@ -1,15 +1,14 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import type { BacklogItem, BacklogStatus, ViewingMode } from "../types.ts";
 import { statusOrder, viewingModeOrder } from "../constants.ts";
 import { sortStackedItemsByViewingMode } from "../viewing-mode.ts";
 import { DesktopKanbanBoard } from "./DesktopKanbanBoard.tsx";
 import { MobileKanbanBoard } from "./MobileKanbanBoard.tsx";
-import type { DropIndicator } from "./kanban-board-shared.ts";
 
 type Props = {
   items: BacklogItem[];
-  dropIndicator: DropIndicator | null;
+  isDragging: boolean;
   isMobileLayout: boolean;
   isMobileDragging: boolean;
   selectedTabStatus: BacklogStatus;
@@ -23,7 +22,7 @@ type Props = {
 
 export function KanbanBoard({
   items,
-  dropIndicator,
+  isDragging,
   isMobileLayout,
   isMobileDragging,
   selectedTabStatus,
@@ -43,6 +42,8 @@ export function KanbanBoard({
   const handleViewingModeToggle = useCallback((mode: ViewingMode) => {
     void setActiveViewingMode((current) => (current === mode ? null : mode));
   }, []);
+  const lastStableItemsRef = useRef<BacklogItem[] | null>(null);
+  const lastStableStackedItemsRef = useRef<BacklogItem[] | null>(null);
 
   const grouped = useMemo(() => {
     const nextGrouped = new Map<BacklogStatus, BacklogItem[]>(
@@ -53,13 +54,22 @@ export function KanbanBoard({
       nextGrouped.get(item.status)?.push(item);
     }
 
-    nextGrouped.set(
-      "stacked",
-      sortStackedItemsByViewingMode(nextGrouped.get("stacked") ?? [], activeViewingMode),
+    const sortedStackedItems = sortStackedItemsByViewingMode(
+      nextGrouped.get("stacked") ?? [],
+      activeViewingMode,
     );
 
+    if (!isDragging) {
+      lastStableItemsRef.current = items;
+      lastStableStackedItemsRef.current = sortedStackedItems;
+      nextGrouped.set("stacked", sortedStackedItems);
+    } else if (lastStableItemsRef.current === items && lastStableStackedItemsRef.current) {
+      // ドラッグ開始直後は、直前の filtered 表示順を維持してカードが跳ねないようにする
+      nextGrouped.set("stacked", lastStableStackedItemsRef.current);
+    }
+
     return nextGrouped;
-  }, [items, activeViewingMode]);
+  }, [items, activeViewingMode, isDragging]);
 
   const columnPropsByStatus = useMemo(
     () =>
@@ -71,7 +81,6 @@ export function KanbanBoard({
             items: grouped.get(status) ?? [],
             activeViewingMode: status === "stacked" ? activeViewingMode : null,
             isMobileLayout,
-            dropIndicator,
             onOpenAddModal,
             onOpenDetail,
             onDeleteItem,
@@ -82,7 +91,6 @@ export function KanbanBoard({
       ),
     [
       activeViewingMode,
-      dropIndicator,
       grouped,
       handleViewingModeToggle,
       isMobileLayout,
