@@ -556,7 +556,7 @@ function normalizeCachedOmdbWorkDetails(payload: unknown): OmdbWorkDetails | nul
   };
 }
 
-export type ImdbIdLookupResult =
+type ImdbIdLookupResult =
   | { kind: "found"; imdbId: string }
   | { kind: "missing" }
   | { kind: "unavailable" };
