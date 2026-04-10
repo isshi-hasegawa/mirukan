@@ -403,7 +403,14 @@ function normalizePathForMatch(value: string) {
 }
 
 function sanitizeAbsolutePaths(value: string) {
-  return value.replaceAll(/\/[^"'`\s)]+/g, (token) => toDisplayPath(token));
+  return value.replaceAll(
+    /(^|[\s("'`[])(\/[^\s"'`)\]]*)/g,
+    (fullMatch, prefix: string, candidate: string) => {
+      const { path, suffix } = splitTrailingPunctuation(candidate);
+      const sanitized = toDisplayPath(path);
+      return sanitized === path ? fullMatch : `${prefix}${sanitized}${suffix}`;
+    },
+  );
 }
 
 function toDisplayPath(value: string) {
@@ -425,6 +432,14 @@ function toDisplayPath(value: string) {
   }
 
   return normalized.split("/").findLast(Boolean) ?? normalized;
+}
+
+function splitTrailingPunctuation(value: string) {
+  const match = value.match(/^(.*?)([.,:;!?]+)?$/);
+  return {
+    path: match?.[1] ?? value,
+    suffix: match?.[2] ?? "",
+  };
 }
 
 function minDefined(left: number | undefined, right: number | undefined) {
