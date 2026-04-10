@@ -28,12 +28,8 @@ vi.mock("@dnd-kit/core", () => ({
   pointerWithin: () => [],
 }));
 
-vi.mock("../../../lib/supabase.ts", () => ({
-  supabase: {
-    auth: {
-      signOut: hookMocks.signOut,
-    },
-  },
+vi.mock("../../../lib/auth-repository.ts", () => ({
+  signOut: hookMocks.signOut,
 }));
 
 vi.mock("../hooks/useWindowSize.ts", () => ({

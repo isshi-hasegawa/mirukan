@@ -6,41 +6,22 @@ import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
 import type { BacklogItem } from "../types.ts";
 import { useBacklogActions } from "./useBacklogActions.ts";
 
-const supabaseMocks = vi.hoisted(() => {
-  const deleteEq = vi.fn();
-  const deleteMock = vi.fn(() => ({ eq: deleteEq }));
-  const updateEq = vi.fn();
-  const updateMock = vi.fn(() => ({ eq: updateEq }));
-
-  return {
-    deleteEq,
-    deleteMock,
-    updateEq,
-    updateMock,
-  };
-});
-
 const repositoryMocks = vi.hoisted(() => {
   return {
-    upsertTmdbWork: vi.fn(),
+    deleteBacklogItem: vi.fn(),
+    updateBacklogItem: vi.fn(),
     upsertBacklogItemsToStatus: vi.fn(),
+    upsertTmdbWork: vi.fn(),
   };
 });
-
-vi.mock("../../../lib/supabase.ts", () => ({
-  supabase: {
-    from: () => ({
-      delete: supabaseMocks.deleteMock,
-      update: supabaseMocks.updateMock,
-    }),
-  },
-}));
 
 vi.mock("../work-repository.ts", () => ({
   upsertTmdbWork: repositoryMocks.upsertTmdbWork,
 }));
 
 vi.mock("../backlog-repository.ts", () => ({
+  deleteBacklogItem: repositoryMocks.deleteBacklogItem,
+  updateBacklogItem: repositoryMocks.updateBacklogItem,
   upsertBacklogItemsToStatus: repositoryMocks.upsertBacklogItemsToStatus,
 }));
 
@@ -142,10 +123,8 @@ function HookHarness({
 
 describe("useBacklogActions", () => {
   beforeEach(() => {
-    supabaseMocks.deleteEq.mockResolvedValue({ error: null });
-    supabaseMocks.deleteMock.mockClear();
-    supabaseMocks.updateEq.mockResolvedValue({ error: null });
-    supabaseMocks.updateMock.mockClear();
+    repositoryMocks.deleteBacklogItem.mockResolvedValue({ error: null });
+    repositoryMocks.updateBacklogItem.mockResolvedValue({ error: null });
     repositoryMocks.upsertTmdbWork.mockResolvedValue({ data: { id: "work-1" }, error: null });
     repositoryMocks.upsertBacklogItemsToStatus.mockResolvedValue({ error: null });
   });
@@ -161,8 +140,8 @@ describe("useBacklogActions", () => {
     };
     const loadItems = vi.fn().mockResolvedValue(undefined);
     const onItemDeleted = vi.fn();
-    supabaseMocks.deleteEq.mockResolvedValueOnce({
-      error: { message: "row not found" },
+    repositoryMocks.deleteBacklogItem.mockResolvedValueOnce({
+      error: "row not found",
     });
 
     const user = userEvent.setup();

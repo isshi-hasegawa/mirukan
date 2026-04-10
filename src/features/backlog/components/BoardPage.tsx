@@ -1,7 +1,7 @@
 import type { Session } from "@supabase/supabase-js";
 import { DndContext, DragOverlay, pointerWithin } from "@dnd-kit/core";
 import { Button } from "@/components/ui/button.tsx";
-import { supabase } from "../../../lib/supabase.ts";
+import { signOut } from "../../../lib/auth-repository.ts";
 import { useBoardPageController } from "../hooks/useBoardPageController.ts";
 import { Header } from "./Header.tsx";
 import { KanbanBoard } from "./KanbanBoard.tsx";
@@ -38,7 +38,7 @@ export function BoardPage({ session }: Props) {
             variant="outline"
             className="rounded-full"
             type="button"
-            onClick={() => void supabase.auth.signOut()}
+            onClick={() => void signOut()}
           >
             ログアウト
           </Button>

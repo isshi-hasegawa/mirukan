@@ -6,16 +6,12 @@ const authState = vi.hoisted(() => ({
   callback: null as ((event: string, session: unknown) => void) | null,
 }));
 
-const supabaseMock = vi.hoisted(() => ({
-  auth: {
-    getSession: vi.fn(),
-    onAuthStateChange: vi.fn(),
-  },
+const authRepositoryMock = vi.hoisted(() => ({
+  getSession: vi.fn(),
+  onAuthStateChange: vi.fn(),
 }));
 
-vi.mock("./lib/supabase.ts", () => ({
-  supabase: supabaseMock,
-}));
+vi.mock("./lib/auth-repository.ts", () => authRepositoryMock);
 
 vi.mock("./features/backlog/components/LoginPage.tsx", () => ({
   LoginPage: ({ isSessionLoading = false }: { isSessionLoading?: boolean }) => (
@@ -47,8 +43,8 @@ describe("App", () => {
     authState.callback = null;
     window.history.replaceState({}, "", "/");
 
-    supabaseMock.auth.getSession.mockResolvedValue({ data: { session: null } });
-    supabaseMock.auth.onAuthStateChange.mockImplementation(
+    authRepositoryMock.getSession.mockResolvedValue({ data: { session: null } });
+    authRepositoryMock.onAuthStateChange.mockImplementation(
       (callback: (event: string, session: unknown) => void) => {
         authState.callback = callback;
 
@@ -64,7 +60,7 @@ describe("App", () => {
   });
 
   test("recovery リンク経由でセッションが復元されたら再設定画面を優先する", async () => {
-    supabaseMock.auth.getSession.mockResolvedValue({
+    authRepositoryMock.getSession.mockResolvedValue({
       data: { session: { user: { id: "user-1" } } },
     });
     window.history.replaceState({}, "", "/#type=recovery&access_token=token");
@@ -98,7 +94,7 @@ describe("App", () => {
   });
 
   test("パスワード更新後は recovery パラメータを消して backlog 画面へ戻す", async () => {
-    supabaseMock.auth.getSession.mockResolvedValue({
+    authRepositoryMock.getSession.mockResolvedValue({
       data: { session: { user: { id: "user-1" } } },
     });
     window.history.replaceState({}, "", "/?type=recovery");
@@ -116,7 +112,7 @@ describe("App", () => {
 
   test("getSession が失敗してもローディング状態で止まらずログイン画面に戻る", async () => {
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    supabaseMock.auth.getSession.mockRejectedValueOnce(new Error("network error"));
+    authRepositoryMock.getSession.mockRejectedValueOnce(new Error("network error"));
 
     render(<App />);
 
@@ -133,7 +129,7 @@ describe("App", () => {
     render(<App />);
 
     expect(screen.getByText("PRIVACY_POLICY_PAGE")).toBeInTheDocument();
-    expect(supabaseMock.auth.getSession).not.toHaveBeenCalled();
+    expect(authRepositoryMock.getSession).not.toHaveBeenCalled();
   });
 
   test("/terms では認証処理を通さず利用規約を表示する", () => {
@@ -142,6 +138,6 @@ describe("App", () => {
     render(<App />);
 
     expect(screen.getByText("TERMS_OF_SERVICE_PAGE")).toBeInTheDocument();
-    expect(supabaseMock.auth.getSession).not.toHaveBeenCalled();
+    expect(authRepositoryMock.getSession).not.toHaveBeenCalled();
   });
 });

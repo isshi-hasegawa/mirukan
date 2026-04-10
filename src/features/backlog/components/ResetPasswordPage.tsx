@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Label } from "@/components/ui/label.tsx";
-import { supabase } from "../../../lib/supabase.ts";
+import { updateUserPassword } from "../../../lib/auth-repository.ts";
 import { AuthScreen } from "./AuthScreen.tsx";
 
 export function ResetPasswordPage() {
@@ -22,7 +22,7 @@ export function ResetPasswordPage() {
 
     setIsSubmitting(true);
 
-    const { error } = await supabase.auth.updateUser({ password });
+    const { error } = await updateUserPassword(password);
 
     if (error) {
       setErrorMessage("パスワードの更新に失敗しました。再度お試しください。");

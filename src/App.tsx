@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { supabase } from "./lib/supabase.ts";
+import { getSession, onAuthStateChange } from "./lib/auth-repository.ts";
 import { LoginPage } from "./features/backlog/components/LoginPage.tsx";
 import { BoardPage } from "./features/backlog/components/BoardPage.tsx";
 import { ResetPasswordPage } from "./features/backlog/components/ResetPasswordPage.tsx";
@@ -64,8 +64,7 @@ function AuthenticatedApp() {
   );
 
   useEffect(() => {
-    void supabase.auth
-      .getSession()
+    void getSession()
       .then(({ data }) => {
         setSession(data.session);
       })
@@ -76,7 +75,7 @@ function AuthenticatedApp() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY") {
         setIsPasswordRecovery(true);
       } else if (event === "USER_UPDATED") {

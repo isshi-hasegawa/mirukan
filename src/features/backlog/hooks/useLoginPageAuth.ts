@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { supabase } from "../../../lib/supabase.ts";
+import {
+  resetPasswordForEmail,
+  signInWithOAuth,
+  signInWithPassword,
+  signUp,
+} from "../../../lib/auth-repository.ts";
 
 type AuthMode = "login" | "signUp" | "forgotPassword";
 
@@ -120,12 +125,8 @@ export function useLoginPageAuth({ showDevLoginHint }: UseLoginPageAuthOptions) 
     }
 
     if (isSignUpMode) {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: authRedirectUrl,
-        },
+      const { data, error } = await signUp(email, password, {
+        emailRedirectTo: authRedirectUrl,
       });
 
       if (error) {
@@ -139,7 +140,7 @@ export function useLoginPageAuth({ showDevLoginHint }: UseLoginPageAuthOptions) 
       return;
     }
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await signInWithPassword(email, password);
 
     if (error) {
       setErrorMessage(getLoginErrorMessage(error.message));
@@ -147,7 +148,7 @@ export function useLoginPageAuth({ showDevLoginHint }: UseLoginPageAuthOptions) 
   };
 
   const submitForgotPassword = async () => {
-    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+    const { error } = await resetPasswordForEmail(resetEmail, {
       redirectTo: authRedirectUrl,
     });
 
@@ -180,11 +181,8 @@ export function useLoginPageAuth({ showDevLoginHint }: UseLoginPageAuthOptions) 
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: authRedirectUrl,
-        },
+      const { error } = await signInWithOAuth({
+        redirectTo: authRedirectUrl,
       });
 
       if (error) {

@@ -3,15 +3,11 @@ import userEvent from "@testing-library/user-event";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
 import { UserMenu } from "./UserMenu.tsx";
 
-const supabaseMock = vi.hoisted(() => ({
-  auth: {
-    signOut: vi.fn(),
-  },
+const authRepositoryMock = vi.hoisted(() => ({
+  signOut: vi.fn(),
 }));
 
-vi.mock("../../../lib/supabase.ts", () => ({
-  supabase: supabaseMock,
-}));
+vi.mock("../../../lib/auth-repository.ts", () => authRepositoryMock);
 
 setupTestLifecycle();
 
@@ -20,7 +16,7 @@ describe("UserMenu", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    supabaseMock.auth.signOut.mockResolvedValue({ error: null });
+    authRepositoryMock.signOut.mockResolvedValue({ error: null });
     vi.stubGlobal("open", openMock);
   });
 
