@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import type { BacklogStatus } from "../types.ts";
 import type { KanbanColumnProps } from "./kanban-board-shared.ts";
 import { BacklogCard } from "./BacklogCard.tsx";
 import { KanbanColumnHeader } from "./KanbanColumnHeader.tsx";
