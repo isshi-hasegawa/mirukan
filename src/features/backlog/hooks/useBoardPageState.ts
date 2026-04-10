@@ -34,7 +34,7 @@ export function useBoardPageState({ isMobileLayout, setItems }: Props) {
     setDetailModal(createDetailModalState(null));
   };
 
-  const handleAdded = () => {
+  const handleNavigateToStacked = () => {
     if (isMobileLayout) {
       setSelectedTabStatus("stacked");
       return;
@@ -47,15 +47,6 @@ export function useBoardPageState({ isMobileLayout, setItems }: Props) {
     if (detailModal.openItemId === itemId) {
       setDetailModal(createDetailModalState(null));
     }
-  };
-
-  const handleWorksAdded = () => {
-    if (isMobileLayout) {
-      setSelectedTabStatus("stacked");
-      return;
-    }
-
-    scrollToStackedColumn();
   };
 
   const handleUpdateItem = (updated: BacklogItem) => {
@@ -76,9 +67,8 @@ export function useBoardPageState({ isMobileLayout, setItems }: Props) {
     handleCloseAddModal,
     handleOpenDetail,
     handleCloseDetail,
-    handleAdded,
+    handleNavigateToStacked,
     handleItemDeleted,
-    handleWorksAdded,
     handleUpdateItem,
     handleColumnRef,
   };
