@@ -1,28 +1,23 @@
-import { useCallback, useEffect, useState } from "react";
-import { fetchBacklogItems } from "../backlog-repository.ts";
-import type { BacklogItem } from "../types.ts";
+import { useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { backlogItemsQueryKey, fetchBacklogItemsQuery } from "../backlog-query.ts";
 
 export function useBacklogItems() {
-  const [items, setItems] = useState<BacklogItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const query = useQuery({
+    queryKey: backlogItemsQueryKey,
+    queryFn: fetchBacklogItemsQuery,
+    retry: false,
+  });
 
   const loadItems = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const result = await fetchBacklogItems();
-      setItems(result.data);
-      setError(result.error);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "不明なエラーが発生しました");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    await queryClient.invalidateQueries({ queryKey: backlogItemsQueryKey });
+  }, [queryClient]);
 
-  useEffect(() => {
-    void loadItems();
-  }, [loadItems]);
-
-  return { items, setItems, isLoading, error, loadItems };
+  return {
+    items: query.data ?? [],
+    isLoading: query.isPending || query.isRefetching,
+    error: query.error instanceof Error ? query.error.message : null,
+    loadItems,
+  };
 }

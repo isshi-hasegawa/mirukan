@@ -1,5 +1,6 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
+import { TestQueryClientProvider } from "../../../test/query-client.tsx";
 import * as backlogRepository from "../backlog-repository.ts";
 import type { BacklogItem } from "../types.ts";
 import { useBacklogItems } from "./useBacklogItems.ts";
@@ -21,7 +22,9 @@ describe("useBacklogItems", () => {
   test("正常取得時はデータを返し isLoading が false になる", async () => {
     mockFetchBacklogItems.mockResolvedValue({ data: [stubItem], error: null });
 
-    const { result } = renderHook(() => useBacklogItems());
+    const { result } = renderHook(() => useBacklogItems(), {
+      wrapper: TestQueryClientProvider,
+    });
 
     expect(result.current.isLoading).toBe(true);
 
@@ -34,7 +37,9 @@ describe("useBacklogItems", () => {
   test("repository がエラーを返した場合は error がセットされ isLoading が false になる", async () => {
     mockFetchBacklogItems.mockResolvedValue({ data: [], error: "fetch failed" });
 
-    const { result } = renderHook(() => useBacklogItems());
+    const { result } = renderHook(() => useBacklogItems(), {
+      wrapper: TestQueryClientProvider,
+    });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -45,7 +50,9 @@ describe("useBacklogItems", () => {
   test("repository が throw した場合も isLoading が false になりエラーがセットされる", async () => {
     mockFetchBacklogItems.mockRejectedValue(new Error("network error"));
 
-    const { result } = renderHook(() => useBacklogItems());
+    const { result } = renderHook(() => useBacklogItems(), {
+      wrapper: TestQueryClientProvider,
+    });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -56,7 +63,9 @@ describe("useBacklogItems", () => {
   test("loadItems の再呼び出しで isLoading が true に戻る", async () => {
     mockFetchBacklogItems.mockResolvedValue({ data: [], error: null });
 
-    const { result } = renderHook(() => useBacklogItems());
+    const { result } = renderHook(() => useBacklogItems(), {
+      wrapper: TestQueryClientProvider,
+    });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 

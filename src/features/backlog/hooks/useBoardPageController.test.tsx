@@ -10,7 +10,6 @@ const hookMocks = vi.hoisted(() => ({
   isLoading: false,
   error: null as string | null,
   loadItems: vi.fn().mockResolvedValue(undefined),
-  setItems: vi.fn(),
   detailModalOpenItemId: null as string | null,
 }));
 
@@ -21,7 +20,6 @@ vi.mock("./useWindowSize.ts", () => ({
 vi.mock("./useBacklogItems.ts", () => ({
   useBacklogItems: () => ({
     items: hookMocks.items,
-    setItems: hookMocks.setItems,
     isLoading: hookMocks.isLoading,
     error: hookMocks.error,
     loadItems: hookMocks.loadItems,
@@ -79,7 +77,6 @@ describe("useBoardPageController", () => {
     hookMocks.isLoading = false;
     hookMocks.error = null;
     hookMocks.loadItems.mockClear();
-    hookMocks.setItems.mockClear();
   });
 
   test("windowWidth が 720 以下のとき isMobileLayout が true になる", () => {
