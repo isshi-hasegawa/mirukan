@@ -1,6 +1,8 @@
 import { fetchBacklogItems } from "./backlog-repository.ts";
 
-export const backlogItemsQueryKey = ["backlog-items"] as const;
+export function backlogItemsQueryKey(userId: string) {
+  return ["backlog-items", userId] as const;
+}
 
 export async function fetchBacklogItemsQuery() {
   const result = await fetchBacklogItems();

@@ -22,7 +22,7 @@ describe("useBacklogItems", () => {
   test("正常取得時はデータを返し isLoading が false になる", async () => {
     mockFetchBacklogItems.mockResolvedValue({ data: [stubItem], error: null });
 
-    const { result } = renderHook(() => useBacklogItems(), {
+    const { result } = renderHook(() => useBacklogItems("user-1"), {
       wrapper: TestQueryClientProvider,
     });
 
@@ -37,7 +37,7 @@ describe("useBacklogItems", () => {
   test("repository がエラーを返した場合は error がセットされ isLoading が false になる", async () => {
     mockFetchBacklogItems.mockResolvedValue({ data: [], error: "fetch failed" });
 
-    const { result } = renderHook(() => useBacklogItems(), {
+    const { result } = renderHook(() => useBacklogItems("user-1"), {
       wrapper: TestQueryClientProvider,
     });
 
@@ -50,7 +50,7 @@ describe("useBacklogItems", () => {
   test("repository が throw した場合も isLoading が false になりエラーがセットされる", async () => {
     mockFetchBacklogItems.mockRejectedValue(new Error("network error"));
 
-    const { result } = renderHook(() => useBacklogItems(), {
+    const { result } = renderHook(() => useBacklogItems("user-1"), {
       wrapper: TestQueryClientProvider,
     });
 
@@ -60,10 +60,10 @@ describe("useBacklogItems", () => {
     expect(result.current.items).toEqual([]);
   });
 
-  test("loadItems の再呼び出しで isLoading が true に戻る", async () => {
-    mockFetchBacklogItems.mockResolvedValue({ data: [], error: null });
+  test("loadItems の再呼び出し中も isLoading は false のまま保たれる", async () => {
+    mockFetchBacklogItems.mockResolvedValue({ data: [stubItem], error: null });
 
-    const { result } = renderHook(() => useBacklogItems(), {
+    const { result } = renderHook(() => useBacklogItems("user-1"), {
       wrapper: TestQueryClientProvider,
     });
 
@@ -78,10 +78,12 @@ describe("useBacklogItems", () => {
 
     void result.current.loadItems();
 
-    await waitFor(() => expect(result.current.isLoading).toBe(true));
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.items).toEqual([stubItem]);
 
     resolveNext();
 
+    await waitFor(() => expect(result.current.items).toEqual([]));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
   });
 });
