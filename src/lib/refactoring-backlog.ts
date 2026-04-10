@@ -1,4 +1,4 @@
-export const REFACTORING_BACKLOG_MARKER = "<!-- refactoring-backlog:sonarcloud -->";
+const REFACTORING_BACKLOG_MARKER = "<!-- refactoring-backlog:sonarcloud -->";
 
 export type SonarMeasureKey =
   | "code_smells"
@@ -25,7 +25,7 @@ export type SonarFileSignal = {
   measures: SonarMeasureMap;
 };
 
-export type RankedSignal = {
+type RankedSignal = {
   path: string;
   value: number;
   detail: string;

@@ -16,6 +16,7 @@ import {
 } from "../../src/lib/refactoring-backlog.ts";
 
 const REQUIRED_ENV_KEYS = ["SONAR_PROJECT_KEY", "SONAR_TOKEN"] as const;
+const SONAR_BASE_URL = "https://sonarcloud.io";
 const PROJECT_METRICS: SonarMeasureKey[] = [
   "code_smells",
   "sqale_index",
@@ -66,16 +67,15 @@ async function main() {
   assertRequiredEnv();
 
   const projectKey = process.env.SONAR_PROJECT_KEY!;
-  const sonarBaseUrl = trimTrailingSlash(process.env.SONAR_HOST_URL || "https://sonarcloud.io");
   const branchName = process.env.SONAR_BRANCH || "main";
   const outputDir = resolve(
     process.env.REFACTORING_BACKLOG_OUTPUT_DIR || "artifacts/refactoring-backlog",
   );
 
   const [projectMeasures, fileSignals, issues] = await Promise.all([
-    fetchProjectMeasures({ projectKey, branchName, sonarBaseUrl }),
-    fetchFileSignals({ projectKey, branchName, sonarBaseUrl }),
-    fetchCodeSmells({ projectKey, branchName, sonarBaseUrl }),
+    fetchProjectMeasures({ projectKey, branchName }),
+    fetchFileSignals({ projectKey, branchName }),
+    fetchCodeSmells({ projectKey, branchName }),
   ]);
 
   const observedAt =
@@ -92,7 +92,7 @@ async function main() {
   const issue = buildRefactoringBacklogIssue({
     projectKey,
     observedAt,
-    sonarBaseUrl,
+    sonarBaseUrl: SONAR_BASE_URL,
     branchName,
     projectMeasures,
     quickWinIssues,
@@ -119,43 +119,27 @@ async function main() {
   await appendStepSummary(summary);
 }
 
-async function fetchProjectMeasures(input: {
-  projectKey: string;
-  branchName: string;
-  sonarBaseUrl: string;
-}) {
-  const response = await sonarApi<SonarMeasuresResponse>(
-    input.sonarBaseUrl,
-    "/api/measures/component",
-    {
-      component: input.projectKey,
-      branch: input.branchName,
-      metricKeys: PROJECT_METRICS.join(","),
-    },
-  );
+async function fetchProjectMeasures(input: { projectKey: string; branchName: string }) {
+  const response = await sonarApi<SonarMeasuresResponse>("/api/measures/component", {
+    component: input.projectKey,
+    branch: input.branchName,
+    metricKeys: PROJECT_METRICS.join(","),
+  });
 
   return collectMeasures(response.component?.measures ?? []);
 }
 
-async function fetchFileSignals(input: {
-  projectKey: string;
-  branchName: string;
-  sonarBaseUrl: string;
-}) {
+async function fetchFileSignals(input: { projectKey: string; branchName: string }) {
   const components = await paginate<SonarComponentTreeResponse["components"][number]>(
     async (page) => {
-      const response = await sonarApi<SonarComponentTreeResponse>(
-        input.sonarBaseUrl,
-        "/api/measures/component_tree",
-        {
-          component: input.projectKey,
-          branch: input.branchName,
-          qualifiers: "FIL",
-          metricKeys: FILE_METRICS.join(","),
-          ps: "100",
-          p: String(page),
-        },
-      );
+      const response = await sonarApi<SonarComponentTreeResponse>("/api/measures/component_tree", {
+        component: input.projectKey,
+        branch: input.branchName,
+        qualifiers: "FIL",
+        metricKeys: FILE_METRICS.join(","),
+        ps: "100",
+        p: String(page),
+      });
 
       return {
         items: response.components ?? [],
@@ -171,13 +155,9 @@ async function fetchFileSignals(input: {
   })) satisfies SonarFileSignal[];
 }
 
-async function fetchCodeSmells(input: {
-  projectKey: string;
-  branchName: string;
-  sonarBaseUrl: string;
-}) {
+async function fetchCodeSmells(input: { projectKey: string; branchName: string }) {
   const issues = await paginate<SonarIssuesResponse["issues"][number]>(async (page) => {
-    const response = await sonarApi<SonarIssuesResponse>(input.sonarBaseUrl, "/api/issues/search", {
+    const response = await sonarApi<SonarIssuesResponse>("/api/issues/search", {
       componentKeys: input.projectKey,
       branch: input.branchName,
       types: "CODE_SMELL",
@@ -228,12 +208,8 @@ function collectMeasures(
   );
 }
 
-async function sonarApi<T>(
-  sonarBaseUrl: string,
-  path: string,
-  searchParams: Record<string, string>,
-): Promise<T> {
-  const url = new URL(path, `${sonarBaseUrl}/`);
+async function sonarApi<T>(path: string, searchParams: Record<string, string>): Promise<T> {
+  const url = new URL(path, `${SONAR_BASE_URL}/`);
   Object.entries(searchParams).forEach(([key, value]) => {
     url.searchParams.set(key, value);
   });
@@ -269,8 +245,4 @@ function assertRequiredEnv() {
   if (missing.length > 0) {
     throw new Error(`Missing required environment variables: ${missing.join(", ")}`);
   }
-}
-
-function trimTrailingSlash(value: string) {
-  return value.endsWith("/") ? value.slice(0, -1) : value;
 }
