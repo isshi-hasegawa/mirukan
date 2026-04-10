@@ -118,17 +118,16 @@ export function useBacklogDnd({
 
     if (activeId === overId) return;
 
-    const activeStatus = findItemStatus(localItems, activeId);
-    const overStatus = overId.startsWith("column:")
-      ? (overId.replace("column:", "") as BacklogStatus)
-      : findItemStatus(localItems, overId);
-
-    if (!activeStatus || !overStatus) return;
-    if (isMobileLayout && activeStatus !== overStatus) return;
-
     setLocalItems((prev) => {
       const activeItem = prev.find((i) => i.id === activeId);
       if (!activeItem) return prev;
+      const activeStatus = activeItem.status;
+      const overStatus = overId.startsWith("column:")
+        ? (overId.replace("column:", "") as BacklogStatus)
+        : findItemStatus(prev, overId);
+
+      if (!overStatus) return prev;
+      if (isMobileLayout && activeStatus !== overStatus) return prev;
 
       if (activeStatus === overStatus) {
         // 同列内での並び替え

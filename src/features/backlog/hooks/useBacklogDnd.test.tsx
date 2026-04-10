@@ -62,6 +62,14 @@ function createWatchingItems(): BacklogItem[] {
   ];
 }
 
+function createMixedColumnItems(): BacklogItem[] {
+  return [
+    createItem({ id: "item-1", status: "stacked", sort_order: 1000 }),
+    createItem({ id: "item-2", status: "stacked", sort_order: 2000 }),
+    createItem({ id: "item-3", status: "watching", sort_order: 1000 }),
+  ];
+}
+
 const onAfterDrop = vi.fn().mockResolvedValue(undefined);
 const feedback = {
   alert: vi.fn().mockResolvedValue(undefined),
@@ -263,6 +271,27 @@ describe("useBacklogDnd", () => {
     const { result } = renderDnd(createWatchingItems());
     dragOver(result, "item-2", 260);
     expect(getOrderByStatus(result, "watching")).toEqual(["item-2", "item-1", "item-3"]);
+  });
+
+  test("連続した handleDragOver でも updater の状態から列判定して status を取りこぼさない", () => {
+    const { result } = renderDnd(createMixedColumnItems());
+
+    act(() => {
+      result.current.handleDragStart({ active: { id: "item-1" } } as DragStartEvent);
+      result.current.handleDragOver({
+        active: { id: "item-1" },
+        over: { id: "item-3", rect: makeRect(100, 200) },
+        activatorEvent: { clientY: 120 } as MouseEvent,
+      } as unknown as DragOverEvent);
+      result.current.handleDragOver({
+        active: { id: "item-1" },
+        over: { id: "item-2", rect: makeRect(100, 200) },
+        activatorEvent: { clientY: 120 } as MouseEvent,
+      } as unknown as DragOverEvent);
+    });
+
+    expect(getOrderByStatus(result, "stacked")).toEqual(["item-1", "item-2"]);
+    expect(result.current.localItems.find((item) => item.id === "item-1")?.status).toBe("stacked");
   });
 
   test("handleDragOver で非空列の背景に落としたら列末尾に移動する", () => {
