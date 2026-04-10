@@ -8,3 +8,7 @@ declare module "*.css" {
 declare module "./style.css" {
   export {};
 }
+
+declare module "@fontsource-variable/geist" {
+  export {};
+}
