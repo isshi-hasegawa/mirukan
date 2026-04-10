@@ -196,4 +196,48 @@ describe("KanbanBoard", () => {
       }),
     );
   });
+
+  test("view 絞り込み中にドラッグ開始しても stacked 列の表示順を維持する", () => {
+    const items = [
+      createItem("item-1", "stacked", "長編", {
+        works: {
+          ...createItem("item-1", "stacked", "長編").works,
+          runtime_minutes: 120,
+        },
+      }),
+      createItem("item-2", "stacked", "短編", {
+        works: {
+          ...createItem("item-2", "stacked", "短編").works,
+          runtime_minutes: 20,
+        },
+      }),
+    ];
+
+    const { rerender } = renderKanbanBoard(
+      {
+        items,
+      },
+      { searchParams: "?view=quick" },
+    );
+
+    expect(screen.getByText("stacked:item-2,item-1")).toBeInTheDocument();
+
+    rerender(
+      <KanbanBoard
+        items={items}
+        isDragging
+        isMobileLayout={false}
+        isMobileDragging={false}
+        selectedTabStatus="stacked"
+        onTabChange={vi.fn()}
+        onOpenAddModal={vi.fn()}
+        onOpenDetail={vi.fn()}
+        onDeleteItem={vi.fn()}
+        onMarkAsWatched={vi.fn()}
+        columnRef={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("stacked:item-2,item-1")).toBeInTheDocument();
+  });
 });

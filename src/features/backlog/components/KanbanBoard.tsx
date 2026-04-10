@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import type { BacklogItem, BacklogStatus, ViewingMode } from "../types.ts";
 import { statusOrder, viewingModeOrder } from "../constants.ts";
@@ -42,6 +42,8 @@ export function KanbanBoard({
   const handleViewingModeToggle = useCallback((mode: ViewingMode) => {
     void setActiveViewingMode((current) => (current === mode ? null : mode));
   }, []);
+  const lastStableItemsRef = useRef<BacklogItem[] | null>(null);
+  const lastStableStackedItemsRef = useRef<BacklogItem[] | null>(null);
 
   const grouped = useMemo(() => {
     const nextGrouped = new Map<BacklogStatus, BacklogItem[]>(
@@ -52,12 +54,18 @@ export function KanbanBoard({
       nextGrouped.get(item.status)?.push(item);
     }
 
-    // ドラッグ中は視聴モードによる再ソートをスキップ（localItems の順序を保持）
+    const sortedStackedItems = sortStackedItemsByViewingMode(
+      nextGrouped.get("stacked") ?? [],
+      activeViewingMode,
+    );
+
     if (!isDragging) {
-      nextGrouped.set(
-        "stacked",
-        sortStackedItemsByViewingMode(nextGrouped.get("stacked") ?? [], activeViewingMode),
-      );
+      lastStableItemsRef.current = items;
+      lastStableStackedItemsRef.current = sortedStackedItems;
+      nextGrouped.set("stacked", sortedStackedItems);
+    } else if (lastStableItemsRef.current === items && lastStableStackedItemsRef.current) {
+      // ドラッグ開始直後は、直前の filtered 表示順を維持してカードが跳ねないようにする
+      nextGrouped.set("stacked", lastStableStackedItemsRef.current);
     }
 
     return nextGrouped;
