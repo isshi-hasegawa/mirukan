@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { signOut } from "../../../lib/auth-repository.ts";
+import { lazyNamed } from "../../../lib/lazy-component.ts";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.tsx";
-import { AboutDialog } from "./AboutDialog.tsx";
+
+const AboutDialog = lazyNamed(() => import("./AboutDialog.tsx"), "AboutDialog");
 
 type Props = {
   email: string | null | undefined;
@@ -70,7 +72,11 @@ export function UserMenu({ email }: Props) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {isAboutOpen ? <AboutDialog onClose={() => setIsAboutOpen(false)} /> : null}
+      {isAboutOpen ? (
+        <Suspense fallback={null}>
+          <AboutDialog onClose={() => setIsAboutOpen(false)} />
+        </Suspense>
+      ) : null}
     </>
   );
 }
