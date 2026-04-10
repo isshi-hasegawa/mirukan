@@ -1,6 +1,7 @@
-import { lazy, Suspense, useState } from "react";
+import { Suspense, useState } from "react";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { signOut } from "../../../lib/auth-repository.ts";
+import { lazyNamed } from "../../../lib/lazy-component.ts";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,9 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.tsx";
 
-const AboutDialog = lazy(async () => ({
-  default: (await import("./AboutDialog.tsx")).AboutDialog,
-}));
+const AboutDialog = lazyNamed(() => import("./AboutDialog.tsx"), "AboutDialog");
 
 type Props = {
   email: string | null | undefined;

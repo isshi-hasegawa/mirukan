@@ -1,17 +1,21 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { Button } from "@/components/ui/button.tsx";
+import { LazyViewBoundary } from "./components/LazyViewBoundary.tsx";
 import { getSession, onAuthStateChange } from "./lib/auth-repository.ts";
+import { lazyNamed } from "./lib/lazy-component.ts";
 import { LoginPage } from "./features/backlog/components/LoginPage.tsx";
 import { PrivacyPolicyPage } from "./features/backlog/components/PrivacyPolicyPage.tsx";
 import { TermsOfServicePage } from "./features/backlog/components/TermsOfServicePage.tsx";
 
-const BoardPage = lazy(async () => ({
-  default: (await import("./features/backlog/components/BoardPage.tsx")).BoardPage,
-}));
-
-const ResetPasswordPage = lazy(async () => ({
-  default: (await import("./features/backlog/components/ResetPasswordPage.tsx")).ResetPasswordPage,
-}));
+const BoardPage = lazyNamed(
+  () => import("./features/backlog/components/BoardPage.tsx"),
+  "BoardPage",
+);
+const ResetPasswordPage = lazyNamed(
+  () => import("./features/backlog/components/ResetPasswordPage.tsx"),
+  "ResetPasswordPage",
+);
 
 function isPasswordRecoveryLocation(location: Pick<Location, "hash" | "search">) {
   const searchParams = new URLSearchParams(location.search);
@@ -63,6 +67,30 @@ function clearPasswordRecoveryLocation() {
   }
 }
 
+function LazyRouteErrorFallback() {
+  return (
+    <main className="min-h-svh px-4 py-10 grid place-items-center bg-background">
+      <section className="w-full max-w-[520px] rounded-[28px] border border-border bg-card px-6 py-7 shadow-[0_24px_60px_rgba(0,0,0,0.24)]">
+        <div className="grid gap-3">
+          <h1 className="text-[1.5rem] leading-tight text-foreground">
+            画面の読み込みに失敗しました。
+          </h1>
+          <p className="text-sm leading-6 text-muted-foreground">
+            デプロイ直後の更新や通信エラーで必要なコードを取得できませんでした。再読み込みしてもう一度お試しください。
+          </p>
+          <Button
+            type="button"
+            className="w-full sm:w-auto"
+            onClick={() => window.location.reload()}
+          >
+            再読み込み
+          </Button>
+        </div>
+      </section>
+    </main>
+  );
+}
+
 function AuthenticatedApp() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(() =>
@@ -106,9 +134,13 @@ function AuthenticatedApp() {
 
   if (isPasswordRecovery && session) {
     return (
-      <Suspense fallback={<LoginPage isSessionLoading />}>
+      <LazyViewBoundary
+        loadingFallback={<LoginPage isSessionLoading />}
+        errorFallback={<LazyRouteErrorFallback />}
+        resetKey="password-recovery"
+      >
         <ResetPasswordPage />
-      </Suspense>
+      </LazyViewBoundary>
     );
   }
 
@@ -117,9 +149,13 @@ function AuthenticatedApp() {
   }
 
   return (
-    <Suspense fallback={<LoginPage isSessionLoading />}>
+    <LazyViewBoundary
+      loadingFallback={<LoginPage isSessionLoading />}
+      errorFallback={<LazyRouteErrorFallback />}
+      resetKey="board"
+    >
       <BoardPage session={session} />
-    </Suspense>
+    </LazyViewBoundary>
   );
 }
 
