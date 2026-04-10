@@ -8,10 +8,16 @@ export function useBacklogItems() {
   const [error, setError] = useState<string | null>(null);
 
   const loadItems = useCallback(async () => {
-    const result = await fetchBacklogItems();
-    setItems(result.data);
-    setError(result.error);
-    setIsLoading(false);
+    setIsLoading(true);
+    try {
+      const result = await fetchBacklogItems();
+      setItems(result.data);
+      setError(result.error);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "不明なエラーが発生しました");
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   useEffect(() => {
