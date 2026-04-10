@@ -264,4 +264,24 @@ describe("DetailModal", () => {
 
     expect(screen.getByLabelText("Rotten Tomatoes Rotten 42%")).toBeInTheDocument();
   });
+
+  test("シリーズの runtime は約表記でメタ情報ラベルに出す", () => {
+    renderDetailModal({
+      item: createItem({
+        works: {
+          ...createItem().works!,
+          work_type: "series",
+          tmdb_media_type: "tv",
+          runtime_minutes: null,
+          typical_episode_runtime_minutes: 45,
+          season_count: 1,
+        },
+      }),
+    });
+
+    expect(screen.getByText("2024年")).toBeInTheDocument();
+    expect(screen.getByText("1話約45分")).toBeInTheDocument();
+    expect(screen.getByText("全1シーズン")).toBeInTheDocument();
+    expect(screen.queryByText(/ · /)).not.toBeInTheDocument();
+  });
 });

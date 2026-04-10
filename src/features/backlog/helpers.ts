@@ -6,8 +6,10 @@ import type {
   DropIndicator,
   PrimaryPlatform,
   ResolvedDropTarget,
+  WorkSummary,
   WorkType,
 } from "./types.ts";
+import type { TmdbSearchResult } from "../../lib/tmdb.ts";
 import { isPrimaryPlatformValue } from "./constants.ts";
 
 type RectLike = Pick<DOMRect, "top" | "height">;
@@ -161,4 +163,45 @@ export function resolveDropTarget(
 
 export function getWorkTypeLabel(workType: WorkType) {
   return workType === "movie" ? "映画" : "シリーズ";
+}
+
+type WorkMetadataLabelOptions = {
+  includeReleaseYear?: boolean;
+  includeRuntime?: boolean;
+  includeSeasonCount?: boolean;
+};
+
+export function getWorkMetadataLabels(
+  work: WorkSummary,
+  {
+    includeReleaseYear = false,
+    includeRuntime = false,
+    includeSeasonCount = false,
+  }: WorkMetadataLabelOptions = {},
+) {
+  const labels: string[] = [];
+
+  if (includeReleaseYear && work.release_date) {
+    labels.push(`${work.release_date.slice(0, 4)}年`);
+  }
+
+  if (includeRuntime) {
+    if (work.work_type === "movie" && work.runtime_minutes) {
+      labels.push(`${work.runtime_minutes}分`);
+    }
+
+    if (work.work_type !== "movie" && work.typical_episode_runtime_minutes) {
+      labels.push(`1話約${work.typical_episode_runtime_minutes}分`);
+    }
+  }
+
+  if (includeSeasonCount && work.season_count) {
+    labels.push(`全${work.season_count}シーズン`);
+  }
+
+  return labels;
+}
+
+export function getTmdbSearchResultMetadataLabels(result: TmdbSearchResult) {
+  return [result.releaseDate ? `${result.releaseDate.slice(0, 4)}年` : null].filter(Boolean);
 }

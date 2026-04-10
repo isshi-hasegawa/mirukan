@@ -2,6 +2,7 @@ import { FilmIcon, TvIcon, CheckIcon } from "@heroicons/react/24/outline";
 import type { ReactNode } from "react";
 import type { TmdbSearchResult } from "../../../lib/tmdb.ts";
 import { platformLabels } from "../constants.ts";
+import { getTmdbSearchResultMetadataLabels } from "../helpers.ts";
 import { RottenTomatoesBadge } from "./RottenTomatoesBadge.tsx";
 import { TmdbLink } from "./TmdbLink.tsx";
 
@@ -29,6 +30,7 @@ export function TmdbWorkCard({
     : null;
   const rtScore = result.rottenTomatoesScore ?? null;
   const rtVariant = rtScore === null ? null : rtScore >= 60 ? "fresh" : "rotten";
+  const metadataLabels = getTmdbSearchResultMetadataLabels(result);
 
   const checkButton = onAddToStacked ? (
     <button
@@ -78,23 +80,27 @@ export function TmdbWorkCard({
       </div>
       <div className="grid gap-1 min-w-0 pr-8">
         <span className="font-bold">{result.title}</span>
-        <span className="flex items-center gap-1 text-muted-foreground text-[0.88rem]">
-          {result.workType === "movie" ? (
-            <FilmIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
-          ) : (
-            <TvIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
-          )}
-          {result.workType === "movie" ? "映画" : "シリーズ"}
-          {result.releaseDate && ` · ${result.releaseDate.slice(0, 4)}`}
+        <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground text-[0.88rem]">
+          <span className="inline-flex items-center gap-1">
+            {result.workType === "movie" ? (
+              <FilmIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
+            ) : (
+              <TvIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
+            )}
+            {result.workType === "movie" ? "映画" : "シリーズ"}
+          </span>
+          {metadataLabels.map((label) => (
+            <span key={label} className="text-[0.8rem] leading-none text-muted-foreground/80">
+              {label}
+            </span>
+          ))}
           {rtScore !== null && rtVariant && (
-            <>
-              <span aria-hidden="true">·</span>
-              <RottenTomatoesBadge
-                score={rtScore}
-                variant={rtVariant}
-                className="px-1.5 py-0 text-[0.74rem]"
-              />
-            </>
+            <RottenTomatoesBadge
+              score={rtScore}
+              variant={rtVariant}
+              appearance="plain"
+              className="text-[0.74rem]"
+            />
           )}
         </span>
         {result.jpWatchPlatforms.length > 0 && (

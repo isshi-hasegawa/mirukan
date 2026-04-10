@@ -1,6 +1,6 @@
 import { useEffect, useRef, type Dispatch, type SetStateAction } from "react";
 import { FilmIcon, TvIcon } from "@heroicons/react/24/outline";
-import { createDetailModalState, getWorkTypeLabel } from "../helpers.ts";
+import { createDetailModalState, getWorkMetadataLabels, getWorkTypeLabel } from "../helpers.ts";
 import { statusLabels, statusOrder } from "../constants.ts";
 import { PosterImage } from "./PosterImage.tsx";
 import { RottenTomatoesBadge } from "./RottenTomatoesBadge.tsx";
@@ -62,12 +62,11 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onRelo
   const title = work.title;
   const WorkTypeIcon = work.work_type === "movie" ? FilmIcon : TvIcon;
   const workTypeLabel = getWorkTypeLabel(work.work_type);
-  const metadataRest = [
-    work.release_date ? work.release_date.slice(0, 4) : null,
-    work.runtime_minutes ? `${work.runtime_minutes}分` : null,
-    work.typical_episode_runtime_minutes ? `1話 ${work.typical_episode_runtime_minutes}分` : null,
-    work.season_count ? `${work.season_count}シーズン` : null,
-  ].filter(Boolean);
+  const metadataLabels = getWorkMetadataLabels(work, {
+    includeReleaseYear: true,
+    includeRuntime: true,
+    includeSeasonCount: true,
+  });
 
   const rtScore = work.rotten_tomatoes_score;
 
@@ -117,14 +116,24 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onRelo
                 />
               )}
             </div>
-            <p className="flex items-center gap-1 text-muted-foreground text-[0.95rem]">
-              <WorkTypeIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
-              {workTypeLabel}
-              {metadataRest.length > 0 && ` · ${metadataRest.join(" · ")}`}
-            </p>
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-muted-foreground text-[0.95rem]">
+              <span className="inline-flex items-center gap-1">
+                <WorkTypeIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
+                {workTypeLabel}
+              </span>
+              {metadataLabels.map((label) => (
+                <span key={label} className="text-[0.84rem] leading-none text-muted-foreground/80">
+                  {label}
+                </span>
+              ))}
+            </div>
             {rtScore !== null && (
               <p className="text-[0.85rem]">
-                <RottenTomatoesBadge score={rtScore} variant={rtScore >= 60 ? "fresh" : "rotten"} />
+                <RottenTomatoesBadge
+                  score={rtScore}
+                  variant={rtScore >= 60 ? "fresh" : "rotten"}
+                  appearance="plain"
+                />
               </p>
             )}
           </div>

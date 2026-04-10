@@ -17,7 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.tsx";
-import { getWorkTypeLabel } from "../helpers.ts";
+import { getWorkMetadataLabels, getWorkTypeLabel } from "../helpers.ts";
 import { viewingModeLabels } from "../constants.ts";
 import type { DropIndicator } from "./kanban-board-shared.ts";
 
@@ -66,7 +66,7 @@ export function BacklogCard({
   const viewingMode = showModeBadge ? getViewingMode(work) : null;
   const WorkTypeIcon = work.work_type === "movie" ? FilmIcon : TvIcon;
   const workTypeLabel = getWorkTypeLabel(work.work_type);
-  const metadataRest = [work.release_date ? work.release_date.slice(0, 4) : null].filter(Boolean);
+  const metadataLabels = getWorkMetadataLabels(work, { includeReleaseYear: true });
 
   const cardDropIndicator =
     dropIndicator?.type === "card" && dropIndicator.itemId === item.id ? dropIndicator : null;
@@ -182,14 +182,20 @@ export function BacklogCard({
         </div>
         <div className="grid gap-2 min-w-0">
           <p className="text-[1rem] font-bold">{title}</p>
-          <p className="text-muted-foreground text-[0.9rem]">
-            <WorkTypeIcon
-              className="w-[14px] h-[14px] inline-block align-[-2px] mr-[3px] shrink-0"
-              aria-hidden="true"
-            />
-            {workTypeLabel}
-            {metadataRest.length > 0 && ` · ${metadataRest.join(" · ")}`}
-          </p>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground text-[0.9rem]">
+            <span className="inline-flex items-center">
+              <WorkTypeIcon
+                className="w-[14px] h-[14px] inline-block align-[-2px] mr-[3px] shrink-0"
+                aria-hidden="true"
+              />
+              {workTypeLabel}
+            </span>
+            {metadataLabels.map((label) => (
+              <span key={label} className="text-[0.82rem] leading-none text-muted-foreground/80">
+                {label}
+              </span>
+            ))}
+          </div>
           {item.note && <p className="text-muted-foreground text-[0.9rem]">{item.note}</p>}
         </div>
       </div>
