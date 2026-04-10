@@ -8,7 +8,6 @@ export function useBacklogItems() {
   const [error, setError] = useState<string | null>(null);
 
   const loadItems = useCallback(async () => {
-    setIsLoading(true);
     try {
       const result = await fetchBacklogItems();
       setItems(result.data);
