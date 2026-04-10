@@ -28,6 +28,7 @@ describe("TmdbWorkCard", () => {
 
     expect(screen.getByText("ゴジラ")).toBeInTheDocument();
     expect(screen.queryByText("Godzilla")).not.toBeInTheDocument();
+    expect(screen.getByText("2024年")).toBeInTheDocument();
   });
 
   test("概要がない場合は説明文を表示しない", () => {
@@ -45,6 +46,13 @@ describe("TmdbWorkCard", () => {
   test("Rotten Tomatoes スコアがある場合は年の横にバッジを表示する", () => {
     render(<TmdbWorkCard result={createResult({ rottenTomatoesScore: 93 })} />);
 
+    expect(screen.getByText("2024年")).toBeInTheDocument();
     expect(screen.getByLabelText("Rotten Tomatoes Fresh 93%")).toBeInTheDocument();
+  });
+
+  test("メタ情報に中黒を使わない", () => {
+    render(<TmdbWorkCard result={createResult()} />);
+
+    expect(screen.queryByText("·")).not.toBeInTheDocument();
   });
 });

@@ -182,7 +182,7 @@ export function BacklogCard({
         </div>
         <div className="grid gap-2 min-w-0">
           <p className="text-[1rem] font-bold">{title}</p>
-          <div className="flex flex-wrap items-center gap-1.5 text-muted-foreground text-[0.9rem]">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground text-[0.9rem]">
             <span className="inline-flex items-center">
               <WorkTypeIcon
                 className="w-[14px] h-[14px] inline-block align-[-2px] mr-[3px] shrink-0"
@@ -191,10 +191,7 @@ export function BacklogCard({
               {workTypeLabel}
             </span>
             {metadataLabels.map((label) => (
-              <span
-                key={label}
-                className="inline-flex items-center rounded-full border border-[rgba(92,59,35,0.12)] bg-[rgba(92,59,35,0.05)] px-2 py-0.5 text-[0.76rem] leading-none"
-              >
+              <span key={label} className="text-[0.82rem] leading-none text-muted-foreground/80">
                 {label}
               </span>
             ))}

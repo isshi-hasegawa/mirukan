@@ -116,16 +116,13 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onRelo
                 />
               )}
             </div>
-            <div className="flex flex-wrap items-center gap-2 text-muted-foreground text-[0.95rem]">
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-muted-foreground text-[0.95rem]">
               <span className="inline-flex items-center gap-1">
                 <WorkTypeIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
                 {workTypeLabel}
               </span>
               {metadataLabels.map((label) => (
-                <span
-                  key={label}
-                  className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[0.82rem] leading-none"
-                >
+                <span key={label} className="text-[0.84rem] leading-none text-muted-foreground/80">
                   {label}
                 </span>
               ))}
