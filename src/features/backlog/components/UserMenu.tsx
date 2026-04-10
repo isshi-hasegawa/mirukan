@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
-import { supabase } from "../../../lib/supabase.ts";
+import { signOut } from "../../../lib/auth-repository.ts";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,7 +62,7 @@ export function UserMenu({ email }: Props) {
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
-              void supabase.auth.signOut();
+              void signOut();
             }}
           >
             ログアウト
