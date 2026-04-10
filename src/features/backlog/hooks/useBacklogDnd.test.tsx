@@ -18,15 +18,6 @@ vi.mock("../../../lib/supabase.ts", () => ({
   },
 }));
 
-vi.mock("@dnd-kit/sortable", () => ({
-  arrayMove: <T,>(arr: T[], from: number, to: number): T[] => {
-    const result = [...arr];
-    const [item] = result.splice(from, 1);
-    result.splice(to, 0, item);
-    return result;
-  },
-}));
-
 setupTestLifecycle();
 
 function createItem(overrides: Partial<BacklogItem> = {}): BacklogItem {
@@ -170,7 +161,8 @@ describe("useBacklogDnd", () => {
       result.current.handleDragStart({ active: { id: "item-1" } } as DragStartEvent);
       result.current.handleDragOver({
         active: { id: "item-1" },
-        over: { id: "item-2" },
+        over: { id: "item-2", rect: makeRect(100, 200) },
+        activatorEvent: { clientY: 220 } as MouseEvent,
       } as unknown as DragOverEvent);
     });
 
@@ -212,7 +204,8 @@ describe("useBacklogDnd", () => {
       result.current.handleDragStart({ active: { id: "item-1" } } as DragStartEvent);
       result.current.handleDragOver({
         active: { id: "item-1" },
-        over: { id: "item-2" },
+        over: { id: "item-2", rect: makeRect(100, 200) },
+        activatorEvent: { clientY: 220 } as MouseEvent,
       } as unknown as DragOverEvent);
     });
 
@@ -243,7 +236,8 @@ describe("useBacklogDnd", () => {
     act(() => {
       result.current.handleDragOver({
         active: { id: "item-1" },
-        over: { id: "item-2" },
+        over: { id: "item-2", rect: makeRect(100, 200) },
+        activatorEvent: { clientY: 220 } as MouseEvent,
       } as unknown as DragOverEvent);
     });
 
@@ -251,6 +245,56 @@ describe("useBacklogDnd", () => {
       .filter((i) => i.status === "stacked")
       .map((i) => i.id);
     expect(stackedOrder).toEqual(["item-2", "item-1"]);
+  });
+
+  test("handleDragOver で列またぎ時は pointer が over の上半分なら手前に挿入する", () => {
+    const crossColumnItems = [
+      createItem({ id: "item-1", status: "stacked", sort_order: 1000 }),
+      createItem({ id: "item-2", status: "watching", sort_order: 1000 }),
+      createItem({ id: "item-3", status: "watching", sort_order: 2000 }),
+    ];
+    const { result } = renderHook(() =>
+      useBacklogDnd({ items: crossColumnItems, isMobileLayout: false, onAfterDrop, feedback }),
+    );
+
+    act(() => {
+      result.current.handleDragStart({ active: { id: "item-1" } } as DragStartEvent);
+      result.current.handleDragOver({
+        active: { id: "item-1" },
+        over: { id: "item-3", rect: makeRect(100, 200) },
+        activatorEvent: { clientY: 120 } as MouseEvent,
+      } as unknown as DragOverEvent);
+    });
+
+    const watchingOrder = result.current.localItems
+      .filter((i) => i.status === "watching")
+      .map((i) => i.id);
+    expect(watchingOrder).toEqual(["item-2", "item-1", "item-3"]);
+  });
+
+  test("handleDragOver で列またぎ時は pointer が over の下半分なら後ろに挿入する", () => {
+    const crossColumnItems = [
+      createItem({ id: "item-1", status: "stacked", sort_order: 1000 }),
+      createItem({ id: "item-2", status: "watching", sort_order: 1000 }),
+      createItem({ id: "item-3", status: "watching", sort_order: 2000 }),
+    ];
+    const { result } = renderHook(() =>
+      useBacklogDnd({ items: crossColumnItems, isMobileLayout: false, onAfterDrop, feedback }),
+    );
+
+    act(() => {
+      result.current.handleDragStart({ active: { id: "item-1" } } as DragStartEvent);
+      result.current.handleDragOver({
+        active: { id: "item-1" },
+        over: { id: "item-2", rect: makeRect(100, 200) },
+        activatorEvent: { clientY: 260 } as MouseEvent,
+      } as unknown as DragOverEvent);
+    });
+
+    const watchingOrder = result.current.localItems
+      .filter((i) => i.status === "watching")
+      .map((i) => i.id);
+    expect(watchingOrder).toEqual(["item-2", "item-1", "item-3"]);
   });
 
   test("モバイルレイアウトでは handleDragOver が列間移動をブロックする", () => {
@@ -269,7 +313,8 @@ describe("useBacklogDnd", () => {
     act(() => {
       result.current.handleDragOver({
         active: { id: "item-1" },
-        over: { id: "item-2" },
+        over: { id: "item-2", rect: makeRect(100, 200) },
+        activatorEvent: { clientY: 220 } as MouseEvent,
       } as unknown as DragOverEvent);
     });
 
@@ -287,7 +332,8 @@ describe("useBacklogDnd", () => {
       result.current.handleDragStart({ active: { id: "item-1" } } as DragStartEvent);
       result.current.handleDragOver({
         active: { id: "item-1" },
-        over: { id: "item-2" },
+        over: { id: "item-2", rect: makeRect(100, 200) },
+        activatorEvent: { clientY: 220 } as MouseEvent,
       } as unknown as DragOverEvent);
     });
 

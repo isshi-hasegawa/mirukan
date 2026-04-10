@@ -8,7 +8,6 @@ import {
   type DragOverEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { arrayMove } from "@dnd-kit/sortable";
 import { supabase } from "../../../lib/supabase.ts";
 import type { BacklogItem, BacklogStatus } from "../types.ts";
 import { browserBacklogFeedback, type BacklogFeedback } from "../ui-feedback.ts";
@@ -20,8 +19,53 @@ type Props = {
   feedback?: BacklogFeedback;
 };
 
+type RectLike = Pick<DOMRect, "top" | "height">;
+
 function findItemStatus(items: BacklogItem[], id: string): BacklogStatus | null {
   return items.find((i) => i.id === id)?.status ?? null;
+}
+
+function getDropSideFromRect(rect: RectLike, clientY: number) {
+  return clientY < rect.top + rect.height / 2 ? "before" : "after";
+}
+
+function getClientYFromPointerEvent(
+  event: MouseEvent | TouchEvent | null | undefined,
+  rect: RectLike,
+  touchListKey: "touches" | "changedTouches" = "touches",
+) {
+  const fallbackY = rect.top + rect.height / 2;
+
+  if (!event) {
+    return fallbackY;
+  }
+
+  if ("touches" in event && event.type.includes("touch")) {
+    const touchList = touchListKey === "changedTouches" ? event.changedTouches : event.touches;
+    return touchList?.[0]?.clientY ?? fallbackY;
+  }
+
+  return "clientY" in event ? (event.clientY ?? fallbackY) : fallbackY;
+}
+
+function getReorderedColumnItems(
+  columnItems: BacklogItem[],
+  activeId: string,
+  overId: string,
+  side: "before" | "after",
+) {
+  const activeIdx = columnItems.findIndex((i) => i.id === activeId);
+  const overIdx = columnItems.findIndex((i) => i.id === overId);
+  if (activeIdx === -1 || overIdx === -1) return columnItems;
+
+  const baseItems = columnItems.filter((i) => i.id !== activeId);
+  const targetIdx = baseItems.findIndex((i) => i.id === overId);
+  if (targetIdx === -1) return columnItems;
+
+  const insertionIdx = side === "before" ? targetIdx : targetIdx + 1;
+  const activeItem = columnItems[activeIdx];
+
+  return [...baseItems.slice(0, insertionIdx), activeItem, ...baseItems.slice(insertionIdx)];
 }
 
 export function useBacklogDnd({
@@ -54,7 +98,7 @@ export function useBacklogDnd({
   };
 
   const handleDragOver = (event: DragOverEvent) => {
-    const { active, over } = event;
+    const { active, over, activatorEvent } = event;
     if (!over) return;
 
     const activeId = active.id as string;
@@ -79,10 +123,12 @@ export function useBacklogDnd({
         if (overId.startsWith("column:")) return prev;
         const colItems = prev.filter((i) => i.status === overStatus);
         const others = prev.filter((i) => i.status !== overStatus);
-        const oldIdx = colItems.findIndex((i) => i.id === activeId);
-        const newIdx = colItems.findIndex((i) => i.id === overId);
-        if (oldIdx === -1 || newIdx === -1) return prev;
-        return [...others, ...arrayMove(colItems, oldIdx, newIdx)];
+        const clientY = getClientYFromPointerEvent(
+          activatorEvent as MouseEvent | TouchEvent | null | undefined,
+          over.rect,
+        );
+        const side = getDropSideFromRect(over.rect, clientY);
+        return [...others, ...getReorderedColumnItems(colItems, activeId, overId, side)];
       } else {
         // 列またぎ: ステータスを変更して over アイテムの位置に挿入
         const withUpdatedStatus = prev.map((i) =>
@@ -95,10 +141,12 @@ export function useBacklogDnd({
 
         const newColItems = withUpdatedStatus.filter((i) => i.status === overStatus);
         const others = withUpdatedStatus.filter((i) => i.status !== overStatus);
-        const activeIdx = newColItems.findIndex((i) => i.id === activeId);
-        const overIdx = newColItems.findIndex((i) => i.id === overId);
-        if (activeIdx === -1 || overIdx === -1) return withUpdatedStatus;
-        return [...others, ...arrayMove(newColItems, activeIdx, overIdx)];
+        const clientY = getClientYFromPointerEvent(
+          activatorEvent as MouseEvent | TouchEvent | null | undefined,
+          over.rect,
+        );
+        const side = getDropSideFromRect(over.rect, clientY);
+        return [...others, ...getReorderedColumnItems(newColItems, activeId, overId, side)];
       }
     });
   };
