@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { withNuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { OnUrlUpdateFunction } from "nuqs/adapters/testing";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
-import type { BacklogItem, BacklogStatus } from "../types.ts";
+import type { BacklogItem, BacklogStatus, WorkSummary } from "../types.ts";
 import type { ViewingMode } from "../types.ts";
 import { KanbanBoard } from "./KanbanBoard.tsx";
 
@@ -88,6 +88,34 @@ function createItem(
       metacritic_score: null,
     },
     ...overrides,
+  };
+}
+
+function createWorkSummary(id: string, title: string, runtimeMinutes: number): WorkSummary {
+  return {
+    id: `work-${id}`,
+    title,
+    work_type: "movie",
+    source_type: "tmdb",
+    tmdb_id: Number(id.replace(/\D/g, "")) || 1,
+    tmdb_media_type: "movie",
+    original_title: null,
+    overview: null,
+    poster_path: null,
+    release_date: null,
+    runtime_minutes: runtimeMinutes,
+    typical_episode_runtime_minutes: null,
+    duration_bucket: null,
+    genres: [],
+    season_count: null,
+    season_number: null,
+    focus_required_score: null,
+    background_fit_score: null,
+    completion_load_score: null,
+    rotten_tomatoes_score: null,
+    imdb_rating: null,
+    imdb_votes: null,
+    metacritic_score: null,
   };
 }
 
@@ -200,16 +228,10 @@ describe("KanbanBoard", () => {
   test("view 絞り込み中にドラッグ開始しても stacked 列の表示順を維持する", () => {
     const items = [
       createItem("item-1", "stacked", "長編", {
-        works: {
-          ...createItem("item-1", "stacked", "長編").works,
-          runtime_minutes: 120,
-        },
+        works: createWorkSummary("item-1", "長編", 120),
       }),
       createItem("item-2", "stacked", "短編", {
-        works: {
-          ...createItem("item-2", "stacked", "短編").works,
-          runtime_minutes: 20,
-        },
+        works: createWorkSummary("item-2", "短編", 20),
       }),
     ];
 
