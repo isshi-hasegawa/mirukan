@@ -10,11 +10,9 @@ type UseBoardPageControllerOptions = {
 
 export function useBoardPageController({ session }: UseBoardPageControllerOptions) {
   const { isMobileLayout } = useBoardPageLayout();
-  const { feedback, feedbackUi, items, setItems, isLoading, error, loadItems } =
-    useBoardPageResources();
+  const { feedback, feedbackUi, items, isLoading, error, loadItems } = useBoardPageResources();
   const boardPageState = useBoardPageState({
     isMobileLayout,
-    setItems,
   });
 
   const { dnd, actions } = useBoardPageInteractions({
@@ -75,7 +73,7 @@ export function useBoardPageController({ session }: UseBoardPageControllerOption
       items,
       onStateChange: boardPageState.setDetailModal,
       onClose: boardPageState.handleCloseDetail,
-      onUpdate: boardPageState.handleUpdateItem,
+      onReload: () => loadItems(),
     },
   };
 }

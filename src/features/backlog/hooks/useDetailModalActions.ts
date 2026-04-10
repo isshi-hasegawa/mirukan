@@ -1,6 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
 import {
-  applyBacklogItemUpdate,
   buildDetailFieldUpdate,
   getSortOrderForStatusChange,
   type BacklogItemUpdate,
@@ -20,7 +19,7 @@ type UseDetailModalActionsOptions = {
   items: BacklogItem[];
   state: DetailModalState;
   onStateChange: Dispatch<SetStateAction<DetailModalState>>;
-  onUpdate: (item: BacklogItem) => void;
+  onReload: () => Promise<void>;
 };
 
 export function useDetailModalActions({
@@ -28,7 +27,7 @@ export function useDetailModalActions({
   items,
   state,
   onStateChange,
-  onUpdate,
+  onReload,
 }: UseDetailModalActionsOptions) {
   const resetState = () => {
     onStateChange((prev) =>
@@ -53,7 +52,7 @@ export function useDetailModalActions({
       return false;
     }
 
-    onUpdate(applyBacklogItemUpdate(item, update));
+    await onReload();
     resetState();
     return true;
   };

@@ -84,7 +84,7 @@ export function BoardPage({ session }: Props) {
           items={detailModal.items}
           onStateChange={detailModal.onStateChange}
           onClose={detailModal.onClose}
-          onUpdate={detailModal.onUpdate}
+          onReload={detailModal.onReload}
         />
       )}
 

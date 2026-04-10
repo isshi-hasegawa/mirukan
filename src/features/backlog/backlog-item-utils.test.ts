@@ -1,6 +1,5 @@
 import { setupTestLifecycle } from "../../test/test-lifecycle.ts";
 import {
-  applyBacklogItemUpdate,
   buildDetailFieldUpdate,
   buildMoveToStatusConfirmMessage,
   getNextSortOrder,
@@ -220,27 +219,6 @@ describe("buildDetailFieldUpdate", () => {
   test("空 note は null を返す", () => {
     expect(buildDetailFieldUpdate("note", "   ")).toEqual({
       note: null,
-    });
-  });
-});
-
-describe("applyBacklogItemUpdate", () => {
-  test("BacklogItem へ部分更新を反映する", () => {
-    const item = createItem("a", "stacked", 1000);
-
-    expect(
-      applyBacklogItemUpdate(item, {
-        status: "watched",
-        sort_order: 2000,
-        primary_platform: "netflix",
-        note: "メモ",
-      }),
-    ).toMatchObject({
-      id: "a",
-      status: "watched",
-      sort_order: 2000,
-      primary_platform: "netflix",
-      note: "メモ",
     });
   });
 });

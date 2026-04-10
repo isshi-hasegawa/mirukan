@@ -69,28 +69,24 @@ function DetailModalHarness({
   items,
   initialState,
   onClose,
-  onUpdate,
+  onReload,
 }: {
   item: BacklogItem;
   items: BacklogItem[];
   initialState: DetailModalState;
   onClose: () => void;
-  onUpdate: (item: BacklogItem) => void;
+  onReload: () => Promise<void>;
 }) {
   const [state, setState] = useState(initialState);
-  const [currentItem, setCurrentItem] = useState(item);
 
   return (
     <DetailModal
-      item={currentItem}
+      item={item}
       state={state}
       items={items}
       onStateChange={setState}
       onClose={onClose}
-      onUpdate={(updated) => {
-        setCurrentItem(updated);
-        onUpdate(updated);
-      }}
+      onReload={onReload}
     />
   );
 }
@@ -101,7 +97,7 @@ function renderDetailModal({
   initialState = createDetailModalState(item.id),
 }: RenderOptions = {}) {
   const onClose = vi.fn();
-  const onUpdate = vi.fn();
+  const onReload = vi.fn().mockResolvedValue(undefined);
   const user = userEvent.setup();
 
   render(
@@ -110,11 +106,11 @@ function renderDetailModal({
       items={items}
       initialState={initialState}
       onClose={onClose}
-      onUpdate={onUpdate}
+      onReload={onReload}
     />,
   );
 
-  return { user, onClose, onUpdate };
+  return { user, onClose, onReload };
 }
 
 describe("DetailModal", () => {
@@ -127,7 +123,7 @@ describe("DetailModal", () => {
     vi.clearAllMocks();
   });
 
-  test("ステータス変更成功時に正しい payload で保存し、onUpdate と state reset が走る", async () => {
+  test("ステータス変更成功時に正しい payload で保存し、onReload と state reset が走る", async () => {
     const item = createItem();
     const watchedItem = createItem({
       id: "item-2",
@@ -141,7 +137,7 @@ describe("DetailModal", () => {
       },
     });
 
-    const { user, onUpdate } = renderDetailModal({
+    const { user, onReload } = renderDetailModal({
       item,
       items: [item, watchedItem],
       initialState: createDetailModalState(item.id, { message: "古いメッセージ" }),
@@ -157,29 +153,23 @@ describe("DetailModal", () => {
         sort_order: 3000,
       }),
     );
-    expect(onUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: "item-1",
-        status: "watched",
-        sort_order: 3000,
-      }),
-    );
+    expect(onReload).toHaveBeenCalled();
     await waitFor(() => expect(screen.queryByText("古いメッセージ")).not.toBeInTheDocument());
   });
 
-  test("ステータス変更失敗時はエラーメッセージを表示し、onUpdate しない", async () => {
+  test("ステータス変更失敗時はエラーメッセージを表示し、onReload しない", async () => {
     dataMocks.updateBacklogItem.mockResolvedValueOnce({ error: "DB error" });
 
-    const { user, onUpdate } = renderDetailModal();
+    const { user, onReload } = renderDetailModal();
 
     await user.click(screen.getByRole("button", { name: "視聴済み" }));
 
     expect(await screen.findByText("更新に失敗しました: DB error")).toBeInTheDocument();
-    expect(onUpdate).not.toHaveBeenCalled();
+    expect(onReload).not.toHaveBeenCalled();
   });
 
   test("note 編集は blur で保存する", async () => {
-    const { user, onUpdate } = renderDetailModal();
+    const { user, onReload } = renderDetailModal();
 
     await user.click(screen.getByRole("button", { name: "メモを追加" }));
 
@@ -192,12 +182,11 @@ describe("DetailModal", () => {
         note: "あとで見返したい",
       }),
     );
-    expect(onUpdate).toHaveBeenCalledWith(expect.objectContaining({ note: "あとで見返したい" }));
-    expect(await screen.findByText("あとで見返したい")).toBeInTheDocument();
+    expect(onReload).toHaveBeenCalled();
   });
 
   test("note 編集は Ctrl+Enter でも保存する", async () => {
-    const { user } = renderDetailModal({
+    const { user, onReload } = renderDetailModal({
       item: createItem({ note: "既存メモ" }),
     });
 
@@ -213,11 +202,11 @@ describe("DetailModal", () => {
         note: "更新メモ",
       }),
     );
-    expect(await screen.findByText("更新メモ")).toBeInTheDocument();
+    expect(onReload).toHaveBeenCalled();
   });
 
   test("platform 変更時は即時保存する", async () => {
-    const { user, onUpdate } = renderDetailModal();
+    const { user, onReload } = renderDetailModal();
 
     await user.click(screen.getByRole("button", { name: "Netflix" }));
 
@@ -226,7 +215,7 @@ describe("DetailModal", () => {
         primary_platform: "netflix",
       }),
     );
-    expect(onUpdate).toHaveBeenCalledWith(expect.objectContaining({ primary_platform: "netflix" }));
+    expect(onReload).toHaveBeenCalled();
   });
 
   test("編集中に Escape を押すと編集だけキャンセルし、modal close しない", async () => {
