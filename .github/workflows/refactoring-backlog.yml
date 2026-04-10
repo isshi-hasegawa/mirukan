@@ -76,6 +76,7 @@ jobs:
 
           issue_number=$(
             gh issue list \
+              --label "$REFACTORING_BACKLOG_LABEL" \
               --state open \
               --limit 100 \
               --json number,title,body \

@@ -181,7 +181,7 @@ describe("buildRefactoringBacklogIssue", () => {
         },
         {
           key: "issue-3",
-          message: "'/tmp/clone123/src/lib/example.ts' imported multiple times.",
+          message: "'/opt/clone123/src/lib/example.ts' imported multiple times.",
           component: "mirukan:src/lib/consumer.ts",
           line: 7,
           rule: "typescript:S3863",
@@ -204,7 +204,7 @@ describe("buildRefactoringBacklogIssue", () => {
     expect(result.body).toContain(
       "- 'src/lib/example.ts' imported multiple times. - 1件 (最短 1 min)",
     );
-    expect(result.body).not.toContain("/tmp/clone123");
+    expect(result.body).not.toContain("/opt/clone123");
     expect(result.body).toContain("| `src/lib/example.ts` | 6.5% | 520 lines |");
   });
 });
