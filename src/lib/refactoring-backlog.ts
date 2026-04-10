@@ -367,8 +367,8 @@ function groupQuickWinIssues(issues: SonarIssue[], projectKey: string): QuickWin
   return [...grouped.values()].sort((left, right) => {
     const leftEffort = left.minEffortMinutes ?? Number.POSITIVE_INFINITY;
     const rightEffort = right.minEffortMinutes ?? Number.POSITIVE_INFINITY;
-    const leftExamplePath = normalizeComponentPath(left.examples[0]!.component, projectKey);
-    const rightExamplePath = normalizeComponentPath(right.examples[0]!.component, projectKey);
+    const leftExamplePath = normalizeComponentPath(left.examples[0]?.component ?? "", projectKey);
+    const rightExamplePath = normalizeComponentPath(right.examples[0]?.component ?? "", projectKey);
 
     return (
       leftEffort - rightEffort ||
@@ -391,10 +391,10 @@ function matchesGlobPattern(path: string, pattern: string) {
   const normalizedPath = normalizePathForMatch(path);
   const normalizedPattern = normalizePathForMatch(pattern);
   const source = normalizedPattern
-    .replace(/[|\\{}()[\]^$+?.]/g, "\\$&")
-    .replace(/\*\*/g, "__DOUBLE_STAR__")
-    .replace(/\*/g, "[^/]*")
-    .replace(/__DOUBLE_STAR__/g, ".*");
+    .replaceAll(/[|\\{}()[\]^$+?.]/g, String.raw`\$&`)
+    .replaceAll(/\*\*/g, "__DOUBLE_STAR__")
+    .replaceAll(/\*/g, "[^/]*")
+    .replaceAll(/__DOUBLE_STAR__/g, ".*");
   return new RegExp(`^${source}$`).test(normalizedPath);
 }
 
@@ -403,7 +403,7 @@ function normalizePathForMatch(value: string) {
 }
 
 function sanitizeAbsolutePaths(value: string) {
-  return value.replace(/\/[^"'`\s)]+/g, (token) => toDisplayPath(token));
+  return value.replaceAll(/\/[^"'`\s)]+/g, (token) => toDisplayPath(token));
 }
 
 function toDisplayPath(value: string) {
@@ -424,7 +424,7 @@ function toDisplayPath(value: string) {
     return "pnpm-lock.yaml";
   }
 
-  return normalized.split("/").filter(Boolean).at(-1) ?? normalized;
+  return normalized.split("/").findLast(Boolean) ?? normalized;
 }
 
 function minDefined(left: number | undefined, right: number | undefined) {
