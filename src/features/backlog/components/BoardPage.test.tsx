@@ -233,7 +233,7 @@ describe("BoardPage", () => {
     expect(screen.getByText("selected-tab:watching")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "追加モーダルを開く" }));
-    await user.click(screen.getByRole("button", { name: "追加完了" }));
+    await user.click(await screen.findByRole("button", { name: "追加完了" }));
 
     expect(screen.getByText("selected-tab:stacked")).toBeInTheDocument();
     deferred.resolve(undefined);
@@ -248,7 +248,7 @@ describe("BoardPage", () => {
     renderBoardPage();
 
     await user.click(screen.getByRole("button", { name: "追加モーダルを開く" }));
-    await user.click(screen.getByRole("button", { name: "追加完了" }));
+    await user.click(await screen.findByRole("button", { name: "追加完了" }));
 
     expect(scrollIntoViewSpy).toHaveBeenCalledWith({
       behavior: "smooth",
@@ -264,7 +264,7 @@ describe("BoardPage", () => {
     renderBoardPage();
 
     await user.click(screen.getByRole("button", { name: "詳細を開く" }));
-    expect(screen.getByText("detail-modal:item-1")).toBeInTheDocument();
+    expect(await screen.findByText("detail-modal:item-1")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "item-1 を削除" }));
 

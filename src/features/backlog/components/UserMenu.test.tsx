@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
 import { UserMenu } from "./UserMenu.tsx";
@@ -34,7 +34,7 @@ describe("UserMenu", () => {
     await user.keyboard("{Enter}");
     await user.click(await screen.findByRole("menuitem", { name: "About" }));
 
-    expect(screen.getByRole("dialog", { name: "みるカンについて" })).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "みるカンについて" })).toBeInTheDocument();
     expect(
       screen.getByText(
         "みるカンは、積んだ映画やシリーズから次に見る一本を決めるための映像作品バックログです。",
@@ -58,7 +58,9 @@ describe("UserMenu", () => {
     await user.keyboard("{Enter}");
     await user.click(await screen.findByRole("menuitem", { name: "利用規約" }));
 
-    expect(openMock).toHaveBeenCalledWith("/terms", "_blank", "noopener,noreferrer");
+    await waitFor(() =>
+      expect(openMock).toHaveBeenCalledWith("/terms", "_blank", "noopener,noreferrer"),
+    );
   });
 
   test("メニューからプライバシーポリシーページを新しいタブで開ける", async () => {
@@ -71,7 +73,9 @@ describe("UserMenu", () => {
     await user.keyboard("{Enter}");
     await user.click(await screen.findByRole("menuitem", { name: "プライバシーポリシー" }));
 
-    expect(openMock).toHaveBeenCalledWith("/privacy", "_blank", "noopener,noreferrer");
+    await waitFor(() =>
+      expect(openMock).toHaveBeenCalledWith("/privacy", "_blank", "noopener,noreferrer"),
+    );
   });
 
   test("メニューから GitHub Issues の不具合報告導線を開ける", async () => {
@@ -84,10 +88,12 @@ describe("UserMenu", () => {
     await user.keyboard("{Enter}");
     await user.click(await screen.findByRole("menuitem", { name: "不具合を報告" }));
 
-    expect(openMock).toHaveBeenCalledWith(
-      "https://github.com/isshi-hasegawa/mirukan/issues/new/choose",
-      "_blank",
-      "noopener,noreferrer",
+    await waitFor(() =>
+      expect(openMock).toHaveBeenCalledWith(
+        "https://github.com/isshi-hasegawa/mirukan/issues/new/choose",
+        "_blank",
+        "noopener,noreferrer",
+      ),
     );
   });
 });

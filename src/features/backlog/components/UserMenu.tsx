@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { signOut } from "../../../lib/auth-repository.ts";
 import {
@@ -7,7 +7,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.tsx";
-import { AboutDialog } from "./AboutDialog.tsx";
+
+const AboutDialog = lazy(async () => ({
+  default: (await import("./AboutDialog.tsx")).AboutDialog,
+}));
 
 type Props = {
   email: string | null | undefined;
@@ -70,7 +73,11 @@ export function UserMenu({ email }: Props) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {isAboutOpen ? <AboutDialog onClose={() => setIsAboutOpen(false)} /> : null}
+      {isAboutOpen ? (
+        <Suspense fallback={null}>
+          <AboutDialog onClose={() => setIsAboutOpen(false)} />
+        </Suspense>
+      ) : null}
     </>
   );
 }

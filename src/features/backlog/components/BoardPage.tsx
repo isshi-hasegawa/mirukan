@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { DndContext, DragOverlay, pointerWithin } from "@dnd-kit/core";
 import { Button } from "@/components/ui/button.tsx";
@@ -5,9 +6,15 @@ import { signOut } from "../../../lib/auth-repository.ts";
 import { useBoardPageController } from "../hooks/useBoardPageController.ts";
 import { Header } from "./Header.tsx";
 import { KanbanBoard } from "./KanbanBoard.tsx";
-import { AddModal } from "./AddModal.tsx";
-import { DetailModal } from "./DetailModal.tsx";
 import { DraggedBacklogCardOverlay } from "./DraggedBacklogCardOverlay.tsx";
+
+const AddModal = lazy(async () => ({
+  default: (await import("./AddModal.tsx")).AddModal,
+}));
+
+const DetailModal = lazy(async () => ({
+  default: (await import("./DetailModal.tsx")).DetailModal,
+}));
 
 type Props = { session: Session };
 
@@ -70,23 +77,27 @@ export function BoardPage({ session }: Props) {
       </DndContext>
 
       {addModal.isOpen && (
-        <AddModal
-          items={addModal.items}
-          session={addModal.session}
-          onClose={addModal.onClose}
-          onAdded={addModal.onAdded}
-        />
+        <Suspense fallback={null}>
+          <AddModal
+            items={addModal.items}
+            session={addModal.session}
+            onClose={addModal.onClose}
+            onAdded={addModal.onAdded}
+          />
+        </Suspense>
       )}
 
       {detailModal.isOpen && (
-        <DetailModal
-          item={detailModal.item}
-          state={detailModal.state}
-          items={detailModal.items}
-          onStateChange={detailModal.onStateChange}
-          onClose={detailModal.onClose}
-          onReload={detailModal.onReload}
-        />
+        <Suspense fallback={null}>
+          <DetailModal
+            item={detailModal.item}
+            state={detailModal.state}
+            items={detailModal.items}
+            onStateChange={detailModal.onStateChange}
+            onClose={detailModal.onClose}
+            onReload={detailModal.onReload}
+          />
+        </Suspense>
       )}
 
       {feedbackUi}

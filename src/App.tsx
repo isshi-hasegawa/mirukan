@@ -1,11 +1,17 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { getSession, onAuthStateChange } from "./lib/auth-repository.ts";
 import { LoginPage } from "./features/backlog/components/LoginPage.tsx";
-import { BoardPage } from "./features/backlog/components/BoardPage.tsx";
-import { ResetPasswordPage } from "./features/backlog/components/ResetPasswordPage.tsx";
 import { PrivacyPolicyPage } from "./features/backlog/components/PrivacyPolicyPage.tsx";
 import { TermsOfServicePage } from "./features/backlog/components/TermsOfServicePage.tsx";
+
+const BoardPage = lazy(async () => ({
+  default: (await import("./features/backlog/components/BoardPage.tsx")).BoardPage,
+}));
+
+const ResetPasswordPage = lazy(async () => ({
+  default: (await import("./features/backlog/components/ResetPasswordPage.tsx")).ResetPasswordPage,
+}));
 
 function isPasswordRecoveryLocation(location: Pick<Location, "hash" | "search">) {
   const searchParams = new URLSearchParams(location.search);
@@ -99,14 +105,22 @@ function AuthenticatedApp() {
   }
 
   if (isPasswordRecovery && session) {
-    return <ResetPasswordPage />;
+    return (
+      <Suspense fallback={<LoginPage isSessionLoading />}>
+        <ResetPasswordPage />
+      </Suspense>
+    );
   }
 
   if (!session) {
     return <LoginPage />;
   }
 
-  return <BoardPage session={session} />;
+  return (
+    <Suspense fallback={<LoginPage isSessionLoading />}>
+      <BoardPage session={session} />
+    </Suspense>
+  );
 }
 
 export function App() {
