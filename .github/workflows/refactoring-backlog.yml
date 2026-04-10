@@ -9,6 +9,8 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   VP_BOOTSTRAP_VERSION: 0.1.14
   REFACTORING_BACKLOG_LABEL: refactoring-backlog
+  REFACTORING_BACKLOG_MARKER: <!-- refactoring-backlog:sonarcloud -->
+  REFACTORING_BACKLOG_TITLE: refactoring backlog
   REFACTORING_BACKLOG_OUTPUT_DIR: artifacts/refactoring-backlog
   SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
   SONAR_BRANCH: main
@@ -72,20 +74,21 @@ jobs:
             --color "0969da" \
             || true
 
-          issue_number=$(gh issue list \
-            --label "$REFACTORING_BACKLOG_LABEL" \
-            --state open \
-            --limit 100 \
-            --json number,title,body \
-            --jq 'map(select(.body | contains("<!-- refactoring-backlog:sonarcloud -->")) | .number) | first')
+          issue_number=$(
+            gh issue list \
+              --state open \
+              --limit 100 \
+              --json number,title,body \
+              --jq 'map(select(.body | contains(env.REFACTORING_BACKLOG_MARKER))) | first | .number // empty'
+          )
 
-          if [[ -n "${issue_number}" && "${issue_number}" != "null" ]]; then
+          if [[ -n "${issue_number}" ]]; then
             gh issue edit "$issue_number" \
-              --title "$(cat "$REFACTORING_BACKLOG_OUTPUT_DIR/title.txt")" \
+              --title "$REFACTORING_BACKLOG_TITLE" \
               --body-file "$REFACTORING_BACKLOG_OUTPUT_DIR/body.md"
           else
             gh issue create \
-              --title "$(cat "$REFACTORING_BACKLOG_OUTPUT_DIR/title.txt")" \
+              --title "$REFACTORING_BACKLOG_TITLE" \
               --body-file "$REFACTORING_BACKLOG_OUTPUT_DIR/body.md" \
               --label "$REFACTORING_BACKLOG_LABEL"
           fi

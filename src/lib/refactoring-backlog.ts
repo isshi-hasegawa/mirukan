@@ -1,4 +1,6 @@
 const REFACTORING_BACKLOG_MARKER = "<!-- refactoring-backlog:sonarcloud -->";
+const DEFAULT_BACKLOG_EXCLUDE_PATTERNS = ["pnpm-lock.yaml", "supabase/templates/**"] as const;
+const REPO_PATH_SEGMENTS = ["src/", "supabase/", ".github/", "docs/", "public/"] as const;
 
 export type SonarMeasureKey =
   | "code_smells"
@@ -29,6 +31,14 @@ type RankedSignal = {
   path: string;
   value: number;
   detail: string;
+};
+
+type QuickWinGroup = {
+  key: string;
+  label: string;
+  count: number;
+  examples: SonarIssue[];
+  minEffortMinutes?: number;
 };
 
 type RefactoringBacklogInput = {
@@ -111,6 +121,13 @@ export function normalizeComponentPath(component: string, projectKey: string): s
   return component.startsWith(prefix) ? component.slice(prefix.length) : component;
 }
 
+export function filterBacklogSignals(
+  files: SonarFileSignal[],
+  excludePatterns: readonly string[] = DEFAULT_BACKLOG_EXCLUDE_PATTERNS,
+) {
+  return files.filter((file) => !matchesAnyPattern(file.path, excludePatterns));
+}
+
 export function rankLongFiles(files: SonarFileSignal[], limit = 5): RankedSignal[] {
   return files
     .map((file) => ({
@@ -152,13 +169,24 @@ export function rankDuplicateFiles(files: SonarFileSignal[], limit = 5): RankedS
 }
 
 export function selectQuickWinIssues(issues: SonarIssue[], limit = 7): SonarIssue[] {
-  return [...issues]
-    .sort((left, right) => {
-      const leftEffort = left.effortMinutes ?? Number.POSITIVE_INFINITY;
-      const rightEffort = right.effortMinutes ?? Number.POSITIVE_INFINITY;
-      return leftEffort - rightEffort || left.component.localeCompare(right.component);
-    })
-    .slice(0, limit);
+  const sorted = [...issues].sort((left, right) => {
+    const leftEffort = left.effortMinutes ?? Number.POSITIVE_INFINITY;
+    const rightEffort = right.effortMinutes ?? Number.POSITIVE_INFINITY;
+    return leftEffort - rightEffort || left.component.localeCompare(right.component);
+  });
+
+  if (sorted.length <= limit) {
+    return sorted;
+  }
+
+  const cutoffEffort = sorted[limit - 1]?.effortMinutes;
+  if (cutoffEffort == null) {
+    return sorted.slice(0, limit);
+  }
+
+  return sorted.filter(
+    (issue) => (issue.effortMinutes ?? Number.POSITIVE_INFINITY) <= cutoffEffort,
+  );
 }
 
 export function buildRefactoringBacklogIssue({
@@ -235,12 +263,20 @@ function renderQuickWinIssues(projectKey: string, sonarBaseUrl: string, issues: 
     return ["- 今回は quick win 候補なし"];
   }
 
-  return issues.map((issue) => {
-    const path = normalizeComponentPath(issue.component, projectKey);
-    const effort = issue.effortMinutes ? `${issue.effortMinutes} min` : "effort unknown";
-    const line = issue.line ? `:${issue.line}` : "";
-    const issueUrl = `${trimTrailingSlash(sonarBaseUrl)}/project/issues?id=${encodeURIComponent(projectKey)}&open=${encodeURIComponent(issue.key)}`;
-    return `- [${path}${line}](${issueUrl}) - ${issue.message} (${effort})`;
+  return groupQuickWinIssues(issues, projectKey).flatMap((group) => {
+    const effortLabel = group.minEffortMinutes
+      ? `最短 ${group.minEffortMinutes} min`
+      : "effort unknown";
+    const lines = [`- ${group.label} - ${formatNumber(group.count)}件 (${effortLabel})`];
+
+    for (const example of group.examples) {
+      const path = toDisplayPath(normalizeComponentPath(example.component, projectKey));
+      const line = example.line ? `:${example.line}` : "";
+      const issueUrl = `${trimTrailingSlash(sonarBaseUrl)}/project/issues?id=${encodeURIComponent(projectKey)}&open=${encodeURIComponent(example.key)}`;
+      lines.push(`  - 例: [${path}${line}](${issueUrl})`);
+    }
+
+    return lines;
   });
 }
 
@@ -253,7 +289,8 @@ function renderRankedSignals(rows: RankedSignal[], valueLabel: string, detailLab
     `| file | ${valueLabel} | ${detailLabel} |`,
     "| --- | ---: | --- |",
     ...rows.map(
-      (row) => `| \`${row.path}\` | ${formatRankValue(valueLabel, row.value)} | ${row.detail} |`,
+      (row) =>
+        `| \`${toDisplayPath(row.path)}\` | ${formatRankValue(valueLabel, row.value)} | ${row.detail} |`,
     ),
   ];
 }
@@ -299,4 +336,105 @@ function formatNumber(value: number | undefined) {
 
 function trimTrailingSlash(value: string) {
   return value.endsWith("/") ? value.slice(0, -1) : value;
+}
+
+function groupQuickWinIssues(issues: SonarIssue[], projectKey: string): QuickWinGroup[] {
+  const grouped = new Map<string, QuickWinGroup>();
+
+  for (const issue of issues) {
+    const label = sanitizeQuickWinLabel(issue.message);
+    const key = issue.rule ? `${issue.rule}::${label}` : label;
+    const current = grouped.get(key);
+
+    if (current) {
+      current.count += 1;
+      current.minEffortMinutes = minDefined(current.minEffortMinutes, issue.effortMinutes);
+      if (current.examples.length < 3) {
+        current.examples.push(issue);
+      }
+      continue;
+    }
+
+    grouped.set(key, {
+      key,
+      label,
+      count: 1,
+      examples: [issue],
+      minEffortMinutes: issue.effortMinutes,
+    });
+  }
+
+  return [...grouped.values()].sort((left, right) => {
+    const leftEffort = left.minEffortMinutes ?? Number.POSITIVE_INFINITY;
+    const rightEffort = right.minEffortMinutes ?? Number.POSITIVE_INFINITY;
+    const leftExamplePath = normalizeComponentPath(left.examples[0]!.component, projectKey);
+    const rightExamplePath = normalizeComponentPath(right.examples[0]!.component, projectKey);
+
+    return (
+      leftEffort - rightEffort ||
+      right.count - left.count ||
+      leftExamplePath.localeCompare(rightExamplePath) ||
+      left.key.localeCompare(right.key)
+    );
+  });
+}
+
+function sanitizeQuickWinLabel(message: string) {
+  return sanitizeAbsolutePaths(message);
+}
+
+function matchesAnyPattern(path: string, patterns: readonly string[]) {
+  return patterns.some((pattern) => matchesGlobPattern(path, pattern));
+}
+
+function matchesGlobPattern(path: string, pattern: string) {
+  const normalizedPath = normalizePathForMatch(path);
+  const normalizedPattern = normalizePathForMatch(pattern);
+  const source = normalizedPattern
+    .replace(/[|\\{}()[\]^$+?.]/g, "\\$&")
+    .replace(/\*\*/g, "__DOUBLE_STAR__")
+    .replace(/\*/g, "[^/]*")
+    .replace(/__DOUBLE_STAR__/g, ".*");
+  return new RegExp(`^${source}$`).test(normalizedPath);
+}
+
+function normalizePathForMatch(value: string) {
+  return value.replaceAll("\\", "/").replace(/^\.\//, "");
+}
+
+function sanitizeAbsolutePaths(value: string) {
+  return value.replace(/\/[^"'`\s)]+/g, (token) => toDisplayPath(token));
+}
+
+function toDisplayPath(value: string) {
+  const normalized = normalizePathForMatch(value);
+  if (!normalized.startsWith("/")) {
+    return normalized;
+  }
+
+  for (const segment of REPO_PATH_SEGMENTS) {
+    const marker = `/${segment}`;
+    const index = normalized.lastIndexOf(marker);
+    if (index >= 0) {
+      return normalized.slice(index + 1);
+    }
+  }
+
+  if (normalized.endsWith("/pnpm-lock.yaml")) {
+    return "pnpm-lock.yaml";
+  }
+
+  return normalized.split("/").filter(Boolean).at(-1) ?? normalized;
+}
+
+function minDefined(left: number | undefined, right: number | undefined) {
+  if (left == null) {
+    return right;
+  }
+
+  if (right == null) {
+    return left;
+  }
+
+  return Math.min(left, right);
 }

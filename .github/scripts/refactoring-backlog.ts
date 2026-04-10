@@ -2,6 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import {
   buildRefactoringBacklogIssue,
+  filterBacklogSignals,
   normalizeComponentPath,
   parseMeasureValue,
   parseMinutes,
@@ -86,9 +87,10 @@ async function main() {
     }).format(new Date()) + " UTC";
 
   const quickWinIssues = selectQuickWinIssues(issues);
-  const longFiles = rankLongFiles(fileSignals);
-  const complexFiles = rankComplexFiles(fileSignals);
-  const duplicateFiles = rankDuplicateFiles(fileSignals);
+  const filteredFileSignals = filterBacklogSignals(fileSignals);
+  const longFiles = rankLongFiles(filteredFileSignals);
+  const complexFiles = rankComplexFiles(filteredFileSignals);
+  const duplicateFiles = rankDuplicateFiles(filteredFileSignals);
   const issue = buildRefactoringBacklogIssue({
     projectKey,
     observedAt,
