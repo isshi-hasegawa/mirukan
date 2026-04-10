@@ -404,6 +404,7 @@ async function upsertFetchedTmdbWork(
     .insert({
       ...buildTmdbWorkInsert(details, userId, workType, options.parentWorkId ?? null),
       ...omdbFields,
+      background_fit_score: calcBackgroundFitScore(details.genres, omdbRatings),
     })
     .select("id")
     .single();
