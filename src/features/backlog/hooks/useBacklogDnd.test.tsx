@@ -297,6 +297,64 @@ describe("useBacklogDnd", () => {
     expect(watchingOrder).toEqual(["item-2", "item-1", "item-3"]);
   });
 
+  test("handleDragOver で非空列の背景に落としたら列末尾に移動する", () => {
+    const crossColumnItems = [
+      createItem({ id: "item-1", status: "stacked", sort_order: 1000 }),
+      createItem({ id: "item-2", status: "watching", sort_order: 1000 }),
+      createItem({ id: "item-3", status: "watching", sort_order: 2000 }),
+    ];
+    const { result } = renderHook(() =>
+      useBacklogDnd({ items: crossColumnItems, isMobileLayout: false, onAfterDrop, feedback }),
+    );
+
+    act(() => {
+      result.current.handleDragStart({ active: { id: "item-1" } } as DragStartEvent);
+      result.current.handleDragOver({
+        active: { id: "item-1" },
+        over: { id: "column:watching", rect: makeRect(100, 200) },
+        activatorEvent: { clientY: 260 } as MouseEvent,
+      } as unknown as DragOverEvent);
+    });
+
+    const watchingOrder = result.current.localItems
+      .filter((i) => i.status === "watching")
+      .map((i) => i.id);
+    expect(watchingOrder).toEqual(["item-2", "item-3", "item-1"]);
+  });
+
+  test("handleDragEnd で非空列の背景ドロップは列末尾の sort_order を保存する", async () => {
+    const crossColumnItems = [
+      createItem({ id: "item-1", status: "stacked", sort_order: 1000 }),
+      createItem({ id: "item-2", status: "watching", sort_order: 1000 }),
+      createItem({ id: "item-3", status: "watching", sort_order: 2000 }),
+    ];
+    const { result } = renderHook(() =>
+      useBacklogDnd({ items: crossColumnItems, isMobileLayout: false, onAfterDrop, feedback }),
+    );
+
+    act(() => {
+      result.current.handleDragStart({ active: { id: "item-1" } } as DragStartEvent);
+      result.current.handleDragOver({
+        active: { id: "item-1" },
+        over: { id: "column:watching", rect: makeRect(100, 200) },
+        activatorEvent: { clientY: 260 } as MouseEvent,
+      } as unknown as DragOverEvent);
+    });
+
+    await act(async () => {
+      await result.current.handleDragEnd({
+        active: { id: "item-1" },
+        over: { id: "column:watching", rect: makeRect(100, 200) },
+        activatorEvent: null,
+      } as unknown as DragEndEvent);
+    });
+
+    expect(supabaseMocks.update).toHaveBeenCalledWith({
+      status: "watching",
+      sort_order: 3000,
+    });
+  });
+
   test("モバイルレイアウトでは handleDragOver が列間移動をブロックする", () => {
     const crossColumnItems = [
       createItem({ id: "item-1", status: "stacked", sort_order: 1000 }),

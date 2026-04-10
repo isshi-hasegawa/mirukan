@@ -68,6 +68,17 @@ function getReorderedColumnItems(
   return [...baseItems.slice(0, insertionIdx), activeItem, ...baseItems.slice(insertionIdx)];
 }
 
+function moveItemToColumnEnd(items: BacklogItem[], activeId: string, status: BacklogStatus) {
+  const activeItem = items.find((i) => i.id === activeId);
+  if (!activeItem) return items;
+
+  const updatedItems = items.map((i) => (i.id === activeId ? { ...i, status } : i));
+  const columnItems = updatedItems.filter((i) => i.status === status && i.id !== activeId);
+  const others = updatedItems.filter((i) => i.status !== status);
+
+  return [...others, ...columnItems, { ...activeItem, status }];
+}
+
 export function useBacklogDnd({
   items,
   isMobileLayout,
@@ -136,7 +147,7 @@ export function useBacklogDnd({
         );
 
         if (overId.startsWith("column:")) {
-          return withUpdatedStatus;
+          return moveItemToColumnEnd(prev, activeId, overStatus);
         }
 
         const newColItems = withUpdatedStatus.filter((i) => i.status === overStatus);
