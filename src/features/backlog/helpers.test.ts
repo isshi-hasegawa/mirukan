@@ -9,10 +9,12 @@ import {
   getClientYFromPointerEvent,
   getDropIndicator,
   getDropSideFromRect,
+  getTmdbSearchResultMetadataLabels,
   getWorkMetadataLabels,
   getWorkTypeLabel,
   resolveDropTarget,
 } from "./helpers.ts";
+import type { TmdbSearchResult } from "../../lib/tmdb.ts";
 import type { BacklogItem } from "./types.ts";
 import { setupTestLifecycle } from "../../test/test-lifecycle.ts";
 
@@ -344,5 +346,25 @@ describe("getWorkMetadataLabels", () => {
         },
       ),
     ).toEqual(["2024年", "1話約45分", "全1シーズン"]);
+  });
+});
+
+describe("getTmdbSearchResultMetadataLabels", () => {
+  test("検索結果の公開年ラベルを返す", () => {
+    const result: TmdbSearchResult = {
+      tmdbId: 1,
+      tmdbMediaType: "movie",
+      workType: "movie",
+      title: "テスト作品",
+      originalTitle: null,
+      overview: null,
+      posterPath: null,
+      releaseDate: "2024-01-01",
+      jpWatchPlatforms: [],
+      hasJapaneseRelease: true,
+      rottenTomatoesScore: null,
+    };
+
+    expect(getTmdbSearchResultMetadataLabels(result)).toEqual(["2024年"]);
   });
 });

@@ -9,6 +9,7 @@ import type {
   WorkSummary,
   WorkType,
 } from "./types.ts";
+import type { TmdbSearchResult } from "../../lib/tmdb.ts";
 import { isPrimaryPlatformValue } from "./constants.ts";
 
 type RectLike = Pick<DOMRect, "top" | "height">;
@@ -199,4 +200,8 @@ export function getWorkMetadataLabels(
   }
 
   return labels;
+}
+
+export function getTmdbSearchResultMetadataLabels(result: TmdbSearchResult) {
+  return [result.releaseDate ? `${result.releaseDate.slice(0, 4)}年` : null].filter(Boolean);
 }

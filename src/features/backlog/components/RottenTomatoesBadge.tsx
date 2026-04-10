@@ -5,6 +5,7 @@ type RottenTomatoesBadgeVariant = "fresh" | "rotten";
 type Props = {
   score: number;
   variant: RottenTomatoesBadgeVariant;
+  appearance?: "pill" | "plain";
   className?: string;
 };
 
@@ -54,26 +55,31 @@ function getVariantCopy(variant: RottenTomatoesBadgeVariant) {
     case "fresh":
       return {
         label: "Fresh",
-        className: "bg-[rgba(239,68,68,0.14)] text-[#f87171] border-[rgba(239,68,68,0.24)]",
+        textClassName: "text-[#f87171]",
+        pillClassName: "bg-[rgba(239,68,68,0.14)] border-[rgba(239,68,68,0.24)]",
         Icon: FreshIcon,
       };
     case "rotten":
       return {
         label: "Rotten",
-        className: "bg-[rgba(132,204,22,0.14)] text-[#bef264] border-[rgba(132,204,22,0.24)]",
+        textClassName: "text-[#bef264]",
+        pillClassName: "bg-[rgba(132,204,22,0.14)] border-[rgba(132,204,22,0.24)]",
         Icon: RottenIcon,
       };
   }
 }
 
-export function RottenTomatoesBadge({ score, variant, className }: Props) {
-  const { label, className: variantClassName, Icon } = getVariantCopy(variant);
+export function RottenTomatoesBadge({ score, variant, appearance = "pill", className }: Props) {
+  const { label, textClassName, pillClassName, Icon } = getVariantCopy(variant);
 
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-medium",
-        variantClassName,
+        appearance === "pill"
+          ? "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-medium"
+          : "inline-flex items-center gap-1 text-[0.8rem] font-medium",
+        textClassName,
+        appearance === "pill" && pillClassName,
         className,
       )}
       title="Rotten Tomatoes"

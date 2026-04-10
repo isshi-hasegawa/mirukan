@@ -129,7 +129,11 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onRelo
             </div>
             {rtScore !== null && (
               <p className="text-[0.85rem]">
-                <RottenTomatoesBadge score={rtScore} variant={rtScore >= 60 ? "fresh" : "rotten"} />
+                <RottenTomatoesBadge
+                  score={rtScore}
+                  variant={rtScore >= 60 ? "fresh" : "rotten"}
+                  appearance="plain"
+                />
               </p>
             )}
           </div>

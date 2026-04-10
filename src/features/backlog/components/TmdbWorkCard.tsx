@@ -2,6 +2,7 @@ import { FilmIcon, TvIcon, CheckIcon } from "@heroicons/react/24/outline";
 import type { ReactNode } from "react";
 import type { TmdbSearchResult } from "../../../lib/tmdb.ts";
 import { platformLabels } from "../constants.ts";
+import { getTmdbSearchResultMetadataLabels } from "../helpers.ts";
 import { RottenTomatoesBadge } from "./RottenTomatoesBadge.tsx";
 import { TmdbLink } from "./TmdbLink.tsx";
 
@@ -29,9 +30,7 @@ export function TmdbWorkCard({
     : null;
   const rtScore = result.rottenTomatoesScore ?? null;
   const rtVariant = rtScore === null ? null : rtScore >= 60 ? "fresh" : "rotten";
-  const metadataLabels = [result.releaseDate ? `${result.releaseDate.slice(0, 4)}年` : null].filter(
-    Boolean,
-  );
+  const metadataLabels = getTmdbSearchResultMetadataLabels(result);
 
   const checkButton = onAddToStacked ? (
     <button
@@ -99,7 +98,8 @@ export function TmdbWorkCard({
             <RottenTomatoesBadge
               score={rtScore}
               variant={rtVariant}
-              className="px-1.5 py-0 text-[0.74rem]"
+              appearance="plain"
+              className="text-[0.74rem]"
             />
           )}
         </span>
