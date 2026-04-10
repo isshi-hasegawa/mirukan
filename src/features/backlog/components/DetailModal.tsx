@@ -16,10 +16,10 @@ type Props = {
   items: BacklogItem[];
   onStateChange: Dispatch<SetStateAction<DetailModalState>>;
   onClose: () => void;
-  onUpdate: (item: BacklogItem) => void;
+  onReload: () => Promise<void>;
 };
 
-export function DetailModal({ item, state, items, onStateChange, onClose, onUpdate }: Props) {
+export function DetailModal({ item, state, items, onStateChange, onClose, onReload }: Props) {
   const inputRef = useRef<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null>(null);
   const { cancelEditing, handlePlatformSelect, handleStatusSelect, saveField, startEditing } =
     useDetailModalActions({
@@ -27,7 +27,7 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onUpda
       items,
       state,
       onStateChange,
-      onUpdate,
+      onReload,
     });
 
   useEffect(() => {

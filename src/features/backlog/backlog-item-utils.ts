@@ -226,13 +226,6 @@ export function buildDetailFieldUpdate(
   };
 }
 
-export function applyBacklogItemUpdate(item: BacklogItem, update: BacklogItemUpdate): BacklogItem {
-  return {
-    ...item,
-    ...update,
-  };
-}
-
 export function getSortOrderForDrop(
   items: BacklogItem[],
   itemId: string,

@@ -1,13 +1,12 @@
-import { useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { useRef, useState } from "react";
 import { createDetailModalState } from "../helpers.ts";
-import type { BacklogItem, BacklogStatus, DetailModalState } from "../types.ts";
+import type { BacklogStatus, DetailModalState } from "../types.ts";
 
 type Props = {
   isMobileLayout: boolean;
-  setItems: Dispatch<SetStateAction<BacklogItem[]>>;
 };
 
-export function useBoardPageState({ isMobileLayout, setItems }: Props) {
+export function useBoardPageState({ isMobileLayout }: Props) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [detailModal, setDetailModal] = useState<DetailModalState>(createDetailModalState(null));
   const [selectedTabStatus, setSelectedTabStatus] = useState<BacklogStatus>("stacked");
@@ -49,10 +48,6 @@ export function useBoardPageState({ isMobileLayout, setItems }: Props) {
     }
   };
 
-  const handleUpdateItem = (updated: BacklogItem) => {
-    setItems((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
-  };
-
   const handleColumnRef = (status: BacklogStatus, el: HTMLElement | null) => {
     columnRefs.current[status] = el;
   };
@@ -69,7 +64,6 @@ export function useBoardPageState({ isMobileLayout, setItems }: Props) {
     handleCloseDetail,
     handleNavigateToStacked,
     handleItemDeleted,
-    handleUpdateItem,
     handleColumnRef,
   };
 }

@@ -13,8 +13,8 @@ type UseBoardPageControllerOptions = {
 export function useBoardPageController({ session }: UseBoardPageControllerOptions) {
   const { isMobileLayout } = useBoardPageLayout();
   const { feedback, feedbackUi } = useBacklogFeedback();
-  const { items, setItems, isLoading, error, loadItems } = useBacklogItems();
-  const boardPageState = useBoardPageState({ isMobileLayout, setItems });
+  const { items, isLoading, error, loadItems } = useBacklogItems();
+  const boardPageState = useBoardPageState({ isMobileLayout });
 
   const dnd = useBacklogDnd({
     items,
@@ -80,7 +80,7 @@ export function useBoardPageController({ session }: UseBoardPageControllerOption
       items,
       onStateChange: boardPageState.setDetailModal,
       onClose: boardPageState.handleCloseDetail,
-      onUpdate: boardPageState.handleUpdateItem,
+      onReload: loadItems,
     },
   };
 }
