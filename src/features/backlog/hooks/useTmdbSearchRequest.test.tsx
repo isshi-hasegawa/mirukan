@@ -1,5 +1,6 @@
 import { renderHook, act } from "@testing-library/react";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
+import type { BacklogItem } from "../types.ts";
 import { useTmdbSearchRequest } from "./useTmdbSearchRequest.ts";
 
 const tmdbMocks = vi.hoisted(() => ({
@@ -18,6 +19,41 @@ vi.mock("../../../lib/tmdb.ts", async () => {
 });
 
 setupTestLifecycle();
+
+function createItem(id: string, status: BacklogItem["status"], tmdbId: number): BacklogItem {
+  return {
+    id,
+    status,
+    primary_platform: null,
+    note: null,
+    sort_order: 1000,
+    works: {
+      id: `work-${id}`,
+      title: `title-${id}`,
+      work_type: "movie",
+      source_type: "tmdb",
+      tmdb_id: tmdbId,
+      tmdb_media_type: "movie",
+      original_title: null,
+      overview: null,
+      poster_path: null,
+      release_date: null,
+      runtime_minutes: null,
+      typical_episode_runtime_minutes: null,
+      duration_bucket: null,
+      genres: [],
+      season_count: null,
+      season_number: null,
+      focus_required_score: null,
+      background_fit_score: null,
+      completion_load_score: null,
+      rotten_tomatoes_score: null,
+      imdb_rating: null,
+      imdb_votes: null,
+      metacritic_score: null,
+    },
+  };
+}
 
 describe("useTmdbSearchRequest", () => {
   const onResetSelection = vi.fn();
@@ -42,6 +78,36 @@ describe("useTmdbSearchRequest", () => {
     });
 
     expect(tmdbMocks.fetchTmdbRecommendations).toHaveBeenCalledTimes(1);
+  });
+
+  test("推薦元は watched を優先しつつ Fisher-Yates でシャッフルする", async () => {
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0);
+
+    renderHook(() =>
+      useTmdbSearchRequest({
+        items: [
+          createItem("watched-1", "watched", 1),
+          createItem("watching-1", "watching", 3),
+          createItem("watched-2", "watched", 2),
+          createItem("watching-2", "watching", 4),
+        ],
+        onResetSelection,
+        onSetSearchMessage,
+      }),
+    );
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    expect(tmdbMocks.fetchTmdbRecommendations).toHaveBeenCalledWith([
+      { tmdbId: 2, tmdbMediaType: "movie" },
+      { tmdbId: 1, tmdbMediaType: "movie" },
+      { tmdbId: 4, tmdbMediaType: "movie" },
+      { tmdbId: 3, tmdbMediaType: "movie" },
+    ]);
+
+    randomSpy.mockRestore();
   });
 
   test("handleQueryChange でクエリ入力後、デバウンス経過で searchTmdbWorks が呼ばれる", async () => {

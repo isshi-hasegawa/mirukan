@@ -83,20 +83,30 @@ function prioritizeLocalizedResults(results: TmdbSearchResult[]) {
 const MAX_RECOMMENDATION_SOURCE_ITEMS = 8;
 const SEARCH_DEBOUNCE_MS = 250;
 
+function shuffleArray<T>(items: T[]) {
+  const shuffled = [...items];
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+  }
+
+  return shuffled;
+}
+
 function buildRecommendationSourceItems(items: BacklogItem[]) {
-  return items
-    .filter(
-      (item) =>
-        (item.status === "watched" || item.status === "watching") &&
-        item.works?.tmdb_id != null &&
-        item.works?.source_type === "tmdb" &&
-        item.works?.work_type !== "season",
-    )
-    .sort((a, b) => {
-      if (a.status === "watched" && b.status !== "watched") return -1;
-      if (a.status !== "watched" && b.status === "watched") return 1;
-      return Math.random() - 0.5;
-    })
+  const recommendationCandidates = items.filter(
+    (item) =>
+      (item.status === "watched" || item.status === "watching") &&
+      item.works?.tmdb_id != null &&
+      item.works?.source_type === "tmdb" &&
+      item.works?.work_type !== "season",
+  );
+
+  return [
+    ...shuffleArray(recommendationCandidates.filter((item) => item.status === "watched")),
+    ...shuffleArray(recommendationCandidates.filter((item) => item.status === "watching")),
+  ]
     .slice(0, MAX_RECOMMENDATION_SOURCE_ITEMS)
     .map((item) => ({
       tmdbId: item.works!.tmdb_id!,
