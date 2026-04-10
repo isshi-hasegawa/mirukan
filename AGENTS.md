@@ -57,8 +57,6 @@
 - 未実施の検証や確認できていないリスクがあれば、明示したうえでコミットする。
 - 重大な懸念が見つかった場合は、修正してからコミットまたは追加コミットする。
 
-Claude Code で作業している場合、self-review の代わりに `/codex:adversarial-review` を使ってもよい。これは Claude Code 専用のプラグイン機能であり、Codex エージェントによる批判的なレビューを実施できる。このリポジトリの開発には Codex も使用しているため、Claude Code 以外の環境では self-review を用いること。
-
 ## PR 追従修正
 
 既存 PR のレビュー指摘対応や CI 修正は `.agents/skills/pr-followup/SKILL.md` を参照する。
