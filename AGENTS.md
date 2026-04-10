@@ -25,13 +25,6 @@
 
 通常の開始フローでは `.agents/skills/task-start/SKILL.md` を参照する。
 
-- 新規作業は最新の `main` から作成した作業ブランチ上で始める。
-- 既存作業の継続では、その作業用ブランチを再利用する。
-- `main` のまま編集やコミットをしない。
-- 画面確認やブラウザ操作での確認が明らかに必要な作業では、原則として worktree を追加しない。
-- 並行開発や作業隔離が必要で、かつ画面確認が明らかに不要な作業だけ worktree を追加する。
-- 既存作業の継続でも、着手前・PR 前・review 対応前に `origin/main` を確認し、古い前提で判断しない。
-
 不要 branch や余った worktree を整理したいときは `.agents/skills/branch-cleanup/SKILL.md` を使う。
 
 ## ブランチ命名
@@ -48,6 +41,7 @@
 ## 実装後チェック
 
 実装後は必ず self-review を実施してからコミット・PR 作成する。`.agents/skills/self-review/SKILL.md` を参照する。シンプルな変更であっても省略しない。
+追加の見直しが必要なときだけ、節目ごとに self-review または `.agents/skills/adversarial-review/SKILL.md` を使う。利用条件や進め方の詳細は各 skill を正本とする。
 
 - `main` または作業元ブランチとの差分を確認し、不要な変更が混ざっていないかを確認する。
 - PR 作成前や review 対応前に、必要なら `origin/main` との差分や乖離を見直す。
@@ -55,8 +49,6 @@
 - 変更に応じて必要な検証を実行し、実行したコマンドと結果を整理する。
 - 未実施の検証や確認できていないリスクがあれば、明示したうえでコミットする。
 - 重大な懸念が見つかった場合は、修正してからコミットまたは追加コミットする。
-
-Claude Code で作業している場合、self-review の代わりに `/codex:adversarial-review` を使ってもよい。これは Claude Code 専用のプラグイン機能であり、Codex エージェントによる批判的なレビューを実施できる。このリポジトリの開発には Codex も使用しているため、Claude Code 以外の環境では self-review を用いること。
 
 ## PR 追従修正
 
