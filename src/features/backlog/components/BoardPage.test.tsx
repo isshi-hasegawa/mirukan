@@ -10,7 +10,6 @@ const hookMocks = vi.hoisted(() => ({
   isLoading: false,
   error: null as string | null,
   loadItems: vi.fn().mockResolvedValue(undefined),
-  setItems: vi.fn(),
   onItemDeleted: null as ((itemId: string) => void) | null,
   onWorksAdded: null as (() => void) | null,
   handleDeleteItem: vi.fn(async (itemId: string) => {
@@ -39,7 +38,6 @@ vi.mock("../hooks/useWindowSize.ts", () => ({
 vi.mock("../hooks/useBacklogItems.ts", () => ({
   useBacklogItems: () => ({
     items: hookMocks.items,
-    setItems: hookMocks.setItems,
     isLoading: hookMocks.isLoading,
     error: hookMocks.error,
     loadItems: hookMocks.loadItems,
@@ -191,7 +189,6 @@ describe("BoardPage", () => {
     hookMocks.isLoading = false;
     hookMocks.error = null;
     hookMocks.loadItems.mockResolvedValue(undefined);
-    hookMocks.setItems.mockReset();
     hookMocks.handleDeleteItem.mockClear();
     hookMocks.handleMarkAsWatched.mockClear();
     hookMocks.signOut.mockClear();

@@ -13,7 +13,7 @@ type UseBoardPageControllerOptions = {
 export function useBoardPageController({ session }: UseBoardPageControllerOptions) {
   const { isMobileLayout } = useBoardPageLayout();
   const { feedback, feedbackUi } = useBacklogFeedback();
-  const { items, isLoading, error, loadItems } = useBacklogItems();
+  const { items, isLoading, error, loadItems } = useBacklogItems(session.user.id);
   const boardPageState = useBoardPageState({ isMobileLayout });
 
   const dnd = useBacklogDnd({
