@@ -1,6 +1,6 @@
 # Refactoring Backlog
 
-Issue [#163](https://github.com/isshi-hasegawa/mirukan/issues/163) の初期実装として、定期的な refactoring 候補の棚卸しを GitHub Actions で行う。
+定期的な refactoring 候補の棚卸しを GitHub Actions で行う。
 
 ## 初期スコープ
 
