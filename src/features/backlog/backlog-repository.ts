@@ -30,6 +30,16 @@ export async function fetchBacklogItems(): Promise<{
   };
 }
 
+export async function deleteBacklogItem(itemId: string): Promise<{ error: string | null }> {
+  const { error } = await supabase.from("backlog_items").delete().eq("id", itemId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { error: null };
+}
+
 export async function updateBacklogItem(
   itemId: string,
   update: BacklogItemUpdate,

@@ -3,22 +3,18 @@ import userEvent from "@testing-library/user-event";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
 import { ResetPasswordPage } from "./ResetPasswordPage.tsx";
 
-const supabaseMock = vi.hoisted(() => ({
-  auth: {
-    updateUser: vi.fn(),
-  },
+const authRepositoryMock = vi.hoisted(() => ({
+  updateUserPassword: vi.fn(),
 }));
 
-vi.mock("../../../lib/supabase.ts", () => ({
-  supabase: supabaseMock,
-}));
+vi.mock("../../../lib/auth-repository.ts", () => authRepositoryMock);
 
 setupTestLifecycle();
 
 describe("ResetPasswordPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    supabaseMock.auth.updateUser.mockResolvedValue({ error: null });
+    authRepositoryMock.updateUserPassword.mockResolvedValue({ error: null });
   });
 
   test("新しいパスワードと確認用パスワードのフォームを表示する", () => {
@@ -39,7 +35,7 @@ describe("ResetPasswordPage", () => {
     await user.type(screen.getByLabelText("確認用パスワード"), "newpassword123");
     await user.click(screen.getByRole("button", { name: "パスワードを更新する" }));
 
-    expect(supabaseMock.auth.updateUser).toHaveBeenCalledWith({ password: "newpassword123" });
+    expect(authRepositoryMock.updateUserPassword).toHaveBeenCalledWith("newpassword123");
 
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "パスワードを更新する" })).toBeEnabled(),
@@ -56,13 +52,13 @@ describe("ResetPasswordPage", () => {
     await user.click(screen.getByRole("button", { name: "パスワードを更新する" }));
 
     expect(await screen.findByText("確認用パスワードが一致しません。")).toBeInTheDocument();
-    expect(supabaseMock.auth.updateUser).not.toHaveBeenCalled();
+    expect(authRepositoryMock.updateUserPassword).not.toHaveBeenCalled();
   });
 
   test("更新失敗時はエラーメッセージを表示する", async () => {
     const user = userEvent.setup();
 
-    supabaseMock.auth.updateUser.mockResolvedValue({
+    authRepositoryMock.updateUserPassword.mockResolvedValue({
       error: { message: "Password should be at least 6 characters" },
     });
 
@@ -82,7 +78,7 @@ describe("ResetPasswordPage", () => {
     const user = userEvent.setup();
     let resolveUpdate: ((value: { error: null }) => void) | undefined;
 
-    supabaseMock.auth.updateUser.mockImplementation(
+    authRepositoryMock.updateUserPassword.mockImplementation(
       () =>
         new Promise<{ error: null }>((resolve) => {
           resolveUpdate = resolve;

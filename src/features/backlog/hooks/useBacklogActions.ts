@@ -1,12 +1,15 @@
 import type { Session } from "@supabase/supabase-js";
-import { supabase } from "../../../lib/supabase.ts";
 import type { TmdbSearchResult } from "../../../lib/tmdb.ts";
 import {
   buildMoveToStatusConfirmMessage,
   getTopSortOrder,
   planBacklogItemUpserts,
 } from "../backlog-item-utils.ts";
-import { upsertBacklogItemsToStatus } from "../backlog-repository.ts";
+import {
+  deleteBacklogItem,
+  updateBacklogItem,
+  upsertBacklogItemsToStatus,
+} from "../backlog-repository.ts";
 import { upsertTmdbWork } from "../work-repository.ts";
 import type { BacklogItem } from "../types.ts";
 import { browserBacklogFeedback, type BacklogFeedback } from "../ui-feedback.ts";
@@ -37,10 +40,10 @@ export function useBacklogActions({
   feedback = browserBacklogFeedback,
 }: Props) {
   const handleDeleteItem = async (itemId: string) => {
-    const { error: deleteError } = await supabase.from("backlog_items").delete().eq("id", itemId);
+    const { error: deleteError } = await deleteBacklogItem(itemId);
 
     if (deleteError) {
-      await Promise.resolve(feedback.alert(`削除に失敗しました: ${deleteError.message}`));
+      await Promise.resolve(feedback.alert(`削除に失敗しました: ${deleteError}`));
       return;
     }
 
@@ -51,13 +54,13 @@ export function useBacklogActions({
   const handleMarkAsWatched = async (itemId: string) => {
     const sortOrder = getTopSortOrder(items, "watched");
 
-    const { error: updateError } = await supabase
-      .from("backlog_items")
-      .update({ status: "watched", sort_order: sortOrder })
-      .eq("id", itemId);
+    const { error: updateError } = await updateBacklogItem(itemId, {
+      status: "watched",
+      sort_order: sortOrder,
+    });
 
     if (updateError) {
-      await Promise.resolve(feedback.alert(`変更に失敗しました: ${updateError.message}`));
+      await Promise.resolve(feedback.alert(`変更に失敗しました: ${updateError}`));
       return;
     }
 

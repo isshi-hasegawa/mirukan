@@ -3,18 +3,14 @@ import userEvent from "@testing-library/user-event";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
 import { getAuthRedirectUrl, LoginPage } from "./LoginPage.tsx";
 
-const supabaseMock = vi.hoisted(() => ({
-  auth: {
-    signInWithPassword: vi.fn(),
-    signUp: vi.fn(),
-    resetPasswordForEmail: vi.fn(),
-    signInWithOAuth: vi.fn(),
-  },
+const authRepositoryMock = vi.hoisted(() => ({
+  signInWithPassword: vi.fn(),
+  signUp: vi.fn(),
+  resetPasswordForEmail: vi.fn(),
+  signInWithOAuth: vi.fn(),
 }));
 
-vi.mock("../../../lib/supabase.ts", () => ({
-  supabase: supabaseMock,
-}));
+vi.mock("../../../lib/auth-repository.ts", () => authRepositoryMock);
 
 setupTestLifecycle();
 
@@ -22,13 +18,13 @@ describe("LoginPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.history.replaceState({}, "", "/");
-    supabaseMock.auth.signInWithPassword.mockResolvedValue({ error: null });
-    supabaseMock.auth.signUp.mockResolvedValue({
+    authRepositoryMock.signInWithPassword.mockResolvedValue({ error: null });
+    authRepositoryMock.signUp.mockResolvedValue({
       data: { session: null, user: { id: "user-1" } },
       error: null,
     });
-    supabaseMock.auth.resetPasswordForEmail.mockResolvedValue({ error: null });
-    supabaseMock.auth.signInWithOAuth.mockResolvedValue({ error: null });
+    authRepositoryMock.resetPasswordForEmail.mockResolvedValue({ error: null });
+    authRepositoryMock.signInWithOAuth.mockResolvedValue({ error: null });
   });
 
   test("ブランドロゴと説明を表示する", () => {
@@ -91,7 +87,7 @@ describe("LoginPage", () => {
     const user = userEvent.setup();
     let resolveSignIn: ((value: { error: null }) => void) | undefined;
 
-    supabaseMock.auth.signInWithPassword.mockImplementation(
+    authRepositoryMock.signInWithPassword.mockImplementation(
       () =>
         new Promise<{ error: null }>((resolve) => {
           resolveSignIn = resolve;
@@ -120,7 +116,7 @@ describe("LoginPage", () => {
   test("認証失敗時はエラーメッセージを表示して再入力できる", async () => {
     const user = userEvent.setup();
 
-    supabaseMock.auth.signInWithPassword.mockResolvedValue({
+    authRepositoryMock.signInWithPassword.mockResolvedValue({
       error: { message: "Invalid login credentials" },
     });
 
@@ -141,7 +137,7 @@ describe("LoginPage", () => {
   test("確認メール未完了の認証失敗は案内付き文言を表示する", async () => {
     const user = userEvent.setup();
 
-    supabaseMock.auth.signInWithPassword.mockResolvedValue({
+    authRepositoryMock.signInWithPassword.mockResolvedValue({
       error: { message: "Email not confirmed" },
     });
 
@@ -169,12 +165,8 @@ describe("LoginPage", () => {
     await user.type(screen.getByLabelText("確認用パスワード"), "password456");
     await user.click(screen.getByRole("button", { name: "確認メールを送信して登録" }));
 
-    expect(supabaseMock.auth.signUp).toHaveBeenCalledWith({
-      email: "new-user@example.com",
-      password: "password456",
-      options: {
-        emailRedirectTo: window.location.origin,
-      },
+    expect(authRepositoryMock.signUp).toHaveBeenCalledWith("new-user@example.com", "password456", {
+      emailRedirectTo: window.location.origin,
     });
     expect(await screen.findByText("確認メールを送信しました")).toBeInTheDocument();
     expect(
@@ -216,7 +208,7 @@ describe("LoginPage", () => {
     await user.click(screen.getByRole("button", { name: "確認メールを送信して登録" }));
 
     expect(await screen.findByText("確認用パスワードが一致しません。")).toBeInTheDocument();
-    expect(supabaseMock.auth.signUp).not.toHaveBeenCalled();
+    expect(authRepositoryMock.signUp).not.toHaveBeenCalled();
   });
 
   test("ログイン画面からパスワードを忘れた場合の画面に遷移できる", async () => {
@@ -240,7 +232,7 @@ describe("LoginPage", () => {
     await user.type(screen.getByLabelText("メールアドレス"), "akari@example.com");
     await user.click(screen.getByRole("button", { name: "リセットメールを送信" }));
 
-    expect(supabaseMock.auth.resetPasswordForEmail).toHaveBeenCalledWith("akari@example.com", {
+    expect(authRepositoryMock.resetPasswordForEmail).toHaveBeenCalledWith("akari@example.com", {
       redirectTo: window.location.origin,
     });
     expect(await screen.findByText("リセットメールを送信しました")).toBeInTheDocument();
@@ -289,7 +281,7 @@ describe("LoginPage", () => {
   test("redirect URL 不一致の失敗は設定起因の文言を表示する", async () => {
     const user = userEvent.setup();
 
-    supabaseMock.auth.resetPasswordForEmail.mockResolvedValue({
+    authRepositoryMock.resetPasswordForEmail.mockResolvedValue({
       error: { message: "Redirect URL not allowed" },
     });
 
@@ -343,18 +335,15 @@ describe("LoginPage", () => {
 
     await user.click(screen.getByRole("button", { name: "Googleでログイン" }));
 
-    expect(supabaseMock.auth.signInWithOAuth).toHaveBeenCalledWith({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin,
-      },
+    expect(authRepositoryMock.signInWithOAuth).toHaveBeenCalledWith({
+      redirectTo: window.location.origin,
     });
   });
 
   test("Google ログイン失敗時はエラーメッセージを表示する", async () => {
     const user = userEvent.setup();
 
-    supabaseMock.auth.signInWithOAuth.mockResolvedValue({
+    authRepositoryMock.signInWithOAuth.mockResolvedValue({
       error: { message: "OAuth error" },
     });
 

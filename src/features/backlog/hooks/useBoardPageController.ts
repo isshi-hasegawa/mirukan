@@ -1,7 +1,9 @@
 import type { Session } from "@supabase/supabase-js";
-import { useBoardPageInteractions } from "./useBoardPageInteractions.ts";
+import { useBacklogActions } from "./useBacklogActions.ts";
+import { useBacklogDnd } from "./useBacklogDnd.ts";
+import { useBacklogFeedback } from "./useBacklogFeedback.tsx";
+import { useBacklogItems } from "./useBacklogItems.ts";
 import { useBoardPageLayout } from "./useBoardPageLayout.ts";
-import { useBoardPageResources } from "./useBoardPageResources.ts";
 import { useBoardPageState } from "./useBoardPageState.ts";
 
 type UseBoardPageControllerOptions = {
@@ -10,18 +12,23 @@ type UseBoardPageControllerOptions = {
 
 export function useBoardPageController({ session }: UseBoardPageControllerOptions) {
   const { isMobileLayout } = useBoardPageLayout();
-  const { feedback, feedbackUi, items, isLoading, error, loadItems } = useBoardPageResources();
-  const boardPageState = useBoardPageState({
+  const { feedback, feedbackUi } = useBacklogFeedback();
+  const { items, isLoading, error, loadItems } = useBacklogItems();
+  const boardPageState = useBoardPageState({ isMobileLayout });
+
+  const dnd = useBacklogDnd({
+    items,
     isMobileLayout,
+    onAfterDrop: loadItems,
+    feedback,
   });
 
-  const { dnd, actions } = useBoardPageInteractions({
+  const actions = useBacklogActions({
     items,
     session,
-    isMobileLayout,
     loadItems,
     onItemDeleted: boardPageState.handleItemDeleted,
-    onWorksAdded: boardPageState.handleWorksAdded,
+    onWorksAdded: boardPageState.handleNavigateToStacked,
     feedback,
   });
 
@@ -62,7 +69,7 @@ export function useBoardPageController({ session }: UseBoardPageControllerOption
       session,
       onClose: boardPageState.handleCloseAddModal,
       onAdded: () => {
-        boardPageState.handleAdded();
+        boardPageState.handleNavigateToStacked();
         void loadItems();
       },
     },
@@ -73,7 +80,7 @@ export function useBoardPageController({ session }: UseBoardPageControllerOption
       items,
       onStateChange: boardPageState.setDetailModal,
       onClose: boardPageState.handleCloseDetail,
-      onReload: () => loadItems(),
+      onReload: loadItems,
     },
   };
 }
