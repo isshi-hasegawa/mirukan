@@ -61,30 +61,47 @@ export function parseMinutes(value: string | undefined): number | undefined {
     return undefined;
   }
 
-  const matches = [...value.matchAll(/(\d+)\s*(d|h|min)/g)];
-  if (matches.length === 0) {
-    return undefined;
+  let totalMinutes = 0;
+  let currentNumber = "";
+
+  for (let index = 0; index < value.length; index += 1) {
+    const character = value[index];
+
+    if (!character) {
+      continue;
+    }
+
+    if (character >= "0" && character <= "9") {
+      currentNumber += character;
+      continue;
+    }
+
+    if (character === " " || character === "\t") {
+      continue;
+    }
+
+    const amount = Number(currentNumber);
+    currentNumber = "";
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      continue;
+    }
+
+    if (character === "d") {
+      totalMinutes += amount * 60 * 8;
+      continue;
+    }
+
+    if (character === "h") {
+      totalMinutes += amount * 60;
+      continue;
+    }
+
+    if (character === "m" && value[index + 1] === "i" && value[index + 2] === "n") {
+      totalMinutes += amount;
+      index += 2;
+    }
   }
-
-  const totalMinutes = matches.reduce((sum, match) => {
-    const amount = Number(match[1]);
-    const unit = match[2];
-
-    if (!Number.isFinite(amount)) {
-      return sum;
-    }
-
-    switch (unit) {
-      case "d":
-        return sum + amount * 60 * 8;
-      case "h":
-        return sum + amount * 60;
-      case "min":
-        return sum + amount;
-      default:
-        return sum;
-    }
-  }, 0);
 
   return totalMinutes > 0 ? totalMinutes : undefined;
 }
