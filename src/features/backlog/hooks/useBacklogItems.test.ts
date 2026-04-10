@@ -60,8 +60,8 @@ describe("useBacklogItems", () => {
     expect(result.current.items).toEqual([]);
   });
 
-  test("loadItems の再呼び出しで isLoading が true に戻る", async () => {
-    mockFetchBacklogItems.mockResolvedValue({ data: [], error: null });
+  test("loadItems の再呼び出し中も isLoading は false のまま保たれる", async () => {
+    mockFetchBacklogItems.mockResolvedValue({ data: [stubItem], error: null });
 
     const { result } = renderHook(() => useBacklogItems(), {
       wrapper: TestQueryClientProvider,
@@ -78,10 +78,13 @@ describe("useBacklogItems", () => {
 
     void result.current.loadItems();
 
-    await waitFor(() => expect(result.current.isLoading).toBe(true));
+    // 再取得中も isLoading は false のまま（画面が暗転しない）
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.items).toEqual([stubItem]);
 
     resolveNext();
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await waitFor(() => expect(result.current.items).toEqual([]));
+    expect(result.current.isLoading).toBe(false);
   });
 });
