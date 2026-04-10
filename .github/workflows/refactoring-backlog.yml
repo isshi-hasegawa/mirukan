@@ -1,0 +1,91 @@
+name: Refactoring Backlog
+
+on:
+  schedule:
+    - cron: "17 2 * * 2,6"
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  VP_BOOTSTRAP_VERSION: 0.1.14
+  REFACTORING_BACKLOG_LABEL: refactoring-backlog
+  REFACTORING_BACKLOG_OUTPUT_DIR: artifacts/refactoring-backlog
+  SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
+  SONAR_BRANCH: main
+
+concurrency:
+  group: refactoring-backlog-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Enable Corepack
+        run: |
+          corepack enable
+          corepack install
+
+      - name: Get pnpm store path
+        id: pnpm-cache-dir
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        with:
+          path: ${{ steps.pnpm-cache-dir.outputs.STORE_PATH }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: pnpm --package="vite-plus@${VP_BOOTSTRAP_VERSION}" dlx vp install --frozen-lockfile
+
+      - name: Build refactoring backlog issue body
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: node --experimental-strip-types .github/scripts/refactoring-backlog.ts
+
+      - name: Create or update backlog issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          gh label create "$REFACTORING_BACKLOG_LABEL" \
+            --description "Periodic refactoring backlog generated from SonarCloud" \
+            --color "0969da" \
+            || true
+
+          issue_number=$(gh issue list \
+            --label "$REFACTORING_BACKLOG_LABEL" \
+            --state open \
+            --limit 100 \
+            --json number,title,body \
+            --jq 'map(select(.body | contains("<!-- refactoring-backlog:sonarcloud -->")) | .number) | first')
+
+          if [[ -n "${issue_number}" && "${issue_number}" != "null" ]]; then
+            gh issue edit "$issue_number" \
+              --title "$(cat "$REFACTORING_BACKLOG_OUTPUT_DIR/title.txt")" \
+              --body-file "$REFACTORING_BACKLOG_OUTPUT_DIR/body.md"
+          else
+            gh issue create \
+              --title "$(cat "$REFACTORING_BACKLOG_OUTPUT_DIR/title.txt")" \
+              --body-file "$REFACTORING_BACKLOG_OUTPUT_DIR/body.md" \
+              --label "$REFACTORING_BACKLOG_LABEL"
+          fi
