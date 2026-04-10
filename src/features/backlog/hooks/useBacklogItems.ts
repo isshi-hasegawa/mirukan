@@ -17,7 +17,13 @@ export function useBacklogItems(userId: string) {
   return {
     items: query.data ?? [],
     isLoading: query.isPending,
-    error: query.error instanceof Error ? query.error.message : null,
+    // キャッシュデータがない場合のみエラーを表示（バックグラウンド refetch エラーはキャッシュがあれば無視）
+    error:
+      !query.data && query.error
+        ? query.error instanceof Error
+          ? query.error.message
+          : null
+        : null,
     loadItems,
   };
 }
