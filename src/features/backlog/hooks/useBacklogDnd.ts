@@ -20,6 +20,7 @@ type Props = {
 };
 
 type RectLike = Pick<DOMRect, "top" | "height">;
+type TouchListKey = "touches" | "changedTouches";
 
 function findItemStatus(items: BacklogItem[], id: string): BacklogStatus | null {
   return items.find((i) => i.id === id)?.status ?? null;
@@ -32,7 +33,7 @@ function getDropSideFromRect(rect: RectLike, clientY: number) {
 function getClientYFromPointerEvent(
   event: MouseEvent | TouchEvent | null | undefined,
   rect: RectLike,
-  touchListKey: "touches" | "changedTouches" = "touches",
+  touchListKey: TouchListKey = "touches",
 ) {
   const fallbackY = rect.top + rect.height / 2;
 
@@ -202,10 +203,10 @@ export function useBacklogDnd({
       sortOrder = 1000;
     } else if (!prevItem) {
       sortOrder = nextItem!.sort_order - 1000;
-    } else if (!nextItem) {
-      sortOrder = prevItem.sort_order + 1000;
-    } else {
+    } else if (nextItem) {
       sortOrder = (prevItem.sort_order + nextItem.sort_order) / 2;
+    } else {
+      sortOrder = prevItem.sort_order + 1000;
     }
 
     setIsDropSyncPending(true);
