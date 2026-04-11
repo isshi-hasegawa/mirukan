@@ -73,13 +73,13 @@ function ToastNotification({
   timeoutMs,
   onUndo,
   onClose,
-}: {
+}: Readonly<{
   message: string;
   undoLabel?: string;
   timeoutMs: number;
   onUndo: () => void;
   onClose: () => void;
-}) {
+}>) {
   useEffect(() => {
     const id = setTimeout(onClose, timeoutMs);
     return () => clearTimeout(id);
@@ -135,11 +135,15 @@ export function useBacklogFeedback() {
         }),
       toast: (message, options) =>
         new Promise<ToastResult>((resolve) => {
-          setToastState({
-            message,
-            undoLabel: options?.undoLabel,
-            timeoutMs: options?.timeoutMs ?? 5000,
-            resolve,
+          setToastState((current) => {
+            // 既存トーストがあれば先に settle して Promise を解決させる
+            current?.resolve({ undone: false });
+            return {
+              message,
+              undoLabel: options?.undoLabel,
+              timeoutMs: options?.timeoutMs ?? 5000,
+              resolve,
+            };
           });
         }),
     }),

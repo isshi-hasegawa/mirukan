@@ -60,8 +60,9 @@ export function useBacklogActions({
     });
 
     if (undone) {
-      // 元の位置に戻す
+      // 元の位置に戻す（loadItems による再同期で既に復元済みの場合は挿入しない）
       setLocalItems((prev) => {
+        if (prev.some((i) => i.id === itemToDelete.id)) return prev;
         const next = [...prev];
         next.splice(Math.min(itemIndex, next.length), 0, itemToDelete);
         return next;
