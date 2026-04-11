@@ -11,6 +11,7 @@ const REFACTORING_BACKLOG_MARKER = "<!-- refactoring-backlog:sonarcloud -->";
 const DEFAULT_BACKLOG_EXCLUDE_PATTERNS = [
   "pnpm-lock.yaml",
   "supabase/migrations/**",
+  "supabase/*.sample.sql",
   "supabase/templates/**",
 ] as const;
 
