@@ -12,38 +12,27 @@
 - テストがある変更では、関連する `vp test` を実行する。範囲が判断しづらい場合は `vp test` を実行する。
 - `main` には直接コミットしない。
 - 変更は作業ブランチ上でコミットし、PR 経由で `main` に取り込む。
-- 新しい作業は、通常は現在の clone 上で最新の `main` から作業ブランチを作って始める。
-- worktree を使うかの判断は `.agents/skills/task-start/SKILL.md` の「画面確認の要否分類」に従う。
-- 既存作業の継続では、その作業用ブランチを使う。別作業になった場合のみ新しい作業ブランチを作成する。
-- 既存作業の継続でも、判断や実装の前提が古くならないよう `origin/main` を随時確認する。
-- ブランチ名は作業開始時点の内容に基づいて付け、作業途中で内容が多少変わっても原則として変更しない。別作業になった場合のみ新しい作業ブランチを作成する。
 - 変更後は適切な単位でコミットする。
-
-## 作業開始手順
-
-通常の開始フローでは `.agents/skills/task-start/SKILL.md` を参照する。
-
-不要 branch や余った worktree を整理したいときは `.agents/skills/branch-cleanup/SKILL.md` を使う。
 
 ## ブランチ命名
 
 1. ブランチ名は `feat/...` `fix/...` `chore/...` `docs/...` `refactor/...` `test/...` `ci/...` などの種別を先頭に付ける。
 2. Issue がある作業では `type/<issue-number>-<slug>`、Issue がない作業では `type/<slug>` の形式を使う。
+3. ブランチ名は作業開始時点の内容に基づいて付け、作業途中で内容が多少変わっても原則として変更しない。別作業になった場合のみ新しい作業ブランチを作成する。
+
+## 作業フロー
+
+- **作業開始**: コード変更を始めるときは必ず `.agents/skills/task-start/SKILL.md` に従う。継続作業か新規作業かの判定、ブランチ作成、worktree の要否判断をここで行う。
+- **実装後**: 必ず `.agents/skills/self-review/SKILL.md` に従う。シンプルな変更でも省略しない。
+- **PR 作成**: self-review 通過後、PR が未作成なら `.agents/skills/pr-open/SKILL.md` に従う。
+- **PR 追従**: レビュー指摘や CI 失敗への対応は `.agents/skills/pr-followup/SKILL.md` に従う。
+- **後始末**: 不要 branch や余った worktree の整理は `.agents/skills/branch-cleanup/SKILL.md` に従う。
 
 ## Skill の命名と構成
 
 - 基本は「作業フロー」単位で切り、フロー上の位置が分かる名前にする。
 - 流れは **開始 → 確認 → PR → 追従 → 後始末** に沿わせる。
 - 対象限定 skill は例外として扱い、`<対象>-<操作>` の形式にする。
-
-## 実装後チェック
-
-実装後は必ず self-review を実施する。`.agents/skills/self-review/SKILL.md` を参照する。シンプルな変更であっても省略しない。
-追加の見直しが必要なときだけ、節目ごとに self-review または `.agents/skills/adversarial-review/SKILL.md` を使う。利用条件や進め方の詳細は各 skill を正本とする。
-
-## PR 追従修正
-
-既存 PR のレビュー指摘対応や CI 修正は `.agents/skills/pr-followup/SKILL.md` を参照する。
 
 ## コミット
 

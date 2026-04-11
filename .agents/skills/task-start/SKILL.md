@@ -26,7 +26,7 @@ description: 作業を始めたいときに使う。現在の clone とブラン
 
 ## 判断ルール
 
-- 継続作業なら現在の clone / branch をそのまま使う
+- 継続作業なら現在の clone / branch をそのまま使う。別作業になった場合のみ新しい作業ブランチを作成する
 - 新規作業では本体側 `main` を `origin/main` に fast-forward で最新化してから branch を切る
 - 継続作業でも、着手前に `origin/main` を確認して前提が古くなっていないかを見る
 - branch 名は `AGENTS.md` の命名規則に従う
