@@ -62,7 +62,7 @@ function applyOptimisticItems(
   items: BacklogItem[],
   workIds: string[],
   optimisticItems: BacklogItem[],
-) {
+): BacklogItem[] {
   const plan = planBacklogItemUpserts(items, workIds, "stacked");
   const movedItemsByWorkId = new Map(
     plan.actions.flatMap((action) =>
@@ -132,7 +132,7 @@ function createTmdbWorkSummary(workId: string, result: TmdbSearchResult): WorkSu
 function createSeasonWorkSummaries(
   result: { workIds: string[] },
   seasonTargets: ReturnType<typeof buildSelectedSeasonTargets>,
-) {
+): WorkSummary[] {
   return seasonTargets.map((target, index) => ({
     id: result.workIds[index]!,
     title: target.title,
