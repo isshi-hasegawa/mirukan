@@ -104,18 +104,16 @@ describe("calcBackgroundFitScore: 評価による補正", () => {
 
   test("高評価（IMDb≥8.0）はジャンルスコア≥50を25に抑える", () => {
     expect(
-      calcBackgroundFitScore(["アクション"], { imdbRating: 8.0, rottenTomatoesScore: null }),
+      calcBackgroundFitScore(["アクション"], { imdbRating: 8, rottenTomatoesScore: null }),
     ).toBe(25);
   });
 
   test("高評価でもジャンルスコアが0（low genre）なら0のまま", () => {
-    expect(calcBackgroundFitScore(["ホラー"], { imdbRating: 9.0, rottenTomatoesScore: 95 })).toBe(
-      0,
-    );
+    expect(calcBackgroundFitScore(["ホラー"], { imdbRating: 9, rottenTomatoesScore: 95 })).toBe(0);
   });
 
   test("ジャンルスコアが25（low-mid）なら高評価でも25のまま", () => {
-    expect(calcBackgroundFitScore([], { imdbRating: 9.0, rottenTomatoesScore: 95 })).toBe(25);
+    expect(calcBackgroundFitScore([], { imdbRating: 9, rottenTomatoesScore: 95 })).toBe(25);
   });
 
   test("評価がそこそこ（RT<80かつIMDb<8.0）はジャンルスコアをそのまま返す", () => {

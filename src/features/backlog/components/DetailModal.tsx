@@ -8,7 +8,7 @@ import { TmdbLink } from "./TmdbLink.tsx";
 import { useDetailModalActions } from "../hooks/useDetailModalActions.ts";
 import { DetailModalNoteField } from "./DetailModalNoteField.tsx";
 import { DetailModalPlatformField } from "./DetailModalPlatformField.tsx";
-import type { BacklogItem, BacklogStatus, DetailModalState } from "../types.ts";
+import type { BacklogItem, DetailModalState } from "../types.ts";
 
 type Props = {
   item: BacklogItem | null;
@@ -148,7 +148,7 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onRelo
                       ? " bg-primary border-primary text-primary-foreground font-semibold"
                       : " border-[rgba(92,59,35,0.2)] bg-transparent text-muted-foreground hover:bg-[rgba(92,59,35,0.08)] hover:text-foreground"
                   }`}
-                  onClick={() => void handleStatusSelect(s as BacklogStatus)}
+                  onClick={() => void handleStatusSelect(s)}
                 >
                   {statusLabels[s]}
                 </button>

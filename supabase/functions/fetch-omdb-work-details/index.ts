@@ -7,7 +7,7 @@ import {
   methodNotAllowedResponse,
   readJsonBody,
 } from "../_shared/http.ts";
-import { fetchOmdbDetails, type OmdbWorkDetails } from "../_shared/omdb.ts";
+import { fetchOmdbDetails } from "../_shared/omdb.ts";
 
 type FetchOmdbWorkDetailsRequest = {
   imdbId?: string;

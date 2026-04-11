@@ -140,7 +140,7 @@ describe("getWorkTypeLabel", () => {
 });
 
 describe("getWorkMetadataLabels", () => {
-  const baseWork: BacklogItem["works"] = {
+  const baseWork: NonNullable<BacklogItem["works"]> = {
     id: "work-1",
     title: "テスト作品",
     work_type: "movie",
@@ -168,7 +168,7 @@ describe("getWorkMetadataLabels", () => {
 
   test("映画は公開年と上映時間をそのまま表示する", () => {
     expect(
-      getWorkMetadataLabels(baseWork!, {
+      getWorkMetadataLabels(baseWork, {
         includeReleaseYear: true,
         includeRuntime: true,
       }),
@@ -179,7 +179,7 @@ describe("getWorkMetadataLabels", () => {
     expect(
       getWorkMetadataLabels(
         {
-          ...baseWork!,
+          ...baseWork,
           work_type: "series",
           tmdb_media_type: "tv",
           runtime_minutes: null,
