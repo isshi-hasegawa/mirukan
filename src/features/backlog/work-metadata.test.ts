@@ -172,4 +172,18 @@ describe("buildTmdbWorkUpdate", () => {
       last_tmdb_synced_at: "2026-04-01T00:00:00.000Z",
     });
   });
+
+  test("imdbId があるときだけ imdb_id を含める", () => {
+    const withImdbId = buildTmdbWorkUpdate(
+      makeDetails("movie", 95, null, { imdbId: "tt0133093" }),
+      "2026-04-01T00:00:00.000Z",
+    );
+    const withoutImdbId = buildTmdbWorkUpdate(
+      makeDetails("movie", 95, null, { imdbId: undefined }),
+      "2026-04-01T00:00:00.000Z",
+    );
+
+    expect(withImdbId).toMatchObject({ imdb_id: "tt0133093" });
+    expect(withoutImdbId).not.toHaveProperty("imdb_id");
+  });
 });
