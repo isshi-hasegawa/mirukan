@@ -1,4 +1,4 @@
-import type { BacklogItem, WorkSummary } from "../features/backlog/types.ts";
+import type { WorkSummary } from "../features/backlog/types.ts";
 
 export function createWorkSummary(overrides: Partial<WorkSummary> = {}): WorkSummary {
   return {
@@ -25,18 +25,6 @@ export function createWorkSummary(overrides: Partial<WorkSummary> = {}): WorkSum
     imdb_rating: null,
     imdb_votes: null,
     metacritic_score: null,
-    ...overrides,
-  };
-}
-
-export function createBacklogItem(overrides: Partial<BacklogItem> = {}): BacklogItem {
-  return {
-    id: "item-1",
-    status: "stacked",
-    primary_platform: null,
-    note: null,
-    sort_order: 1000,
-    works: createWorkSummary(),
     ...overrides,
   };
 }
