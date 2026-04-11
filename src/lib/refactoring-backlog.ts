@@ -1,5 +1,9 @@
 const REFACTORING_BACKLOG_MARKER = "<!-- refactoring-backlog:sonarcloud -->";
-const DEFAULT_BACKLOG_EXCLUDE_PATTERNS = ["pnpm-lock.yaml", "supabase/templates/**"] as const;
+const DEFAULT_BACKLOG_EXCLUDE_PATTERNS = [
+  "pnpm-lock.yaml",
+  "supabase/templates/**",
+  "supabase/seed.sql",
+] as const;
 const REPO_PATH_SEGMENTS = ["src/", "supabase/", ".github/", "docs/", "public/"] as const;
 
 export type SonarMeasureKey =

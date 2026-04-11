@@ -126,6 +126,10 @@ describe("signal ranking", () => {
           path: "supabase/templates/confirmation.html",
           measures: { duplicated_lines_density: 88 },
         },
+        {
+          path: "supabase/seed.sql",
+          measures: { ncloc: 500 },
+        },
       ]),
     ).toEqual(files);
   });
