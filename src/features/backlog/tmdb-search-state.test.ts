@@ -1,5 +1,5 @@
 import { setupTestLifecycle } from "../../test/test-lifecycle.ts";
-import { createWorkSummary } from "../../test/backlog-fixtures.ts";
+import { createBacklogItem, createWorkSummary } from "../../test/backlog-fixtures.ts";
 import {
   buildDuplicateState,
   buildTvSelectionState,
@@ -28,21 +28,13 @@ function createSearchResult(
 }
 
 function createItem(overrides: Partial<BacklogItem> = {}): BacklogItem {
-  return {
-    id: "item-1",
-    status: "stacked",
-    primary_platform: null,
-    note: null,
-    sort_order: 1000,
-    works: createWorkSummary({
-      title: "既存作品",
-      work_type: "series",
-      tmdb_media_type: "tv",
-      release_date: "2024-01-01",
-      season_count: 2,
-    }),
-    ...overrides,
-  };
+  return createBacklogItem(overrides, {
+    title: "既存作品",
+    work_type: "series",
+    tmdb_media_type: "tv",
+    release_date: "2024-01-01",
+    season_count: 2,
+  });
 }
 
 describe("mergeSeasonNumbers", () => {

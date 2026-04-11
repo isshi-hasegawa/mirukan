@@ -1,19 +1,18 @@
 import { setupTestLifecycle } from "../../test/test-lifecycle.ts";
-import { createWorkSummary } from "../../test/backlog-fixtures.ts";
+import { createBacklogItem, createWorkSummary } from "../../test/backlog-fixtures.ts";
 import { applyModeFilter, sortStackedItemsByViewingMode } from "./viewing-mode.ts";
 import type { BacklogItem } from "./types.ts";
 
 setupTestLifecycle();
 
 function createItem(id: string, sortOrder: number): BacklogItem {
-  return {
-    id,
-    status: "stacked",
-    primary_platform: null,
-    note: null,
-    sort_order: sortOrder,
-    works: createWorkSummary({ id: `work-${id}` }),
-  };
+  return createBacklogItem(
+    {
+      id,
+      sort_order: sortOrder,
+    },
+    { id: `work-${id}` },
+  );
 }
 
 describe("applyModeFilter", () => {

@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
-import { createWorkSummary } from "../../../test/backlog-fixtures.ts";
+import { createBacklogItem } from "../../../test/backlog-fixtures.ts";
 import type { BacklogItem, BacklogStatus } from "../types.ts";
 import { BoardPage } from "./BoardPage.tsx";
 
@@ -135,15 +135,7 @@ vi.mock("./DetailModal.tsx", () => ({
 }));
 
 function createItem(overrides: Partial<BacklogItem> = {}): BacklogItem {
-  return {
-    id: "item-1",
-    status: "stacked",
-    primary_platform: null,
-    note: null,
-    sort_order: 1000,
-    works: createWorkSummary({ title: "作品1" }),
-    ...overrides,
-  };
+  return createBacklogItem(overrides, { title: "作品1" });
 }
 
 function createDeferred<T>() {

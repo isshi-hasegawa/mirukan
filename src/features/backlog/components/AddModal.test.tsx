@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import type { Session } from "@supabase/supabase-js";
 import type { TmdbSearchResult, TmdbSeasonOption } from "../../../lib/tmdb.ts";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
-import { createWorkSummary } from "../../../test/backlog-fixtures.ts";
+import { createBacklogItem } from "../../../test/backlog-fixtures.ts";
 import type { BacklogItem } from "../types.ts";
 import { AddModal } from "./AddModal.tsx";
 
@@ -83,15 +83,7 @@ function createSeasonOption(
 }
 
 function createItem(overrides: Partial<BacklogItem> = {}): BacklogItem {
-  return {
-    id: "item-1",
-    status: "stacked",
-    primary_platform: null,
-    note: null,
-    sort_order: 1000,
-    works: createWorkSummary({ title: "既存作品", release_date: "2024-01-01" }),
-    ...overrides,
-  };
+  return createBacklogItem(overrides, { title: "既存作品", release_date: "2024-01-01" });
 }
 
 type RenderOptions = {

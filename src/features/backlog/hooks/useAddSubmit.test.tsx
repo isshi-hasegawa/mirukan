@@ -2,7 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Session } from "@supabase/supabase-js";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
-import { createWorkSummary } from "../../../test/backlog-fixtures.ts";
+import { createBacklogItem } from "../../../test/backlog-fixtures.ts";
 import type { BacklogItem } from "../types.ts";
 import { useAddSubmit } from "./useAddSubmit.ts";
 
@@ -37,15 +37,7 @@ vi.mock("../work-repository.ts", async () => {
 setupTestLifecycle();
 
 function createItem(overrides: Partial<BacklogItem> = {}): BacklogItem {
-  return {
-    id: "item-1",
-    status: "stacked",
-    primary_platform: null,
-    note: null,
-    sort_order: 1000,
-    works: createWorkSummary({ title: "作品1" }),
-    ...overrides,
-  };
+  return createBacklogItem(overrides, { title: "作品1" });
 }
 
 type HarnessProps = {

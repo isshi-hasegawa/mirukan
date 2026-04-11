@@ -1,6 +1,7 @@
 import { renderHook, act } from "@testing-library/react";
 import type { Session } from "@supabase/supabase-js";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
+import { createBacklogItem } from "../../../test/backlog-fixtures.ts";
 import type { BacklogItem } from "../types.ts";
 import { useBoardPageController } from "./useBoardPageController.ts";
 
@@ -60,15 +61,7 @@ setupTestLifecycle();
 const session = { user: { id: "user-1" } } as Session;
 
 function createItem(overrides: Partial<BacklogItem> = {}): BacklogItem {
-  return {
-    id: "item-1",
-    status: "stacked",
-    primary_platform: null,
-    note: null,
-    sort_order: 1000,
-    works: null,
-    ...overrides,
-  };
+  return createBacklogItem({ works: null, ...overrides });
 }
 
 describe("useBoardPageController", () => {

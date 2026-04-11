@@ -2,6 +2,7 @@ import { renderHook, act } from "@testing-library/react";
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from "@dnd-kit/core";
 import { useBacklogDnd } from "./useBacklogDnd.ts";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
+import { createBacklogItem } from "../../../test/backlog-fixtures.ts";
 import type { BacklogItem } from "../types.ts";
 
 const supabaseMocks = vi.hoisted(() => {
@@ -21,15 +22,7 @@ vi.mock("../../../lib/supabase.ts", () => ({
 setupTestLifecycle();
 
 function createItem(overrides: Partial<BacklogItem> = {}): BacklogItem {
-  return {
-    id: "item-1",
-    status: "stacked",
-    primary_platform: null,
-    note: null,
-    sort_order: 1000,
-    works: null,
-    ...overrides,
-  };
+  return createBacklogItem({ works: null, ...overrides });
 }
 
 function makeRect(top = 100, height = 200): DOMRect {
