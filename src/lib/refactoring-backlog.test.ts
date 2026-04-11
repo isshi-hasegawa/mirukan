@@ -32,6 +32,15 @@ describe("parseMinutes", () => {
     expect(parseMinutes("unknown")).toBeUndefined();
   });
 
+  test("7 桁超の digit run を途中から誤マッチしない", () => {
+    // \b がないと "1234567h" が "234567h" としてマッチし、
+    // 234567 時間という過小値に誤解釈される。
+    expect(parseMinutes("1234567h")).toBeUndefined();
+    expect(parseMinutes("1234567min")).toBeUndefined();
+    // 6 桁以内は正常にマッチする
+    expect(parseMinutes("123456h")).toBe(123456 * 60);
+  });
+
   test("長大な非マッチ入力でも super-linear にならず短時間で完了する", () => {
     // ReDoS 回帰テスト: 量化子が上限付きで固定コストのため、
     // 桁数を増やしても線形時間で完了すること。
