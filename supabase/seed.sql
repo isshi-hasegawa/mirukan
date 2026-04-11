@@ -11,6 +11,7 @@ declare
   work_tmdb_season2 constant uuid := 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4';
   work_manual_series constant uuid := 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5';
   work_tmdb_interrupted constant uuid := 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa6';
+  genres_drama_crime constant text[] := array['Drama', 'Crime'];
 begin
   insert into auth.users (
     instance_id,
@@ -237,7 +238,7 @@ begin
       7,
       5,
       null,
-      array['Drama', 'Crime'],
+      genres_drama_crime,
       75,
       0,
       100
@@ -262,7 +263,7 @@ begin
       13,
       null,
       2,
-      array['Drama', 'Crime'],
+      genres_drama_crime,
       75,
       0,
       100
