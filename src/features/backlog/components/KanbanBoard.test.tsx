@@ -3,8 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { withNuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { OnUrlUpdateFunction } from "nuqs/adapters/testing";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
-import type { BacklogItem, BacklogStatus, WorkSummary } from "../types.ts";
-import type { ViewingMode } from "../types.ts";
+import type { BacklogItem, BacklogStatus, ViewingMode, WorkSummary } from "../types.ts";
 import { KanbanBoard } from "./KanbanBoard.tsx";
 
 vi.mock("./KanbanColumn.tsx", () => ({

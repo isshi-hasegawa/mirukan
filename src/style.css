@@ -95,6 +95,9 @@
 
 * {
   box-sizing: border-box;
+  /* Firefox: 細いスクロールバーを透明で用意（hover 時に色付く） */
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
 }
 
 /* モバイルタブのスクロールバーを非表示 */
@@ -146,12 +149,7 @@
   }
 }
 
-/* Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
-}
-
+/* Firefox: ホバー時にスクロールバーを色付きで表示 */
 @media (hover: hover) {
   *:hover {
     scrollbar-color: rgba(255, 140, 66, 0.25) transparent;

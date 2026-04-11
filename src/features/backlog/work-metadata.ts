@@ -75,7 +75,7 @@ export type RatingInfo = {
 function isHighlyRated({ imdbRating, rottenTomatoesScore }: RatingInfo): boolean {
   return (
     (rottenTomatoesScore !== null && rottenTomatoesScore >= 80) ||
-    (imdbRating !== null && imdbRating >= 8.0)
+    (imdbRating !== null && imdbRating >= 8)
   );
 }
 

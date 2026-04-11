@@ -80,6 +80,33 @@ function moveItemToColumnEnd(items: BacklogItem[], activeId: string, status: Bac
   return [...others, ...columnItems, { ...activeItem, status }];
 }
 
+function resolveDropSide(
+  activatorEvent: DragOverEvent["activatorEvent"],
+  rect: RectLike,
+): "before" | "after" {
+  const clientY = getClientYFromPointerEvent(
+    activatorEvent as MouseEvent | TouchEvent | null | undefined,
+    rect,
+  );
+  return getDropSideFromRect(rect, clientY);
+}
+
+function calculateInsertedSortOrder(
+  prevSortOrder: number | null,
+  nextSortOrder: number | null,
+): number {
+  if (prevSortOrder === null && nextSortOrder === null) {
+    return 1000;
+  }
+  if (prevSortOrder === null) {
+    return (nextSortOrder as number) - 1000;
+  }
+  if (nextSortOrder === null) {
+    return prevSortOrder + 1000;
+  }
+  return (prevSortOrder + nextSortOrder) / 2;
+}
+
 export function useBacklogDnd({
   items,
   isMobileLayout,
@@ -134,31 +161,22 @@ export function useBacklogDnd({
         if (overId.startsWith("column:")) return prev;
         const colItems = prev.filter((i) => i.status === overStatus);
         const others = prev.filter((i) => i.status !== overStatus);
-        const clientY = getClientYFromPointerEvent(
-          activatorEvent as MouseEvent | TouchEvent | null | undefined,
-          over.rect,
-        );
-        const side = getDropSideFromRect(over.rect, clientY);
+        const side = resolveDropSide(activatorEvent, over.rect);
         return [...others, ...getReorderedColumnItems(colItems, activeId, overId, side)];
-      } else {
-        // 列またぎ: ステータスを変更して over アイテムの位置に挿入
-        const withUpdatedStatus = prev.map((i) =>
-          i.id === activeId ? { ...i, status: overStatus } : i,
-        );
-
-        if (overId.startsWith("column:")) {
-          return moveItemToColumnEnd(prev, activeId, overStatus);
-        }
-
-        const newColItems = withUpdatedStatus.filter((i) => i.status === overStatus);
-        const others = withUpdatedStatus.filter((i) => i.status !== overStatus);
-        const clientY = getClientYFromPointerEvent(
-          activatorEvent as MouseEvent | TouchEvent | null | undefined,
-          over.rect,
-        );
-        const side = getDropSideFromRect(over.rect, clientY);
-        return [...others, ...getReorderedColumnItems(newColItems, activeId, overId, side)];
       }
+
+      // 列またぎ: ステータスを変更して over アイテムの位置に挿入
+      if (overId.startsWith("column:")) {
+        return moveItemToColumnEnd(prev, activeId, overStatus);
+      }
+
+      const withUpdatedStatus = prev.map((i) =>
+        i.id === activeId ? { ...i, status: overStatus } : i,
+      );
+      const newColItems = withUpdatedStatus.filter((i) => i.status === overStatus);
+      const others = withUpdatedStatus.filter((i) => i.status !== overStatus);
+      const side = resolveDropSide(activatorEvent, over.rect);
+      return [...others, ...getReorderedColumnItems(newColItems, activeId, overId, side)];
     });
   };
 
@@ -196,17 +214,10 @@ export function useBacklogDnd({
     // sort_order はサーバーアイテムの値を使って補間する
     const prevItem = prevId ? items.find((i) => i.id === prevId) : null;
     const nextItem = nextId ? items.find((i) => i.id === nextId) : null;
-
-    let sortOrder: number;
-    if (!prevItem && !nextItem) {
-      sortOrder = 1000;
-    } else if (!prevItem) {
-      sortOrder = nextItem!.sort_order - 1000;
-    } else if (nextItem) {
-      sortOrder = (prevItem.sort_order + nextItem.sort_order) / 2;
-    } else {
-      sortOrder = prevItem.sort_order + 1000;
-    }
+    const sortOrder = calculateInsertedSortOrder(
+      prevItem?.sort_order ?? null,
+      nextItem?.sort_order ?? null,
+    );
 
     setIsDropSyncPending(true);
     try {

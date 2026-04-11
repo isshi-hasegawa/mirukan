@@ -135,7 +135,7 @@ export async function upsertManualWork(
   if (conflicted) {
     return buildOkIdResponse(conflicted.id);
   }
-  return buildErrorIdResponse(insertResult.error!, 409, "Conflict");
+  return buildErrorIdResponse(insertResult.error, 409, "Conflict");
 }
 
 export function buildSelectedSeasonTargets(
