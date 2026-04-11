@@ -2,6 +2,7 @@ import { renderHook, act } from "@testing-library/react";
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from "@dnd-kit/core";
 import { useBacklogDnd } from "./useBacklogDnd.ts";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
+import { createWorkSummary } from "../../../test/backlog-fixtures.ts";
 import type { BacklogItem } from "../types.ts";
 
 const supabaseMocks = vi.hoisted(() => {
@@ -128,6 +129,7 @@ describe("useBacklogDnd", () => {
     supabaseMocks.update.mockClear();
     onAfterDrop.mockClear();
     feedback.alert.mockClear();
+    feedback.toast.mockClear();
   });
 
   test("handleDragStart で dragItemId がセットされる", () => {
@@ -173,6 +175,62 @@ describe("useBacklogDnd", () => {
     );
     expect(onAfterDrop).toHaveBeenCalledTimes(1);
     expect(result.current.dragItemId).toBeNull();
+  });
+
+  test("handleDragEnd 成功後に列またぎのメッセージで feedback.toast を呼ぶ", async () => {
+    const items = [
+      createItem({
+        id: "item-1",
+        status: "stacked",
+        sort_order: 1000,
+        works: createWorkSummary({ title: "テスト作品" }),
+      }),
+      createItem({ id: "item-2", status: "watching", sort_order: 1000 }),
+    ];
+    const { result } = renderDnd(items);
+
+    dragOver(result, "item-2", 260);
+
+    await act(async () => {
+      await result.current.handleDragEnd({
+        active: { id: "item-1" },
+        over: { id: "item-2", rect: makeRect(100, 200) },
+        activatorEvent: null,
+      } as unknown as DragEndEvent);
+    });
+
+    expect(feedback.toast).toHaveBeenCalledWith(
+      "「テスト作品」を「視聴中」に移動しました",
+      expect.objectContaining({ onUndo: expect.any(Function) }),
+    );
+  });
+
+  test("handleDragEnd 成功後に同列並び替えのメッセージで feedback.toast を呼ぶ", async () => {
+    const items = [
+      createItem({
+        id: "item-1",
+        status: "stacked",
+        sort_order: 1000,
+        works: createWorkSummary({ title: "テスト作品" }),
+      }),
+      createItem({ id: "item-2", status: "stacked", sort_order: 2000 }),
+    ];
+    const { result } = renderDnd(items);
+
+    dragOver(result, "item-2", 220);
+
+    await act(async () => {
+      await result.current.handleDragEnd({
+        active: { id: "item-1" },
+        over: { id: "item-2", rect: makeRect(100, 200) },
+        activatorEvent: null,
+      } as unknown as DragEndEvent);
+    });
+
+    expect(feedback.toast).toHaveBeenCalledWith(
+      "「テスト作品」の並び順を変更しました",
+      expect.objectContaining({ onUndo: expect.any(Function) }),
+    );
   });
 
   test("handleDragEnd で supabase がエラーを返したら alert を出して onAfterDrop を呼ばない", async () => {

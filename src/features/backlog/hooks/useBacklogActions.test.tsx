@@ -79,7 +79,7 @@ function HookHarness({
     toast: (message: string) => void;
   };
 }) {
-  const { handleDeleteItem, handleAddTmdbWorksToStacked } = useBacklogActions({
+  const { handleDeleteItem, handleMarkAsWatched, handleAddTmdbWorksToStacked } = useBacklogActions({
     items,
     session: { user: { id: "user-1" } } as Session,
     loadItems,
@@ -92,6 +92,9 @@ function HookHarness({
     <>
       <button type="button" onClick={() => void handleDeleteItem("item-1")}>
         削除
+      </button>
+      <button type="button" onClick={() => void handleMarkAsWatched("item-1")}>
+        視聴済み
       </button>
       <button type="button" onClick={() => void handleAddTmdbWorksToStacked(results)}>
         追加
@@ -110,6 +113,54 @@ describe("useBacklogActions", () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+  });
+
+  test("視聴済みに移動成功後に feedback.toast をタイトル付きメッセージで呼ぶ", async () => {
+    const feedback = {
+      alert: vi.fn().mockResolvedValue(undefined),
+      confirm: vi.fn().mockResolvedValue(true),
+      toast: vi.fn(),
+    };
+    const loadItems = vi.fn().mockResolvedValue(undefined);
+
+    const user = userEvent.setup();
+
+    render(
+      <HookHarness
+        items={[createItem({ id: "item-1", status: "stacked" })]}
+        feedback={feedback}
+        loadItems={loadItems}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "視聴済み" }));
+
+    await waitFor(() =>
+      expect(feedback.toast).toHaveBeenCalledWith(
+        "「作品1」を「視聴済み」に移動しました",
+        expect.objectContaining({ onUndo: expect.any(Function) }),
+      ),
+    );
+    expect(loadItems).toHaveBeenCalled();
+  });
+
+  test("視聴済みに移動失敗時は toast を呼ばずに alert を出す", async () => {
+    const feedback = {
+      alert: vi.fn().mockResolvedValue(undefined),
+      confirm: vi.fn().mockResolvedValue(true),
+      toast: vi.fn(),
+    };
+    repositoryMocks.updateBacklogItem.mockResolvedValueOnce({ error: "更新失敗" });
+
+    const user = userEvent.setup();
+    render(<HookHarness feedback={feedback} />);
+
+    await user.click(screen.getByRole("button", { name: "視聴済み" }));
+
+    await waitFor(() =>
+      expect(feedback.alert).toHaveBeenCalledWith(expect.stringContaining("更新失敗")),
+    );
+    expect(feedback.toast).not.toHaveBeenCalled();
   });
 
   test("delete 失敗時は alert を出して reload や state 更新をしない", async () => {
