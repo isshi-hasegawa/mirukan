@@ -17,10 +17,11 @@ declare
   work_tmdb_season2 constant uuid := 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4';
   work_manual_series constant uuid := 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5';
   work_tmdb_interrupted constant uuid := 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa6';
-  work_type_movie constant text := 'movie';
+  tmdb_media_type_movie constant public.tmdb_media_type := 'movie';
+  work_type_movie constant public.work_type := 'movie';
   default_sort_order constant integer := 1000;
   two_days_ago constant interval := interval '2 days';
-  platform_netflix constant text := 'netflix';
+  platform_netflix constant public.primary_platform := 'netflix';
   manual_movie_title constant text := 'あの日の街角';
   genres_drama_crime constant text[] := array['Drama', 'Crime'];
 begin
@@ -208,7 +209,7 @@ begin
       work_tmdb_movie,
       user_akari,
       'tmdb',
-      work_type_movie,
+      tmdb_media_type_movie,
       603,
       work_type_movie,
       null,
@@ -308,7 +309,7 @@ begin
       work_tmdb_interrupted,
       user_akari,
       'tmdb',
-      work_type_movie,
+      tmdb_media_type_movie,
       157336,
       work_type_movie,
       null,
