@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button.tsx";
 import type { BacklogFeedback, BacklogToastOptions } from "../ui-feedback.ts";
 
@@ -116,6 +116,48 @@ export function useBacklogFeedback() {
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
   const [toasts, setToasts] = useState<ToastState[]>([]);
+  const toastsRef = useRef<ToastState[]>([]);
+
+  const updateToasts = useCallback((nextToasts: ToastState[]) => {
+    toastsRef.current = nextToasts;
+    setToasts(nextToasts);
+  }, []);
+
+  const removeToast = useCallback(
+    (toastId: string) => {
+      const nextToasts = toastsRef.current.filter((toast) => toast.id !== toastId);
+
+      if (nextToasts.length === toastsRef.current.length) {
+        return false;
+      }
+
+      updateToasts(nextToasts);
+      return true;
+    },
+    [updateToasts],
+  );
+
+  const handleToastAction = useCallback(
+    (toast: ToastState) => {
+      if (!removeToast(toast.id)) {
+        return;
+      }
+
+      void toast.onAction?.();
+    },
+    [removeToast],
+  );
+
+  const handleToastClose = useCallback(
+    (toast: ToastState) => {
+      if (!removeToast(toast.id)) {
+        return;
+      }
+
+      void toast.onClose?.();
+    },
+    [removeToast],
+  );
 
   useEffect(() => {
     return () => {
@@ -123,7 +165,13 @@ export function useBacklogFeedback() {
         current?.resolve(false);
         return null;
       });
-      setToasts([]);
+
+      const pendingToasts = [...toastsRef.current];
+      toastsRef.current = [];
+
+      for (const toast of pendingToasts) {
+        void toast.onClose?.();
+      }
     };
   }, []);
 
@@ -137,16 +185,18 @@ export function useBacklogFeedback() {
           setConfirmState({ message, resolve });
         }),
       toast: (options) => {
-        setToasts((current) => [
-          ...current,
+        const nextToasts = [
+          ...toastsRef.current,
           {
             ...options,
-            id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${current.length}`,
+            id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${toastsRef.current.length}`,
           },
-        ]);
+        ];
+
+        updateToasts(nextToasts);
       },
     }),
-    [],
+    [updateToasts],
   );
 
   const handleCloseAlert = () => {
@@ -158,20 +208,6 @@ export function useBacklogFeedback() {
       current?.resolve(result);
       return null;
     });
-  };
-
-  const removeToast = (toastId: string) => {
-    setToasts((current) => current.filter((toast) => toast.id !== toastId));
-  };
-
-  const handleToastAction = (toast: ToastState) => {
-    removeToast(toast.id);
-    void toast.onAction?.();
-  };
-
-  const handleToastClose = (toast: ToastState) => {
-    removeToast(toast.id);
-    void toast.onClose?.();
   };
 
   const feedbackUi = (
