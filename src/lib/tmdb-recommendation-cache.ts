@@ -145,8 +145,10 @@ async function loadAndPersist(
   return results;
 }
 
-function hasFreshEntry(entry: RecommendationCacheEntry | null | undefined) {
-  return Boolean(entry && Date.now() - entry.fetchedAt < RECOMMENDATIONS_CACHE_TTL_MS);
+function hasFreshEntry(
+  entry: RecommendationCacheEntry | null | undefined,
+): entry is RecommendationCacheEntry {
+  return entry != null && Date.now() - entry.fetchedAt < RECOMMENDATIONS_CACHE_TTL_MS;
 }
 
 function dedupeRecommendationResults(results: TmdbSearchResult[], seen: Set<string>) {
