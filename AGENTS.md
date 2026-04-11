@@ -40,7 +40,7 @@
 
 ## 実装後チェック
 
-実装後は必ず self-review を実施してからコミット・PR 作成する。`.agents/skills/self-review/SKILL.md` を参照する。シンプルな変更であっても省略しない。
+実装後は必ず self-review を実施する。`.agents/skills/self-review/SKILL.md` を参照する。シンプルな変更であっても省略しない。self-review 通過後、PR が未作成なら自動的に `pr-open` まで進む。
 追加の見直しが必要なときだけ、節目ごとに self-review または `.agents/skills/adversarial-review/SKILL.md` を使う。利用条件や進め方の詳細は各 skill を正本とする。
 
 - `main` または作業元ブランチとの差分を確認し、不要な変更が混ざっていないかを確認する。
