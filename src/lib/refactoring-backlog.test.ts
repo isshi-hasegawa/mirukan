@@ -207,4 +207,88 @@ describe("buildRefactoringBacklogIssue", () => {
     expect(result.body).not.toContain("/opt/clone123");
     expect(result.body).toContain("| `src/lib/example.ts` | 6.5% | 520 lines |");
   });
+
+  test("絶対パスだけを repo 相対に正規化し、相対パスの quick win label は壊さない", () => {
+    const result = buildRefactoringBacklogIssue({
+      projectKey: "mirukan",
+      observedAt: "2026-04-11 10:00 UTC",
+      sonarBaseUrl: "https://sonarcloud.io",
+      branchName: "main",
+      projectMeasures: {},
+      quickWinIssues: [
+        {
+          key: "issue-1",
+          message: "'/tmp/clone123/src/lib/example.ts' imported multiple times.",
+          component: "mirukan:src/lib/consumer-a.ts",
+          rule: "typescript:S3863",
+          effortMinutes: 1,
+        },
+        {
+          key: "issue-2",
+          message:
+            "'/opt/actions-runner/_work/mirukan/mirukan/src/features/backlog/types.ts' imported multiple times.",
+          component: "mirukan:src/lib/consumer-b.ts",
+          rule: "typescript:S3863",
+          effortMinutes: 1,
+        },
+        {
+          key: "issue-3",
+          message: "'src/lib/example.ts' imported multiple times.",
+          component: "mirukan:src/lib/consumer-c.ts",
+          rule: "typescript:S3863",
+          effortMinutes: 1,
+        },
+        {
+          key: "issue-4",
+          message: "'supabase/functions/foo.ts' imported multiple times.",
+          component: "mirukan:src/lib/consumer-d.ts",
+          rule: "typescript:S3863",
+          effortMinutes: 1,
+        },
+      ],
+      longFiles: [],
+      complexFiles: [],
+      duplicateFiles: [],
+    });
+
+    expect(result.body).toContain(
+      "- 'src/lib/example.ts' imported multiple times. - 2件 (最短 1 min)",
+    );
+    expect(result.body).toContain(
+      "- 'src/features/backlog/types.ts' imported multiple times. - 1件 (最短 1 min)",
+    );
+    expect(result.body).toContain(
+      "- 'supabase/functions/foo.ts' imported multiple times. - 1件 (最短 1 min)",
+    );
+    expect(result.body).not.toContain("srclib/example.ts");
+    expect(result.body).not.toContain("supabasefunctions/foo.ts");
+    expect(result.body).not.toContain("/tmp");
+    expect(result.body).not.toContain("/opt/actions-runner/_work/mirukan/mirukan");
+  });
+
+  test("通常の slash を含むだけのメッセージは変更しない", () => {
+    const result = buildRefactoringBacklogIssue({
+      projectKey: "mirukan",
+      observedAt: "2026-04-11 10:00 UTC",
+      sonarBaseUrl: "https://sonarcloud.io",
+      branchName: "main",
+      projectMeasures: {},
+      quickWinIssues: [
+        {
+          key: "issue-1",
+          message: "See docs/ui.md and keep src/lib/example.ts as-is.",
+          component: "mirukan:src/lib/consumer.ts",
+          rule: "custom:message",
+          effortMinutes: 1,
+        },
+      ],
+      longFiles: [],
+      complexFiles: [],
+      duplicateFiles: [],
+    });
+
+    expect(result.body).toContain(
+      "- See docs/ui.md and keep src/lib/example.ts as-is. - 1件 (最短 1 min)",
+    );
+  });
 });

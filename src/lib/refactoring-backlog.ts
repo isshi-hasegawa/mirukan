@@ -403,7 +403,14 @@ function normalizePathForMatch(value: string) {
 }
 
 function sanitizeAbsolutePaths(value: string) {
-  return value.replaceAll(/\/[^"'`\s)]+/g, (token) => toDisplayPath(token));
+  return value.replaceAll(
+    /(^|[\s("'`[])(\/[^\s"'`)\]]*)/g,
+    (fullMatch, prefix: string, candidate: string) => {
+      const { path, suffix } = splitTrailingPunctuation(candidate);
+      const sanitized = toDisplayPath(path);
+      return sanitized === path ? fullMatch : `${prefix}${sanitized}${suffix}`;
+    },
+  );
 }
 
 function toDisplayPath(value: string) {
@@ -427,6 +434,19 @@ function toDisplayPath(value: string) {
   return normalized.split("/").findLast(Boolean) ?? normalized;
 }
 
+function splitTrailingPunctuation(value: string) {
+  let index = value.length;
+
+  while (index > 0 && isTrailingPunctuation(value[index - 1])) {
+    index -= 1;
+  }
+
+  return {
+    path: value.slice(0, index),
+    suffix: value.slice(index),
+  };
+}
+
 function minDefined(left: number | undefined, right: number | undefined) {
   if (left == null) {
     return right;
@@ -437,4 +457,15 @@ function minDefined(left: number | undefined, right: number | undefined) {
   }
 
   return Math.min(left, right);
+}
+
+function isTrailingPunctuation(value: string) {
+  return (
+    value === "." ||
+    value === "," ||
+    value === ":" ||
+    value === ";" ||
+    value === "!" ||
+    value === "?"
+  );
 }
