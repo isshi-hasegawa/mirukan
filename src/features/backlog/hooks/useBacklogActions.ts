@@ -1,3 +1,4 @@
+import type { Dispatch, SetStateAction } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { TmdbSearchResult } from "../../../lib/tmdb.ts";
 import {
@@ -16,6 +17,8 @@ import { browserBacklogFeedback, type BacklogFeedback } from "../ui-feedback.ts"
 
 type Props = {
   items: BacklogItem[];
+  localItems: BacklogItem[];
+  setLocalItems: Dispatch<SetStateAction<BacklogItem[]>>;
   session: Session;
   loadItems: () => Promise<void>;
   onItemDeleted: (itemId: string) => void;
@@ -33,6 +36,8 @@ function buildWorkFailureMessage(failedTitles: string[], prefix: string) {
 
 export function useBacklogActions({
   items,
+  localItems,
+  setLocalItems,
   session,
   loadItems,
   onItemDeleted,
@@ -40,14 +45,35 @@ export function useBacklogActions({
   feedback = browserBacklogFeedback,
 }: Props) {
   const handleDeleteItem = async (itemId: string) => {
-    const { error: deleteError } = await deleteBacklogItem(itemId);
+    const itemToDelete = localItems.find((i) => i.id === itemId);
+    if (!itemToDelete) return;
 
-    if (deleteError) {
-      await Promise.resolve(feedback.alert(`削除に失敗しました: ${deleteError}`));
+    const itemIndex = localItems.findIndex((i) => i.id === itemId);
+
+    // 楽観的除去: 即座に UI から消す
+    setLocalItems((prev) => prev.filter((i) => i.id !== itemId));
+    onItemDeleted(itemId);
+
+    const { undone } = await feedback.toast("削除しました", {
+      undoLabel: "元に戻す",
+      timeoutMs: 5000,
+    });
+
+    if (undone) {
+      // 元の位置に戻す
+      setLocalItems((prev) => {
+        const next = [...prev];
+        next.splice(Math.min(itemIndex, next.length), 0, itemToDelete);
+        return next;
+      });
       return;
     }
 
-    onItemDeleted(itemId);
+    // 実際に削除
+    const { error: deleteError } = await deleteBacklogItem(itemId);
+    if (deleteError) {
+      await Promise.resolve(feedback.alert(`削除に失敗しました: ${deleteError}`));
+    }
     await loadItems();
   };
 

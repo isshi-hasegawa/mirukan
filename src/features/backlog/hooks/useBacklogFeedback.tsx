@@ -1,10 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button.tsx";
-import type { BacklogFeedback } from "../ui-feedback.ts";
+import type { BacklogFeedback, ToastResult } from "../ui-feedback.ts";
 
 type ConfirmState = {
   message: string;
   resolve: (result: boolean) => void;
+};
+
+type ToastState = {
+  message: string;
+  undoLabel?: string;
+  timeoutMs: number;
+  resolve: (result: ToastResult) => void;
 };
 
 function FeedbackAlert({ message, onClose }: { message: string; onClose: () => void }) {
@@ -60,14 +67,62 @@ function FeedbackConfirmDialog({
   );
 }
 
+function ToastNotification({
+  message,
+  undoLabel,
+  timeoutMs,
+  onUndo,
+  onClose,
+}: {
+  message: string;
+  undoLabel?: string;
+  timeoutMs: number;
+  onUndo: () => void;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const id = setTimeout(onClose, timeoutMs);
+    return () => clearTimeout(id);
+  }, [onClose, timeoutMs]);
+
+  return (
+    <div
+      className="fixed inset-x-0 top-4 z-50 flex justify-center px-4"
+      role="status"
+      aria-live="polite"
+    >
+      <div className="w-full max-w-[560px] rounded-[24px] border border-border bg-[rgba(28,28,28,0.96)] px-5 py-4 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+        <div className="flex items-start justify-between gap-4">
+          <p className="text-sm leading-6 text-foreground">{message}</p>
+          {undoLabel ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="shrink-0 rounded-full"
+              onClick={onUndo}
+            >
+              {undoLabel}
+            </Button>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function useBacklogFeedback() {
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
+  const [toastState, setToastState] = useState<ToastState | null>(null);
 
   useEffect(() => {
     return () => {
       setConfirmState((current) => {
         current?.resolve(false);
+        return null;
+      });
+      setToastState((current) => {
+        current?.resolve({ undone: false });
         return null;
       });
     };
@@ -81,6 +136,15 @@ export function useBacklogFeedback() {
       confirm: (message) =>
         new Promise<boolean>((resolve) => {
           setConfirmState({ message, resolve });
+        }),
+      toast: (message, options) =>
+        new Promise<ToastResult>((resolve) => {
+          setToastState({
+            message,
+            undoLabel: options?.undoLabel,
+            timeoutMs: options?.timeoutMs ?? 5000,
+            resolve,
+          });
         }),
     }),
     [],
@@ -97,8 +161,24 @@ export function useBacklogFeedback() {
     });
   };
 
+  const settleToast = (undone: boolean) => {
+    setToastState((current) => {
+      current?.resolve({ undone });
+      return null;
+    });
+  };
+
   const feedbackUi = (
     <>
+      {toastState ? (
+        <ToastNotification
+          message={toastState.message}
+          undoLabel={toastState.undoLabel}
+          timeoutMs={toastState.timeoutMs}
+          onUndo={() => settleToast(true)}
+          onClose={() => settleToast(false)}
+        />
+      ) : null}
       {alertMessage ? <FeedbackAlert message={alertMessage} onClose={handleCloseAlert} /> : null}
       {confirmState ? (
         <FeedbackConfirmDialog

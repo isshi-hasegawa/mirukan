@@ -1,3 +1,4 @@
+import type React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Session } from "@supabase/supabase-js";
@@ -56,29 +57,37 @@ function createSearchResult(overrides: Partial<TmdbSearchResult> = {}): TmdbSear
   };
 }
 
+function createToastFeedback(undone = false) {
+  return {
+    alert: vi.fn().mockResolvedValue(undefined),
+    confirm: vi.fn().mockResolvedValue(true),
+    toast: vi.fn().mockResolvedValue({ undone }),
+  };
+}
+
 function HookHarness({
   items = [createItem()],
+  localItems,
+  setLocalItems = vi.fn(),
   loadItems = vi.fn().mockResolvedValue(undefined),
   onItemDeleted = vi.fn(),
   onWorksAdded = vi.fn(),
   results = [createSearchResult()],
-  feedback = {
-    alert: vi.fn().mockResolvedValue(undefined),
-    confirm: vi.fn().mockResolvedValue(true),
-  },
+  feedback = createToastFeedback(),
 }: {
   items?: BacklogItem[];
+  localItems?: BacklogItem[];
+  setLocalItems?: React.Dispatch<React.SetStateAction<BacklogItem[]>>;
   loadItems?: () => Promise<void>;
   onItemDeleted?: (itemId: string) => void;
   onWorksAdded?: () => void;
   results?: TmdbSearchResult[];
-  feedback?: {
-    alert: (message: string) => void | Promise<void>;
-    confirm: (message: string) => boolean | Promise<boolean>;
-  };
+  feedback?: ReturnType<typeof createToastFeedback>;
 }) {
   const { handleDeleteItem, handleAddTmdbWorksToStacked } = useBacklogActions({
     items,
+    localItems: localItems ?? items,
+    setLocalItems,
     session: { user: { id: "user-1" } } as Session,
     loadItems,
     onItemDeleted,
@@ -110,11 +119,52 @@ describe("useBacklogActions", () => {
     vi.clearAllMocks();
   });
 
-  test("delete 失敗時は alert を出して reload や state 更新をしない", async () => {
-    const feedback = {
-      alert: vi.fn().mockResolvedValue(undefined),
-      confirm: vi.fn().mockResolvedValue(true),
-    };
+  test("delete 成功時は楽観的除去後に toast を表示し、完了後に reload する", async () => {
+    const feedback = createToastFeedback(false);
+    const loadItems = vi.fn().mockResolvedValue(undefined);
+    const onItemDeleted = vi.fn();
+    const setLocalItems = vi.fn();
+
+    const user = userEvent.setup();
+
+    render(
+      <HookHarness
+        feedback={feedback}
+        loadItems={loadItems}
+        onItemDeleted={onItemDeleted}
+        setLocalItems={setLocalItems}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "削除" }));
+
+    await waitFor(() => expect(loadItems).toHaveBeenCalled());
+    expect(setLocalItems).toHaveBeenCalled();
+    expect(onItemDeleted).toHaveBeenCalledWith("item-1");
+    expect(feedback.toast).toHaveBeenCalledWith("削除しました", {
+      undoLabel: "元に戻す",
+      timeoutMs: 5000,
+    });
+  });
+
+  test("undo 時は setLocalItems で復元して削除 API を呼ばない", async () => {
+    const feedback = createToastFeedback(true);
+    const loadItems = vi.fn().mockResolvedValue(undefined);
+    const setLocalItems = vi.fn();
+
+    const user = userEvent.setup();
+
+    render(<HookHarness feedback={feedback} loadItems={loadItems} setLocalItems={setLocalItems} />);
+
+    await user.click(screen.getByRole("button", { name: "削除" }));
+
+    await waitFor(() => expect(setLocalItems).toHaveBeenCalledTimes(2));
+    expect(repositoryMocks.deleteBacklogItem).not.toHaveBeenCalled();
+    expect(loadItems).not.toHaveBeenCalled();
+  });
+
+  test("delete 失敗時は alert を出して reload する", async () => {
+    const feedback = createToastFeedback(false);
     const loadItems = vi.fn().mockResolvedValue(undefined);
     const onItemDeleted = vi.fn();
     repositoryMocks.deleteBacklogItem.mockResolvedValueOnce({
@@ -130,15 +180,12 @@ describe("useBacklogActions", () => {
     await waitFor(() =>
       expect(feedback.alert).toHaveBeenCalledWith("削除に失敗しました: row not found"),
     );
-    expect(onItemDeleted).not.toHaveBeenCalled();
-    expect(loadItems).not.toHaveBeenCalled();
+    expect(onItemDeleted).toHaveBeenCalledWith("item-1");
+    expect(loadItems).toHaveBeenCalled();
   });
 
   test("複数追加で一部失敗したら成功分は反映しつつ失敗作品を通知する", async () => {
-    const feedback = {
-      alert: vi.fn().mockResolvedValue(undefined),
-      confirm: vi.fn().mockResolvedValue(true),
-    };
+    const feedback = createToastFeedback();
     const loadItems = vi.fn().mockResolvedValue(undefined);
     const onWorksAdded = vi.fn();
     repositoryMocks.upsertTmdbWork
@@ -174,10 +221,7 @@ describe("useBacklogActions", () => {
   });
 
   test("複数追加がすべて失敗したら詳細を通知して追加処理を中断する", async () => {
-    const feedback = {
-      alert: vi.fn().mockResolvedValue(undefined),
-      confirm: vi.fn().mockResolvedValue(true),
-    };
+    const feedback = createToastFeedback();
     const loadItems = vi.fn().mockResolvedValue(undefined);
     const onWorksAdded = vi.fn();
     repositoryMocks.upsertTmdbWork
@@ -206,10 +250,7 @@ describe("useBacklogActions", () => {
   });
 
   test("確認ダイアログの件数は追加成功した作品数を使う", async () => {
-    const feedback = {
-      alert: vi.fn().mockResolvedValue(undefined),
-      confirm: vi.fn().mockResolvedValue(true),
-    };
+    const feedback = createToastFeedback();
     const user = userEvent.setup();
     repositoryMocks.upsertTmdbWork
       .mockResolvedValueOnce({ data: { id: "work-1" }, error: null })

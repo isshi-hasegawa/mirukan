@@ -255,6 +255,7 @@ export function useBacklogDnd({
   return {
     dragItemId,
     localItems,
+    setLocalItems,
     sensors,
     handleDragStart,
     handleDragOver,

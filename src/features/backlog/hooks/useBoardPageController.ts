@@ -25,6 +25,8 @@ export function useBoardPageController({ session }: UseBoardPageControllerOption
 
   const actions = useBacklogActions({
     items,
+    localItems: dnd.localItems,
+    setLocalItems: dnd.setLocalItems,
     session,
     loadItems,
     onItemDeleted: boardPageState.handleItemDeleted,

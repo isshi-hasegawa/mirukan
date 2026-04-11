@@ -74,6 +74,7 @@ const onAfterDrop = vi.fn().mockResolvedValue(undefined);
 const feedback = {
   alert: vi.fn().mockResolvedValue(undefined),
   confirm: vi.fn().mockResolvedValue(true),
+  toast: vi.fn().mockResolvedValue({ undone: false }),
 };
 
 function renderDnd(
