@@ -10,8 +10,8 @@ import {
 const REFACTORING_BACKLOG_MARKER = "<!-- refactoring-backlog:sonarcloud -->";
 const DEFAULT_BACKLOG_EXCLUDE_PATTERNS = [
   "pnpm-lock.yaml",
+  "supabase/migrations/**",
   "supabase/templates/**",
-  "supabase/seed.sql",
 ] as const;
 
 export type SonarMeasureKey =
@@ -112,6 +112,17 @@ export function filterBacklogSignals(
   excludePatterns: readonly string[] = DEFAULT_BACKLOG_EXCLUDE_PATTERNS,
 ) {
   return files.filter((file) => !matchesAnyPattern(file.path, excludePatterns));
+}
+
+export function filterBacklogIssues(
+  issues: SonarIssue[],
+  projectKey: string,
+  excludePatterns: readonly string[] = DEFAULT_BACKLOG_EXCLUDE_PATTERNS,
+) {
+  return issues.filter(
+    (issue) =>
+      !matchesAnyPattern(normalizeComponentPath(issue.component, projectKey), excludePatterns),
+  );
 }
 
 export function rankLongFiles(files: SonarFileSignal[], limit = 5): RankedSignal[] {

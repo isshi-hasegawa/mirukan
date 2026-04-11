@@ -1,5 +1,6 @@
 import {
   buildRefactoringBacklogIssue,
+  filterBacklogIssues,
   filterBacklogSignals,
   normalizeComponentPath,
   parseMeasureValue,
@@ -127,11 +128,29 @@ describe("signal ranking", () => {
           measures: { duplicated_lines_density: 88 },
         },
         {
-          path: "supabase/seed.sql",
+          path: "supabase/migrations/20260412000000_create_items.sql",
           measures: { ncloc: 500 },
         },
       ]),
     ).toEqual(files);
+  });
+
+  test("seed.sql は backlog 保守対象として残す", () => {
+    expect(
+      filterBacklogSignals([
+        ...files,
+        {
+          path: "supabase/seed.sql",
+          measures: { ncloc: 500 },
+        },
+      ]),
+    ).toEqual([
+      ...files,
+      {
+        path: "supabase/seed.sql",
+        measures: { ncloc: 500 },
+      },
+    ]);
   });
 });
 
@@ -162,6 +181,44 @@ describe("selectQuickWinIssues", () => {
       { key: "1", message: "A", component: "mirukan:src/a.ts", effortMinutes: 1 },
       { key: "2", message: "A", component: "mirukan:src/b.ts", effortMinutes: 1 },
       { key: "3", message: "B", component: "mirukan:src/c.ts", effortMinutes: 1 },
+    ]);
+  });
+
+  test("migration 配下の issue は backlog 候補から外す", () => {
+    const issues = [
+      {
+        key: "1",
+        message: "A",
+        component: "mirukan:supabase/migrations/20260412000000_create_items.sql",
+        effortMinutes: 1,
+      },
+      {
+        key: "2",
+        message: "B",
+        component: "mirukan:supabase/seed.sql",
+        effortMinutes: 1,
+      },
+      {
+        key: "3",
+        message: "C",
+        component: "mirukan:src/lib/example.ts",
+        effortMinutes: 1,
+      },
+    ];
+
+    expect(filterBacklogIssues(issues, "mirukan")).toEqual([
+      {
+        key: "2",
+        message: "B",
+        component: "mirukan:supabase/seed.sql",
+        effortMinutes: 1,
+      },
+      {
+        key: "3",
+        message: "C",
+        component: "mirukan:src/lib/example.ts",
+        effortMinutes: 1,
+      },
     ]);
   });
 });
