@@ -86,13 +86,9 @@ function ToastNotification({
   }, [onClose, timeoutMs]);
 
   return (
-    <div
-      className="fixed inset-x-0 top-4 z-50 flex justify-center px-4"
-      role="status"
-      aria-live="polite"
-    >
-      <div className="w-full max-w-[560px] rounded-[24px] border border-border bg-[rgba(28,28,28,0.96)] px-5 py-4 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl">
-        <div className="flex items-start justify-between gap-4">
+    <div className="fixed bottom-4 right-4 z-50" role="status" aria-live="polite">
+      <div className="w-full max-w-[360px] rounded-[24px] border border-border bg-[rgba(28,28,28,0.96)] px-5 py-4 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+        <div className="flex items-center justify-between gap-4">
           <p className="text-sm leading-6 text-foreground">{message}</p>
           {undoLabel ? (
             <Button
