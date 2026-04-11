@@ -12,8 +12,11 @@ import { supabase } from "../../../lib/supabase.ts";
 import type { BacklogItem, BacklogStatus } from "../types.ts";
 import { browserBacklogFeedback, type BacklogFeedback } from "../ui-feedback.ts";
 
+const EMPTY_PENDING_DELETES: ReadonlySet<string> = new Set();
+
 type Props = {
   items: BacklogItem[];
+  pendingDeleteIds?: ReadonlySet<string>;
   isMobileLayout: boolean;
   onAfterDrop: () => Promise<void>;
   feedback?: BacklogFeedback;
@@ -120,6 +123,7 @@ function calculateInsertedSortOrder(
 
 export function useBacklogDnd({
   items,
+  pendingDeleteIds = EMPTY_PENDING_DELETES,
   isMobileLayout,
   onAfterDrop,
   feedback = browserBacklogFeedback,
@@ -129,11 +133,14 @@ export function useBacklogDnd({
   const [localItems, setLocalItems] = useState<BacklogItem[]>(items);
 
   // サーバーデータが更新されたら、ドラッグ中またはドロップ反映待ちでない場合に同期
+  // 楽観的削除中の項目は除外してサーバーデータで上書きされないようにする
   useEffect(() => {
     if (!dragItemId && !isDropSyncPending) {
-      setLocalItems(items);
+      setLocalItems(
+        pendingDeleteIds.size > 0 ? items.filter((i) => !pendingDeleteIds.has(i.id)) : items,
+      );
     }
-  }, [items, dragItemId, isDropSyncPending]);
+  }, [items, dragItemId, isDropSyncPending, pendingDeleteIds]);
 
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint: { distance: 8 },
@@ -255,6 +262,7 @@ export function useBacklogDnd({
   return {
     dragItemId,
     localItems,
+    setLocalItems,
     sensors,
     handleDragStart,
     handleDragOver,

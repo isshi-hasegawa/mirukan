@@ -30,6 +30,7 @@ vi.mock("./useBacklogDnd.ts", () => ({
   useBacklogDnd: () => ({
     dragItemId: null,
     localItems: hookMocks.items,
+    setLocalItems: vi.fn(),
     sensors: [],
     handleDragStart: vi.fn(),
     handleDragOver: vi.fn(),
@@ -42,6 +43,7 @@ vi.mock("./useBacklogActions.ts", () => ({
   useBacklogActions: () => ({
     handleDeleteItem: vi.fn(),
     handleMarkAsWatched: vi.fn(),
+    handleAddTmdbWorksToStacked: vi.fn(),
   }),
 }));
 
@@ -50,6 +52,7 @@ vi.mock("./useBacklogFeedback.tsx", () => ({
     feedback: {
       alert: vi.fn().mockResolvedValue(undefined),
       confirm: vi.fn().mockResolvedValue(true),
+      toast: vi.fn().mockResolvedValue({ undone: false }),
     },
     feedbackUi: null,
   }),
