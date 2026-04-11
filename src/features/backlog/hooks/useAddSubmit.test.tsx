@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Session } from "@supabase/supabase-js";
@@ -54,8 +55,7 @@ type HarnessProps = {
   isTvSelection?: boolean;
   selectedSeasonNumbers?: number[];
   onClose?: () => void;
-  onOptimisticAdd?: (items: BacklogItem[]) => void;
-  onRollbackOptimisticAdd?: (itemIds: string[]) => void;
+  onLocalItemsChange?: (items: BacklogItem[]) => void;
   beginOptimisticUpdate?: () => () => void;
   onAdded?: () => void | Promise<void>;
 };
@@ -66,11 +66,11 @@ function HookHarness({
   isTvSelection = false,
   selectedSeasonNumbers = [],
   onClose = vi.fn(),
-  onOptimisticAdd = vi.fn(),
-  onRollbackOptimisticAdd = vi.fn(),
+  onLocalItemsChange = vi.fn(),
   beginOptimisticUpdate = () => vi.fn(),
   onAdded = vi.fn(),
 }: HarnessProps) {
+  const [localItems, setLocalItems] = useState(items);
   const {
     formMessage,
     pendingSaveMessage,
@@ -79,7 +79,7 @@ function HookHarness({
     confirmPendingSave,
     handleSubmit,
   } = useAddSubmit({
-    items,
+    items: localItems,
     session: { user: { id: "user-1" } } as Session,
     selectedTmdbResult: null,
     selectedSeasonNumbers,
@@ -90,8 +90,13 @@ function HookHarness({
     primaryPlatform: null,
     note: "",
     onClose,
-    onOptimisticAdd,
-    onRollbackOptimisticAdd,
+    setLocalItems: (value) => {
+      setLocalItems((current) => {
+        const nextItems = typeof value === "function" ? value(current) : value;
+        onLocalItemsChange(nextItems);
+        return nextItems;
+      });
+    },
     beginOptimisticUpdate,
     onAdded,
   });
@@ -100,6 +105,7 @@ function HookHarness({
     <form onSubmit={(e) => void handleSubmit(e)}>
       {formMessage && <p data-testid="form-message">{formMessage}</p>}
       {pendingSaveMessage && <p data-testid="pending-save-message">{pendingSaveMessage}</p>}
+      <p data-testid="local-items">{localItems.map((item) => item.id).join(",")}</p>
       <button type="submit">送信</button>
       <button type="button" onClick={clearSubmissionState}>
         クリア
@@ -171,13 +177,13 @@ describe("useAddSubmit", () => {
   test("upsertBacklogItemsToStatus エラー時はエラーメッセージを表示してモーダルを閉じない", async () => {
     dataMocks.upsertBacklogItemsToStatus.mockResolvedValueOnce({ error: "保存失敗" });
     const onClose = vi.fn();
-    const onRollbackOptimisticAdd = vi.fn();
+    const onLocalItemsChange = vi.fn();
     const user = userEvent.setup();
     render(
       <HookHarness
         resolvedTitle="手動作品"
         onClose={onClose}
-        onRollbackOptimisticAdd={onRollbackOptimisticAdd}
+        onLocalItemsChange={onLocalItemsChange}
       />,
     );
 
@@ -187,7 +193,7 @@ describe("useAddSubmit", () => {
       "カードの保存に失敗しました: 保存失敗",
     );
     expect(onClose).not.toHaveBeenCalled();
-    expect(onRollbackOptimisticAdd).toHaveBeenCalledWith(["optimistic-work-new"]);
+    expect(onLocalItemsChange).toHaveBeenLastCalledWith([]);
   });
 
   test("pendingSave 中に cancelPendingSave を呼ぶと pending メッセージが消える", async () => {
@@ -219,19 +225,23 @@ describe("useAddSubmit", () => {
     expect(dataMocks.upsertBacklogItemsToStatus).not.toHaveBeenCalled();
   });
 
-  test("保存成功時は optimistic item を先に追加してから完了コールバックを待つ", async () => {
-    const onOptimisticAdd = vi.fn();
+  test("保存成功時は optimistic item を先に反映してから完了コールバックを待つ", async () => {
+    const onLocalItemsChange = vi.fn();
     const onAdded = vi.fn().mockResolvedValue(undefined);
     const user = userEvent.setup();
 
     render(
-      <HookHarness resolvedTitle="手動作品" onOptimisticAdd={onOptimisticAdd} onAdded={onAdded} />,
+      <HookHarness
+        resolvedTitle="手動作品"
+        onLocalItemsChange={onLocalItemsChange}
+        onAdded={onAdded}
+      />,
     );
 
     await user.click(screen.getByRole("button", { name: "送信" }));
 
-    await waitFor(() => expect(onOptimisticAdd).toHaveBeenCalledTimes(1));
-    expect(onOptimisticAdd).toHaveBeenCalledWith([
+    await waitFor(() => expect(onLocalItemsChange).toHaveBeenCalledTimes(1));
+    expect(onLocalItemsChange).toHaveBeenCalledWith([
       expect.objectContaining({
         id: "optimistic-work-new",
         status: "stacked",
@@ -242,6 +252,30 @@ describe("useAddSubmit", () => {
         }),
       }),
     ]);
+    expect(screen.getByTestId("local-items")).toHaveTextContent("optimistic-work-new");
     expect(onAdded).toHaveBeenCalledTimes(1);
+  });
+
+  test("別 status にある既存作品を stacked へ戻すと optimistic duplicate を作らない", async () => {
+    const movedItem = createItem({
+      id: "item-watching",
+      status: "watching",
+      works: {
+        ...createItem().works!,
+        id: "work-existing",
+        title: "既存作品",
+      },
+    });
+    dataMocks.upsertManualWork.mockResolvedValue({ data: { id: "work-existing" }, error: null });
+    const user = userEvent.setup();
+
+    render(<HookHarness items={[movedItem]} resolvedTitle="既存作品" />);
+
+    await user.click(screen.getByRole("button", { name: "送信" }));
+    await user.click(await screen.findByRole("button", { name: "確認" }));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("local-items").textContent?.split(",")).toEqual(["item-watching"]),
+    );
   });
 });

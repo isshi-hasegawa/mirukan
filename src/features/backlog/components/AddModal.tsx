@@ -1,3 +1,4 @@
+import type { Dispatch, SetStateAction } from "react";
 import { useEffect } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { BacklogItem } from "../types.ts";
@@ -9,8 +10,7 @@ type Props = {
   items: BacklogItem[];
   session: Session;
   onClose: () => void;
-  onOptimisticAdd?: (items: BacklogItem[]) => void;
-  onRollbackOptimisticAdd?: (itemIds: string[]) => void;
+  setLocalItems?: Dispatch<SetStateAction<BacklogItem[]>>;
   beginOptimisticUpdate?: () => () => void;
   onAdded: () => void | Promise<void>;
 };
@@ -19,11 +19,10 @@ export function AddModal({
   items,
   session,
   onClose,
-  onOptimisticAdd,
-  onRollbackOptimisticAdd,
+  setLocalItems,
   beginOptimisticUpdate,
   onAdded,
-}: Props) {
+}: Readonly<Props>) {
   const {
     searchQuery,
     searchResults,
@@ -64,8 +63,7 @@ export function AddModal({
     items,
     session,
     onClose,
-    onOptimisticAdd,
-    onRollbackOptimisticAdd,
+    setLocalItems,
     beginOptimisticUpdate,
     onAdded,
   });

@@ -34,6 +34,51 @@ function buildWorkFailureMessage(failedTitles: string[], prefix: string) {
   return `${prefix}: ${failedTitles.join("、")}`;
 }
 
+function restoreDeletedItem(
+  setLocalItems: Dispatch<SetStateAction<BacklogItem[]>>,
+  itemToDelete: BacklogItem,
+  deletedIndex: number,
+) {
+  setLocalItems((current) => {
+    if (current.some((item) => item.id === itemToDelete.id)) {
+      return current;
+    }
+
+    const nextItems = [...current];
+    nextItems.splice(Math.min(deletedIndex, nextItems.length), 0, itemToDelete);
+    return nextItems;
+  });
+}
+
+async function finalizeDeleteItem({
+  itemId,
+  loadItems,
+  feedback,
+  releaseOptimisticUpdate,
+  onDeleteFailed,
+}: {
+  itemId: string;
+  loadItems: () => Promise<void>;
+  feedback: BacklogFeedback;
+  releaseOptimisticUpdate: () => void;
+  onDeleteFailed: () => void;
+}) {
+  const { error: deleteError } = await deleteBacklogItem(itemId);
+
+  if (deleteError) {
+    onDeleteFailed();
+    await Promise.resolve(feedback.alert(`削除に失敗しました: ${deleteError}`));
+    releaseOptimisticUpdate();
+    return;
+  }
+
+  try {
+    await loadItems();
+  } finally {
+    releaseOptimisticUpdate();
+  }
+}
+
 export function useBacklogActions({
   items,
   session,
@@ -56,47 +101,25 @@ export function useBacklogActions({
     setLocalItems((current) => current.filter((item) => item.id !== itemId));
     onItemDeleted(itemId);
 
-    const restoreDeletedItem = () => {
-      setLocalItems((current) => {
-        if (current.some((item) => item.id === itemId)) {
-          return current;
-        }
-
-        const nextItems = [...current];
-        nextItems.splice(Math.min(deletedIndex, nextItems.length), 0, itemToDelete);
-        return nextItems;
-      });
-    };
-
     await Promise.resolve(
       feedback.toast({
         message: "削除しました",
         actionLabel: "元に戻す",
         durationMs: 5000,
         onAction: () => {
-          restoreDeletedItem();
+          restoreDeletedItem(setLocalItems, itemToDelete, deletedIndex);
           releaseOptimisticUpdate();
         },
-        onClose: async () => {
-          const { error: deleteError } = await deleteBacklogItem(itemId);
-
-          if (deleteError) {
-            restoreDeletedItem();
-            await Promise.resolve(feedback.alert(`削除に失敗しました: ${deleteError}`));
-            releaseOptimisticUpdate();
-            return;
-          }
-
-          try {
-            await loadItems();
-          } finally {
-            releaseOptimisticUpdate();
-          }
-        },
+        onClose: () =>
+          finalizeDeleteItem({
+            itemId,
+            loadItems,
+            feedback,
+            releaseOptimisticUpdate,
+            onDeleteFailed: () => restoreDeletedItem(setLocalItems, itemToDelete, deletedIndex),
+          }),
       }),
     );
-
-    return;
   };
 
   const handleMarkAsWatched = async (itemId: string) => {

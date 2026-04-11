@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import type { BacklogItem } from "../types.ts";
 import { useBacklogActions } from "./useBacklogActions.ts";
 import { useBacklogDnd } from "./useBacklogDnd.ts";
 import { useBacklogFeedback } from "./useBacklogFeedback.tsx";
@@ -102,12 +101,7 @@ export function useBoardPageController({ session }: UseBoardPageControllerOption
       items: localItems,
       session,
       onClose: boardPageState.handleCloseAddModal,
-      onOptimisticAdd: (optimisticItems: BacklogItem[]) => {
-        setLocalItems((current) => [...optimisticItems, ...current]);
-      },
-      onRollbackOptimisticAdd: (optimisticItemIds: string[]) => {
-        setLocalItems((current) => current.filter((item) => !optimisticItemIds.includes(item.id)));
-      },
+      setLocalItems,
       beginOptimisticUpdate,
       onAdded: async () => {
         boardPageState.handleNavigateToStacked();

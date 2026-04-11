@@ -11,7 +11,7 @@ type ToastState = BacklogToastOptions & {
   id: string;
 };
 
-function FeedbackAlert({ message, onClose }: { message: string; onClose: () => void }) {
+function FeedbackAlert({ message, onClose }: Readonly<{ message: string; onClose: () => void }>) {
   return (
     <div
       className="fixed inset-x-0 top-4 z-50 flex justify-center px-4"
@@ -34,11 +34,11 @@ function FeedbackConfirmDialog({
   message,
   onCancel,
   onConfirm,
-}: {
+}: Readonly<{
   message: string;
   onCancel: () => void;
   onConfirm: () => void;
-}) {
+}>) {
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-[rgba(0,0,0,0.48)] px-4 backdrop-blur-[6px]">
       <section
@@ -68,11 +68,11 @@ function FeedbackToast({
   toast,
   onAction,
   onClose,
-}: {
+}: Readonly<{
   toast: ToastState;
   onAction: (toast: ToastState) => void;
   onClose: (toast: ToastState) => void;
-}) {
+}>) {
   useEffect(() => {
     const timeoutId = globalThis.setTimeout(() => {
       onClose(toast);

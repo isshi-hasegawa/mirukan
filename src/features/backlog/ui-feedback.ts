@@ -17,7 +17,8 @@ export const browserBacklogFeedback: BacklogFeedback = {
     globalThis.alert(message);
   },
   confirm: (message) => globalThis.confirm(message),
-  toast: ({ message }) => {
+  toast: async ({ message, onClose }) => {
     globalThis.alert(message);
+    await onClose?.();
   },
 };

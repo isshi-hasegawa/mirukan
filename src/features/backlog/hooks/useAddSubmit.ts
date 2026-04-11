@@ -1,7 +1,8 @@
+import type { Dispatch, SetStateAction } from "react";
 import { useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { TmdbSearchResult, TmdbSeasonOption } from "../../../lib/tmdb.ts";
-import { getTopSortOrder } from "../backlog-item-utils.ts";
+import { getTopSortOrder, planBacklogItemUpserts } from "../backlog-item-utils.ts";
 import { upsertBacklogItemsToStatus } from "../backlog-repository.ts";
 import {
   buildSelectedSeasonTargets,
@@ -29,8 +30,7 @@ type UseAddSubmitOptions = {
   primaryPlatform: PrimaryPlatform;
   note: string;
   onClose: () => void;
-  onOptimisticAdd?: (items: BacklogItem[]) => void;
-  onRollbackOptimisticAdd?: (itemIds: string[]) => void;
+  setLocalItems?: Dispatch<SetStateAction<BacklogItem[]>>;
   beginOptimisticUpdate?: () => () => void;
   onAdded: () => void | Promise<void>;
 };
@@ -56,6 +56,49 @@ function createOptimisticBacklogItems(
 
     return optimisticItem;
   });
+}
+
+function applyOptimisticItems(
+  items: BacklogItem[],
+  workIds: string[],
+  optimisticItems: BacklogItem[],
+) {
+  const plan = planBacklogItemUpserts(items, workIds, "stacked");
+  const movedItemsByWorkId = new Map(
+    plan.actions.flatMap((action) =>
+      action.type === "move" ? [[action.item.works!.id, action.item] as const] : [],
+    ),
+  );
+  const optimisticItemsByWorkId = new Map(
+    optimisticItems
+      .filter(
+        (item): item is BacklogItem & { works: NonNullable<BacklogItem["works"]> } => !!item.works,
+      )
+      .map((item) => [item.works.id, item] as const),
+  );
+  const insertedItems = optimisticItems.filter((item) => {
+    const workId = item.works?.id;
+    return !!workId && !movedItemsByWorkId.has(workId);
+  });
+  const nextItems = items.map((item) => {
+    const workId = item.works?.id;
+    if (!workId || !movedItemsByWorkId.has(workId)) {
+      return item;
+    }
+
+    const optimisticItem = optimisticItemsByWorkId.get(workId);
+    if (!optimisticItem) {
+      return item;
+    }
+
+    return {
+      ...item,
+      status: "stacked",
+      sort_order: optimisticItem.sort_order,
+    };
+  });
+
+  return [...insertedItems, ...nextItems];
 }
 
 function createTmdbWorkSummary(workId: string, result: TmdbSearchResult): WorkSummary {
@@ -94,7 +137,7 @@ function createSeasonWorkSummaries(
     id: result.workIds[index]!,
     title: target.title,
     work_type: target.workType,
-    source_type: "tmdb" as const,
+    source_type: "tmdb",
     tmdb_id: target.tmdbId,
     tmdb_media_type: target.tmdbMediaType,
     original_title: target.originalTitle,
@@ -161,8 +204,7 @@ export function useAddSubmit({
   primaryPlatform,
   note,
   onClose,
-  onOptimisticAdd,
-  onRollbackOptimisticAdd,
+  setLocalItems,
   beginOptimisticUpdate,
   onAdded,
 }: UseAddSubmitOptions) {
@@ -183,8 +225,9 @@ export function useAddSubmit({
       payload.backlogOptions,
     );
     const rollbackOptimisticUpdate = beginOptimisticUpdate?.();
+    const previousItems = items;
 
-    onOptimisticAdd?.(optimisticItems);
+    setLocalItems?.(applyOptimisticItems(items, payload.workIds, optimisticItems));
 
     const backlogResult = await upsertBacklogItemsToStatus(
       session.user.id,
@@ -195,7 +238,7 @@ export function useAddSubmit({
     );
 
     if (backlogResult.error) {
-      onRollbackOptimisticAdd?.(optimisticItems.map((item) => item.id));
+      setLocalItems?.(previousItems);
       rollbackOptimisticUpdate?.();
       setSubmitPhase({
         phase: "error",

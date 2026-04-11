@@ -1,3 +1,4 @@
+import type { Dispatch, SetStateAction } from "react";
 import { useReducer } from "react";
 import type { Session } from "@supabase/supabase-js";
 import {
@@ -13,8 +14,7 @@ type UseAddFlowOptions = {
   items: BacklogItem[];
   session: Session;
   onClose: () => void;
-  onOptimisticAdd?: (items: BacklogItem[]) => void;
-  onRollbackOptimisticAdd?: (itemIds: string[]) => void;
+  setLocalItems?: Dispatch<SetStateAction<BacklogItem[]>>;
   beginOptimisticUpdate?: () => () => void;
   onAdded: () => void | Promise<void>;
 };
@@ -23,8 +23,7 @@ export function useAddFlow({
   items,
   session,
   onClose,
-  onOptimisticAdd,
-  onRollbackOptimisticAdd,
+  setLocalItems,
   beginOptimisticUpdate,
   onAdded,
 }: UseAddFlowOptions) {
@@ -77,8 +76,7 @@ export function useAddFlow({
     primaryPlatform: draftState.primaryPlatform,
     note: draftState.note,
     onClose,
-    onOptimisticAdd,
-    onRollbackOptimisticAdd,
+    setLocalItems,
     beginOptimisticUpdate,
     onAdded,
   });
