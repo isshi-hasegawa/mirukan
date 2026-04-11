@@ -1,6 +1,6 @@
 ---
 name: task-start
-description: 作業を始めたいときに使う。現在の clone とブランチが継続作業に使えるかを判定し、必要なら最新の main から作業ブランチを作成する。画面確認が明らかに不要な並行作業でだけ worktree を使う。
+description: 新しい作業を始めたいときに使う。最新の main から作業ブランチを作成し、画面確認が明らかに不要な並行作業でだけ worktree を使う。
 ---
 
 # Task Start
@@ -8,27 +8,26 @@ description: 作業を始めたいときに使う。現在の clone とブラン
 ## いつ使うか
 
 - 新しい作業を始めるとき
-- 既存の作業ブランチに戻って作業を再開するとき
 
 ## いつ使わないか
 
 - 既に作業ブランチ上で作業中のとき
+- 既存 open PR の追従をするとき
 
 ## 責務
 
-- 継続作業か新規作業かを判定する
-- 必要なら最新の `main` から作業ブランチを用意する
-- 必要時のみ worktree と `vp install` を扱う
+- 新規作業を最新の `main` から始める
+- 必要な場合だけ worktree と `vp install` を扱う
 
 ## 正本
 
 - repo 共通ルールは `AGENTS.md` を正本とする
+- 既存 PR の追従修正は [`pr-followup`](../pr-followup/SKILL.md) を正本とする
 
 ## 判断ルール
 
-- 継続作業なら現在の clone / branch をそのまま使う。別作業になった場合のみ新しい作業ブランチを作成する
+- 既存 open PR の追従は [`pr-followup`](../pr-followup/SKILL.md) で扱う
 - 新規作業では本体側 `main` を `origin/main` に fast-forward で最新化してから branch を切る
-- 継続作業でも、着手前に `origin/main` を確認して前提が古くなっていないかを見る
 - branch 名は `AGENTS.md` の命名規則に従う
 - 画面確認やブラウザ操作での確認が明らかに必要な作業では、原則として現在の clone を使う
 - 並行開発や隔離が必要で、かつ画面確認が明らかに不要な場合だけ worktree を作る
@@ -65,8 +64,8 @@ description: 作業を始めたいときに使う。現在の clone とブラン
 
 1. 現在の clone / branch / status を確認する
 2. `git fetch origin` で `origin/main` を確認できる状態にする
-3. 継続作業なら、`origin/main` を見て前提が古くなっていないか確認したうえで、そのまま今回の作業場所として確定する
-4. 新規作業なら `main` を最新化する
+3. 既存 open PR の追従なら、この skill を止めて [`pr-followup`](../pr-followup/SKILL.md) に切り替える
+4. `main` を最新化する
 5. タスク内容から「画面確認の要否分類」に従い worktree を使うかを決める。不明ならユーザーに確認する
 6. ブランチ名を決める
 7. 画面確認が必要、または worktree が不要な作業なら `git switch -c <branch>` で現在の clone に作業ブランチを作る
@@ -75,7 +74,7 @@ description: 作業を始めたいときに使う。現在の clone とブラン
 
 ## 停止条件
 
-- 継続作業か新規作業かを判断できない
+- 新規作業か既存 open PR の追従かを判断できない
 - `main` を最新化する場所を安全に確保できない
 - `main` の最新化に失敗する
 - 新しい branch 名を安全に決められない
@@ -87,7 +86,7 @@ description: 作業を始めたいときに使う。現在の clone とブラン
 
 - 採用した branch 名
 - 使用する作業場所
-- 継続作業として再利用したか、新規開始したか
+- 新規開始として扱ったか、または `pr-followup` へ切り替えたか
 - 実行した主要コマンド
 - `vp install` の実施有無
 - 未実施の確認や残リスク
