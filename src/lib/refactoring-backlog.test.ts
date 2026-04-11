@@ -237,9 +237,11 @@ describe("buildRefactoringBacklogIssue", () => {
   test("issue 本文に summary と候補一覧を含める", () => {
     const result = buildRefactoringBacklogIssue({
       projectKey: "mirukan",
-      observedAt: "2026-04-11 10:00 UTC",
+      observedAt: "2026-04-11 10:00 JST",
       sonarBaseUrl: "https://sonarcloud.io",
       branchName: "main",
+      workflowUrl:
+        "https://github.com/isshi-hasegawa/mirukan/actions/workflows/refactoring-backlog.yml",
       projectMeasures: {
         code_smells: 12,
         sqale_index: 135,
@@ -249,6 +251,8 @@ describe("buildRefactoringBacklogIssue", () => {
         complexity: 90,
         ncloc: 1500,
       },
+      bugIssues: [],
+      vulnerabilityIssues: [],
       quickWinIssues: [
         {
           key: "issue-1",
@@ -300,10 +304,14 @@ describe("buildRefactoringBacklogIssue", () => {
   test("絶対パスだけを repo 相対に正規化し、相対パスの quick win label は壊さない", () => {
     const result = buildRefactoringBacklogIssue({
       projectKey: "mirukan",
-      observedAt: "2026-04-11 10:00 UTC",
+      observedAt: "2026-04-11 10:00 JST",
       sonarBaseUrl: "https://sonarcloud.io",
       branchName: "main",
+      workflowUrl:
+        "https://github.com/isshi-hasegawa/mirukan/actions/workflows/refactoring-backlog.yml",
       projectMeasures: {},
+      bugIssues: [],
+      vulnerabilityIssues: [],
       quickWinIssues: [
         {
           key: "issue-1",
@@ -358,10 +366,14 @@ describe("buildRefactoringBacklogIssue", () => {
   test("通常の slash を含むだけのメッセージは変更しない", () => {
     const result = buildRefactoringBacklogIssue({
       projectKey: "mirukan",
-      observedAt: "2026-04-11 10:00 UTC",
+      observedAt: "2026-04-11 10:00 JST",
       sonarBaseUrl: "https://sonarcloud.io",
       branchName: "main",
+      workflowUrl:
+        "https://github.com/isshi-hasegawa/mirukan/actions/workflows/refactoring-backlog.yml",
       projectMeasures: {},
+      bugIssues: [],
+      vulnerabilityIssues: [],
       quickWinIssues: [
         {
           key: "issue-1",
@@ -379,5 +391,65 @@ describe("buildRefactoringBacklogIssue", () => {
     expect(result.body).toContain(
       "- See docs/ui.md and keep src/lib/example.ts as-is. - 1件 (最短 1 min)",
     );
+  });
+
+  test("bugs が存在する場合にセクションと issue リンクを出力する", () => {
+    const result = buildRefactoringBacklogIssue({
+      projectKey: "mirukan",
+      observedAt: "2026-04-11 10:00 JST",
+      sonarBaseUrl: "https://sonarcloud.io",
+      branchName: "main",
+      workflowUrl:
+        "https://github.com/isshi-hasegawa/mirukan/actions/workflows/refactoring-backlog.yml",
+      projectMeasures: {},
+      bugIssues: [
+        {
+          key: "bug-1",
+          message: "Null pointer dereference.",
+          component: "mirukan:src/lib/example.ts",
+          line: 10,
+          rule: "typescript:S2259",
+        },
+        {
+          key: "bug-2",
+          message: "This condition always evaluates to true.",
+          component: "mirukan:src/features/backlog/types.ts",
+          line: 5,
+          rule: "typescript:S2589",
+        },
+      ],
+      vulnerabilityIssues: [],
+      quickWinIssues: [],
+      longFiles: [],
+      complexFiles: [],
+      duplicateFiles: [],
+    });
+
+    expect(result.body).toContain("## バグ (2件)");
+    expect(result.body).toContain("[src/lib/example.ts:10]");
+    expect(result.body).toContain("Null pointer dereference.");
+    expect(result.body).toContain("[src/features/backlog/types.ts:5]");
+    expect(result.body).not.toContain("## 脆弱性");
+  });
+
+  test("bugs / vulnerabilities が 0 件の場合はセクションを出力しない", () => {
+    const result = buildRefactoringBacklogIssue({
+      projectKey: "mirukan",
+      observedAt: "2026-04-11 10:00 JST",
+      sonarBaseUrl: "https://sonarcloud.io",
+      branchName: "main",
+      workflowUrl:
+        "https://github.com/isshi-hasegawa/mirukan/actions/workflows/refactoring-backlog.yml",
+      projectMeasures: {},
+      bugIssues: [],
+      vulnerabilityIssues: [],
+      quickWinIssues: [],
+      longFiles: [],
+      complexFiles: [],
+      duplicateFiles: [],
+    });
+
+    expect(result.body).not.toContain("## バグ");
+    expect(result.body).not.toContain("## 脆弱性");
   });
 });

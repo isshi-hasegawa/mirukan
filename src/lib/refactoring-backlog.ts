@@ -3,6 +3,7 @@ import {
   formatMinutes,
   formatNumber,
   formatPercent,
+  renderIssueList,
   renderQuickWinIssues,
   renderRankedSignals,
 } from "./refactoring-backlog-render.ts";
@@ -51,7 +52,10 @@ type RefactoringBacklogInput = {
   observedAt: string;
   sonarBaseUrl: string;
   branchName: string;
+  workflowUrl: string;
   projectMeasures: SonarMeasureMap;
+  bugIssues: SonarIssue[];
+  vulnerabilityIssues: SonarIssue[];
   quickWinIssues: SonarIssue[];
   longFiles: RankedSignal[];
   complexFiles: RankedSignal[];
@@ -197,13 +201,18 @@ export function buildRefactoringBacklogIssue({
   observedAt,
   sonarBaseUrl,
   branchName,
+  workflowUrl,
   projectMeasures,
+  bugIssues,
+  vulnerabilityIssues,
   quickWinIssues,
   longFiles,
   complexFiles,
   duplicateFiles,
 }: RefactoringBacklogInput) {
-  const dashboardUrl = `${trimTrailingSlash(sonarBaseUrl)}/summary/new_code?id=${encodeURIComponent(projectKey)}`;
+  const base = trimTrailingSlash(sonarBaseUrl);
+  const encodedKey = encodeURIComponent(projectKey);
+  const overallDashboardUrl = `${base}/summary/overall?id=${encodedKey}&branch=${encodeURIComponent(branchName)}`;
   const issueTitle = "refactoring backlog";
   const issueBody = [
     REFACTORING_BACKLOG_MARKER,
@@ -212,7 +221,8 @@ export function buildRefactoringBacklogIssue({
     "",
     `- 観測日時: ${observedAt}`,
     `- 対象ブランチ: \`${branchName}\``,
-    `- SonarCloud: [dashboard](${dashboardUrl})`,
+    `- SonarCloud: [overall dashboard](${overallDashboardUrl})`,
+    `- workflow: [refactoring-backlog.yml](${workflowUrl})`,
     "",
     "## 今回のサマリー",
     "",
@@ -224,6 +234,22 @@ export function buildRefactoringBacklogIssue({
     `- complexity: ${formatNumber(projectMeasures.complexity)}`,
     `- ncloc: ${formatNumber(projectMeasures.ncloc)}`,
     "",
+    ...(bugIssues.length > 0
+      ? [
+          `## バグ (${bugIssues.length}件)`,
+          "",
+          ...renderIssueList(projectKey, sonarBaseUrl, bugIssues),
+          "",
+        ]
+      : []),
+    ...(vulnerabilityIssues.length > 0
+      ? [
+          `## 脆弱性 (${vulnerabilityIssues.length}件)`,
+          "",
+          ...renderIssueList(projectKey, sonarBaseUrl, vulnerabilityIssues),
+          "",
+        ]
+      : []),
     "## すぐ直す",
     "",
     ...renderQuickWinIssues(projectKey, sonarBaseUrl, quickWinIssues),
@@ -241,17 +267,6 @@ export function buildRefactoringBacklogIssue({
     "### 重複率が高いファイル",
     "",
     ...renderRankedSignals(duplicateFiles, "duplicated lines density", "関連メモ"),
-    "",
-    "## 今は保留",
-    "",
-    "- coverage / knip / lint はまだ棚卸し対象に含めていない",
-    "- issue 分割や自動 PR は行わず、この issue に集約する",
-    "",
-    "## メモ",
-    "",
-    "- `すぐ直す` は修正コストが低い code smell を優先表示",
-    "- `構造改善が必要` は局所修正では片付きにくいファイル単位のシグナル",
-    "- 最終的な優先度判断は人間が行う",
     "",
   ].join("\n");
 

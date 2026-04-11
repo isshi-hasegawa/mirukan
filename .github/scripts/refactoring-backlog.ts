@@ -19,6 +19,8 @@ import {
 
 const REQUIRED_ENV_KEYS = ["SONAR_PROJECT_KEY", "SONAR_TOKEN"] as const;
 const SONAR_BASE_URL = "https://sonarcloud.io";
+const WORKFLOW_URL =
+  "https://github.com/isshi-hasegawa/mirukan/actions/workflows/refactoring-backlog.yml";
 const PROJECT_METRICS: SonarMeasureKey[] = [
   "code_smells",
   "sqale_index",
@@ -74,20 +76,24 @@ async function main() {
     process.env.REFACTORING_BACKLOG_OUTPUT_DIR || "artifacts/refactoring-backlog",
   );
 
-  const [projectMeasures, fileSignals, issues] = await Promise.all([
+  const [projectMeasures, fileSignals, codeSmells, bugs, vulnerabilities] = await Promise.all([
     fetchProjectMeasures({ projectKey, branchName }),
     fetchFileSignals({ projectKey, branchName }),
-    fetchCodeSmells({ projectKey, branchName }),
+    fetchIssuesByType({ projectKey, branchName, type: "CODE_SMELL" }),
+    fetchIssuesByType({ projectKey, branchName, type: "BUG" }),
+    fetchIssuesByType({ projectKey, branchName, type: "VULNERABILITY" }),
   ]);
 
   const observedAt =
     new Intl.DateTimeFormat("sv-SE", {
-      timeZone: "UTC",
+      timeZone: "Asia/Tokyo",
       dateStyle: "short",
       timeStyle: "short",
-    }).format(new Date()) + " UTC";
+    }).format(new Date()) + " JST";
 
-  const quickWinIssues = selectQuickWinIssues(filterBacklogIssues(issues, projectKey));
+  const bugIssues = filterBacklogIssues(bugs, projectKey);
+  const vulnerabilityIssues = filterBacklogIssues(vulnerabilities, projectKey);
+  const quickWinIssues = selectQuickWinIssues(filterBacklogIssues(codeSmells, projectKey));
   const filteredFileSignals = filterBacklogSignals(fileSignals);
   const longFiles = rankLongFiles(filteredFileSignals);
   const complexFiles = rankComplexFiles(filteredFileSignals);
@@ -97,7 +103,10 @@ async function main() {
     observedAt,
     sonarBaseUrl: SONAR_BASE_URL,
     branchName,
+    workflowUrl: WORKFLOW_URL,
     projectMeasures,
+    bugIssues,
+    vulnerabilityIssues,
     quickWinIssues,
     longFiles,
     complexFiles,
@@ -158,12 +167,12 @@ async function fetchFileSignals(input: { projectKey: string; branchName: string 
   })) satisfies SonarFileSignal[];
 }
 
-async function fetchCodeSmells(input: { projectKey: string; branchName: string }) {
+async function fetchIssuesByType(input: { projectKey: string; branchName: string; type: string }) {
   const issues = await paginate<SonarIssuesResponse["issues"][number]>(async (page) => {
     const response = await sonarApi<SonarIssuesResponse>("/api/issues/search", {
       componentKeys: input.projectKey,
       branch: input.branchName,
-      types: "CODE_SMELL",
+      types: input.type,
       statuses: "OPEN,CONFIRMED",
       ps: "100",
       p: String(page),

@@ -23,6 +23,19 @@ type QuickWinGroup = {
   minEffortMinutes?: number;
 };
 
+export function renderIssueList(
+  projectKey: string,
+  sonarBaseUrl: string,
+  issues: SonarIssueLike[],
+) {
+  return issues.map((issue) => {
+    const path = toDisplayPath(normalizeComponentPath(issue.component, projectKey));
+    const line = issue.line ? `:${issue.line}` : "";
+    const issueUrl = `${trimTrailingSlash(sonarBaseUrl)}/project/issues?id=${encodeURIComponent(projectKey)}&open=${encodeURIComponent(issue.key)}`;
+    return `- [${path}${line}](${issueUrl}) — ${sanitizeAbsolutePaths(issue.message)}`;
+  });
+}
+
 export function renderQuickWinIssues(
   projectKey: string,
   sonarBaseUrl: string,
