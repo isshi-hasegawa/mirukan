@@ -11,10 +11,22 @@ import { fetchOmdbWorkDetails } from "../../lib/omdb.ts";
 import { buildSearchText } from "./helpers.ts";
 import type { WorkType } from "./types.ts";
 import { buildTmdbWorkUpdate, calcBackgroundFitScore, type RatingInfo } from "./work-metadata.ts";
+import {
+  buildErrorIdResponse,
+  buildOkIdResponse,
+  buildSelectedSeasonTargets,
+  buildTmdbSeriesTarget,
+  buildTmdbWorkInsert,
+  shouldRefreshOmdbWork,
+  shouldRefreshTmdbWork,
+  type TmdbWorkIdResponse,
+} from "./work-repository-helpers.ts";
+export {
+  buildSelectedSeasonTargets,
+  shouldRefreshOmdbWork,
+  shouldRefreshTmdbWork,
+} from "./work-repository-helpers.ts";
 
-const TMDB_WORK_REFRESH_INTERVAL_MS = 30 * 24 * 60 * 60 * 1000;
-const OMDB_WORK_REFRESH_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000;
-type TmdbWorkIdResponse = PostgrestSingleResponse<{ id: string }>;
 type ExistingTmdbWorkRow = {
   id: string;
   last_tmdb_synced_at: string | null;
@@ -33,41 +45,6 @@ type UpsertFetchedTmdbWorkOptions = {
   seasonNumber?: number;
   workType?: WorkType;
 };
-type OkResponseData = { id: string };
-
-export function shouldRefreshOmdbWork(
-  omdbFetchedAt: string | null,
-  now = Date.now(),
-  refreshIntervalMs = OMDB_WORK_REFRESH_INTERVAL_MS,
-) {
-  if (!omdbFetchedAt) {
-    return true;
-  }
-
-  const fetchedAtMs = Date.parse(omdbFetchedAt);
-  if (Number.isNaN(fetchedAtMs)) {
-    return true;
-  }
-
-  return now - fetchedAtMs >= refreshIntervalMs;
-}
-
-export function shouldRefreshTmdbWork(
-  lastSyncedAt: string | null,
-  now = Date.now(),
-  refreshIntervalMs = TMDB_WORK_REFRESH_INTERVAL_MS,
-) {
-  if (!lastSyncedAt) {
-    return true;
-  }
-
-  const syncedAtMs = Date.parse(lastSyncedAt);
-  if (Number.isNaN(syncedAtMs)) {
-    return true;
-  }
-
-  return now - syncedAtMs >= refreshIntervalMs;
-}
 
 export async function upsertTmdbWork(
   target: TmdbSelectionTarget,
@@ -138,42 +115,6 @@ export async function upsertManualWork(
   return buildErrorIdResponse(insertResult.error, 409, "Conflict");
 }
 
-export function buildSelectedSeasonTargets(
-  seriesResult: TmdbSearchResult,
-  seasonOptions: TmdbSeasonOption[],
-  seasonNumbers: number[],
-): TmdbSelectionTarget[] {
-  const normalizedSeasonNumbers = [...new Set(seasonNumbers)].sort((left, right) => left - right);
-  const seasonOptionsByNumber = new Map(
-    seasonOptions.map((season) => [season.seasonNumber, season] as const),
-  );
-
-  return normalizedSeasonNumbers.map((seasonNumber) => {
-    if (seasonNumber === 1) {
-      return seriesResult;
-    }
-
-    const season = seasonOptionsByNumber.get(seasonNumber);
-    if (!season) {
-      throw new Error(`シーズン${seasonNumber}の情報が見つかりません`);
-    }
-
-    return {
-      tmdbId: seriesResult.tmdbId,
-      tmdbMediaType: "tv",
-      workType: "season",
-      title: season.title,
-      originalTitle: seriesResult.originalTitle,
-      overview: season.overview,
-      posterPath: season.posterPath,
-      releaseDate: season.releaseDate,
-      seasonNumber,
-      episodeCount: season.episodeCount,
-      seriesTitle: seriesResult.title,
-    };
-  });
-}
-
 type ResolveSelectedSeasonWorkIdsOptions = {
   seasonOptions: TmdbSeasonOption[];
 };
@@ -212,23 +153,6 @@ export async function resolveSelectedSeasonWorkIds(
   }
 
   return { error: null, workIds };
-}
-
-function buildTmdbWorkInsert(
-  details: Parameters<typeof buildTmdbWorkUpdate>[0],
-  userId: string,
-  workType: WorkType,
-  parentWorkId: string | null = null,
-) {
-  return {
-    created_by: userId,
-    source_type: "tmdb" as const,
-    tmdb_media_type: details.tmdbMediaType,
-    tmdb_id: details.tmdbId,
-    work_type: workType,
-    parent_work_id: parentWorkId,
-    ...buildTmdbWorkUpdate(details),
-  };
 }
 
 async function upsertTmdbSeasonWork(
@@ -278,113 +202,23 @@ async function upsertFetchedTmdbWork(
   userId: string,
   options: UpsertFetchedTmdbWorkOptions = {},
 ): Promise<TmdbWorkIdResponse> {
-  const workType = options.workType ?? target.workType;
-  const seasonNumber =
-    options.seasonNumber ?? (target.workType === "season" ? target.seasonNumber : undefined);
-  const { data: existing, error: selectError } = await findExistingTmdbWork({
-    tmdbMediaType: target.tmdbMediaType,
-    tmdbId: target.tmdbId,
-    workType,
-    seasonNumber,
-  });
+  const lookup = buildTmdbWorkLookup(target, options);
+  const { data: existing, error: selectError } = await findExistingTmdbWork(lookup);
 
   if (selectError) {
     return buildErrorIdResponse(selectError);
   }
 
-  const shouldRefreshTmdb = !existing || shouldRefreshTmdbWork(existing.last_tmdb_synced_at);
-  const shouldRefreshOmdb = !existing || shouldRefreshOmdbWork(existing.omdb_fetched_at);
-  const shouldSyncTmdbForOmdb = Boolean(existing && shouldRefreshOmdb && !existing.imdb_id);
-
-  if (existing && !shouldRefreshTmdb && !shouldSyncTmdbForOmdb) {
-    if (existing.imdb_id && shouldRefreshOmdb) {
-      try {
-        const omdb = await fetchOmdbWorkDetails(existing.imdb_id);
-        const omdbRatings: RatingInfo = {
-          imdbRating: omdb.imdbRating,
-          rottenTomatoesScore: omdb.rottenTomatoesScore,
-        };
-        await supabase
-          .from("works")
-          .update({
-            rotten_tomatoes_score: omdb.rottenTomatoesScore,
-            imdb_rating: omdb.imdbRating,
-            imdb_votes: omdb.imdbVotes,
-            metacritic_score: omdb.metacriticScore,
-            background_fit_score: calcBackgroundFitScore(existing.genres, omdbRatings),
-            omdb_fetched_at: new Date().toISOString(),
-          })
-          .eq("id", existing.id);
-      } catch {
-        // OMDb 更新の失敗は TMDb の early return をブロックしない
-      }
-    }
+  const syncState = buildTmdbSyncState(existing);
+  if (existing && !syncState.shouldRefreshTmdb && !syncState.shouldSyncTmdbForOmdb) {
+    await refreshExistingOmdbFields(existing, syncState.shouldRefreshOmdb);
     return buildOkIdResponse(existing.id);
   }
 
   const details = await fetchTmdbWorkDetails(target);
-
-  const omdbFields = await (async () => {
-    const omdbFetchedAt = new Date().toISOString();
-
-    if (details.imdbId === null) {
-      if (
-        existing &&
-        !shouldRefreshOmdbWork(existing.omdb_fetched_at) &&
-        existing.imdb_id === null
-      ) {
-        return {};
-      }
-
-      return {
-        rotten_tomatoes_score: null,
-        imdb_rating: null,
-        imdb_votes: null,
-        metacritic_score: null,
-        omdb_fetched_at: omdbFetchedAt,
-      };
-    }
-
-    if (!details.imdbId) return {};
-    if (
-      existing &&
-      !shouldRefreshOmdbWork(existing.omdb_fetched_at) &&
-      existing.imdb_id === details.imdbId
-    ) {
-      return {};
-    }
-    try {
-      const omdb = await fetchOmdbWorkDetails(details.imdbId);
-      return {
-        rotten_tomatoes_score: omdb.rottenTomatoesScore,
-        imdb_rating: omdb.imdbRating,
-        imdb_votes: omdb.imdbVotes,
-        metacritic_score: omdb.metacriticScore,
-        omdb_fetched_at: omdbFetchedAt,
-      };
-    } catch {
-      return {};
-    }
-  })();
-
-  const omdbRatings: RatingInfo = {
-    imdbRating: "imdb_rating" in omdbFields ? (omdbFields.imdb_rating ?? null) : null,
-    rottenTomatoesScore:
-      "rotten_tomatoes_score" in omdbFields ? (omdbFields.rotten_tomatoes_score ?? null) : null,
-  };
-  const updatePayload =
-    options.parentWorkId === undefined
-      ? {
-          ...buildTmdbWorkUpdate(details),
-          ...omdbFields,
-          background_fit_score: calcBackgroundFitScore(details.genres, omdbRatings),
-        }
-      : {
-          ...buildTmdbWorkUpdate(details),
-          ...omdbFields,
-          background_fit_score: calcBackgroundFitScore(details.genres, omdbRatings),
-          parent_work_id: options.parentWorkId,
-        };
+  const omdbFields = await buildOmdbFields(details, existing);
+  const omdbRatings = buildOmdbRatings(omdbFields);
+  const updatePayload = buildTmdbUpdatePayload(details, omdbFields, options.parentWorkId);
 
   if (existing) {
     const { error: updateError } = await supabase
@@ -402,7 +236,7 @@ async function upsertFetchedTmdbWork(
   return supabase
     .from("works")
     .insert({
-      ...buildTmdbWorkInsert(details, userId, workType, options.parentWorkId ?? null),
+      ...buildTmdbWorkInsert(details, userId, lookup.workType, options.parentWorkId ?? null),
       ...omdbFields,
       background_fit_score: calcBackgroundFitScore(details.genres, omdbRatings),
     })
@@ -410,30 +244,135 @@ async function upsertFetchedTmdbWork(
     .single();
 }
 
-function buildTmdbSeriesTarget(target: TmdbSeasonSelectionTarget): TmdbSearchResult {
+function buildTmdbWorkLookup(
+  target: TmdbSelectionTarget,
+  options: UpsertFetchedTmdbWorkOptions,
+): TmdbWorkLookup {
   return {
+    tmdbMediaType: target.tmdbMediaType,
     tmdbId: target.tmdbId,
-    tmdbMediaType: "tv",
-    workType: "series",
-    title: target.seriesTitle,
-    originalTitle: target.originalTitle,
-    overview: target.overview,
-    posterPath: target.posterPath,
-    releaseDate: target.releaseDate,
-    jpWatchPlatforms: [],
-    hasJapaneseRelease: false,
+    workType: options.workType ?? target.workType,
+    seasonNumber:
+      options.seasonNumber ?? (target.workType === "season" ? target.seasonNumber : undefined),
   };
 }
 
-function buildErrorIdResponse(
-  error: PostgrestError,
-  status = 400,
-  statusText = "Bad Request",
-): TmdbWorkIdResponse {
-  return { success: false, data: null, error, count: null, status, statusText };
+function buildTmdbSyncState(existing: ExistingTmdbWorkRow | null) {
+  const shouldRefreshTmdb = !existing || shouldRefreshTmdbWork(existing.last_tmdb_synced_at);
+  const shouldRefreshOmdb = !existing || shouldRefreshOmdbWork(existing.omdb_fetched_at);
+
+  return {
+    shouldRefreshTmdb,
+    shouldRefreshOmdb,
+    shouldSyncTmdbForOmdb: Boolean(existing && shouldRefreshOmdb && !existing.imdb_id),
+  };
 }
 
-function buildOkIdResponse(id: string): TmdbWorkIdResponse {
-  const data: OkResponseData = { id };
-  return { success: true, data, error: null, count: null, status: 200, statusText: "OK" };
+async function refreshExistingOmdbFields(
+  existing: ExistingTmdbWorkRow,
+  shouldRefreshOmdb: boolean,
+) {
+  if (!existing.imdb_id || !shouldRefreshOmdb) {
+    return;
+  }
+
+  try {
+    const omdb = await fetchOmdbWorkDetails(existing.imdb_id);
+    const omdbRatings: RatingInfo = {
+      imdbRating: omdb.imdbRating,
+      rottenTomatoesScore: omdb.rottenTomatoesScore,
+    };
+
+    await supabase
+      .from("works")
+      .update({
+        rotten_tomatoes_score: omdb.rottenTomatoesScore,
+        imdb_rating: omdb.imdbRating,
+        imdb_votes: omdb.imdbVotes,
+        metacritic_score: omdb.metacriticScore,
+        background_fit_score: calcBackgroundFitScore(existing.genres, omdbRatings),
+        omdb_fetched_at: new Date().toISOString(),
+      })
+      .eq("id", existing.id);
+  } catch {
+    // OMDb 更新の失敗は TMDb の early return をブロックしない
+  }
+}
+
+type OmdbFields = {
+  rotten_tomatoes_score?: number | null;
+  imdb_rating?: number | null;
+  imdb_votes?: number | null;
+  metacritic_score?: number | null;
+  omdb_fetched_at?: string;
+};
+
+async function buildOmdbFields(
+  details: Awaited<ReturnType<typeof fetchTmdbWorkDetails>>,
+  existing: ExistingTmdbWorkRow | null,
+): Promise<OmdbFields> {
+  const omdbFetchedAt = new Date().toISOString();
+
+  if (details.imdbId === null) {
+    return shouldKeepExistingNullOmdbState(existing)
+      ? {}
+      : {
+          rotten_tomatoes_score: null,
+          imdb_rating: null,
+          imdb_votes: null,
+          metacritic_score: null,
+          omdb_fetched_at: omdbFetchedAt,
+        };
+  }
+
+  if (!details.imdbId || shouldSkipOmdbRefresh(existing, details.imdbId)) {
+    return {};
+  }
+
+  try {
+    const omdb = await fetchOmdbWorkDetails(details.imdbId);
+    return {
+      rotten_tomatoes_score: omdb.rottenTomatoesScore,
+      imdb_rating: omdb.imdbRating,
+      imdb_votes: omdb.imdbVotes,
+      metacritic_score: omdb.metacriticScore,
+      omdb_fetched_at: omdbFetchedAt,
+    };
+  } catch {
+    return {};
+  }
+}
+
+function shouldKeepExistingNullOmdbState(existing: ExistingTmdbWorkRow | null) {
+  return Boolean(
+    existing && !shouldRefreshOmdbWork(existing.omdb_fetched_at) && existing.imdb_id === null,
+  );
+}
+
+function shouldSkipOmdbRefresh(existing: ExistingTmdbWorkRow | null, imdbId: string) {
+  return Boolean(
+    existing && !shouldRefreshOmdbWork(existing.omdb_fetched_at) && existing.imdb_id === imdbId,
+  );
+}
+
+function buildOmdbRatings(omdbFields: OmdbFields): RatingInfo {
+  return {
+    imdbRating: "imdb_rating" in omdbFields ? (omdbFields.imdb_rating ?? null) : null,
+    rottenTomatoesScore:
+      "rotten_tomatoes_score" in omdbFields ? (omdbFields.rotten_tomatoes_score ?? null) : null,
+  };
+}
+
+function buildTmdbUpdatePayload(
+  details: Awaited<ReturnType<typeof fetchTmdbWorkDetails>>,
+  omdbFields: OmdbFields,
+  parentWorkId: string | undefined,
+) {
+  const omdbRatings = buildOmdbRatings(omdbFields);
+  return {
+    ...buildTmdbWorkUpdate(details),
+    ...omdbFields,
+    background_fit_score: calcBackgroundFitScore(details.genres, omdbRatings),
+    ...(parentWorkId === undefined ? {} : { parent_work_id: parentWorkId }),
+  };
 }
