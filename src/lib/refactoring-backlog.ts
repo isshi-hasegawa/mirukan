@@ -435,10 +435,15 @@ function toDisplayPath(value: string) {
 }
 
 function splitTrailingPunctuation(value: string) {
-  const match = value.match(/^(.*?)([.,:;!?]+)?$/);
+  let index = value.length;
+
+  while (index > 0 && isTrailingPunctuation(value[index - 1])) {
+    index -= 1;
+  }
+
   return {
-    path: match?.[1] ?? value,
-    suffix: match?.[2] ?? "",
+    path: value.slice(0, index),
+    suffix: value.slice(index),
   };
 }
 
@@ -452,4 +457,15 @@ function minDefined(left: number | undefined, right: number | undefined) {
   }
 
   return Math.min(left, right);
+}
+
+function isTrailingPunctuation(value: string) {
+  return (
+    value === "." ||
+    value === "," ||
+    value === ":" ||
+    value === ";" ||
+    value === "!" ||
+    value === "?"
+  );
 }
