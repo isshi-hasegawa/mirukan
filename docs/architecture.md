@@ -45,4 +45,5 @@
 ## DB マイグレーション
 
 - `supabase/migrations/` に SQL ファイルを追加して管理する。
-- `supabase/seed.sql` はローカル開発用初期データとして扱う。
+- `supabase/seed.sql` はローカル開発用の最小初期データとして扱う。
+- `supabase/seed.sample.sql` は盤面を増やしたいときだけ手動で流す任意サンプルとする。

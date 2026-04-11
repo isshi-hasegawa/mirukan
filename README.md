@@ -36,6 +36,13 @@ cp supabase/functions/.env.example supabase/functions/.env
 
 `supabase/functions/.env` にはローカル開発用の `TMDB_API_KEY` を設定してください。リモート環境は `supabase secrets set TMDB_API_KEY=...` で管理します。
 
+ローカル DB の初期データは `supabase/seed.sql` に最小構成で入ります。盤面を増やしたいときだけ、追加で `supabase/seed.sample.sql` を流してください。
+
+```bash
+supabase db reset
+supabase db query --file supabase/seed.sample.sql
+```
+
 コミット時の pre-commit では `vp check --fix` を実行します。secret scan は GitHub Actions の Betterleaks workflow で実行します。
 
 ## TMDB Attribution

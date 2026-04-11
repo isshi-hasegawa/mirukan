@@ -131,6 +131,10 @@ describe("signal ranking", () => {
           path: "supabase/migrations/20260412000000_create_items.sql",
           measures: { ncloc: 500 },
         },
+        {
+          path: "supabase/seed.sample.sql",
+          measures: { ncloc: 500 },
+        },
       ]),
     ).toEqual(files);
   });
@@ -201,6 +205,12 @@ describe("selectQuickWinIssues", () => {
       {
         key: "3",
         message: "C",
+        component: "mirukan:supabase/seed.sample.sql",
+        effortMinutes: 1,
+      },
+      {
+        key: "4",
+        message: "C",
         component: "mirukan:src/lib/example.ts",
         effortMinutes: 1,
       },
@@ -214,7 +224,7 @@ describe("selectQuickWinIssues", () => {
         effortMinutes: 1,
       },
       {
-        key: "3",
+        key: "4",
         message: "C",
         component: "mirukan:src/lib/example.ts",
         effortMinutes: 1,
