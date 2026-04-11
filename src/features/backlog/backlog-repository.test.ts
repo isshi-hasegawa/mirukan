@@ -1,5 +1,6 @@
 import { http, HttpResponse } from "msw";
 import { setupTestLifecycle } from "../../test/test-lifecycle.ts";
+import { createWorkSummary } from "../../test/backlog-fixtures.ts";
 import { getMockBacklogItems, setMockBacklogItems } from "../../test/mocks/handlers";
 import { server } from "../../test/mocks/server";
 import {
@@ -34,31 +35,13 @@ function createItem(
     primary_platform: null,
     note: null,
     sort_order: sortOrder,
-    works: {
+    works: createWorkSummary({
       id: workId,
       title: `Title ${id}`,
-      work_type: "movie",
       source_type: "manual",
       tmdb_id: null,
       tmdb_media_type: null,
-      original_title: null,
-      overview: null,
-      poster_path: null,
-      release_date: null,
-      runtime_minutes: null,
-      typical_episode_runtime_minutes: null,
-      duration_bucket: null,
-      genres: [],
-      season_count: null,
-      season_number: null,
-      focus_required_score: null,
-      background_fit_score: null,
-      completion_load_score: null,
-      rotten_tomatoes_score: null,
-      imdb_rating: null,
-      imdb_votes: null,
-      metacritic_score: null,
-    },
+    }),
   };
 }
 

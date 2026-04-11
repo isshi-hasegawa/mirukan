@@ -3,7 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { withNuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { OnUrlUpdateFunction } from "nuqs/adapters/testing";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
-import type { BacklogItem, BacklogStatus, ViewingMode, WorkSummary } from "../types.ts";
+import { createWorkSummary as createWorkSummaryFromFixtures } from "../../../test/backlog-fixtures.ts";
+import type { BacklogItem, BacklogStatus, ViewingMode } from "../types.ts";
 import { KanbanBoard } from "./KanbanBoard.tsx";
 
 vi.mock("./KanbanColumn.tsx", () => ({
@@ -61,61 +62,22 @@ function createItem(
     primary_platform: null,
     note: null,
     sort_order: 1000,
-    works: {
+    works: createWorkSummaryFromFixtures({
       id: `work-${id}`,
       title,
-      work_type: "movie",
-      source_type: "tmdb",
       tmdb_id: Number(id.replace(/\D/g, "")) || 1,
-      tmdb_media_type: "movie",
-      original_title: null,
-      overview: null,
-      poster_path: null,
-      release_date: null,
-      runtime_minutes: null,
-      typical_episode_runtime_minutes: null,
-      duration_bucket: null,
-      genres: [],
-      season_count: null,
-      season_number: null,
-      focus_required_score: null,
-      background_fit_score: null,
-      completion_load_score: null,
-      rotten_tomatoes_score: null,
-      imdb_rating: null,
-      imdb_votes: null,
-      metacritic_score: null,
-    },
+    }),
     ...overrides,
   };
 }
 
-function createWorkSummary(id: string, title: string, runtimeMinutes: number): WorkSummary {
-  return {
+function createWorkSummary(id: string, title: string, runtimeMinutes: number) {
+  return createWorkSummaryFromFixtures({
     id: `work-${id}`,
     title,
-    work_type: "movie",
-    source_type: "tmdb",
     tmdb_id: Number(id.replace(/\D/g, "")) || 1,
-    tmdb_media_type: "movie",
-    original_title: null,
-    overview: null,
-    poster_path: null,
-    release_date: null,
     runtime_minutes: runtimeMinutes,
-    typical_episode_runtime_minutes: null,
-    duration_bucket: null,
-    genres: [],
-    season_count: null,
-    season_number: null,
-    focus_required_score: null,
-    background_fit_score: null,
-    completion_load_score: null,
-    rotten_tomatoes_score: null,
-    imdb_rating: null,
-    imdb_votes: null,
-    metacritic_score: null,
-  };
+  });
 }
 
 function renderKanbanBoard(

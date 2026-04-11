@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
+import { createWorkSummary } from "../../../test/backlog-fixtures.ts";
 import type { BacklogItem } from "../types.ts";
 import { BacklogCard } from "./BacklogCard.tsx";
 
@@ -28,31 +29,13 @@ function createItem(): BacklogItem {
     primary_platform: null,
     note: "メモあり",
     sort_order: 1000,
-    works: {
-      id: "work-1",
+    works: createWorkSummary({
       title: "テスト作品",
-      work_type: "movie",
       source_type: "manual",
       tmdb_id: null,
       tmdb_media_type: null,
-      original_title: null,
-      overview: null,
-      poster_path: null,
       release_date: "2024-01-01",
-      runtime_minutes: null,
-      typical_episode_runtime_minutes: null,
-      duration_bucket: null,
-      genres: [],
-      season_count: null,
-      season_number: null,
-      focus_required_score: null,
-      background_fit_score: null,
-      completion_load_score: null,
-      rotten_tomatoes_score: null,
-      imdb_rating: null,
-      imdb_votes: null,
-      metacritic_score: null,
-    },
+    }),
   };
 }
 
