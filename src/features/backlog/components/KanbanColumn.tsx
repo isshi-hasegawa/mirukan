@@ -6,7 +6,7 @@ import { BacklogCard } from "./BacklogCard.tsx";
 import { KanbanColumnHeader } from "./KanbanColumnHeader.tsx";
 import { ViewingModeFilter } from "./ViewingModeFilter.tsx";
 
-const RECENT_WATCHED_COUNT = 5;
+const RECENT_WATCHED_COUNT = 20;
 
 type Props = KanbanColumnProps & {
   extra?: ReactNode;
@@ -84,22 +84,22 @@ export function KanbanColumn({
                 ))}
                 {isWatchedWithOverflow && (
                   <>
-                    <button
-                      type="button"
-                      className="flex items-center gap-[6px] rounded-full border border-[var(--border)] bg-[rgba(92,59,35,0.04)] px-[12px] py-[7px] text-[0.8rem] text-[var(--text-muted)] hover:bg-[rgba(92,59,35,0.08)] transition-colors"
-                      onClick={() => setIsOlderOpen((prev) => !prev)}
-                      aria-expanded={isOlderOpen}
-                    >
-                      <svg
-                        className="h-[12px] w-[12px] shrink-0 fill-none stroke-current [stroke-linecap:round] [stroke-linejoin:round] [stroke-width:2] transition-transform"
-                        style={{ transform: isOlderOpen ? "rotate(180deg)" : "rotate(0deg)" }}
-                        viewBox="0 0 12 12"
-                        aria-hidden="true"
+                    {!isOlderOpen && (
+                      <button
+                        type="button"
+                        className="flex items-center gap-[6px] rounded-full border border-[var(--border)] bg-[rgba(92,59,35,0.04)] px-[12px] py-[7px] text-[0.8rem] text-[var(--text-muted)] hover:bg-[rgba(92,59,35,0.08)] transition-colors"
+                        onClick={() => setIsOlderOpen(true)}
                       >
-                        <path d="M2 4l4 4 4-4" />
-                      </svg>
-                      {isOlderOpen ? "折りたたむ" : `過去の視聴済み（${olderItems.length}件）`}
-                    </button>
+                        <svg
+                          className="h-[12px] w-[12px] shrink-0 fill-none stroke-current [stroke-linecap:round] [stroke-linejoin:round] [stroke-width:2]"
+                          viewBox="0 0 12 12"
+                          aria-hidden="true"
+                        >
+                          <path d="M2 4l4 4 4-4" />
+                        </svg>
+                        {`過去の視聴済み（${olderItems.length}件）`}
+                      </button>
+                    )}
                     {isOlderOpen &&
                       olderItems.map((item) => (
                         <BacklogCard
