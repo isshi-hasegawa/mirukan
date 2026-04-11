@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { useBacklogActions } from "./useBacklogActions.ts";
 import { useBacklogDnd } from "./useBacklogDnd.ts";
@@ -15,9 +16,11 @@ export function useBoardPageController({ session }: UseBoardPageControllerOption
   const { feedback, feedbackUi } = useBacklogFeedback();
   const { items, isLoading, error, loadItems } = useBacklogItems(session.user.id);
   const boardPageState = useBoardPageState({ isMobileLayout });
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<ReadonlySet<string>>(new Set());
 
   const dnd = useBacklogDnd({
     items,
+    pendingDeleteIds,
     isMobileLayout,
     onAfterDrop: loadItems,
     feedback,
@@ -27,6 +30,7 @@ export function useBoardPageController({ session }: UseBoardPageControllerOption
     items,
     localItems: dnd.localItems,
     setLocalItems: dnd.setLocalItems,
+    setPendingDeleteIds,
     session,
     loadItems,
     onItemDeleted: boardPageState.handleItemDeleted,

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button.tsx";
-import type { BacklogFeedback, ToastResult } from "../ui-feedback.ts";
+import type { BacklogFeedback, ToastOptions, ToastResult } from "../ui-feedback.ts";
 
 type ConfirmState = {
   message: string;
@@ -13,6 +13,22 @@ type ToastState = {
   timeoutMs: number;
   resolve: (result: ToastResult) => void;
 };
+
+function buildNextToastState(
+  current: ToastState | null,
+  message: string,
+  options: ToastOptions | undefined,
+  resolve: (result: ToastResult) => void,
+): ToastState {
+  // 既存トーストがあれば先に settle して Promise を解決させる
+  current?.resolve({ undone: false });
+  return {
+    message,
+    undoLabel: options?.undoLabel,
+    timeoutMs: options?.timeoutMs ?? 5000,
+    resolve,
+  };
+}
 
 function FeedbackAlert({ message, onClose }: { message: string; onClose: () => void }) {
   return (
@@ -135,16 +151,7 @@ export function useBacklogFeedback() {
         }),
       toast: (message, options) =>
         new Promise<ToastResult>((resolve) => {
-          setToastState((current) => {
-            // 既存トーストがあれば先に settle して Promise を解決させる
-            current?.resolve({ undone: false });
-            return {
-              message,
-              undoLabel: options?.undoLabel,
-              timeoutMs: options?.timeoutMs ?? 5000,
-              resolve,
-            };
-          });
+          setToastState((current) => buildNextToastState(current, message, options, resolve));
         }),
     }),
     [],

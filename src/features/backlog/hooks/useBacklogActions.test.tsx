@@ -69,6 +69,7 @@ function HookHarness({
   items = [createItem()],
   localItems,
   setLocalItems = vi.fn(),
+  setPendingDeleteIds = vi.fn(),
   loadItems = vi.fn().mockResolvedValue(undefined),
   onItemDeleted = vi.fn(),
   onWorksAdded = vi.fn(),
@@ -78,6 +79,7 @@ function HookHarness({
   items?: BacklogItem[];
   localItems?: BacklogItem[];
   setLocalItems?: React.Dispatch<React.SetStateAction<BacklogItem[]>>;
+  setPendingDeleteIds?: React.Dispatch<React.SetStateAction<ReadonlySet<string>>>;
   loadItems?: () => Promise<void>;
   onItemDeleted?: (itemId: string) => void;
   onWorksAdded?: () => void;
@@ -88,6 +90,7 @@ function HookHarness({
     items,
     localItems: localItems ?? items,
     setLocalItems,
+    setPendingDeleteIds,
     session: { user: { id: "user-1" } } as Session,
     loadItems,
     onItemDeleted,

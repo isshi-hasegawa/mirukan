@@ -19,6 +19,7 @@ type Props = {
   items: BacklogItem[];
   localItems: BacklogItem[];
   setLocalItems: Dispatch<SetStateAction<BacklogItem[]>>;
+  setPendingDeleteIds: Dispatch<SetStateAction<ReadonlySet<string>>>;
   session: Session;
   loadItems: () => Promise<void>;
   onItemDeleted: (itemId: string) => void;
@@ -38,6 +39,7 @@ export function useBacklogActions({
   items,
   localItems,
   setLocalItems,
+  setPendingDeleteIds,
   session,
   loadItems,
   onItemDeleted,
@@ -50,7 +52,8 @@ export function useBacklogActions({
 
     const itemIndex = localItems.findIndex((i) => i.id === itemId);
 
-    // 楽観的除去: 即座に UI から消す
+    // 楽観的除去: 即座に UI から消し、サーバー同期でも除外されるよう登録
+    setPendingDeleteIds((prev) => new Set([...prev, itemId]));
     setLocalItems((prev) => prev.filter((i) => i.id !== itemId));
     onItemDeleted(itemId);
 
@@ -60,7 +63,12 @@ export function useBacklogActions({
     });
 
     if (undone) {
-      // 元の位置に戻す（loadItems による再同期で既に復元済みの場合は挿入しない）
+      // 登録を解除して元の位置に戻す（既に復元済みの場合は挿入しない）
+      setPendingDeleteIds((prev) => {
+        const next = new Set(prev);
+        next.delete(itemId);
+        return next;
+      });
       setLocalItems((prev) => {
         if (prev.some((i) => i.id === itemToDelete.id)) return prev;
         const next = [...prev];
@@ -70,8 +78,13 @@ export function useBacklogActions({
       return;
     }
 
-    // 実際に削除
+    // 実際に削除して登録を解除
     const { error: deleteError } = await deleteBacklogItem(itemId);
+    setPendingDeleteIds((prev) => {
+      const next = new Set(prev);
+      next.delete(itemId);
+      return next;
+    });
     if (deleteError) {
       await Promise.resolve(feedback.alert(`削除に失敗しました: ${deleteError}`));
     }

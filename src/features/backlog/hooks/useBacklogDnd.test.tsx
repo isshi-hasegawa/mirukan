@@ -82,11 +82,13 @@ function renderDnd(
   options?: {
     isMobileLayout?: boolean;
     onAfterDropOverride?: () => Promise<void>;
+    pendingDeleteIds?: ReadonlySet<string>;
   },
 ) {
   return renderHook(() =>
     useBacklogDnd({
       items,
+      pendingDeleteIds: options?.pendingDeleteIds ?? new Set(),
       isMobileLayout: options?.isMobileLayout ?? false,
       onAfterDrop: options?.onAfterDropOverride ?? onAfterDrop,
       feedback,
