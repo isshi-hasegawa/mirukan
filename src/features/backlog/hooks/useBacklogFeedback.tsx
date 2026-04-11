@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { type Dispatch, type SetStateAction, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button.tsx";
 import type { BacklogFeedback, ToastOptions, ToastResult } from "../ui-feedback.ts";
 
@@ -28,6 +28,16 @@ function buildNextToastState(
     timeoutMs: options?.timeoutMs ?? 5000,
     resolve,
   };
+}
+
+function createToastPromise(
+  message: string,
+  options: ToastOptions | undefined,
+  setToastState: Dispatch<SetStateAction<ToastState | null>>,
+): Promise<ToastResult> {
+  return new Promise<ToastResult>((resolve) => {
+    setToastState((current) => buildNextToastState(current, message, options, resolve));
+  });
 }
 
 function FeedbackAlert({ message, onClose }: { message: string; onClose: () => void }) {
@@ -149,10 +159,7 @@ export function useBacklogFeedback() {
         new Promise<boolean>((resolve) => {
           setConfirmState({ message, resolve });
         }),
-      toast: (message, options) =>
-        new Promise<ToastResult>((resolve) => {
-          setToastState((current) => buildNextToastState(current, message, options, resolve));
-        }),
+      toast: (message, options) => createToastPromise(message, options, setToastState),
     }),
     [],
   );

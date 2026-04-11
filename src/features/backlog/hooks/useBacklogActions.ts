@@ -78,17 +78,19 @@ export function useBacklogActions({
       return;
     }
 
-    // 実際に削除して登録を解除
+    // 実際に削除し、loadItems 完了後にフィルタを解除
+    // loadItems の完了まで pendingDeleteIds を保持することで、再フェッチ遅延中に
+    // サーバーキャッシュから削除済みアイテムが復活するのを防ぐ
     const { error: deleteError } = await deleteBacklogItem(itemId);
+    if (deleteError) {
+      await Promise.resolve(feedback.alert(`削除に失敗しました: ${deleteError}`));
+    }
+    await loadItems();
     setPendingDeleteIds((prev) => {
       const next = new Set(prev);
       next.delete(itemId);
       return next;
     });
-    if (deleteError) {
-      await Promise.resolve(feedback.alert(`削除に失敗しました: ${deleteError}`));
-    }
-    await loadItems();
   };
 
   const handleMarkAsWatched = async (itemId: string) => {
