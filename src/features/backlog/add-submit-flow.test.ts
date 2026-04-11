@@ -1,4 +1,5 @@
 import { setupTestLifecycle } from "../../test/test-lifecycle.ts";
+import { createWorkSummary } from "../../test/backlog-fixtures.ts";
 import {
   buildSelectedSubject,
   buildStackedBacklogOptions,
@@ -31,49 +32,19 @@ function createItem(
   workId: string,
   workOverrides: Partial<NonNullable<BacklogItem["works"]>> = {},
 ): BacklogItem {
-  const baseWorks: NonNullable<BacklogItem["works"]> = {
-    id: workId,
-    title: `作品 ${id}`,
-    work_type: "movie",
-    source_type: "tmdb",
-    tmdb_id: null,
-    tmdb_media_type: null,
-    original_title: null,
-    overview: null,
-    poster_path: null,
-    release_date: null,
-    runtime_minutes: null,
-    typical_episode_runtime_minutes: null,
-    duration_bucket: null,
-    genres: [],
-    season_count: null,
-    season_number: null,
-    focus_required_score: null,
-    background_fit_score: null,
-    completion_load_score: null,
-    rotten_tomatoes_score: null,
-    imdb_rating: null,
-    imdb_votes: null,
-    metacritic_score: null,
-  };
-  const works = {
-    ...baseWorks,
-    ...workOverrides,
-  };
-
   return {
     id,
     status,
     primary_platform: null,
     note: null,
     sort_order: 1000,
-    works: {
-      ...works,
-      rotten_tomatoes_score: works.rotten_tomatoes_score ?? null,
-      imdb_rating: works.imdb_rating ?? null,
-      imdb_votes: works.imdb_votes ?? null,
-      metacritic_score: works.metacritic_score ?? null,
-    },
+    works: createWorkSummary({
+      id: workId,
+      title: `作品 ${id}`,
+      tmdb_id: null,
+      tmdb_media_type: null,
+      ...workOverrides,
+    }),
   };
 }
 

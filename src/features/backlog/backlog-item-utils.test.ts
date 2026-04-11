@@ -1,4 +1,5 @@
 import { setupTestLifecycle } from "../../test/test-lifecycle.ts";
+import { createWorkSummary } from "../../test/backlog-fixtures.ts";
 import {
   buildDetailFieldUpdate,
   buildMoveToStatusConfirmMessage,
@@ -9,7 +10,7 @@ import {
   normalizeBacklogItems,
   planBacklogItemUpserts,
 } from "./backlog-item-utils.ts";
-import type { BacklogItem, WorkSummary } from "./types.ts";
+import type { BacklogItem } from "./types.ts";
 
 setupTestLifecycle();
 
@@ -25,71 +26,13 @@ function createItem(
     primary_platform: null,
     note: null,
     sort_order: sortOrder,
-    works: {
+    works: createWorkSummary({
       id: workId,
       title: `Title ${id}`,
-      work_type: "movie",
       source_type: "manual",
       tmdb_id: null,
       tmdb_media_type: null,
-      original_title: null,
-      overview: null,
-      poster_path: null,
-      release_date: null,
-      runtime_minutes: null,
-      typical_episode_runtime_minutes: null,
-      duration_bucket: null,
-      genres: [],
-      season_count: null,
-      season_number: null,
-      focus_required_score: null,
-      background_fit_score: null,
-      completion_load_score: null,
-      rotten_tomatoes_score: null,
-      imdb_rating: null,
-      imdb_votes: null,
-      metacritic_score: null,
-    },
-  };
-}
-
-function createWork(overrides: Partial<WorkSummary> = {}): WorkSummary {
-  const baseWork: WorkSummary = {
-    id: "w1",
-    title: "Test",
-    work_type: "movie",
-    source_type: "tmdb",
-    tmdb_id: 1,
-    tmdb_media_type: "movie",
-    original_title: null,
-    overview: null,
-    poster_path: null,
-    release_date: null,
-    runtime_minutes: null,
-    typical_episode_runtime_minutes: null,
-    duration_bucket: null,
-    genres: [],
-    season_count: null,
-    season_number: null,
-    focus_required_score: null,
-    background_fit_score: null,
-    completion_load_score: null,
-    rotten_tomatoes_score: null,
-    imdb_rating: null,
-    imdb_votes: null,
-    metacritic_score: null,
-  };
-  const work = {
-    ...baseWork,
-    ...overrides,
-  };
-
-  return {
-    ...work,
-    rotten_tomatoes_score: work.rotten_tomatoes_score ?? null,
-    imdb_rating: work.imdb_rating ?? null,
-    imdb_votes: work.imdb_votes ?? null,
-    metacritic_score: work.metacritic_score ?? null,
+    }),
   };
 }
 
@@ -232,14 +175,14 @@ describe("normalizeBacklogItems", () => {
         primary_platform: null,
         note: null,
         sort_order: 1000,
-        works: [createWork({ id: "w1" })],
+        works: [createWorkSummary({ id: "w1" })],
       },
     ];
 
     const result = normalizeBacklogItems(rows);
 
     expect(result).toHaveLength(1);
-    expect(result[0].works).toEqual(createWork({ id: "w1" }));
+    expect(result[0].works).toEqual(createWorkSummary({ id: "w1" }));
   });
 
   test("passes through single work objects", () => {
@@ -250,14 +193,14 @@ describe("normalizeBacklogItems", () => {
         primary_platform: null,
         note: null,
         sort_order: 1000,
-        works: createWork({ id: "w1" }),
+        works: createWorkSummary({ id: "w1" }),
       },
     ];
 
     const result = normalizeBacklogItems(rows);
 
     expect(result).toHaveLength(1);
-    expect(result[0].works).toEqual(createWork({ id: "w1" }));
+    expect(result[0].works).toEqual(createWorkSummary({ id: "w1" }));
   });
 
   test("excludes rows with null works", () => {
@@ -283,7 +226,7 @@ describe("normalizeBacklogItems", () => {
         primary_platform: "unsupported",
         note: null,
         sort_order: 1000,
-        works: createWork({ id: "w1" }),
+        works: createWorkSummary({ id: "w1" }),
       },
     ];
 

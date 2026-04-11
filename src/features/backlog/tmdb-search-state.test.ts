@@ -1,4 +1,5 @@
 import { setupTestLifecycle } from "../../test/test-lifecycle.ts";
+import { createWorkSummary } from "../../test/backlog-fixtures.ts";
 import {
   buildDuplicateState,
   buildTvSelectionState,
@@ -33,31 +34,13 @@ function createItem(overrides: Partial<BacklogItem> = {}): BacklogItem {
     primary_platform: null,
     note: null,
     sort_order: 1000,
-    works: {
-      id: "work-1",
+    works: createWorkSummary({
       title: "既存作品",
       work_type: "series",
-      source_type: "tmdb",
-      tmdb_id: 1,
       tmdb_media_type: "tv",
-      original_title: null,
-      overview: null,
-      poster_path: null,
       release_date: "2024-01-01",
-      runtime_minutes: null,
-      typical_episode_runtime_minutes: null,
-      duration_bucket: null,
-      genres: [],
       season_count: 2,
-      season_number: null,
-      focus_required_score: null,
-      background_fit_score: null,
-      completion_load_score: null,
-      rotten_tomatoes_score: null,
-      imdb_rating: null,
-      imdb_votes: null,
-      metacritic_score: null,
-    },
+    }),
     ...overrides,
   };
 }

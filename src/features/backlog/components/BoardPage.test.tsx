@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
+import { createWorkSummary } from "../../../test/backlog-fixtures.ts";
 import type { BacklogItem, BacklogStatus } from "../types.ts";
 import { BoardPage } from "./BoardPage.tsx";
 
@@ -140,31 +141,7 @@ function createItem(overrides: Partial<BacklogItem> = {}): BacklogItem {
     primary_platform: null,
     note: null,
     sort_order: 1000,
-    works: {
-      id: "work-1",
-      title: "作品1",
-      work_type: "movie",
-      source_type: "tmdb",
-      tmdb_id: 1,
-      tmdb_media_type: "movie",
-      original_title: null,
-      overview: null,
-      poster_path: null,
-      release_date: null,
-      runtime_minutes: null,
-      typical_episode_runtime_minutes: null,
-      duration_bucket: null,
-      genres: [],
-      season_count: null,
-      season_number: null,
-      focus_required_score: null,
-      background_fit_score: null,
-      completion_load_score: null,
-      rotten_tomatoes_score: null,
-      imdb_rating: null,
-      imdb_votes: null,
-      metacritic_score: null,
-    },
+    works: createWorkSummary({ title: "作品1" }),
     ...overrides,
   };
 }
