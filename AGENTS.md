@@ -13,6 +13,7 @@
 - `main` には直接コミットしない。
 - 変更は作業ブランチ上でコミットし、PR 経由で `main` に取り込む。
 - 変更後は適切な単位でコミットする。
+- ユーザーが明示的に不要と言わない限り、変更作業はコミット後に PR 作成まで完了して終了する。
 
 ## ブランチ命名
 
@@ -22,16 +23,16 @@
 
 ## 作業フロー
 
-- **作業開始**: コード変更を始めるときは必ず `.agents/skills/task-start/SKILL.md` に従う。継続作業か新規作業かの判定、ブランチ作成、worktree の要否判断をここで行う。
-- **実装後**: 必ず `.agents/skills/self-review/SKILL.md` に従う。シンプルな変更でも省略しない。
-- **PR 作成**: self-review 通過後、PR が未作成なら `.agents/skills/pr-open/SKILL.md` に従う。
-- **PR 追従**: レビュー指摘や CI 失敗への対応は `.agents/skills/pr-followup/SKILL.md` に従う。
-- **後始末**: 不要 branch や余った worktree の整理は `.agents/skills/branch-cleanup/SKILL.md` に従う。
+- 作業開始: コード変更を始めるときは必ず `task-start` に従う。
+- 実装後: 必ず `self-review` に従う。
+- PR 作成: `self-review` 通過後、PR が未作成なら必ず `pr-open` に従う。
+- PR 追従: レビュー指摘や CI 失敗への対応は `pr-followup` に従う。
+- 後始末: `cleanup` に従う。
 
 ## Skill の命名と構成
 
 - 基本は「作業フロー」単位で切り、フロー上の位置が分かる名前にする。
-- 流れは **開始 → 確認 → PR → 追従 → 後始末** に沿わせる。
+- 流れは「開始 → 確認 → PR → 追従 → 後始末」に沿わせる。
 - 対象限定 skill は例外として扱い、`<対象>-<操作>` の形式にする。
 
 ## コミット
