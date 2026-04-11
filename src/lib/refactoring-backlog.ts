@@ -3,6 +3,7 @@ import {
   formatMinutes,
   formatNumber,
   formatPercent,
+  renderIssueList,
   renderQuickWinIssues,
   renderRankedSignals,
 } from "./refactoring-backlog-render.ts";
@@ -22,11 +23,7 @@ export type SonarMeasureKey =
   | "duplicated_blocks"
   | "complexity"
   | "cognitive_complexity"
-  | "ncloc"
-  | "reliability_rating"
-  | "bugs"
-  | "security_rating"
-  | "vulnerabilities";
+  | "ncloc";
 
 export type SonarMeasureMap = Partial<Record<SonarMeasureKey, number>>;
 
@@ -57,6 +54,8 @@ type RefactoringBacklogInput = {
   branchName: string;
   workflowUrl: string;
   projectMeasures: SonarMeasureMap;
+  bugIssues: SonarIssue[];
+  vulnerabilityIssues: SonarIssue[];
   quickWinIssues: SonarIssue[];
   longFiles: RankedSignal[];
   complexFiles: RankedSignal[];
@@ -204,6 +203,8 @@ export function buildRefactoringBacklogIssue({
   branchName,
   workflowUrl,
   projectMeasures,
+  bugIssues,
+  vulnerabilityIssues,
   quickWinIssues,
   longFiles,
   complexFiles,
@@ -232,9 +233,23 @@ export function buildRefactoringBacklogIssue({
     `- cognitive complexity: ${formatNumber(projectMeasures.cognitive_complexity)}`,
     `- complexity: ${formatNumber(projectMeasures.complexity)}`,
     `- ncloc: ${formatNumber(projectMeasures.ncloc)}`,
-    `- reliability: ${formatRating(projectMeasures.reliability_rating)} (bugs: ${formatNumber(projectMeasures.bugs)})`,
-    `- security: ${formatRating(projectMeasures.security_rating)} (vulnerabilities: ${formatNumber(projectMeasures.vulnerabilities)})`,
     "",
+    ...(bugIssues.length > 0
+      ? [
+          `## バグ (${bugIssues.length}件)`,
+          "",
+          ...renderIssueList(projectKey, sonarBaseUrl, bugIssues),
+          "",
+        ]
+      : []),
+    ...(vulnerabilityIssues.length > 0
+      ? [
+          `## 脆弱性 (${vulnerabilityIssues.length}件)`,
+          "",
+          ...renderIssueList(projectKey, sonarBaseUrl, vulnerabilityIssues),
+          "",
+        ]
+      : []),
     "## すぐ直す",
     "",
     ...renderQuickWinIssues(projectKey, sonarBaseUrl, quickWinIssues),
@@ -259,15 +274,6 @@ export function buildRefactoringBacklogIssue({
     title: issueTitle,
     body: issueBody,
   };
-}
-
-function formatRating(value: number | undefined): string {
-  if (value == null) {
-    return "-";
-  }
-
-  const grade = ["A", "B", "C", "D", "E"][Math.round(value) - 1];
-  return grade ?? "-";
 }
 
 function trimTrailingSlash(value: string) {
