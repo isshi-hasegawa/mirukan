@@ -154,6 +154,9 @@ export function BoardPage({ session }: Props) {
           items={addModal.items}
           session={addModal.session}
           onClose={addModal.onClose}
+          onOptimisticAdd={addModal.onOptimisticAdd}
+          onRollbackOptimisticAdd={addModal.onRollbackOptimisticAdd}
+          beginOptimisticUpdate={addModal.beginOptimisticUpdate}
           onAdded={addModal.onAdded}
         />
       </LazyModalBoundary>

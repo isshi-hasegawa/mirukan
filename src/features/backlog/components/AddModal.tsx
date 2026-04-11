@@ -9,10 +9,21 @@ type Props = {
   items: BacklogItem[];
   session: Session;
   onClose: () => void;
+  onOptimisticAdd?: (items: BacklogItem[]) => void;
+  onRollbackOptimisticAdd?: (itemIds: string[]) => void;
+  beginOptimisticUpdate?: () => () => void;
   onAdded: () => void | Promise<void>;
 };
 
-export function AddModal({ items, session, onClose, onAdded }: Props) {
+export function AddModal({
+  items,
+  session,
+  onClose,
+  onOptimisticAdd,
+  onRollbackOptimisticAdd,
+  beginOptimisticUpdate,
+  onAdded,
+}: Props) {
   const {
     searchQuery,
     searchResults,
@@ -53,6 +64,9 @@ export function AddModal({ items, session, onClose, onAdded }: Props) {
     items,
     session,
     onClose,
+    onOptimisticAdd,
+    onRollbackOptimisticAdd,
+    beginOptimisticUpdate,
     onAdded,
   });
 

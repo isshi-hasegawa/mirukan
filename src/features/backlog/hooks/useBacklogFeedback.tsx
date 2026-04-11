@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button.tsx";
-import type { BacklogFeedback } from "../ui-feedback.ts";
+import type { BacklogFeedback, BacklogToastOptions } from "../ui-feedback.ts";
 
 type ConfirmState = {
   message: string;
   resolve: (result: boolean) => void;
+};
+
+type ToastState = BacklogToastOptions & {
+  id: string;
 };
 
 function FeedbackAlert({ message, onClose }: { message: string; onClose: () => void }) {
@@ -60,9 +64,58 @@ function FeedbackConfirmDialog({
   );
 }
 
+function FeedbackToast({
+  toast,
+  onAction,
+  onClose,
+}: {
+  toast: ToastState;
+  onAction: (toast: ToastState) => void;
+  onClose: (toast: ToastState) => void;
+}) {
+  useEffect(() => {
+    const timeoutId = globalThis.setTimeout(() => {
+      onClose(toast);
+    }, toast.durationMs ?? 5000);
+
+    return () => {
+      globalThis.clearTimeout(timeoutId);
+    };
+  }, [onClose, toast]);
+
+  return (
+    <div className="w-full max-w-[420px] rounded-[22px] border border-border bg-[rgba(28,28,28,0.96)] px-4 py-3 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+      <div className="flex items-start gap-3">
+        <p className="min-w-0 flex-1 text-sm leading-6 text-foreground">{toast.message}</p>
+        <div className="flex shrink-0 items-center gap-2">
+          {toast.actionLabel ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-full"
+              onClick={() => onAction(toast)}
+            >
+              {toast.actionLabel}
+            </Button>
+          ) : null}
+          <Button
+            type="button"
+            variant="ghost"
+            className="rounded-full px-3"
+            onClick={() => onClose(toast)}
+          >
+            閉じる
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function useBacklogFeedback() {
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
+  const [toasts, setToasts] = useState<ToastState[]>([]);
 
   useEffect(() => {
     return () => {
@@ -70,6 +123,7 @@ export function useBacklogFeedback() {
         current?.resolve(false);
         return null;
       });
+      setToasts([]);
     };
   }, []);
 
@@ -82,6 +136,15 @@ export function useBacklogFeedback() {
         new Promise<boolean>((resolve) => {
           setConfirmState({ message, resolve });
         }),
+      toast: (options) => {
+        setToasts((current) => [
+          ...current,
+          {
+            ...options,
+            id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${current.length}`,
+          },
+        ]);
+      },
     }),
     [],
   );
@@ -97,6 +160,20 @@ export function useBacklogFeedback() {
     });
   };
 
+  const removeToast = (toastId: string) => {
+    setToasts((current) => current.filter((toast) => toast.id !== toastId));
+  };
+
+  const handleToastAction = (toast: ToastState) => {
+    removeToast(toast.id);
+    void toast.onAction?.();
+  };
+
+  const handleToastClose = (toast: ToastState) => {
+    removeToast(toast.id);
+    void toast.onClose?.();
+  };
+
   const feedbackUi = (
     <>
       {alertMessage ? <FeedbackAlert message={alertMessage} onClose={handleCloseAlert} /> : null}
@@ -106,6 +183,18 @@ export function useBacklogFeedback() {
           onCancel={() => settleConfirm(false)}
           onConfirm={() => settleConfirm(true)}
         />
+      ) : null}
+      {toasts.length > 0 ? (
+        <div className="fixed inset-x-0 bottom-4 z-50 flex flex-col items-center gap-3 px-4">
+          {toasts.map((toast) => (
+            <FeedbackToast
+              key={toast.id}
+              toast={toast}
+              onAction={handleToastAction}
+              onClose={handleToastClose}
+            />
+          ))}
+        </div>
       ) : null}
     </>
   );

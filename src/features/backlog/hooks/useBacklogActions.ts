@@ -1,3 +1,4 @@
+import type { Dispatch, SetStateAction } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { TmdbSearchResult } from "../../../lib/tmdb.ts";
 import {
@@ -18,6 +19,8 @@ type Props = {
   items: BacklogItem[];
   session: Session;
   loadItems: () => Promise<void>;
+  setLocalItems: Dispatch<SetStateAction<BacklogItem[]>>;
+  beginOptimisticUpdate: () => () => void;
   onItemDeleted: (itemId: string) => void;
   onWorksAdded: () => void;
   feedback?: BacklogFeedback;
@@ -35,20 +38,65 @@ export function useBacklogActions({
   items,
   session,
   loadItems,
+  setLocalItems,
+  beginOptimisticUpdate,
   onItemDeleted,
   onWorksAdded,
   feedback = browserBacklogFeedback,
 }: Props) {
   const handleDeleteItem = async (itemId: string) => {
-    const { error: deleteError } = await deleteBacklogItem(itemId);
-
-    if (deleteError) {
-      await Promise.resolve(feedback.alert(`削除に失敗しました: ${deleteError}`));
+    const itemToDelete = items.find((item) => item.id === itemId);
+    if (!itemToDelete) {
       return;
     }
 
+    const deletedIndex = items.findIndex((item) => item.id === itemId);
+    const releaseOptimisticUpdate = beginOptimisticUpdate();
+
+    setLocalItems((current) => current.filter((item) => item.id !== itemId));
     onItemDeleted(itemId);
-    await loadItems();
+
+    const restoreDeletedItem = () => {
+      setLocalItems((current) => {
+        if (current.some((item) => item.id === itemId)) {
+          return current;
+        }
+
+        const nextItems = [...current];
+        nextItems.splice(Math.min(deletedIndex, nextItems.length), 0, itemToDelete);
+        return nextItems;
+      });
+    };
+
+    await Promise.resolve(
+      feedback.toast({
+        message: "削除しました",
+        actionLabel: "元に戻す",
+        durationMs: 5000,
+        onAction: () => {
+          restoreDeletedItem();
+          releaseOptimisticUpdate();
+        },
+        onClose: async () => {
+          const { error: deleteError } = await deleteBacklogItem(itemId);
+
+          if (deleteError) {
+            restoreDeletedItem();
+            await Promise.resolve(feedback.alert(`削除に失敗しました: ${deleteError}`));
+            releaseOptimisticUpdate();
+            return;
+          }
+
+          try {
+            await loadItems();
+          } finally {
+            releaseOptimisticUpdate();
+          }
+        },
+      }),
+    );
+
+    return;
   };
 
   const handleMarkAsWatched = async (itemId: string) => {

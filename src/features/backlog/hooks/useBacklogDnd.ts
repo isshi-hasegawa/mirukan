@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import {
   MouseSensor,
   TouchSensor,
@@ -14,6 +14,8 @@ import { browserBacklogFeedback, type BacklogFeedback } from "../ui-feedback.ts"
 
 type Props = {
   items: BacklogItem[];
+  localItems: BacklogItem[];
+  setLocalItems: Dispatch<SetStateAction<BacklogItem[]>>;
   isMobileLayout: boolean;
   onAfterDrop: () => Promise<void>;
   feedback?: BacklogFeedback;
@@ -120,20 +122,14 @@ function calculateInsertedSortOrder(
 
 export function useBacklogDnd({
   items,
+  localItems,
+  setLocalItems,
   isMobileLayout,
   onAfterDrop,
   feedback = browserBacklogFeedback,
 }: Props) {
   const [dragItemId, setDragItemId] = useState<string | null>(null);
   const [isDropSyncPending, setIsDropSyncPending] = useState(false);
-  const [localItems, setLocalItems] = useState<BacklogItem[]>(items);
-
-  // サーバーデータが更新されたら、ドラッグ中またはドロップ反映待ちでない場合に同期
-  useEffect(() => {
-    if (!dragItemId && !isDropSyncPending) {
-      setLocalItems(items);
-    }
-  }, [items, dragItemId, isDropSyncPending]);
 
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint: { distance: 8 },
@@ -254,6 +250,7 @@ export function useBacklogDnd({
 
   return {
     dragItemId,
+    isDropSyncPending,
     localItems,
     sensors,
     handleDragStart,

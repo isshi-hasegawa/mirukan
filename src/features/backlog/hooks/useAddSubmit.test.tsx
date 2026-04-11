@@ -54,6 +54,9 @@ type HarnessProps = {
   isTvSelection?: boolean;
   selectedSeasonNumbers?: number[];
   onClose?: () => void;
+  onOptimisticAdd?: (items: BacklogItem[]) => void;
+  onRollbackOptimisticAdd?: (itemIds: string[]) => void;
+  beginOptimisticUpdate?: () => () => void;
   onAdded?: () => void | Promise<void>;
 };
 
@@ -63,6 +66,9 @@ function HookHarness({
   isTvSelection = false,
   selectedSeasonNumbers = [],
   onClose = vi.fn(),
+  onOptimisticAdd = vi.fn(),
+  onRollbackOptimisticAdd = vi.fn(),
+  beginOptimisticUpdate = () => vi.fn(),
   onAdded = vi.fn(),
 }: HarnessProps) {
   const {
@@ -84,6 +90,9 @@ function HookHarness({
     primaryPlatform: null,
     note: "",
     onClose,
+    onOptimisticAdd,
+    onRollbackOptimisticAdd,
+    beginOptimisticUpdate,
     onAdded,
   });
 
@@ -162,8 +171,15 @@ describe("useAddSubmit", () => {
   test("upsertBacklogItemsToStatus エラー時はエラーメッセージを表示してモーダルを閉じない", async () => {
     dataMocks.upsertBacklogItemsToStatus.mockResolvedValueOnce({ error: "保存失敗" });
     const onClose = vi.fn();
+    const onRollbackOptimisticAdd = vi.fn();
     const user = userEvent.setup();
-    render(<HookHarness resolvedTitle="手動作品" onClose={onClose} />);
+    render(
+      <HookHarness
+        resolvedTitle="手動作品"
+        onClose={onClose}
+        onRollbackOptimisticAdd={onRollbackOptimisticAdd}
+      />,
+    );
 
     await user.click(screen.getByRole("button", { name: "送信" }));
 
@@ -171,6 +187,7 @@ describe("useAddSubmit", () => {
       "カードの保存に失敗しました: 保存失敗",
     );
     expect(onClose).not.toHaveBeenCalled();
+    expect(onRollbackOptimisticAdd).toHaveBeenCalledWith(["optimistic-work-new"]);
   });
 
   test("pendingSave 中に cancelPendingSave を呼ぶと pending メッセージが消える", async () => {
@@ -200,5 +217,31 @@ describe("useAddSubmit", () => {
       expect(screen.queryByTestId("pending-save-message")).not.toBeInTheDocument(),
     );
     expect(dataMocks.upsertBacklogItemsToStatus).not.toHaveBeenCalled();
+  });
+
+  test("保存成功時は optimistic item を先に追加してから完了コールバックを待つ", async () => {
+    const onOptimisticAdd = vi.fn();
+    const onAdded = vi.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+
+    render(
+      <HookHarness resolvedTitle="手動作品" onOptimisticAdd={onOptimisticAdd} onAdded={onAdded} />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "送信" }));
+
+    await waitFor(() => expect(onOptimisticAdd).toHaveBeenCalledTimes(1));
+    expect(onOptimisticAdd).toHaveBeenCalledWith([
+      expect.objectContaining({
+        id: "optimistic-work-new",
+        status: "stacked",
+        works: expect.objectContaining({
+          id: "work-new",
+          title: "手動作品",
+          source_type: "manual",
+        }),
+      }),
+    ]);
+    expect(onAdded).toHaveBeenCalledTimes(1);
   });
 });

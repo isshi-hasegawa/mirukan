@@ -13,10 +13,21 @@ type UseAddFlowOptions = {
   items: BacklogItem[];
   session: Session;
   onClose: () => void;
+  onOptimisticAdd?: (items: BacklogItem[]) => void;
+  onRollbackOptimisticAdd?: (itemIds: string[]) => void;
+  beginOptimisticUpdate?: () => () => void;
   onAdded: () => void | Promise<void>;
 };
 
-export function useAddFlow({ items, session, onClose, onAdded }: UseAddFlowOptions) {
+export function useAddFlow({
+  items,
+  session,
+  onClose,
+  onOptimisticAdd,
+  onRollbackOptimisticAdd,
+  beginOptimisticUpdate,
+  onAdded,
+}: UseAddFlowOptions) {
   const [draftState, dispatchDraft] = useReducer(addFlowDraftReducer, initialAddFlowDraftState);
   const {
     searchQuery,
@@ -66,6 +77,9 @@ export function useAddFlow({ items, session, onClose, onAdded }: UseAddFlowOptio
     primaryPlatform: draftState.primaryPlatform,
     note: draftState.note,
     onClose,
+    onOptimisticAdd,
+    onRollbackOptimisticAdd,
+    beginOptimisticUpdate,
     onAdded,
   });
 

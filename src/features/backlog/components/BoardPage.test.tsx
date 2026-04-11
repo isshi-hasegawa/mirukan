@@ -48,6 +48,7 @@ vi.mock("../hooks/useBacklogItems.ts", () => ({
 vi.mock("../hooks/useBacklogDnd.ts", () => ({
   useBacklogDnd: () => ({
     dragItemId: null,
+    isDropSyncPending: false,
     localItems: hookMocks.items,
     sensors: [],
     handleDragStart: vi.fn(),

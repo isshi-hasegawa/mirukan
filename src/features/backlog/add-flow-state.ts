@@ -1,5 +1,5 @@
 import type { TmdbSearchResult } from "../../lib/tmdb.ts";
-import type { PrimaryPlatform, WorkType } from "./types.ts";
+import type { PrimaryPlatform, WorkSummary, WorkType } from "./types.ts";
 
 // Submit フローの状態遷移:
 //   idle → loading → error      (バリデーション失敗・API エラー)
@@ -22,6 +22,7 @@ export type SubmitPhase =
       message: string;
       workIds: string[];
       backlogOptions: BacklogOptions;
+      optimisticWorkSummaries: WorkSummary[];
     };
 
 export const initialSubmitPhase: SubmitPhase = { phase: "idle" };

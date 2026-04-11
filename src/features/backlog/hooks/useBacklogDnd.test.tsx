@@ -1,4 +1,5 @@
 import { renderHook, act } from "@testing-library/react";
+import { useState } from "react";
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from "@dnd-kit/core";
 import { useBacklogDnd } from "./useBacklogDnd.ts";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
@@ -74,6 +75,7 @@ const onAfterDrop = vi.fn().mockResolvedValue(undefined);
 const feedback = {
   alert: vi.fn().mockResolvedValue(undefined),
   confirm: vi.fn().mockResolvedValue(true),
+  toast: vi.fn(),
 };
 
 function renderDnd(
@@ -83,14 +85,18 @@ function renderDnd(
     onAfterDropOverride?: () => Promise<void>;
   },
 ) {
-  return renderHook(() =>
-    useBacklogDnd({
+  return renderHook(() => {
+    const [localItems, setLocalItems] = useState(items);
+
+    return useBacklogDnd({
       items,
+      localItems,
+      setLocalItems,
       isMobileLayout: options?.isMobileLayout ?? false,
       onAfterDrop: options?.onAfterDropOverride ?? onAfterDrop,
       feedback,
-    }),
-  );
+    });
+  });
 }
 
 function dragOver(
@@ -195,7 +201,17 @@ describe("useBacklogDnd", () => {
     const deferred = createDeferred<{ error: null }>();
     supabaseMocks.eq.mockReturnValueOnce(deferred.promise);
     const { result, rerender } = renderHook(
-      ({ items }) => useBacklogDnd({ items, isMobileLayout: false, onAfterDrop, feedback }),
+      ({ items }) => {
+        const [localItems, setLocalItems] = useState(items);
+        return useBacklogDnd({
+          items,
+          localItems,
+          setLocalItems,
+          isMobileLayout: false,
+          onAfterDrop,
+          feedback,
+        });
+      },
       { initialProps: { items: stackedItems } },
     );
 
@@ -221,20 +237,20 @@ describe("useBacklogDnd", () => {
     });
   });
 
-  test("handleDragEnd 後に onAfterDrop が失敗しても次回同期をブロックし続けない", async () => {
+  test("handleDragEnd 後に onAfterDrop が失敗しても isDropSyncPending を解除する", async () => {
     const failingOnAfterDrop = vi.fn().mockRejectedValue(new Error("reload failed"));
-    const reorderedItems = [
-      createItem({ id: "item-2", status: "stacked", sort_order: 1000 }),
-      createItem({ id: "item-1", status: "stacked", sort_order: 2000 }),
-    ];
     const { result, rerender } = renderHook(
-      ({ items }) =>
-        useBacklogDnd({
+      ({ items }) => {
+        const [localItems, setLocalItems] = useState(items);
+        return useBacklogDnd({
           items,
+          localItems,
+          setLocalItems,
           isMobileLayout: false,
           onAfterDrop: failingOnAfterDrop,
           feedback,
-        }),
+        });
+      },
       { initialProps: { items: stackedItems } },
     );
 
@@ -250,9 +266,18 @@ describe("useBacklogDnd", () => {
       }),
     ).rejects.toThrow("reload failed");
 
-    rerender({ items: reorderedItems });
+    rerender({
+      items: [
+        createItem({ id: "item-2", status: "stacked", sort_order: 1000 }),
+        createItem({ id: "item-1", status: "stacked", sort_order: 2000 }),
+      ],
+    });
 
-    expect(result.current.localItems).toEqual(reorderedItems);
+    expect(result.current.isDropSyncPending).toBe(false);
+    expect(result.current.localItems).toEqual([
+      createItem({ id: "item-2", status: "stacked", sort_order: 2000 }),
+      createItem({ id: "item-1", status: "stacked", sort_order: 1000 }),
+    ]);
   });
 
   test("handleDragOver で同列内の並び替えで localItems が更新される", async () => {
