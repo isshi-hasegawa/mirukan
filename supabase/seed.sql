@@ -3,14 +3,26 @@
 
 do $$
 declare
+  auth_instance_id constant uuid := '00000000-0000-0000-0000-000000000000';
+  auth_role constant text := 'authenticated';
+  email_provider constant text := 'email';
+  empty_text constant text := '';
   user_akari constant uuid := '11111111-1111-1111-1111-111111111111';
+  user_akari_email constant text := 'akari@example.com';
   user_ren constant uuid := '22222222-2222-2222-2222-222222222222';
+  user_ren_email constant text := 'ren@example.com';
   work_manual_movie constant uuid := 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1';
   work_tmdb_movie constant uuid := 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2';
   work_tmdb_series constant uuid := 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3';
   work_tmdb_season2 constant uuid := 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4';
   work_manual_series constant uuid := 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5';
   work_tmdb_interrupted constant uuid := 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa6';
+  tmdb_media_type_movie constant public.tmdb_media_type := 'movie';
+  work_type_movie constant public.work_type := 'movie';
+  default_sort_order constant integer := 1000;
+  two_days_ago constant interval := interval '2 days';
+  platform_netflix constant public.primary_platform := 'netflix';
+  manual_movie_title constant text := 'あの日の街角';
   genres_drama_crime constant text[] := array['Drama', 'Crime'];
 begin
   insert into auth.users (
@@ -39,22 +51,22 @@ begin
   )
   values
     (
-      '00000000-0000-0000-0000-000000000000',
+      auth_instance_id,
       user_akari,
-      'authenticated',
-      'authenticated',
-      'akari@example.com',
+      auth_role,
+      auth_role,
+      user_akari_email,
       crypt('password123', gen_salt('bf')),
       now(),
-      '',
-      '',
-      '',
-      '',
-      '',
+      empty_text,
+      empty_text,
+      empty_text,
+      empty_text,
+      empty_text,
       null,
-      '',
-      '',
-      '',
+      empty_text,
+      empty_text,
+      empty_text,
       '{"provider":"email","providers":["email"]}',
       '{"name":"Akari"}',
       now(),
@@ -63,22 +75,22 @@ begin
       false
     ),
     (
-      '00000000-0000-0000-0000-000000000000',
+      auth_instance_id,
       user_ren,
-      'authenticated',
-      'authenticated',
-      'ren@example.com',
+      auth_role,
+      auth_role,
+      user_ren_email,
       crypt('password123', gen_salt('bf')),
       now(),
-      '',
-      '',
-      '',
-      '',
-      '',
+      empty_text,
+      empty_text,
+      empty_text,
+      empty_text,
+      empty_text,
       null,
-      '',
-      '',
-      '',
+      empty_text,
+      empty_text,
+      empty_text,
       '{"provider":"email","providers":["email"]}',
       '{"name":"Ren"}',
       now(),
@@ -118,9 +130,9 @@ begin
     (
       '33333333-3333-3333-3333-333333333331',
       user_akari,
-      format('{"sub":"%s","email":"%s"}', user_akari, 'akari@example.com')::jsonb,
-      'email',
-      'akari@example.com',
+      format('{"sub":"%s","email":"%s"}', user_akari, user_akari_email)::jsonb,
+      email_provider,
+      user_akari_email,
       now(),
       now(),
       now()
@@ -128,9 +140,9 @@ begin
     (
       '33333333-3333-3333-3333-333333333332',
       user_ren,
-      format('{"sub":"%s","email":"%s"}', user_ren, 'ren@example.com')::jsonb,
-      'email',
-      'ren@example.com',
+      format('{"sub":"%s","email":"%s"}', user_ren, user_ren_email)::jsonb,
+      email_provider,
+      user_ren_email,
       now(),
       now(),
       now()
@@ -174,11 +186,11 @@ begin
       'manual',
       null,
       null,
-      'movie',
+      work_type_movie,
       null,
-      'あの日の街角',
+      manual_movie_title,
       null,
-      'あの日の街角',
+      manual_movie_title,
       '配信では見つからなかったので手動で積んだ、しっとり系のヒューマンドラマ。',
       null,
       '2018-04-13',
@@ -197,9 +209,9 @@ begin
       work_tmdb_movie,
       user_akari,
       'tmdb',
-      'movie',
+      tmdb_media_type_movie,
       603,
-      'movie',
+      work_type_movie,
       null,
       'マトリックス',
       'The Matrix',
@@ -297,9 +309,9 @@ begin
       work_tmdb_interrupted,
       user_akari,
       'tmdb',
-      'movie',
+      tmdb_media_type_movie,
       157336,
-      'movie',
+      work_type_movie,
       null,
       'インターステラー',
       'Interstellar',
@@ -363,10 +375,10 @@ begin
       'stacked',
       null,
       '配信先不明。週末に腰を据えて観たい。',
-      1000,
+      default_sort_order,
       now() - interval '5 days',
-      now() - interval '2 days',
-      now() - interval '2 days'
+      now() - two_days_ago,
+      now() - two_days_ago
     ),
     (
       'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2',
@@ -375,7 +387,7 @@ begin
       'want_to_watch',
       null,
       '軽い気分の日に候補へ回しておく。',
-      1000,
+      default_sort_order,
       now() - interval '4 days',
       now() - interval '1 day',
       now() - interval '1 day'
@@ -385,9 +397,9 @@ begin
       user_akari,
       work_tmdb_series,
       'watching',
-      'netflix',
+      platform_netflix,
       '今月の平日夜に少しずつ進める。',
-      1000,
+      default_sort_order,
       now() - interval '10 days',
       now() - interval '12 hours',
       now() - interval '12 hours'
@@ -397,9 +409,9 @@ begin
       user_akari,
       work_tmdb_season2,
       'interrupted',
-      'netflix',
+      platform_netflix,
       '再開ポイント確認待ち。',
-      1000,
+      default_sort_order,
       now() - interval '14 days',
       now() - interval '3 days',
       now() - interval '3 days'
@@ -411,7 +423,7 @@ begin
       'watched',
       'prime_video',
       '視聴済みだけど比較用に残しているカード。',
-      1000,
+      default_sort_order,
       now() - interval '30 days',
       now() - interval '7 days',
       now() - interval '7 days'
@@ -423,10 +435,10 @@ begin
       'stacked',
       'apple_tv_plus',
       '他ユーザーのサンプル。',
-      1000,
-      now() - interval '2 days',
-      now() - interval '2 days',
-      now() - interval '2 days'
+      default_sort_order,
+      now() - two_days_ago,
+      now() - two_days_ago,
+      now() - two_days_ago
     )
   on conflict (id) do update
   set
