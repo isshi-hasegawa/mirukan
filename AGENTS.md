@@ -26,7 +26,7 @@
 - **実装後**: 必ず `.agents/skills/self-review/SKILL.md` に従う。シンプルな変更でも省略しない。
 - **PR 作成**: self-review 通過後、PR が未作成なら `.agents/skills/pr-open/SKILL.md` に従う。
 - **PR 追従**: レビュー指摘や CI 失敗への対応は `.agents/skills/pr-followup/SKILL.md` に従う。
-- **後始末**: 不要 branch や余った worktree の整理は `.agents/skills/branch-cleanup/SKILL.md` に従う。
+- **後始末**: main への切り戻しと全 branch・worktree の削除は `.agents/skills/cleanup/SKILL.md` に従う。
 
 ## Skill の命名と構成
 
