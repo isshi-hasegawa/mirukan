@@ -1,10 +1,18 @@
+import { matchesAnyPattern } from "./refactoring-backlog-paths.ts";
+import {
+  formatMinutes,
+  formatNumber,
+  formatPercent,
+  renderQuickWinIssues,
+  renderRankedSignals,
+} from "./refactoring-backlog-render.ts";
+
 const REFACTORING_BACKLOG_MARKER = "<!-- refactoring-backlog:sonarcloud -->";
 const DEFAULT_BACKLOG_EXCLUDE_PATTERNS = [
   "pnpm-lock.yaml",
   "supabase/templates/**",
   "supabase/seed.sql",
 ] as const;
-const REPO_PATH_SEGMENTS = ["src/", "supabase/", ".github/", "docs/", "public/"] as const;
 
 export type SonarMeasureKey =
   | "code_smells"
@@ -35,14 +43,6 @@ type RankedSignal = {
   path: string;
   value: number;
   detail: string;
-};
-
-type QuickWinGroup = {
-  key: string;
-  label: string;
-  count: number;
-  examples: SonarIssue[];
-  minEffortMinutes?: number;
 };
 
 type RefactoringBacklogInput = {
@@ -249,235 +249,6 @@ export function buildRefactoringBacklogIssue({
   };
 }
 
-function renderQuickWinIssues(projectKey: string, sonarBaseUrl: string, issues: SonarIssue[]) {
-  if (issues.length === 0) {
-    return ["- 今回は quick win 候補なし"];
-  }
-
-  return groupQuickWinIssues(issues, projectKey).flatMap((group) => [
-    renderQuickWinGroupHeader(group),
-    ...group.examples.map((example) => renderQuickWinExample(example, projectKey, sonarBaseUrl)),
-  ]);
-}
-
-function renderQuickWinGroupHeader(group: QuickWinGroup) {
-  const effortLabel = group.minEffortMinutes
-    ? `最短 ${group.minEffortMinutes} min`
-    : "effort unknown";
-  return `- ${group.label} - ${formatNumber(group.count)}件 (${effortLabel})`;
-}
-
-function renderQuickWinExample(example: SonarIssue, projectKey: string, sonarBaseUrl: string) {
-  const path = toDisplayPath(normalizeComponentPath(example.component, projectKey));
-  const line = example.line ? `:${example.line}` : "";
-  const issueUrl = `${trimTrailingSlash(sonarBaseUrl)}/project/issues?id=${encodeURIComponent(projectKey)}&open=${encodeURIComponent(example.key)}`;
-  return `  - 例: [${path}${line}](${issueUrl})`;
-}
-
-function renderRankedSignals(rows: RankedSignal[], valueLabel: string, detailLabel: string) {
-  if (rows.length === 0) {
-    return ["- 該当なし"];
-  }
-
-  return [
-    `| file | ${valueLabel} | ${detailLabel} |`,
-    "| --- | ---: | --- |",
-    ...rows.map(
-      (row) =>
-        `| \`${toDisplayPath(row.path)}\` | ${formatRankValue(valueLabel, row.value)} | ${row.detail} |`,
-    ),
-  ];
-}
-
-function formatRankValue(label: string, value: number) {
-  return label === "duplicated lines density" ? formatPercent(value) : formatNumber(value);
-}
-
-function formatMinutes(value: number | undefined) {
-  if (value == null) {
-    return "-";
-  }
-
-  const hours = Math.floor(value / 60);
-  const minutes = value % 60;
-
-  if (hours === 0) {
-    return `${minutes} min`;
-  }
-
-  if (minutes === 0) {
-    return `${hours} h`;
-  }
-
-  return `${hours} h ${minutes} min`;
-}
-
-function formatPercent(value: number | undefined) {
-  if (value == null) {
-    return "-";
-  }
-
-  return `${value.toFixed(1)}%`;
-}
-
-function formatNumber(value: number | undefined) {
-  if (value == null) {
-    return "-";
-  }
-
-  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(value);
-}
-
 function trimTrailingSlash(value: string) {
   return value.endsWith("/") ? value.slice(0, -1) : value;
-}
-
-function groupQuickWinIssues(issues: SonarIssue[], projectKey: string): QuickWinGroup[] {
-  const grouped = new Map<string, QuickWinGroup>();
-
-  for (const issue of issues) {
-    const label = sanitizeQuickWinLabel(issue.message);
-    const key = issue.rule ? `${issue.rule}::${label}` : label;
-    mergeIssueIntoGroup(grouped, key, label, issue);
-  }
-
-  return [...grouped.values()].sort((left, right) =>
-    compareQuickWinGroups(left, right, projectKey),
-  );
-}
-
-function mergeIssueIntoGroup(
-  grouped: Map<string, QuickWinGroup>,
-  key: string,
-  label: string,
-  issue: SonarIssue,
-) {
-  const current = grouped.get(key);
-  if (!current) {
-    grouped.set(key, {
-      key,
-      label,
-      count: 1,
-      examples: [issue],
-      minEffortMinutes: issue.effortMinutes,
-    });
-    return;
-  }
-
-  current.count += 1;
-  current.minEffortMinutes = minDefined(current.minEffortMinutes, issue.effortMinutes);
-  if (current.examples.length < 3) {
-    current.examples.push(issue);
-  }
-}
-
-function compareQuickWinGroups(left: QuickWinGroup, right: QuickWinGroup, projectKey: string) {
-  const leftExamplePath = normalizeComponentPath(left.examples[0]?.component ?? "", projectKey);
-  const rightExamplePath = normalizeComponentPath(right.examples[0]?.component ?? "", projectKey);
-
-  return (
-    effortOrInfinity(left.minEffortMinutes) - effortOrInfinity(right.minEffortMinutes) ||
-    right.count - left.count ||
-    leftExamplePath.localeCompare(rightExamplePath) ||
-    left.key.localeCompare(right.key)
-  );
-}
-
-function sanitizeQuickWinLabel(message: string) {
-  return sanitizeAbsolutePaths(message);
-}
-
-function matchesAnyPattern(path: string, patterns: readonly string[]) {
-  return patterns.some((pattern) => matchesGlobPattern(path, pattern));
-}
-
-function matchesGlobPattern(path: string, pattern: string) {
-  const normalizedPath = normalizePathForMatch(path);
-  const normalizedPattern = normalizePathForMatch(pattern);
-  const source = normalizedPattern
-    .replaceAll(/[|\\{}()[\]^$+?.]/g, String.raw`\$&`)
-    .replaceAll(/\*\*/g, "__DOUBLE_STAR__")
-    .replaceAll(/\*/g, "[^/]*")
-    .replaceAll(/__DOUBLE_STAR__/g, ".*");
-  return new RegExp(`^${source}$`).test(normalizedPath);
-}
-
-function normalizePathForMatch(value: string) {
-  return value.replaceAll("\\", "/").replace(/^\.\//, "");
-}
-
-function sanitizeAbsolutePaths(value: string) {
-  return value.replaceAll(
-    /(^|[\s("'`[])(\/[^\s"'`)\]]*)/g,
-    (fullMatch, prefix: string, candidate: string) => {
-      const { path, suffix } = splitTrailingPunctuation(candidate);
-      const sanitized = toDisplayPath(path);
-      return sanitized === path ? fullMatch : `${prefix}${sanitized}${suffix}`;
-    },
-  );
-}
-
-function toDisplayPath(value: string) {
-  const normalized = normalizePathForMatch(value);
-  if (!normalized.startsWith("/")) {
-    return normalized;
-  }
-
-  const repoRelative = stripRepoPrefix(normalized);
-  if (repoRelative !== null) {
-    return repoRelative;
-  }
-
-  if (normalized.endsWith("/pnpm-lock.yaml")) {
-    return "pnpm-lock.yaml";
-  }
-
-  return normalized.split("/").findLast(Boolean) ?? normalized;
-}
-
-function stripRepoPrefix(normalizedPath: string): string | null {
-  for (const segment of REPO_PATH_SEGMENTS) {
-    const marker = `/${segment}`;
-    const index = normalizedPath.lastIndexOf(marker);
-    if (index >= 0) {
-      return normalizedPath.slice(index + 1);
-    }
-  }
-  return null;
-}
-
-function splitTrailingPunctuation(value: string) {
-  let index = value.length;
-
-  while (index > 0 && isTrailingPunctuation(value[index - 1])) {
-    index -= 1;
-  }
-
-  return {
-    path: value.slice(0, index),
-    suffix: value.slice(index),
-  };
-}
-
-function minDefined(left: number | undefined, right: number | undefined) {
-  if (left == null) {
-    return right;
-  }
-
-  if (right == null) {
-    return left;
-  }
-
-  return Math.min(left, right);
-}
-
-function isTrailingPunctuation(value: string) {
-  return (
-    value === "." ||
-    value === "," ||
-    value === ":" ||
-    value === ";" ||
-    value === "!" ||
-    value === "?"
-  );
 }

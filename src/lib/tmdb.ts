@@ -4,6 +4,13 @@ import {
   FunctionsRelayError,
 } from "@supabase/supabase-js";
 import { supabase } from "./supabase.ts";
+import {
+  fetchCachedSimilarResults,
+  fetchCachedTrendingResults,
+  mergeRecommendationResults,
+  normalizeRecommendationSources,
+  resetTmdbRecommendationCachesForTest,
+} from "./tmdb-recommendation-cache.ts";
 
 export type TmdbWatchPlatform = {
   key: string;
@@ -67,20 +74,7 @@ export type TmdbWorkDetails = {
   imdbId?: string | null;
 };
 
-type RecommendationCacheEntry = {
-  results: TmdbSearchResult[];
-  fetchedAt: number;
-};
-
 type ResponseValidator<TResponse> = (data: unknown) => data is TResponse;
-
-const RECOMMENDATIONS_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-const MAX_RECOMMENDATION_SOURCE_ITEMS = 8;
-
-let trendingCache: RecommendationCacheEntry | null = null;
-let trendingCachePromise: Promise<TmdbSearchResult[]> | null = null;
-const similarCache = new Map<string, RecommendationCacheEntry>();
-const similarCachePromises = new Map<string, Promise<TmdbSearchResult[]>>();
 
 async function readSupabaseFunctionErrorDetail(response: Response): Promise<string | null> {
   const contentType = response.headers.get("content-type") ?? "";
@@ -236,44 +230,6 @@ function isTmdbWorkDetails(value: unknown): value is TmdbWorkDetails {
   );
 }
 
-function shuffleArray<T>(arr: T[]): T[] {
-  const shuffled = [...arr];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-}
-
-function normalizeRecommendationSources(
-  sourceItems: Array<{ tmdbId: number; tmdbMediaType: "movie" | "tv" }>,
-): Array<{ tmdbId: number; tmdbMediaType: "movie" | "tv" }> {
-  const seen = new Set<string>();
-  const uniqueItems: Array<{ tmdbId: number; tmdbMediaType: "movie" | "tv" }> = [];
-
-  for (const item of sourceItems) {
-    const key = `${item.tmdbMediaType}-${item.tmdbId}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    uniqueItems.push(item);
-  }
-
-  return uniqueItems.slice(0, MAX_RECOMMENDATION_SOURCE_ITEMS);
-}
-
-function buildRecommendationSourceCacheKey(
-  sourceItems: Array<{ tmdbId: number; tmdbMediaType: "movie" | "tv" }>,
-): string {
-  return [...sourceItems]
-    .sort((a, b) =>
-      a.tmdbMediaType === b.tmdbMediaType
-        ? a.tmdbId - b.tmdbId
-        : a.tmdbMediaType.localeCompare(b.tmdbMediaType),
-    )
-    .map((item) => `${item.tmdbMediaType}-${item.tmdbId}`)
-    .join("|");
-}
-
 export async function fetchTmdbSimilar(
   sourceItems: Array<{ tmdbId: number; tmdbMediaType: "movie" | "tv" }>,
 ): Promise<TmdbSearchResult[]> {
@@ -283,38 +239,15 @@ export async function fetchTmdbSimilar(
     return [];
   }
 
-  const cacheKey = buildRecommendationSourceCacheKey(normalizedSourceItems);
-  const cached = similarCache.get(cacheKey);
-  if (cached && Date.now() - cached.fetchedAt < RECOMMENDATIONS_CACHE_TTL_MS) {
-    return shuffleArray(cached.results);
-  }
-
-  const inFlight = similarCachePromises.get(cacheKey);
-  if (inFlight) {
-    return shuffleArray(await inFlight);
-  }
-
-  const request = (async () => {
-    const results = await invokeTmdbFunction<TmdbSearchResult[]>(
+  return fetchCachedSimilarResults(normalizedSourceItems, async () => {
+    return invokeTmdbFunction<TmdbSearchResult[]>(
       "fetch-tmdb-similar",
       {
         sourceItems: normalizedSourceItems,
       },
       isTmdbSearchResultArray,
     );
-
-    similarCache.set(cacheKey, { results, fetchedAt: Date.now() });
-    return results;
-  })();
-
-  similarCachePromises.set(
-    cacheKey,
-    request.finally(() => {
-      similarCachePromises.delete(cacheKey);
-    }),
-  );
-
-  return shuffleArray(await request);
+  });
 }
 
 export async function fetchTmdbRecommendations(
@@ -324,55 +257,22 @@ export async function fetchTmdbRecommendations(
     fetchTmdbSimilar(sourceItems),
     fetchTmdbTrending(),
   ]);
-  const seen = new Set<string>();
-  const dedupedSimilar = similar.filter((item) => {
-    const key = `${item.tmdbMediaType}-${item.tmdbId}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-  const trendingSupplement = trending.filter((item) => {
-    const key = `${item.tmdbMediaType}-${item.tmdbId}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
 
-  return [...shuffleArray(dedupedSimilar), ...shuffleArray(trendingSupplement)];
+  return mergeRecommendationResults(similar, trending);
 }
 
 export async function fetchTmdbTrending(): Promise<TmdbSearchResult[]> {
-  if (trendingCache && Date.now() - trendingCache.fetchedAt < RECOMMENDATIONS_CACHE_TTL_MS) {
-    return shuffleArray(trendingCache.results);
-  }
-
-  if (trendingCachePromise) {
-    return shuffleArray(await trendingCachePromise);
-  }
-
-  const request = (async () => {
+  return fetchCachedTrendingResults(async () => {
     const results = await invokeTmdbFunction<TmdbSearchResult[]>(
       "fetch-tmdb-trending",
       undefined,
       isTmdbSearchResultArray,
     );
-    trendingCache = { results, fetchedAt: Date.now() };
     return results;
-  })();
-
-  trendingCachePromise = request.finally(() => {
-    trendingCachePromise = null;
   });
-
-  return shuffleArray(await request);
 }
 
-export function resetTmdbRecommendationCachesForTest() {
-  trendingCache = null;
-  trendingCachePromise = null;
-  similarCache.clear();
-  similarCachePromises.clear();
-}
+export { resetTmdbRecommendationCachesForTest };
 
 export function searchTmdbWorks(query: string) {
   return invokeTmdbFunction<TmdbSearchResult[]>(
