@@ -262,7 +262,7 @@ describe("buildRefactoringBacklogIssue", () => {
     );
     expect(result.body).not.toContain("srclib/example.ts");
     expect(result.body).not.toContain("supabasefunctions/foo.ts");
-    expect(result.body).not.toContain("/tmp/clone123");
+    expect(result.body).not.toContain("/tmp");
     expect(result.body).not.toContain("/opt/actions-runner/_work/mirukan/mirukan");
   });
 
