@@ -74,7 +74,10 @@ const MINUTES_PER_UNIT = {
 
 type EffortUnit = keyof typeof MINUTES_PER_UNIT;
 
-const EFFORT_TOKEN_PATTERN = /(\d+)\s*(min|h|d)/g;
+// 量化子は明示的に上限を付けて super-linear backtracking を防ぐ。
+// SonarCloud の effort 文字列 (例: "2d 1h 30min") は小さい整数と最小限の空白で
+// 表現されるため、6 桁 / 4 空白で十分な余白がある。
+const EFFORT_TOKEN_PATTERN = /(\d{1,6})\s{0,4}(min|h|d)/g;
 
 export function parseMinutes(value: string | undefined): number | undefined {
   if (!value) {

@@ -31,6 +31,15 @@ describe("parseMinutes", () => {
   test("数値がなければ undefined を返す", () => {
     expect(parseMinutes("unknown")).toBeUndefined();
   });
+
+  test("長大な非マッチ入力でも super-linear にならず短時間で完了する", () => {
+    // ReDoS 回帰テスト: 量化子が上限付きで固定コストのため、
+    // 桁数を増やしても線形時間で完了すること。
+    const pathological = `${"9".repeat(100000)}x`;
+    const start = Date.now();
+    expect(parseMinutes(pathological)).toBeUndefined();
+    expect(Date.now() - start).toBeLessThan(1000);
+  });
 });
 
 describe("normalizeComponentPath", () => {
