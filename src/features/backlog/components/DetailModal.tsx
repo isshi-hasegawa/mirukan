@@ -33,10 +33,10 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onRelo
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        if (state.editingField !== null) {
-          onStateChange(createDetailModalState(item?.id ?? state.openItemId));
-        } else {
+        if (state.editingField === null) {
           onClose();
+        } else {
+          onStateChange(createDetailModalState(item?.id ?? state.openItemId));
         }
       }
     };

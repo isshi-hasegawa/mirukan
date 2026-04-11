@@ -17,7 +17,7 @@ setupTestLifecycle();
 describe("LoginPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    window.history.replaceState({}, "", "/");
+    globalThis.history.replaceState({}, "", "/");
     authRepositoryMock.signInWithPassword.mockResolvedValue({ error: null });
     authRepositoryMock.signUp.mockResolvedValue({
       data: { session: null, user: { id: "user-1" } },
@@ -166,7 +166,7 @@ describe("LoginPage", () => {
     await user.click(screen.getByRole("button", { name: "確認メールを送信して登録" }));
 
     expect(authRepositoryMock.signUp).toHaveBeenCalledWith("new-user@example.com", "password456", {
-      emailRedirectTo: window.location.origin,
+      emailRedirectTo: globalThis.location.origin,
     });
     expect(await screen.findByText("確認メールを送信しました")).toBeInTheDocument();
     expect(
@@ -233,7 +233,7 @@ describe("LoginPage", () => {
     await user.click(screen.getByRole("button", { name: "リセットメールを送信" }));
 
     expect(authRepositoryMock.resetPasswordForEmail).toHaveBeenCalledWith("akari@example.com", {
-      redirectTo: window.location.origin,
+      redirectTo: globalThis.location.origin,
     });
     expect(await screen.findByText("リセットメールを送信しました")).toBeInTheDocument();
     expect(
@@ -336,7 +336,7 @@ describe("LoginPage", () => {
     await user.click(screen.getByRole("button", { name: "Googleでログイン" }));
 
     expect(authRepositoryMock.signInWithOAuth).toHaveBeenCalledWith({
-      redirectTo: window.location.origin,
+      redirectTo: globalThis.location.origin,
     });
   });
 

@@ -229,7 +229,7 @@ async function fetchTmdbJson<T>(
     }
 
     const retryAfterHeader = response.headers.get("retry-after");
-    const retryAfterMs = retryAfterHeader ? Number.parseFloat(retryAfterHeader) * 1000 : NaN;
+    const retryAfterMs = retryAfterHeader ? Number.parseFloat(retryAfterHeader) * 1000 : Number.NaN;
     const backoffMs =
       Number.isFinite(retryAfterMs) && retryAfterMs > 0
         ? retryAfterMs
@@ -260,7 +260,7 @@ async function mapWithConcurrency<TInput, TOutput>(
     while (nextIndex < items.length) {
       const currentIndex = nextIndex;
       nextIndex += 1;
-      results[currentIndex] = await mapper(items[currentIndex]!, currentIndex);
+      results[currentIndex] = await mapper(items[currentIndex], currentIndex);
     }
   }
 

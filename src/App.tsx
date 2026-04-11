@@ -38,7 +38,7 @@ function clearPasswordRecoveryLocation() {
     "type",
     "code",
   ];
-  const url = new URL(window.location.href);
+  const url = new URL(globalThis.location.href);
   let hasChanged = false;
 
   for (const name of authParamNames) {
@@ -59,8 +59,8 @@ function clearPasswordRecoveryLocation() {
 
   if (hasChanged) {
     url.hash = hashParams.toString();
-    window.history.replaceState(
-      window.history.state,
+    globalThis.history.replaceState(
+      globalThis.history.state,
       "",
       `${url.pathname}${url.search}${url.hash}`,
     );
@@ -81,7 +81,7 @@ function LazyRouteErrorFallback() {
           <Button
             type="button"
             className="w-full sm:w-auto"
-            onClick={() => window.location.reload()}
+            onClick={() => globalThis.location.reload()}
           >
             再読み込み
           </Button>
@@ -94,7 +94,7 @@ function LazyRouteErrorFallback() {
 function AuthenticatedApp() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(() =>
-    isPasswordRecoveryLocation(window.location),
+    isPasswordRecoveryLocation(globalThis.location),
   );
 
   useEffect(() => {
@@ -116,7 +116,7 @@ function AuthenticatedApp() {
         setIsPasswordRecovery(false);
         clearPasswordRecoveryLocation();
       } else if (event === "SIGNED_IN") {
-        setIsPasswordRecovery(isPasswordRecoveryLocation(window.location));
+        setIsPasswordRecovery(isPasswordRecoveryLocation(globalThis.location));
       } else if (event === "SIGNED_OUT") {
         setIsPasswordRecovery(false);
         clearPasswordRecoveryLocation();
@@ -160,7 +160,7 @@ function AuthenticatedApp() {
 }
 
 export function App() {
-  const pathname = window.location.pathname;
+  const pathname = globalThis.location.pathname;
   if (pathname === "/privacy") return <PrivacyPolicyPage />;
   if (pathname === "/terms") return <TermsOfServicePage />;
   return <AuthenticatedApp />;

@@ -515,7 +515,7 @@ describe("AddModal", () => {
       data: { id: "existing-work-42" },
       error: null,
     });
-    const confirmSpy = vi.spyOn(window, "confirm");
+    const confirmSpy = vi.spyOn(globalThis, "confirm");
 
     const { user } = renderAddModal({ items: [duplicateItem] });
 

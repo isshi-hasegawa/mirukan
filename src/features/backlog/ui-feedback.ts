@@ -5,7 +5,7 @@ export type BacklogFeedback = {
 
 export const browserBacklogFeedback: BacklogFeedback = {
   alert: (message) => {
-    window.alert(message);
+    globalThis.alert(message);
   },
-  confirm: (message) => window.confirm(message),
+  confirm: (message) => globalThis.confirm(message),
 };

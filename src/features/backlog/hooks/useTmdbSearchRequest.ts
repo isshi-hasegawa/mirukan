@@ -75,7 +75,7 @@ function prioritizeLocalizedResults(results: TmdbSearchResult[]) {
     .map((result, index) => ({ result, index }))
     .sort((left, right) => {
       const scoreDiff = getLocalizationScore(right.result) - getLocalizationScore(left.result);
-      return scoreDiff !== 0 ? scoreDiff : left.index - right.index;
+      return scoreDiff === 0 ? left.index - right.index : scoreDiff;
     })
     .map(({ result }) => result);
 }
@@ -180,7 +180,7 @@ export function useTmdbSearchRequest({
 
     return () => {
       if (searchTimerRef.current !== null) {
-        window.clearTimeout(searchTimerRef.current);
+        globalThis.clearTimeout(searchTimerRef.current);
       }
     };
   }, []);
@@ -194,7 +194,7 @@ export function useTmdbSearchRequest({
   const runSearch = async (query: string) => {
     const trimmed = query.trim();
     if (searchTimerRef.current !== null) {
-      window.clearTimeout(searchTimerRef.current);
+      globalThis.clearTimeout(searchTimerRef.current);
       searchTimerRef.current = null;
     }
 
@@ -228,9 +228,9 @@ export function useTmdbSearchRequest({
 
   const queueSearch = (query: string) => {
     if (searchTimerRef.current !== null) {
-      window.clearTimeout(searchTimerRef.current);
+      globalThis.clearTimeout(searchTimerRef.current);
     }
-    searchTimerRef.current = window.setTimeout(() => {
+    searchTimerRef.current = globalThis.setTimeout(() => {
       void runSearch(query);
     }, SEARCH_DEBOUNCE_MS);
   };
