@@ -80,6 +80,17 @@ function moveItemToColumnEnd(items: BacklogItem[], activeId: string, status: Bac
   return [...others, ...columnItems, { ...activeItem, status }];
 }
 
+function moveItemToColumnTop(items: BacklogItem[], activeId: string, status: BacklogStatus) {
+  const activeItem = items.find((i) => i.id === activeId);
+  if (!activeItem) return items;
+
+  const updatedItems = items.map((i) => (i.id === activeId ? { ...i, status } : i));
+  const columnItems = updatedItems.filter((i) => i.status === status && i.id !== activeId);
+  const others = updatedItems.filter((i) => i.status !== status);
+
+  return [...others, { ...activeItem, status }, ...columnItems];
+}
+
 function resolveDropSide(
   activatorEvent: DragOverEvent["activatorEvent"],
   rect: RectLike,
@@ -166,8 +177,11 @@ export function useBacklogDnd({
       }
 
       // 列またぎ: ステータスを変更して over アイテムの位置に挿入
+      // watched への列端ドロップは先頭挿入（handleMarkAsWatched と同じ並び順）
       if (overId.startsWith("column:")) {
-        return moveItemToColumnEnd(prev, activeId, overStatus);
+        return overStatus === "watched"
+          ? moveItemToColumnTop(prev, activeId, overStatus)
+          : moveItemToColumnEnd(prev, activeId, overStatus);
       }
 
       const withUpdatedStatus = prev.map((i) =>
