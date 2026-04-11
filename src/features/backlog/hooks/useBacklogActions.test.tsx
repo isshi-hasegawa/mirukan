@@ -65,6 +65,7 @@ function HookHarness({
   feedback = {
     alert: vi.fn().mockResolvedValue(undefined),
     confirm: vi.fn().mockResolvedValue(true),
+    toast: vi.fn(),
   },
 }: {
   items?: BacklogItem[];
@@ -75,6 +76,7 @@ function HookHarness({
   feedback?: {
     alert: (message: string) => void | Promise<void>;
     confirm: (message: string) => boolean | Promise<boolean>;
+    toast: (message: string) => void;
   };
 }) {
   const { handleDeleteItem, handleAddTmdbWorksToStacked } = useBacklogActions({
@@ -114,6 +116,7 @@ describe("useBacklogActions", () => {
     const feedback = {
       alert: vi.fn().mockResolvedValue(undefined),
       confirm: vi.fn().mockResolvedValue(true),
+      toast: vi.fn(),
     };
     const loadItems = vi.fn().mockResolvedValue(undefined);
     const onItemDeleted = vi.fn();
@@ -138,6 +141,7 @@ describe("useBacklogActions", () => {
     const feedback = {
       alert: vi.fn().mockResolvedValue(undefined),
       confirm: vi.fn().mockResolvedValue(true),
+      toast: vi.fn(),
     };
     const loadItems = vi.fn().mockResolvedValue(undefined);
     const onWorksAdded = vi.fn();
@@ -177,6 +181,7 @@ describe("useBacklogActions", () => {
     const feedback = {
       alert: vi.fn().mockResolvedValue(undefined),
       confirm: vi.fn().mockResolvedValue(true),
+      toast: vi.fn(),
     };
     const loadItems = vi.fn().mockResolvedValue(undefined);
     const onWorksAdded = vi.fn();
@@ -209,6 +214,7 @@ describe("useBacklogActions", () => {
     const feedback = {
       alert: vi.fn().mockResolvedValue(undefined),
       confirm: vi.fn().mockResolvedValue(true),
+      toast: vi.fn(),
     };
     const user = userEvent.setup();
     repositoryMocks.upsertTmdbWork

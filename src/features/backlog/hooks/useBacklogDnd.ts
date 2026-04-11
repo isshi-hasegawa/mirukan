@@ -9,6 +9,8 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { supabase } from "../../../lib/supabase.ts";
+import { updateBacklogItem } from "../backlog-repository.ts";
+import { statusLabels } from "../constants.ts";
 import type { BacklogItem, BacklogStatus } from "../types.ts";
 import { browserBacklogFeedback, type BacklogFeedback } from "../ui-feedback.ts";
 
@@ -204,6 +206,7 @@ export function useBacklogDnd({
       return;
     }
 
+    const originalItem = items.find((i) => i.id === activeId);
     const targetStatus = draggedItem.status;
     const columnOrder = localItems.filter((i) => i.status === targetStatus).map((i) => i.id);
     const insertedIndex = columnOrder.indexOf(activeId);
@@ -230,6 +233,25 @@ export function useBacklogDnd({
         await Promise.resolve(feedback.alert(`ドラッグ移動に失敗しました: ${updateError.message}`));
         setLocalItems(items);
         return;
+      }
+
+      if (originalItem) {
+        const isCrossColumn = originalItem.status !== targetStatus;
+        const title = originalItem.works?.title;
+        const message = isCrossColumn
+          ? `${title ? `「${title}」を` : ""}「${statusLabels[targetStatus]}」に移動しました`
+          : `${title ? `「${title}」の` : ""}並び順を変更しました`;
+        feedback.toast(message, {
+          onUndo: async () => {
+            const { error } = await updateBacklogItem(activeId, {
+              status: originalItem.status,
+              sort_order: originalItem.sort_order,
+            });
+            if (!error) {
+              await onAfterDrop();
+            }
+          },
+        });
       }
 
       await onAfterDrop();

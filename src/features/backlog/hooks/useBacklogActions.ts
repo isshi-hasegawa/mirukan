@@ -52,6 +52,7 @@ export function useBacklogActions({
   };
 
   const handleMarkAsWatched = async (itemId: string) => {
+    const originalItem = items.find((i) => i.id === itemId);
     const sortOrder = getTopSortOrder(items, "watched");
 
     const { error: updateError } = await updateBacklogItem(itemId, {
@@ -63,6 +64,20 @@ export function useBacklogActions({
       await Promise.resolve(feedback.alert(`変更に失敗しました: ${updateError}`));
       return;
     }
+
+    const title = originalItem?.works?.title;
+    feedback.toast(`${title ? `「${title}」を` : ""}「視聴済み」に移動しました`, {
+      onUndo: async () => {
+        if (!originalItem) return;
+        const { error } = await updateBacklogItem(itemId, {
+          status: originalItem.status,
+          sort_order: originalItem.sort_order,
+        });
+        if (!error) {
+          await loadItems();
+        }
+      },
+    });
 
     await loadItems();
   };

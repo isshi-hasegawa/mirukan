@@ -50,6 +50,7 @@ vi.mock("./useBacklogFeedback.tsx", () => ({
     feedback: {
       alert: vi.fn().mockResolvedValue(undefined),
       confirm: vi.fn().mockResolvedValue(true),
+      toast: vi.fn(),
     },
     feedbackUi: null,
   }),
