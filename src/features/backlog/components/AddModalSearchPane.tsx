@@ -88,7 +88,7 @@ function SelectedResultFooter({
           onCancel={onCancelPendingSave}
         />
       ) : null}
-      {!pendingSaveMessage ? (
+      {pendingSaveMessage ? null : (
         <div className="flex items-end justify-end gap-3">
           {formMessage && (
             <p className="text-muted-foreground text-sm text-right" aria-live="polite">
@@ -105,7 +105,7 @@ function SelectedResultFooter({
             {selectedTmdbSubmitLabel}
           </Button>
         </div>
-      ) : null}
+      )}
     </div>
   );
 }

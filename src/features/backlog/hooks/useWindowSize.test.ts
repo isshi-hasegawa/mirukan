@@ -4,7 +4,7 @@ import { useWindowSize } from "./useWindowSize.ts";
 describe("useWindowSize", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    Object.defineProperty(window, "innerWidth", {
+    Object.defineProperty(globalThis, "innerWidth", {
       writable: true,
       configurable: true,
       value: 1280,
@@ -15,7 +15,7 @@ describe("useWindowSize", () => {
     vi.useRealTimers();
   });
 
-  test("初期値として window.innerWidth を返す", () => {
+  test("初期値として globalThis.innerWidth を返す", () => {
     const { result } = renderHook(() => useWindowSize());
     expect(result.current).toBe(1280);
   });
@@ -24,19 +24,19 @@ describe("useWindowSize", () => {
     const { result } = renderHook(() => useWindowSize());
 
     act(() => {
-      Object.defineProperty(window, "innerWidth", {
+      Object.defineProperty(globalThis, "innerWidth", {
         writable: true,
         configurable: true,
         value: 390,
       });
-      window.dispatchEvent(new Event("resize"));
+      globalThis.dispatchEvent(new Event("resize"));
 
-      Object.defineProperty(window, "innerWidth", {
+      Object.defineProperty(globalThis, "innerWidth", {
         writable: true,
         configurable: true,
         value: 420,
       });
-      window.dispatchEvent(new Event("resize"));
+      globalThis.dispatchEvent(new Event("resize"));
     });
 
     expect(result.current).toBe(1280);
@@ -49,7 +49,7 @@ describe("useWindowSize", () => {
   });
 
   test("アンマウント後は resize リスナーが除去される", () => {
-    const spy = vi.spyOn(window, "removeEventListener");
+    const spy = vi.spyOn(globalThis, "removeEventListener");
     const { unmount } = renderHook(() => useWindowSize());
 
     unmount();

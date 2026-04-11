@@ -41,7 +41,7 @@ describe("App", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     authState.callback = null;
-    window.history.replaceState({}, "", "/");
+    globalThis.history.replaceState({}, "", "/");
 
     authRepositoryMock.getSession.mockResolvedValue({ data: { session: null } });
     authRepositoryMock.onAuthStateChange.mockImplementation(
@@ -63,7 +63,7 @@ describe("App", () => {
     authRepositoryMock.getSession.mockResolvedValue({
       data: { session: { user: { id: "user-1" } } },
     });
-    window.history.replaceState({}, "", "/#type=recovery&access_token=token");
+    globalThis.history.replaceState({}, "", "/#type=recovery&access_token=token");
 
     render(<App />);
 
@@ -72,7 +72,7 @@ describe("App", () => {
   });
 
   test("recovery パラメータが残っていてもセッションがなければログイン画面を表示する", async () => {
-    window.history.replaceState({}, "", "/#type=recovery");
+    globalThis.history.replaceState({}, "", "/#type=recovery");
 
     render(<App />);
 
@@ -81,7 +81,7 @@ describe("App", () => {
   });
 
   test("SIGNED_IN が先に来る recovery フローでも再設定画面を維持する", async () => {
-    window.history.replaceState({}, "", "/?type=recovery");
+    globalThis.history.replaceState({}, "", "/?type=recovery");
 
     render(<App />);
     expect(await screen.findByText("LOGIN_PAGE")).toBeInTheDocument();
@@ -97,7 +97,7 @@ describe("App", () => {
     authRepositoryMock.getSession.mockResolvedValue({
       data: { session: { user: { id: "user-1" } } },
     });
-    window.history.replaceState({}, "", "/?type=recovery");
+    globalThis.history.replaceState({}, "", "/?type=recovery");
 
     render(<App />);
     expect(await screen.findByText("RESET_PASSWORD_PAGE")).toBeInTheDocument();
@@ -107,7 +107,7 @@ describe("App", () => {
     });
 
     expect(await screen.findByText("BOARD_PAGE")).toBeInTheDocument();
-    expect(window.location.search).toBe("");
+    expect(globalThis.location.search).toBe("");
   });
 
   test("getSession が失敗してもローディング状態で止まらずログイン画面に戻る", async () => {
@@ -124,7 +124,7 @@ describe("App", () => {
   });
 
   test("/privacy では認証処理を通さずプライバシーポリシーを表示する", () => {
-    window.history.replaceState({}, "", "/privacy");
+    globalThis.history.replaceState({}, "", "/privacy");
 
     render(<App />);
 
@@ -133,7 +133,7 @@ describe("App", () => {
   });
 
   test("/terms では認証処理を通さず利用規約を表示する", () => {
-    window.history.replaceState({}, "", "/terms");
+    globalThis.history.replaceState({}, "", "/terms");
 
     render(<App />);
 

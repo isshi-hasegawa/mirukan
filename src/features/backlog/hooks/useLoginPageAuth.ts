@@ -72,7 +72,7 @@ export function useLoginPageAuth({ showDevLoginHint }: UseLoginPageAuthOptions) 
   const isForgotPasswordMode = authMode === "forgotPassword";
   const email = isSignUpMode ? signUpEmail : loginEmail;
   const password = isSignUpMode ? signUpPassword : loginPassword;
-  const authRedirectUrl = getAuthRedirectUrl(window.location);
+  const authRedirectUrl = getAuthRedirectUrl(globalThis.location);
   const shouldShowDevLoginHint = showDevLoginHint && !isSignUpMode && !isForgotPasswordMode;
 
   const resetStatusMessage = () => {

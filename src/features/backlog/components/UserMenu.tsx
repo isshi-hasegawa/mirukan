@@ -43,21 +43,21 @@ export function UserMenu({ email }: Props) {
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
-              window.open("/terms", "_blank", "noopener,noreferrer");
+              globalThis.open("/terms", "_blank", "noopener,noreferrer");
             }}
           >
             利用規約
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
-              window.open("/privacy", "_blank", "noopener,noreferrer");
+              globalThis.open("/privacy", "_blank", "noopener,noreferrer");
             }}
           >
             プライバシーポリシー
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
-              window.open(BUG_REPORT_URL, "_blank", "noopener,noreferrer");
+              globalThis.open(BUG_REPORT_URL, "_blank", "noopener,noreferrer");
             }}
           >
             不具合を報告
