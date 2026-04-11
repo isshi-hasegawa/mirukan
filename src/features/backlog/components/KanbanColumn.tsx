@@ -1,10 +1,12 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import type { KanbanColumnProps } from "./kanban-board-shared.ts";
 import { BacklogCard } from "./BacklogCard.tsx";
 import { KanbanColumnHeader } from "./KanbanColumnHeader.tsx";
 import { ViewingModeFilter } from "./ViewingModeFilter.tsx";
+
+const RECENT_WATCHED_COUNT = 5;
 
 type Props = KanbanColumnProps & {
   extra?: ReactNode;
@@ -23,6 +25,8 @@ export function KanbanColumn({
   onViewingModeToggle,
 }: Props) {
   const { setNodeRef, isOver } = useDroppable({ id: `column:${status}` });
+  const [isOlderOpen, setIsOlderOpen] = useState(false);
+
   const isEmptyColumnActive = isOver && items.length === 0;
 
   const dropzoneStyle: React.CSSProperties | undefined = isEmptyColumnActive
@@ -35,6 +39,10 @@ export function KanbanColumn({
     : undefined;
 
   const itemIds = items.map((item) => item.id);
+
+  const isWatchedWithOverflow = status === "watched" && items.length > RECENT_WATCHED_COUNT;
+  const recentItems = isWatchedWithOverflow ? items.slice(0, RECENT_WATCHED_COUNT) : items;
+  const olderItems = isWatchedWithOverflow ? items.slice(RECENT_WATCHED_COUNT) : [];
 
   return (
     <section
@@ -63,16 +71,49 @@ export function KanbanColumn({
           ) : null}
           <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
             {items.length > 0 ? (
-              items.map((item) => (
-                <BacklogCard
-                  key={item.id}
-                  item={item}
-                  showModeBadge={status === "stacked"}
-                  onOpenDetail={() => onOpenDetail(item.id)}
-                  onDeleteItem={onDeleteItem}
-                  onMarkAsWatched={onMarkAsWatched}
-                />
-              ))
+              <>
+                {recentItems.map((item) => (
+                  <BacklogCard
+                    key={item.id}
+                    item={item}
+                    showModeBadge={status === "stacked"}
+                    onOpenDetail={() => onOpenDetail(item.id)}
+                    onDeleteItem={onDeleteItem}
+                    onMarkAsWatched={onMarkAsWatched}
+                  />
+                ))}
+                {isWatchedWithOverflow && (
+                  <>
+                    <button
+                      type="button"
+                      className="flex items-center gap-[6px] rounded-full border border-[var(--border)] bg-[rgba(92,59,35,0.04)] px-[12px] py-[7px] text-[0.8rem] text-[var(--text-muted)] hover:bg-[rgba(92,59,35,0.08)] transition-colors"
+                      onClick={() => setIsOlderOpen((prev) => !prev)}
+                      aria-expanded={isOlderOpen}
+                    >
+                      <svg
+                        className="h-[12px] w-[12px] shrink-0 fill-none stroke-current [stroke-linecap:round] [stroke-linejoin:round] [stroke-width:2] transition-transform"
+                        style={{ transform: isOlderOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+                        viewBox="0 0 12 12"
+                        aria-hidden="true"
+                      >
+                        <path d="M2 4l4 4 4-4" />
+                      </svg>
+                      {isOlderOpen ? "折りたたむ" : `過去の視聴済み（${olderItems.length}件）`}
+                    </button>
+                    {isOlderOpen &&
+                      olderItems.map((item) => (
+                        <BacklogCard
+                          key={item.id}
+                          item={item}
+                          showModeBadge={false}
+                          onOpenDetail={() => onOpenDetail(item.id)}
+                          onDeleteItem={onDeleteItem}
+                          onMarkAsWatched={onMarkAsWatched}
+                        />
+                      ))}
+                  </>
+                )}
+              </>
             ) : (
               <p className="text-[var(--text-muted)] pt-[18px] text-[0.92rem]">
                 この列にはまだカードがありません。
