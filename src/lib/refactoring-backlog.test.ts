@@ -237,9 +237,11 @@ describe("buildRefactoringBacklogIssue", () => {
   test("issue 本文に summary と候補一覧を含める", () => {
     const result = buildRefactoringBacklogIssue({
       projectKey: "mirukan",
-      observedAt: "2026-04-11 10:00 UTC",
+      observedAt: "2026-04-11 10:00 JST",
       sonarBaseUrl: "https://sonarcloud.io",
       branchName: "main",
+      workflowUrl:
+        "https://github.com/isshi-hasegawa/mirukan/actions/workflows/refactoring-backlog.yml",
       projectMeasures: {
         code_smells: 12,
         sqale_index: 135,
@@ -300,9 +302,11 @@ describe("buildRefactoringBacklogIssue", () => {
   test("絶対パスだけを repo 相対に正規化し、相対パスの quick win label は壊さない", () => {
     const result = buildRefactoringBacklogIssue({
       projectKey: "mirukan",
-      observedAt: "2026-04-11 10:00 UTC",
+      observedAt: "2026-04-11 10:00 JST",
       sonarBaseUrl: "https://sonarcloud.io",
       branchName: "main",
+      workflowUrl:
+        "https://github.com/isshi-hasegawa/mirukan/actions/workflows/refactoring-backlog.yml",
       projectMeasures: {},
       quickWinIssues: [
         {
@@ -358,9 +362,11 @@ describe("buildRefactoringBacklogIssue", () => {
   test("通常の slash を含むだけのメッセージは変更しない", () => {
     const result = buildRefactoringBacklogIssue({
       projectKey: "mirukan",
-      observedAt: "2026-04-11 10:00 UTC",
+      observedAt: "2026-04-11 10:00 JST",
       sonarBaseUrl: "https://sonarcloud.io",
       branchName: "main",
+      workflowUrl:
+        "https://github.com/isshi-hasegawa/mirukan/actions/workflows/refactoring-backlog.yml",
       projectMeasures: {},
       quickWinIssues: [
         {
