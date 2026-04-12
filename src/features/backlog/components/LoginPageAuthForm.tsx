@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Label } from "@/components/ui/label.tsx";
-import { DEV_EMAIL, DEV_PASSWORD, useLoginPageAuth } from "../hooks/useLoginPageAuth.ts";
+import { useLoginPageAuth } from "../hooks/useLoginPageAuth.ts";
 
 type LoginPageAuthModel = ReturnType<typeof useLoginPageAuth>;
 
@@ -166,7 +166,7 @@ function LoginFormContent({ auth }: Props) {
             ローカル検証では seed 済みアカウントを入力して利用できます。
           </p>
           <p className="mt-2 text-xs leading-6 text-muted-foreground">
-            {DEV_EMAIL} / {DEV_PASSWORD}
+            {auth.devLoginCredentials?.email} / {auth.devLoginCredentials?.password}
           </p>
           <Button
             type="button"
