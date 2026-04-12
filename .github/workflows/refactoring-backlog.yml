@@ -10,6 +10,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   VP_BOOTSTRAP_VERSION: 0.1.14
   REFACTORING_BACKLOG_LABEL: refactoring-backlog
+  IMPLEMENTATION_LABEL: implementation
   REFACTORING_BACKLOG_MARKER: <!-- refactoring-backlog:sonarcloud -->
   REFACTORING_BACKLOG_TITLE: refactoring backlog
   REFACTORING_BACKLOG_OUTPUT_DIR: artifacts/refactoring-backlog
@@ -75,12 +76,18 @@ jobs:
             --color "0969da" \
             || true
 
+          gh label create "$IMPLEMENTATION_LABEL" \
+            --description "Ready for coding-agent implementation" \
+            --color "1f883d" \
+            || true
+
           issue_title="$(<"$REFACTORING_BACKLOG_OUTPUT_DIR/title.txt")"
           new_issue_url=$(
             gh issue create \
               --title "${issue_title:-$REFACTORING_BACKLOG_TITLE}" \
               --body-file "$REFACTORING_BACKLOG_OUTPUT_DIR/body.md" \
-              --label "$REFACTORING_BACKLOG_LABEL"
+              --label "$REFACTORING_BACKLOG_LABEL" \
+              --label "$IMPLEMENTATION_LABEL"
           )
           new_issue_number="${new_issue_url##*/}"
 

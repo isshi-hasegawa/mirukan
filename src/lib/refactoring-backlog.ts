@@ -217,7 +217,7 @@ export function buildRefactoringBacklogIssue({
     "",
     "# Refactoring backlog",
     "",
-    "この Issue は定期生成される refactoring backlog snapshot です。最新の観測結果をもとに、今回対応する項目を自分で選んで進めてください。",
+    "この Issue は定期生成される refactoring backlog です。`implementation` ラベル付きの実装入口として、最新の観測結果をもとに今回対応する項目を自分で選んで進めてください。",
     "",
     "- まず `バグ`、次に `脆弱性`、その次に `すぐ直す` を優先",
     "- 余力があれば `構造改善が必要` から安全に触れられるものを追加",

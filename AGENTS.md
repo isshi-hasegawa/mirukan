@@ -39,7 +39,7 @@
 ## Issue 管理
 
 - `discovery` ラベルは、必要性や採用条件を整理中の Issue に付ける。
-- `implementation` ラベルは、必要性が確認できており、コーディングエージェントへ渡せる粒度の Issue に付ける。
+- `implementation` ラベルは、コーディングエージェントが着手してよい Issue に付ける。`refactoring backlog` はこの例外ではなく、定期生成でも `implementation` を付ける。
 - discovery と implementation は別 Issue に分けず、同一 Issue を育てる。必要になったらラベルを `discovery` から `implementation` へ切り替える。
 - 新規アイデアの起票や discovery から implementation への昇格には `issue-open` を使う。
 
