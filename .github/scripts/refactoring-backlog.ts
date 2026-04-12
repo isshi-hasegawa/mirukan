@@ -19,8 +19,6 @@ import {
 
 const REQUIRED_ENV_KEYS = ["SONAR_PROJECT_KEY", "SONAR_TOKEN"] as const;
 const SONAR_BASE_URL = "https://sonarcloud.io";
-const WORKFLOW_URL =
-  "https://github.com/isshi-hasegawa/mirukan/actions/workflows/refactoring-backlog.yml";
 const PROJECT_METRICS: SonarMeasureKey[] = [
   "code_smells",
   "sqale_index",
@@ -103,7 +101,6 @@ async function main() {
     observedAt,
     sonarBaseUrl: SONAR_BASE_URL,
     branchName,
-    workflowUrl: WORKFLOW_URL,
     projectMeasures,
     bugIssues,
     vulnerabilityIssues,

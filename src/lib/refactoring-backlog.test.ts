@@ -240,8 +240,6 @@ describe("buildRefactoringBacklogIssue", () => {
       observedAt: "2026-04-11 10:00 JST",
       sonarBaseUrl: "https://sonarcloud.io",
       branchName: "main",
-      workflowUrl:
-        "https://github.com/isshi-hasegawa/mirukan/actions/workflows/refactoring-backlog.yml",
       projectMeasures: {
         code_smells: 12,
         sqale_index: 135,
@@ -288,7 +286,16 @@ describe("buildRefactoringBacklogIssue", () => {
 
     expect(result.title).toBe("refactoring backlog");
     expect(result.body).toContain("<!-- refactoring-backlog:sonarcloud -->");
+    expect(result.body).toContain(
+      "この Issue は定期生成される refactoring backlog snapshot です。",
+    );
+    expect(result.body).toContain("- まず `バグ`、次に `脆弱性`、その次に `すぐ直す` を優先");
+    expect(result.body).toContain("- PR では原則 `Closes` を使わず、必要なら `Refs` に留める");
+    expect(result.body).not.toContain("workflow:");
     expect(result.body).toContain("maintainability debt: 2 h 15 min");
+    expect(result.body).toContain("## バグ (0件)");
+    expect(result.body).toContain("## 脆弱性 (0件)");
+    expect(result.body).toContain("- 該当なし");
     expect(result.body).toContain(
       "- This assertion is unnecessary since it does not change the type of the expression. - 2件 (最短 1 min)",
     );
@@ -307,8 +314,6 @@ describe("buildRefactoringBacklogIssue", () => {
       observedAt: "2026-04-11 10:00 JST",
       sonarBaseUrl: "https://sonarcloud.io",
       branchName: "main",
-      workflowUrl:
-        "https://github.com/isshi-hasegawa/mirukan/actions/workflows/refactoring-backlog.yml",
       projectMeasures: {},
       bugIssues: [],
       vulnerabilityIssues: [],
@@ -369,8 +374,6 @@ describe("buildRefactoringBacklogIssue", () => {
       observedAt: "2026-04-11 10:00 JST",
       sonarBaseUrl: "https://sonarcloud.io",
       branchName: "main",
-      workflowUrl:
-        "https://github.com/isshi-hasegawa/mirukan/actions/workflows/refactoring-backlog.yml",
       projectMeasures: {},
       bugIssues: [],
       vulnerabilityIssues: [],
@@ -399,8 +402,6 @@ describe("buildRefactoringBacklogIssue", () => {
       observedAt: "2026-04-11 10:00 JST",
       sonarBaseUrl: "https://sonarcloud.io",
       branchName: "main",
-      workflowUrl:
-        "https://github.com/isshi-hasegawa/mirukan/actions/workflows/refactoring-backlog.yml",
       projectMeasures: {},
       bugIssues: [
         {
@@ -429,17 +430,15 @@ describe("buildRefactoringBacklogIssue", () => {
     expect(result.body).toContain("[src/lib/example.ts:10]");
     expect(result.body).toContain("Null pointer dereference.");
     expect(result.body).toContain("[src/features/backlog/types.ts:5]");
-    expect(result.body).not.toContain("## 脆弱性");
+    expect(result.body).toContain("## 脆弱性 (0件)");
   });
 
-  test("bugs / vulnerabilities が 0 件の場合はセクションを出力しない", () => {
+  test("bugs / vulnerabilities が 0 件の場合も空セクションを出力する", () => {
     const result = buildRefactoringBacklogIssue({
       projectKey: "mirukan",
       observedAt: "2026-04-11 10:00 JST",
       sonarBaseUrl: "https://sonarcloud.io",
       branchName: "main",
-      workflowUrl:
-        "https://github.com/isshi-hasegawa/mirukan/actions/workflows/refactoring-backlog.yml",
       projectMeasures: {},
       bugIssues: [],
       vulnerabilityIssues: [],
@@ -449,7 +448,8 @@ describe("buildRefactoringBacklogIssue", () => {
       duplicateFiles: [],
     });
 
-    expect(result.body).not.toContain("## バグ");
-    expect(result.body).not.toContain("## 脆弱性");
+    expect(result.body).toContain("## バグ (0件)");
+    expect(result.body).toContain("## 脆弱性 (0件)");
+    expect(result.body).toContain("- 該当なし");
   });
 });

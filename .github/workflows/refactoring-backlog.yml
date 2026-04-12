@@ -2,7 +2,8 @@ name: Refactoring Backlog
 
 on:
   schedule:
-    - cron: "17 2 * * 2,6"
+    # Tue/Thu/Sat 11:17 JST
+    - cron: "17 2 * * 2,4,6"
   workflow_dispatch:
 
 env:
@@ -61,7 +62,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: node --experimental-strip-types .github/scripts/refactoring-backlog.ts
 
-      - name: Create or update backlog issue
+      - name: Create backlog issue and close superseded snapshots
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
@@ -74,22 +75,29 @@ jobs:
             --color "0969da" \
             || true
 
-          issue_number=$(
+          issue_title="$(<"$REFACTORING_BACKLOG_OUTPUT_DIR/title.txt")"
+          new_issue_url=$(
+            gh issue create \
+              --title "${issue_title:-$REFACTORING_BACKLOG_TITLE}" \
+              --body-file "$REFACTORING_BACKLOG_OUTPUT_DIR/body.md" \
+              --label "$REFACTORING_BACKLOG_LABEL"
+          )
+          new_issue_number="${new_issue_url##*/}"
+
+          mapfile -t backlog_issue_numbers < <(
             gh issue list \
               --label "$REFACTORING_BACKLOG_LABEL" \
               --state open \
               --limit 100 \
-              --json number,title,body \
-              --jq 'map(select(.body | contains(env.REFACTORING_BACKLOG_MARKER))) | first | .number // empty'
+              --json number,body \
+              --jq '.[] | select(.body | contains(env.REFACTORING_BACKLOG_MARKER)) | .number'
           )
 
-          if [[ -n "${issue_number}" ]]; then
-            gh issue edit "$issue_number" \
-              --title "$REFACTORING_BACKLOG_TITLE" \
-              --body-file "$REFACTORING_BACKLOG_OUTPUT_DIR/body.md"
-          else
-            gh issue create \
-              --title "$REFACTORING_BACKLOG_TITLE" \
-              --body-file "$REFACTORING_BACKLOG_OUTPUT_DIR/body.md" \
-              --label "$REFACTORING_BACKLOG_LABEL"
-          fi
+          for issue_number in "${backlog_issue_numbers[@]}"; do
+            if [[ "$issue_number" == "$new_issue_number" ]]; then
+              continue
+            fi
+
+            gh issue comment "$issue_number" --body "Superseded by #$new_issue_number" || true
+            gh issue close "$issue_number"
+          done
