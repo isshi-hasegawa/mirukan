@@ -166,8 +166,12 @@ export async function translateSearchQuery(query: string): Promise<string | null
       `Input: ${JSON.stringify(normalized)}`,
     ].join("\n"),
   );
+  if (result === null) {
+    // Gemini 呼び出し失敗（一時的エラー）はキャッシュしない
+    return null;
+  }
   const translated =
-    result && typeof result.query === "string" && result.query.trim() ? result.query.trim() : null;
+    typeof result.query === "string" && result.query.trim() ? result.query.trim() : null;
   const sanitized =
     translated && translated.toLowerCase() !== normalized.toLowerCase() ? translated : null;
 
@@ -213,8 +217,12 @@ export async function suggestDisplayTitle({
       `Original title: ${JSON.stringify(normalizedOriginalTitle)}`,
     ].join("\n"),
   );
+  if (result === null) {
+    // Gemini 呼び出し失敗（一時的エラー）はキャッシュしない
+    return null;
+  }
   const suggested =
-    result && typeof result.title === "string" && result.title.trim() ? result.title.trim() : null;
+    typeof result.title === "string" && result.title.trim() ? result.title.trim() : null;
   const sanitized = suggested && suggested !== normalizedTitle ? suggested : null;
 
   await writeGeminiCache(cacheKey, sanitized);
