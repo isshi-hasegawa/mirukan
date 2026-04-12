@@ -140,9 +140,9 @@ export async function resolveSelectedSeasonWorkIds(
   }
 
   const sharedSeriesWork = await resolveSharedSeriesWork(targets, userId);
-  if (sharedSeriesWork?.error || !sharedSeriesWork?.data) {
+  if (sharedSeriesWork && (sharedSeriesWork.error || !sharedSeriesWork.data)) {
     return {
-      error: sharedSeriesWork?.error?.message ?? "シーズンの親シリーズ保存に失敗しました",
+      error: sharedSeriesWork.error?.message ?? "シーズンの親シリーズ保存に失敗しました",
       workIds: [],
     };
   }

@@ -70,6 +70,40 @@ function createOmdbDetails() {
   };
 }
 
+function setExistingSeriesWork() {
+  setMockWorks([
+    {
+      id: "series-work",
+      source_type: "tmdb",
+      work_type: "series",
+      tmdb_media_type: "tv",
+      tmdb_id: 100,
+      title: "テストシリーズ",
+      original_title: "Test Series",
+      search_text: "test series",
+      last_tmdb_synced_at: "2026-03-31T00:00:00.000Z",
+      omdb_fetched_at: "2026-04-08T00:00:00.000Z",
+      imdb_id: "tt0123456",
+      episode_count: null,
+      season_number: null,
+      series_title: null,
+    },
+  ]);
+}
+
+function failSeasonLookup(seasonNumber: number) {
+  server.use(
+    http.get(`${SUPABASE_URL}/rest/v1/works`, ({ request }) => {
+      const url = new URL(request.url);
+      if (url.searchParams.get("season_number") === `eq.${seasonNumber}`) {
+        return HttpResponse.json({ message: "season fetch failed" }, { status: 500 });
+      }
+
+      return undefined;
+    }),
+  );
+}
+
 beforeEach(() => {
   tmdbMocks.fetchTmdbWorkDetails.mockReset();
   omdbMocks.fetchOmdbWorkDetails.mockReset();
@@ -571,40 +605,6 @@ describe("resolveSelectedSeasonWorkIds", () => {
     },
   ];
 
-  function setExistingSeriesWork() {
-    setMockWorks([
-      {
-        id: "series-work",
-        source_type: "tmdb",
-        work_type: "series",
-        tmdb_media_type: "tv",
-        tmdb_id: 100,
-        title: "テストシリーズ",
-        original_title: "Test Series",
-        search_text: "test series",
-        last_tmdb_synced_at: "2026-03-31T00:00:00.000Z",
-        omdb_fetched_at: "2026-04-08T00:00:00.000Z",
-        imdb_id: "tt0123456",
-        episode_count: null,
-        season_number: null,
-        series_title: null,
-      },
-    ]);
-  }
-
-  function failSeasonLookup(seasonNumber: number) {
-    server.use(
-      http.get(`${SUPABASE_URL}/rest/v1/works`, ({ request }) => {
-        const url = new URL(request.url);
-        if (url.searchParams.get("season_number") === `eq.${seasonNumber}`) {
-          return HttpResponse.json({ message: "season fetch failed" }, { status: 500 });
-        }
-
-        return undefined;
-      }),
-    );
-  }
-
   test("空入力時はエラーを返す", async () => {
     await expect(
       resolveSelectedSeasonWorkIds(seriesResult, "user-1", [], { seasonOptions }),
@@ -621,6 +621,35 @@ describe("resolveSelectedSeasonWorkIds", () => {
       error: "シーズン4の情報が見つかりません",
       workIds: [],
     });
+  });
+
+  test("シーズン1のみ選択時は series を保存して返す", async () => {
+    tmdbMocks.fetchTmdbWorkDetails.mockResolvedValueOnce(
+      createTmdbDetails({
+        tmdbId: seriesResult.tmdbId,
+        tmdbMediaType: "tv",
+        workType: "series",
+        title: seriesResult.title,
+        originalTitle: seriesResult.originalTitle,
+        runtimeMinutes: null,
+        typicalEpisodeRuntimeMinutes: 48,
+        seasonCount: 3,
+      }),
+    );
+
+    await expect(
+      resolveSelectedSeasonWorkIds(seriesResult, "user-1", [1], { seasonOptions }),
+    ).resolves.toMatchObject({
+      error: null,
+      workIds: [expect.any(String)],
+    });
+    expect(tmdbMocks.fetchTmdbWorkDetails).toHaveBeenCalledTimes(1);
+    expect(getMockWorks()).toContainEqual(
+      expect.objectContaining({
+        work_type: "series",
+        tmdb_id: seriesResult.tmdbId,
+      }),
+    );
   });
 
   test("複数シーズン追加時は親 series を一度だけ解決して workIds を順序どおり返す", async () => {
