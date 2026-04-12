@@ -581,6 +581,64 @@ describe("resolveSelectedSeasonWorkIds", () => {
     });
   });
 
+  test("複数シーズン追加時は親 series を一度だけ解決して workIds を順序どおり返す", async () => {
+    tmdbMocks.fetchTmdbWorkDetails
+      .mockResolvedValueOnce(
+        createTmdbDetails({
+          tmdbId: seriesResult.tmdbId,
+          tmdbMediaType: "tv",
+          workType: "series",
+          title: seriesResult.title,
+          originalTitle: seriesResult.originalTitle,
+          runtimeMinutes: null,
+          typicalEpisodeRuntimeMinutes: 48,
+          seasonCount: 2,
+        }),
+      )
+      .mockResolvedValueOnce(
+        createTmdbDetails({
+          tmdbId: seriesResult.tmdbId,
+          tmdbMediaType: "tv",
+          workType: "season",
+          title: seasonOptions[0].title,
+          originalTitle: seriesResult.originalTitle,
+          overview: seasonOptions[0].overview,
+          posterPath: seasonOptions[0].posterPath,
+          releaseDate: seasonOptions[0].releaseDate,
+          runtimeMinutes: null,
+          typicalEpisodeRuntimeMinutes: 48,
+          episodeCount: seasonOptions[0].episodeCount,
+          seasonNumber: seasonOptions[0].seasonNumber,
+        }),
+      );
+
+    const result = await resolveSelectedSeasonWorkIds(seriesResult, "user-1", [1, 2], {
+      seasonOptions,
+    });
+
+    expect(result.error).toBeNull();
+    expect(tmdbMocks.fetchTmdbWorkDetails).toHaveBeenCalledTimes(2);
+
+    const works = getMockWorks();
+    const seriesWork = works.find((work) => work.work_type === "series");
+    const seasonWork = works.find((work) => work.work_type === "season");
+
+    expect(seriesWork).toEqual(
+      expect.objectContaining({
+        tmdb_id: seriesResult.tmdbId,
+        parent_work_id: null,
+      }),
+    );
+    expect(seasonWork).toEqual(
+      expect.objectContaining({
+        tmdb_id: seriesResult.tmdbId,
+        season_number: 2,
+        parent_work_id: seriesWork?.id,
+      }),
+    );
+    expect(result.workIds).toEqual([seriesWork?.id, seasonWork?.id]);
+  });
+
   test("途中の保存に失敗したら workIds を返さず打ち切る", async () => {
     setMockWorks([
       {
