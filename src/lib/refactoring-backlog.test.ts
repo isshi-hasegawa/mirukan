@@ -287,7 +287,7 @@ describe("buildRefactoringBacklogIssue", () => {
     expect(result.title).toBe("refactoring backlog");
     expect(result.body).toContain("<!-- refactoring-backlog:sonarcloud -->");
     expect(result.body).toContain(
-      "この Issue は定期生成される refactoring backlog です。`implementation` ラベル付きの実装入口として、最新の観測結果をもとに今回対応する項目を自分で選んで進めてください。",
+      "この Issue は定期生成される refactoring backlog snapshot です。",
     );
     expect(result.body).toContain("- まず `バグ`、次に `脆弱性`、その次に `すぐ直す` を優先");
     expect(result.body).toContain("- PR では原則 `Closes` を使わず、必要なら `Refs` に留める");
