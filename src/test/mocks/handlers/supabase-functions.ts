@@ -12,6 +12,7 @@ const similarResultsBySourceKey = new Map<string, TmdbSearchResult[]>();
 const seasonOptionsByResultKey = new Map<string, TmdbSeasonOption[]>();
 const workDetailsByTargetKey = new Map<string, TmdbWorkDetails>();
 const searchResultsByQuery = new Map<string, TmdbSearchResult[]>();
+const displayTitleSuggestionsByTitle = new Map<string, string | null>();
 let trendingResults: TmdbSearchResult[] = [];
 
 function buildSourceKey(sourceItems: Array<{ tmdbId: number; tmdbMediaType: string }>) {
@@ -35,6 +36,7 @@ export function resetMockTmdbData() {
   seasonOptionsByResultKey.clear();
   workDetailsByTargetKey.clear();
   searchResultsByQuery.clear();
+  displayTitleSuggestionsByTitle.clear();
   trendingResults = [];
 }
 
@@ -51,6 +53,10 @@ export function setMockTmdbTrendingResults(results: TmdbSearchResult[]) {
 
 export function setMockTmdbSearchResults(query: string, results: TmdbSearchResult[]) {
   searchResultsByQuery.set(query, results);
+}
+
+export function setMockDisplayTitleSuggestion(title: string, suggestedTitle: string | null) {
+  displayTitleSuggestionsByTitle.set(title, suggestedTitle);
 }
 
 export function setMockTmdbSeasonOptions(
@@ -101,5 +107,13 @@ export const supabaseFunctionsHandlers = [
     return HttpResponse.json(
       body.target ? (workDetailsByTargetKey.get(buildTargetKey(body.target)) ?? null) : null,
     );
+  }),
+
+  http.post(`${SUPABASE_URL}/functions/v1/suggest-display-title`, async ({ request }) => {
+    const body = (await request.json()) as { title?: string };
+
+    return HttpResponse.json({
+      title: body.title ? (displayTitleSuggestionsByTitle.get(body.title) ?? null) : null,
+    });
   }),
 ];

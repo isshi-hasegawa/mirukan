@@ -55,6 +55,11 @@ export type TmdbSeasonOption = {
 };
 
 export type TmdbSelectionTarget = TmdbSearchResult | TmdbSeasonSelectionTarget;
+export type SuggestDisplayTitleRequest = {
+  title: string;
+  originalTitle: string | null;
+  workType: "movie" | "series";
+};
 
 export type TmdbWorkDetails = {
   tmdbId: number;
@@ -230,6 +235,10 @@ function isTmdbWorkDetails(value: unknown): value is TmdbWorkDetails {
   );
 }
 
+function isSuggestDisplayTitleResponse(value: unknown): value is { title: string | null } {
+  return isRecord(value) && isNullableString(value.title);
+}
+
 export async function fetchTmdbSimilar(
   sourceItems: Array<{ tmdbId: number; tmdbMediaType: "movie" | "tv" }>,
 ): Promise<TmdbSearchResult[]> {
@@ -280,6 +289,18 @@ export function searchTmdbWorks(query: string) {
     { query },
     isTmdbSearchResultArray,
   );
+}
+
+export async function suggestDisplayTitle(
+  request: SuggestDisplayTitleRequest,
+): Promise<string | null> {
+  const data = await invokeTmdbFunction<{ title: string | null }>(
+    "suggest-display-title",
+    request,
+    isSuggestDisplayTitleResponse,
+  );
+
+  return data.title;
 }
 
 export function fetchTmdbSeasonOptions(result: TmdbSearchResult): Promise<TmdbSeasonOption[]> {

@@ -11,6 +11,7 @@ const tmdbMocks = vi.hoisted(() => ({
   fetchTmdbRecommendations: vi.fn(),
   searchTmdbWorks: vi.fn(),
   fetchTmdbSeasonOptions: vi.fn(),
+  suggestDisplayTitle: vi.fn(),
 }));
 
 const dataMocks = vi.hoisted(() => ({
@@ -28,6 +29,7 @@ vi.mock("../../../lib/tmdb.ts", async () => {
     fetchTmdbRecommendations: tmdbMocks.fetchTmdbRecommendations,
     searchTmdbWorks: tmdbMocks.searchTmdbWorks,
     fetchTmdbSeasonOptions: tmdbMocks.fetchTmdbSeasonOptions,
+    suggestDisplayTitle: tmdbMocks.suggestDisplayTitle,
   };
 });
 
@@ -127,6 +129,7 @@ describe("AddModal", () => {
     tmdbMocks.fetchTmdbRecommendations.mockResolvedValue([]);
     tmdbMocks.searchTmdbWorks.mockResolvedValue([]);
     tmdbMocks.fetchTmdbSeasonOptions.mockResolvedValue([]);
+    tmdbMocks.suggestDisplayTitle.mockResolvedValue(null);
     dataMocks.resolveSelectedSeasonWorkIds.mockResolvedValue({ error: null, workIds: [] });
     dataMocks.upsertBacklogItemsToStatus.mockResolvedValue({ error: null });
     dataMocks.upsertManualWork.mockResolvedValue({
@@ -467,7 +470,7 @@ describe("AddModal", () => {
         [duplicateItem],
         ["existing-work-41"],
         "stacked",
-        { note: null, primary_platform: null },
+        { display_title: null, note: null, primary_platform: null },
       ),
     );
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -553,7 +556,7 @@ describe("AddModal", () => {
       [],
       ["manual-work-1"],
       "stacked",
-      { note: null, primary_platform: null },
+      { display_title: null, note: null, primary_platform: null },
     );
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(onAdded).toHaveBeenCalledTimes(1);
@@ -575,10 +578,43 @@ describe("AddModal", () => {
       [],
       ["tmdb-work-1"],
       "stacked",
-      { note: null, primary_platform: null },
+      { display_title: null, note: null, primary_platform: null },
     );
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(onAdded).toHaveBeenCalledTimes(1);
+  });
+
+  test("英語タイトルのみの TMDb 作品では日本語提案をタイトル欄に反映して保存する", async () => {
+    const movieResult = createSearchResult({
+      tmdbId: 51,
+      title: "Original Only",
+      originalTitle: "Original Only",
+    });
+    tmdbMocks.fetchTmdbRecommendations.mockResolvedValue([movieResult]);
+    tmdbMocks.suggestDisplayTitle.mockResolvedValue("邦題候補");
+
+    const { user } = renderAddModal();
+
+    await user.click(await screen.findByRole("button", { name: /Original Only/ }));
+
+    await waitFor(() =>
+      expect(tmdbMocks.suggestDisplayTitle).toHaveBeenCalledWith({
+        title: "Original Only",
+        originalTitle: "Original Only",
+        workType: "movie",
+      }),
+    );
+    expect(screen.getByLabelText("タイトル")).toHaveValue("邦題候補");
+
+    await user.click(screen.getByRole("button", { name: "ストックに追加" }));
+
+    expect(dataMocks.upsertBacklogItemsToStatus).toHaveBeenCalledWith(
+      "user-1",
+      [],
+      ["tmdb-work-1"],
+      "stacked",
+      { display_title: "邦題候補", note: null, primary_platform: null },
+    );
   });
 
   test("カード保存失敗時はエラーメッセージを出してモーダルを閉じない", async () => {

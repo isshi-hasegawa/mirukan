@@ -56,7 +56,7 @@ export function BacklogCard({
     return null;
   }
 
-  const title = work.title;
+  const title = item.display_title?.trim() || work.title;
   const viewingMode = showModeBadge ? getViewingMode(work) : null;
   const WorkTypeIcon = work.work_type === "movie" ? FilmIcon : TvIcon;
   const workTypeLabel = getWorkTypeLabel(work.work_type);

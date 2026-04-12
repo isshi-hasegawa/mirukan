@@ -137,6 +137,7 @@ describe("upsertBacklogItemsToStatus", () => {
 
     await expect(
       upsertBacklogItemsToStatus("user-1", [], [], "stacked", {
+        display_title: null,
         note: null,
         primary_platform: null,
       }),
@@ -149,6 +150,7 @@ describe("upsertBacklogItemsToStatus", () => {
         ["work-1"],
         "stacked",
         {
+          display_title: null,
           note: "ignored",
           primary_platform: "netflix",
         },
@@ -186,6 +188,7 @@ describe("upsertBacklogItemsToStatus", () => {
         ["work-move", "work-new"],
         "stacked",
         {
+          display_title: "新規表示名",
           note: "新規メモ",
           primary_platform: "netflix",
         },
@@ -198,6 +201,7 @@ describe("upsertBacklogItemsToStatus", () => {
         .sort((left, right) => left.sort_order - right.sort_order)
         .map((item) => ({
           work_id: item.work_id,
+          display_title: item.display_title,
           primary_platform: item.primary_platform,
           note: item.note,
           sort_order: item.sort_order,
@@ -205,18 +209,21 @@ describe("upsertBacklogItemsToStatus", () => {
     ).toEqual([
       {
         work_id: "work-move",
+        display_title: null,
         primary_platform: null,
         note: null,
         sort_order: 1000,
       },
       {
         work_id: "work-new",
+        display_title: "新規表示名",
         primary_platform: "netflix",
         note: "新規メモ",
         sort_order: 2000,
       },
       {
         work_id: "work-top",
+        display_title: null,
         primary_platform: null,
         note: null,
         sort_order: 3000,
@@ -238,6 +245,7 @@ describe("upsertBacklogItemsToStatus", () => {
         ["work-move"],
         "stacked",
         {
+          display_title: null,
           note: null,
           primary_platform: null,
         },

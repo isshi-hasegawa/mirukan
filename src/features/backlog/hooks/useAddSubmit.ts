@@ -30,6 +30,25 @@ type UseAddSubmitOptions = {
   onAdded: () => void | Promise<void>;
 };
 
+function buildDisplayTitle(
+  selectedTmdbResult: TmdbSearchResult | null,
+  resolvedTitle: string,
+  workCount: number,
+) {
+  if (!selectedTmdbResult || workCount !== 1) {
+    return null;
+  }
+
+  const trimmedTitle = resolvedTitle.trim();
+  const defaultTitle = selectedTmdbResult.title.trim();
+
+  if (!trimmedTitle || trimmedTitle === defaultTitle) {
+    return null;
+  }
+
+  return trimmedTitle;
+}
+
 export function useAddSubmit({
   items,
   session,
@@ -52,7 +71,11 @@ export function useAddSubmit({
 
   const saveToStacked = async (payload: {
     workIds: string[];
-    backlogOptions: { note: string | null; primary_platform: PrimaryPlatform };
+    backlogOptions: {
+      display_title: string | null;
+      note: string | null;
+      primary_platform: PrimaryPlatform;
+    };
   }) => {
     const backlogResult = await upsertBacklogItemsToStatus(
       session.user.id,
@@ -98,7 +121,7 @@ export function useAddSubmit({
       selectedSeasonNumbers,
       resolvedTitle,
     });
-    const backlogOptions = buildStackedBacklogOptions(primaryPlatform, note);
+    const baseBacklogOptions = buildStackedBacklogOptions(primaryPlatform, note);
 
     if (!title) {
       setSubmitPhase({ phase: "error", message: "タイトルを入力してください。" });
@@ -147,12 +170,29 @@ export function useAddSubmit({
           phase: "pending_confirm",
           message: confirmResult.message,
           workIds: result.workIds,
-          backlogOptions,
+          backlogOptions: {
+            ...baseBacklogOptions,
+            display_title: buildDisplayTitle(
+              selectedTmdbResult,
+              resolvedTitle,
+              result.workIds.length,
+            ),
+          },
         });
         return;
       }
 
-      await saveToStacked({ workIds: result.workIds, backlogOptions });
+      await saveToStacked({
+        workIds: result.workIds,
+        backlogOptions: {
+          ...baseBacklogOptions,
+          display_title: buildDisplayTitle(
+            selectedTmdbResult,
+            resolvedTitle,
+            result.workIds.length,
+          ),
+        },
+      });
       return;
     }
 
@@ -204,12 +244,21 @@ export function useAddSubmit({
         phase: "pending_confirm",
         message: confirmResult.message,
         workIds: [work.id],
-        backlogOptions,
+        backlogOptions: {
+          ...baseBacklogOptions,
+          display_title: buildDisplayTitle(selectedTmdbResult, resolvedTitle, 1),
+        },
       });
       return;
     }
 
-    await saveToStacked({ workIds: [work.id], backlogOptions });
+    await saveToStacked({
+      workIds: [work.id],
+      backlogOptions: {
+        ...baseBacklogOptions,
+        display_title: buildDisplayTitle(selectedTmdbResult, resolvedTitle, 1),
+      },
+    });
   };
 
   // useAddFlow が参照する既存 API との互換を維持するための導出値
