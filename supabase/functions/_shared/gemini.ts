@@ -5,7 +5,7 @@ const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/
 const GEMINI_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 type GeminiCacheRow = {
-  payload: unknown;
+  payload: { value: string | null };
   expires_at: string | null;
 };
 
@@ -32,7 +32,7 @@ function buildCacheKey(prefix: string, value: string) {
 
 async function readGeminiCache(
   cacheKey: string,
-): Promise<{ fresh: boolean; payload: unknown } | null> {
+): Promise<{ fresh: boolean; payload: string | null } | null> {
   const admin = getSupabaseAdminClient();
   if (!admin) {
     return null;
@@ -50,19 +50,20 @@ async function readGeminiCache(
 
   return {
     fresh: isCacheEntryFresh(data.expires_at),
-    payload: data.payload,
+    payload: data.payload.value,
   };
 }
 
-async function writeGeminiCache(cacheKey: string, payload: unknown) {
+async function writeGeminiCache(cacheKey: string, value: string | null) {
   const admin = getSupabaseAdminClient();
   if (!admin) {
     return;
   }
 
+  // payload は jsonb NOT NULL のため { value } でラップして null を格納可能にする
   await admin.from("tmdb_metadata_cache").upsert({
     cache_key: cacheKey,
-    payload,
+    payload: { value },
     fetched_at: new Date().toISOString(),
     expires_at: buildExpiresAt(GEMINI_CACHE_TTL_MS),
   });
@@ -153,9 +154,7 @@ export async function translateSearchQuery(query: string): Promise<string | null
   const cacheKey = buildCacheKey("translate-search-query", normalized);
   const cached = await readGeminiCache(cacheKey);
   if (cached?.fresh) {
-    return typeof cached.payload === "string" && cached.payload.trim()
-      ? cached.payload.trim()
-      : null;
+    return cached.payload?.trim() || null;
   }
 
   const result = await generateGeminiJson(
@@ -202,9 +201,7 @@ export async function suggestDisplayTitle({
   );
   const cached = await readGeminiCache(cacheKey);
   if (cached?.fresh) {
-    return typeof cached.payload === "string" && cached.payload.trim()
-      ? cached.payload.trim()
-      : null;
+    return cached.payload?.trim() || null;
   }
 
   const result = await generateGeminiJson(

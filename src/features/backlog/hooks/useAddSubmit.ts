@@ -172,11 +172,8 @@ export function useAddSubmit({
           workIds: result.workIds,
           backlogOptions: {
             ...baseBacklogOptions,
-            display_title: buildDisplayTitle(
-              selectedTmdbResult,
-              resolvedTitle,
-              result.workIds.length,
-            ),
+            // シーズン row には series タイトルを上書きしない
+            display_title: null,
           },
         });
         return;
@@ -186,11 +183,8 @@ export function useAddSubmit({
         workIds: result.workIds,
         backlogOptions: {
           ...baseBacklogOptions,
-          display_title: buildDisplayTitle(
-            selectedTmdbResult,
-            resolvedTitle,
-            result.workIds.length,
-          ),
+          // シーズン row には series タイトルを上書きしない
+          display_title: null,
         },
       });
       return;
