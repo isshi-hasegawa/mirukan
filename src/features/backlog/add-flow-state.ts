@@ -9,6 +9,7 @@ import type { PrimaryPlatform, WorkType } from "./types.ts";
 //   any → idle                  (clearSubmissionState)
 
 type BacklogOptions = {
+  display_title: string | null;
   note: string | null;
   primary_platform: PrimaryPlatform;
 };

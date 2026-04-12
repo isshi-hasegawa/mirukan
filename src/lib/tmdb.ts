@@ -55,7 +55,7 @@ export type TmdbSeasonOption = {
 };
 
 export type TmdbSelectionTarget = TmdbSearchResult | TmdbSeasonSelectionTarget;
-export type SuggestDisplayTitleRequest = {
+type SuggestDisplayTitleRequest = {
   title: string;
   originalTitle: string | null;
   workType: "movie" | "series";

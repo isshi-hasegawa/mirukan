@@ -65,7 +65,7 @@ export type BacklogItem = {
   work_id: string;
   status: "stacked" | "want_to_watch" | "watching" | "interrupted" | "watched";
   sort_order: number;
-  display_title: string;
+  display_title: string | null;
   primary_platform: string | null;
   note: string | null;
 };
