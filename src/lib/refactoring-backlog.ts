@@ -52,7 +52,6 @@ type RefactoringBacklogInput = {
   observedAt: string;
   sonarBaseUrl: string;
   branchName: string;
-  workflowUrl: string;
   projectMeasures: SonarMeasureMap;
   bugIssues: SonarIssue[];
   vulnerabilityIssues: SonarIssue[];
@@ -201,7 +200,6 @@ export function buildRefactoringBacklogIssue({
   observedAt,
   sonarBaseUrl,
   branchName,
-  workflowUrl,
   projectMeasures,
   bugIssues,
   vulnerabilityIssues,
@@ -219,10 +217,19 @@ export function buildRefactoringBacklogIssue({
     "",
     "# Refactoring backlog",
     "",
+    "この Issue は定期生成される refactoring backlog snapshot です。最新の観測結果をもとに、今回対応する項目を自分で選んで進めてください。",
+    "",
+    "- まず `バグ`、次に `脆弱性`、その次に `すぐ直す` を優先",
+    "- 余力があれば `構造改善が必要` から安全に触れられるものを追加",
+    "- 振る舞いを変えないリファクタを優先",
+    "- 実行手順・検証・コミット・PR の進め方は `AGENTS.md` と各 skill に従う",
+    "- PR / 最終報告では、対応した項目・見送った項目・実施した検証を整理する",
+    "- PR では原則 `Closes` を使わず、必要なら `Refs` に留める",
+    "- 大きすぎる変更を 1 PR に詰め込みすぎない",
+    "",
     `- 観測日時: ${observedAt}`,
     `- 対象ブランチ: \`${branchName}\``,
     `- SonarCloud: [overall dashboard](${overallDashboardUrl})`,
-    `- workflow: [refactoring-backlog.yml](${workflowUrl})`,
     "",
     "## 今回のサマリー",
     "",
@@ -234,22 +241,14 @@ export function buildRefactoringBacklogIssue({
     `- complexity: ${formatNumber(projectMeasures.complexity)}`,
     `- ncloc: ${formatNumber(projectMeasures.ncloc)}`,
     "",
-    ...(bugIssues.length > 0
-      ? [
-          `## バグ (${bugIssues.length}件)`,
-          "",
-          ...renderIssueList(projectKey, sonarBaseUrl, bugIssues),
-          "",
-        ]
-      : []),
-    ...(vulnerabilityIssues.length > 0
-      ? [
-          `## 脆弱性 (${vulnerabilityIssues.length}件)`,
-          "",
-          ...renderIssueList(projectKey, sonarBaseUrl, vulnerabilityIssues),
-          "",
-        ]
-      : []),
+    `## バグ (${bugIssues.length}件)`,
+    "",
+    ...renderIssueSection(projectKey, sonarBaseUrl, bugIssues),
+    "",
+    `## 脆弱性 (${vulnerabilityIssues.length}件)`,
+    "",
+    ...renderIssueSection(projectKey, sonarBaseUrl, vulnerabilityIssues),
+    "",
     "## すぐ直す",
     "",
     ...renderQuickWinIssues(projectKey, sonarBaseUrl, quickWinIssues),
@@ -278,4 +277,12 @@ export function buildRefactoringBacklogIssue({
 
 function trimTrailingSlash(value: string) {
   return value.endsWith("/") ? value.slice(0, -1) : value;
+}
+
+function renderIssueSection(projectKey: string, sonarBaseUrl: string, issues: SonarIssue[]) {
+  if (issues.length === 0) {
+    return ["- 該当なし"];
+  }
+
+  return renderIssueList(projectKey, sonarBaseUrl, issues);
 }
