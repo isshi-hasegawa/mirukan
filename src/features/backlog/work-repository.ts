@@ -154,34 +154,29 @@ export async function resolveSelectedSeasonWorkIds(
     }
   }
 
-  const seasonWorks = await Promise.all(
-    targets.map(async (target) => {
-      if (target.workType !== "season") {
-        return sharedSeriesWork ?? upsertTmdbWork(target, userId);
-      }
+  const workIds: string[] = [];
+  for (const [index, target] of targets.entries()) {
+    const seasonWork =
+      target.workType !== "season"
+        ? (sharedSeriesWork ?? (await upsertTmdbWork(target, userId)))
+        : sharedSeriesWork?.data
+          ? await upsertFetchedTmdbWork(target, userId, {
+              parentWorkId: sharedSeriesWork.data.id,
+            })
+          : await upsertTmdbWork(target, userId);
 
-      if (sharedSeriesWork?.data) {
-        return upsertFetchedTmdbWork(target, userId, {
-          parentWorkId: sharedSeriesWork.data.id,
-        });
-      }
-
-      return upsertTmdbWork(target, userId);
-    }),
-  );
-
-  for (const [index, seasonWork] of seasonWorks.entries()) {
     if (seasonWork.error || !seasonWork.data) {
-      const target = targets[index];
       const label = target.workType === "season" ? `シーズン${target.seasonNumber}` : "シーズン1";
       return {
         error: seasonWork.error?.message ?? `${label}の保存に失敗しました`,
         workIds: [],
       };
     }
+
+    workIds[index] = seasonWork.data.id;
   }
 
-  return { error: null, workIds: seasonWorks.map((seasonWork) => seasonWork.data!.id) };
+  return { error: null, workIds };
 }
 
 async function upsertTmdbSeasonWork(
