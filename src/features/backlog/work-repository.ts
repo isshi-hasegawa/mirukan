@@ -139,49 +139,69 @@ export async function resolveSelectedSeasonWorkIds(
     };
   }
 
-  const firstSeasonTarget = targets.find(
-    (target): target is TmdbSeasonSelectionTarget => target.workType === "season",
-  );
-
-  let sharedSeriesWork: TmdbWorkIdResponse | null = null;
-  if (firstSeasonTarget) {
-    sharedSeriesWork = await upsertTmdbWork(buildTmdbSeriesTarget(firstSeasonTarget), userId);
-    if (sharedSeriesWork.error || !sharedSeriesWork.data) {
-      return {
-        error: sharedSeriesWork.error?.message ?? "シーズンの親シリーズ保存に失敗しました",
-        workIds: [],
-      };
-    }
+  const sharedSeriesWork = await resolveSharedSeriesWork(targets, userId);
+  if (sharedSeriesWork && (sharedSeriesWork.error || !sharedSeriesWork.data)) {
+    return {
+      error: sharedSeriesWork.error?.message ?? "シーズンの親シリーズ保存に失敗しました",
+      workIds: [],
+    };
   }
 
-  const seasonWorks = await Promise.all(
-    targets.map(async (target) => {
-      if (target.workType !== "season") {
-        return sharedSeriesWork ?? upsertTmdbWork(target, userId);
-      }
+  const workIds: string[] = [];
+  for (const [index, target] of targets.entries()) {
+    const seasonWork = await resolveTargetWork(target, userId, sharedSeriesWork);
 
-      if (sharedSeriesWork?.data) {
-        return upsertFetchedTmdbWork(target, userId, {
-          parentWorkId: sharedSeriesWork.data.id,
-        });
-      }
-
-      return upsertTmdbWork(target, userId);
-    }),
-  );
-
-  for (const [index, seasonWork] of seasonWorks.entries()) {
     if (seasonWork.error || !seasonWork.data) {
-      const target = targets[index];
-      const label = target.workType === "season" ? `シーズン${target.seasonNumber}` : "シーズン1";
       return {
-        error: seasonWork.error?.message ?? `${label}の保存に失敗しました`,
+        error: seasonWork.error?.message ?? buildSeasonSaveErrorMessage(target),
         workIds: [],
       };
     }
+
+    workIds[index] = seasonWork.data.id;
   }
 
-  return { error: null, workIds: seasonWorks.map((seasonWork) => seasonWork.data!.id) };
+  return { error: null, workIds };
+}
+
+async function resolveSharedSeriesWork(
+  targets: TmdbSelectionTarget[],
+  userId: string,
+): Promise<TmdbWorkIdResponse | null> {
+  const firstSeasonTarget = targets.find(isSeasonTarget);
+  if (!firstSeasonTarget) {
+    return null;
+  }
+
+  return upsertTmdbWork(buildTmdbSeriesTarget(firstSeasonTarget), userId);
+}
+
+async function resolveTargetWork(
+  target: TmdbSelectionTarget,
+  userId: string,
+  sharedSeriesWork: TmdbWorkIdResponse | null,
+): Promise<TmdbWorkIdResponse> {
+  if (!isSeasonTarget(target)) {
+    return sharedSeriesWork ?? upsertTmdbWork(target, userId);
+  }
+
+  if (!sharedSeriesWork?.data) {
+    return upsertTmdbWork(target, userId);
+  }
+
+  return upsertFetchedTmdbWork(target, userId, {
+    parentWorkId: sharedSeriesWork.data.id,
+  });
+}
+
+function isSeasonTarget(target: TmdbSelectionTarget): target is TmdbSeasonSelectionTarget {
+  return target.workType === "season";
+}
+
+function buildSeasonSaveErrorMessage(target: TmdbSelectionTarget) {
+  return isSeasonTarget(target)
+    ? `シーズン${target.seasonNumber}の保存に失敗しました`
+    : "シーズン1の保存に失敗しました";
 }
 
 async function upsertTmdbSeasonWork(
