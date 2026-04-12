@@ -48,7 +48,12 @@ describe("LoginPage", () => {
   test("開発時だけ補助導線から開発用アカウントを入力できる", async () => {
     const user = userEvent.setup();
 
-    render(<LoginPage showDevLoginHint />);
+    render(
+      <LoginPage
+        showDevLoginHint
+        devLoginCredentials={{ email: "akari@example.com", password: "password123" }}
+      />,
+    );
 
     expect(screen.getByText("開発用アカウント")).toBeInTheDocument();
     expect(screen.getByText("akari@example.com / password123")).toBeInTheDocument();

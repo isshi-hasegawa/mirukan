@@ -49,6 +49,10 @@ export function setMockTmdbTrendingResults(results: TmdbSearchResult[]) {
   trendingResults = results;
 }
 
+export function setMockTmdbSearchResults(query: string, results: TmdbSearchResult[]) {
+  searchResultsByQuery.set(query, results);
+}
+
 export function setMockTmdbSeasonOptions(
   result: { tmdbId: number; tmdbMediaType: "movie" | "tv" },
   options: TmdbSeasonOption[],
@@ -78,7 +82,7 @@ export const supabaseFunctionsHandlers = [
   http.post(`${SUPABASE_URL}/functions/v1/search-tmdb-works`, async ({ request }) => {
     const body = (await request.json()) as { query?: string };
 
-    return HttpResponse.json(searchResultsByQuery.get(body.query ?? "") ?? []);
+    return HttpResponse.json(body.query ? (searchResultsByQuery.get(body.query) ?? []) : []);
   }),
 
   http.post(`${SUPABASE_URL}/functions/v1/fetch-tmdb-season-options`, async ({ request }) => {

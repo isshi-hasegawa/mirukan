@@ -8,8 +8,10 @@ import {
 
 type AuthMode = "login" | "signUp" | "forgotPassword";
 
-export const DEV_EMAIL = "akari@example.com";
-export const DEV_PASSWORD = "password123";
+export type DevLoginCredentials = Readonly<{
+  email: string;
+  password: string;
+}>;
 
 export function getAuthRedirectUrl(location: Pick<Location, "origin" | "hostname">) {
   if (location.hostname === "www.mirukan.app") {
@@ -52,10 +54,14 @@ function getResetPasswordErrorMessage(errorMessage: string) {
 }
 
 type UseLoginPageAuthOptions = {
+  devLoginCredentials: DevLoginCredentials | null;
   showDevLoginHint: boolean;
 };
 
-export function useLoginPageAuth({ showDevLoginHint }: UseLoginPageAuthOptions) {
+export function useLoginPageAuth({
+  devLoginCredentials,
+  showDevLoginHint,
+}: UseLoginPageAuthOptions) {
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -73,7 +79,8 @@ export function useLoginPageAuth({ showDevLoginHint }: UseLoginPageAuthOptions) 
   const email = isSignUpMode ? signUpEmail : loginEmail;
   const password = isSignUpMode ? signUpPassword : loginPassword;
   const authRedirectUrl = getAuthRedirectUrl(globalThis.location);
-  const shouldShowDevLoginHint = showDevLoginHint && !isSignUpMode && !isForgotPasswordMode;
+  const shouldShowDevLoginHint =
+    showDevLoginHint && devLoginCredentials !== null && !isSignUpMode && !isForgotPasswordMode;
 
   const resetStatusMessage = () => {
     setErrorMessage("");
@@ -113,8 +120,12 @@ export function useLoginPageAuth({ showDevLoginHint }: UseLoginPageAuthOptions) 
   };
 
   const fillDevAccount = () => {
-    setLoginEmail(DEV_EMAIL);
-    setLoginPassword(DEV_PASSWORD);
+    if (!devLoginCredentials) {
+      return;
+    }
+
+    setLoginEmail(devLoginCredentials.email);
+    setLoginPassword(devLoginCredentials.password);
     setErrorMessage("");
   };
 
@@ -207,6 +218,7 @@ export function useLoginPageAuth({ showDevLoginHint }: UseLoginPageAuthOptions) 
     errorMessage,
     hasSentConfirmationEmail,
     isSubmitting,
+    devLoginCredentials,
     shouldShowDevLoginHint,
     setLoginEmail,
     setLoginPassword,
