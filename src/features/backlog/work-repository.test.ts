@@ -571,6 +571,40 @@ describe("resolveSelectedSeasonWorkIds", () => {
     },
   ];
 
+  function setExistingSeriesWork() {
+    setMockWorks([
+      {
+        id: "series-work",
+        source_type: "tmdb",
+        work_type: "series",
+        tmdb_media_type: "tv",
+        tmdb_id: 100,
+        title: "テストシリーズ",
+        original_title: "Test Series",
+        search_text: "test series",
+        last_tmdb_synced_at: "2026-03-31T00:00:00.000Z",
+        omdb_fetched_at: "2026-04-08T00:00:00.000Z",
+        imdb_id: "tt0123456",
+        episode_count: null,
+        season_number: null,
+        series_title: null,
+      },
+    ]);
+  }
+
+  function failSeasonLookup(seasonNumber: number) {
+    server.use(
+      http.get(`${SUPABASE_URL}/rest/v1/works`, ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.get("season_number") === `eq.${seasonNumber}`) {
+          return HttpResponse.json({ message: "season fetch failed" }, { status: 500 });
+        }
+
+        return undefined;
+      }),
+    );
+  }
+
   test("空入力時はエラーを返す", async () => {
     await expect(
       resolveSelectedSeasonWorkIds(seriesResult, "user-1", [], { seasonOptions }),
@@ -648,34 +682,8 @@ describe("resolveSelectedSeasonWorkIds", () => {
   });
 
   test("途中の保存に失敗したら workIds を返さず打ち切る", async () => {
-    setMockWorks([
-      {
-        id: "series-work",
-        source_type: "tmdb",
-        work_type: "series",
-        tmdb_media_type: "tv",
-        tmdb_id: 100,
-        title: "テストシリーズ",
-        original_title: "Test Series",
-        search_text: "test series",
-        last_tmdb_synced_at: "2026-03-31T00:00:00.000Z",
-        omdb_fetched_at: "2026-04-08T00:00:00.000Z",
-        imdb_id: "tt0123456",
-        episode_count: null,
-        season_number: null,
-        series_title: null,
-      },
-    ]);
-    server.use(
-      http.get(`${SUPABASE_URL}/rest/v1/works`, ({ request }) => {
-        const url = new URL(request.url);
-        if (url.searchParams.get("season_number") === "eq.2") {
-          return HttpResponse.json({ message: "season fetch failed" }, { status: 500 });
-        }
-
-        return undefined;
-      }),
-    );
+    setExistingSeriesWork();
+    failSeasonLookup(2);
 
     await expect(
       resolveSelectedSeasonWorkIds(seriesResult, "user-1", [1, 2], { seasonOptions }),
@@ -687,34 +695,8 @@ describe("resolveSelectedSeasonWorkIds", () => {
   });
 
   test("途中の保存に失敗したら後続シーズンの保存を発行しない", async () => {
-    setMockWorks([
-      {
-        id: "series-work",
-        source_type: "tmdb",
-        work_type: "series",
-        tmdb_media_type: "tv",
-        tmdb_id: 100,
-        title: "テストシリーズ",
-        original_title: "Test Series",
-        search_text: "test series",
-        last_tmdb_synced_at: "2026-03-31T00:00:00.000Z",
-        omdb_fetched_at: "2026-04-08T00:00:00.000Z",
-        imdb_id: "tt0123456",
-        episode_count: null,
-        season_number: null,
-        series_title: null,
-      },
-    ]);
-    server.use(
-      http.get(`${SUPABASE_URL}/rest/v1/works`, ({ request }) => {
-        const url = new URL(request.url);
-        if (url.searchParams.get("season_number") === "eq.2") {
-          return HttpResponse.json({ message: "season fetch failed" }, { status: 500 });
-        }
-
-        return undefined;
-      }),
-    );
+    setExistingSeriesWork();
+    failSeasonLookup(2);
     tmdbMocks.fetchTmdbWorkDetails.mockResolvedValue(
       createTmdbDetails({
         tmdbId: seriesResult.tmdbId,
