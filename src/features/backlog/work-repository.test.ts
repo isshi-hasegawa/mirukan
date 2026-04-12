@@ -104,6 +104,36 @@ function failSeasonLookup(seasonNumber: number) {
   );
 }
 
+function createSeriesTmdbDetails(seriesResult: TmdbSearchResult, seasonCount: number) {
+  return createTmdbDetails({
+    tmdbId: seriesResult.tmdbId,
+    tmdbMediaType: "tv",
+    workType: "series",
+    title: seriesResult.title,
+    originalTitle: seriesResult.originalTitle,
+    runtimeMinutes: null,
+    typicalEpisodeRuntimeMinutes: 48,
+    seasonCount,
+  });
+}
+
+function createSeasonTmdbDetails(seriesResult: TmdbSearchResult, seasonOption: TmdbSeasonOption) {
+  return createTmdbDetails({
+    tmdbId: seriesResult.tmdbId,
+    tmdbMediaType: "tv",
+    workType: "season",
+    title: seasonOption.title,
+    originalTitle: seriesResult.originalTitle,
+    overview: seasonOption.overview,
+    posterPath: seasonOption.posterPath,
+    releaseDate: seasonOption.releaseDate,
+    runtimeMinutes: null,
+    typicalEpisodeRuntimeMinutes: 48,
+    episodeCount: seasonOption.episodeCount,
+    seasonNumber: seasonOption.seasonNumber,
+  });
+}
+
 beforeEach(() => {
   tmdbMocks.fetchTmdbWorkDetails.mockReset();
   omdbMocks.fetchOmdbWorkDetails.mockReset();
@@ -624,18 +654,7 @@ describe("resolveSelectedSeasonWorkIds", () => {
   });
 
   test("シーズン1のみ選択時は series を保存して返す", async () => {
-    tmdbMocks.fetchTmdbWorkDetails.mockResolvedValueOnce(
-      createTmdbDetails({
-        tmdbId: seriesResult.tmdbId,
-        tmdbMediaType: "tv",
-        workType: "series",
-        title: seriesResult.title,
-        originalTitle: seriesResult.originalTitle,
-        runtimeMinutes: null,
-        typicalEpisodeRuntimeMinutes: 48,
-        seasonCount: 3,
-      }),
-    );
+    tmdbMocks.fetchTmdbWorkDetails.mockResolvedValueOnce(createSeriesTmdbDetails(seriesResult, 3));
 
     await expect(
       resolveSelectedSeasonWorkIds(seriesResult, "user-1", [1], { seasonOptions }),
@@ -654,34 +673,8 @@ describe("resolveSelectedSeasonWorkIds", () => {
 
   test("複数シーズン追加時は親 series を一度だけ解決して workIds を順序どおり返す", async () => {
     tmdbMocks.fetchTmdbWorkDetails
-      .mockResolvedValueOnce(
-        createTmdbDetails({
-          tmdbId: seriesResult.tmdbId,
-          tmdbMediaType: "tv",
-          workType: "series",
-          title: seriesResult.title,
-          originalTitle: seriesResult.originalTitle,
-          runtimeMinutes: null,
-          typicalEpisodeRuntimeMinutes: 48,
-          seasonCount: 2,
-        }),
-      )
-      .mockResolvedValueOnce(
-        createTmdbDetails({
-          tmdbId: seriesResult.tmdbId,
-          tmdbMediaType: "tv",
-          workType: "season",
-          title: seasonOptions[0].title,
-          originalTitle: seriesResult.originalTitle,
-          overview: seasonOptions[0].overview,
-          posterPath: seasonOptions[0].posterPath,
-          releaseDate: seasonOptions[0].releaseDate,
-          runtimeMinutes: null,
-          typicalEpisodeRuntimeMinutes: 48,
-          episodeCount: seasonOptions[0].episodeCount,
-          seasonNumber: seasonOptions[0].seasonNumber,
-        }),
-      );
+      .mockResolvedValueOnce(createSeriesTmdbDetails(seriesResult, 2))
+      .mockResolvedValueOnce(createSeasonTmdbDetails(seriesResult, seasonOptions[0]));
 
     const result = await resolveSelectedSeasonWorkIds(seriesResult, "user-1", [1, 2], {
       seasonOptions,
@@ -727,20 +720,7 @@ describe("resolveSelectedSeasonWorkIds", () => {
     setExistingSeriesWork();
     failSeasonLookup(2);
     tmdbMocks.fetchTmdbWorkDetails.mockResolvedValue(
-      createTmdbDetails({
-        tmdbId: seriesResult.tmdbId,
-        tmdbMediaType: "tv",
-        workType: "season",
-        title: seasonOptions[1].title,
-        originalTitle: seriesResult.originalTitle,
-        overview: seasonOptions[1].overview,
-        posterPath: seasonOptions[1].posterPath,
-        releaseDate: seasonOptions[1].releaseDate,
-        runtimeMinutes: null,
-        typicalEpisodeRuntimeMinutes: 48,
-        episodeCount: seasonOptions[1].episodeCount,
-        seasonNumber: seasonOptions[1].seasonNumber,
-      }),
+      createSeasonTmdbDetails(seriesResult, seasonOptions[1]),
     );
 
     await expect(
