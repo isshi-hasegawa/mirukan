@@ -58,9 +58,6 @@ content_path = "./supabase/templates/email_change.html"
 [functions.search-tmdb-works]
 verify_jwt = false
 
-[functions.translate-search-query]
-verify_jwt = false
-
 [functions.fetch-tmdb-trending]
 verify_jwt = false
 

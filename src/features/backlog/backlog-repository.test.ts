@@ -209,7 +209,7 @@ describe("upsertBacklogItemsToStatus", () => {
     ).toEqual([
       {
         work_id: "work-move",
-        display_title: null,
+        display_title: "新規表示名", // options.display_title を優先して上書き
         primary_platform: null,
         note: null,
         sort_order: 1000,

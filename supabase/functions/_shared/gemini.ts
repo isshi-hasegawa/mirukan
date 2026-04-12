@@ -23,7 +23,7 @@ function isCacheEntryFresh(expiresAt: string | null) {
 }
 
 function normalizeCacheSegment(value: string) {
-  return value.trim().toLowerCase().replace(/\s+/g, " ");
+  return value.trim().toLowerCase().replaceAll(/\s+/g, " ");
 }
 
 function buildCacheKey(prefix: string, value: string) {

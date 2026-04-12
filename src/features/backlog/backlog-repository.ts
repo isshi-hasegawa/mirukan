@@ -79,7 +79,7 @@ export async function upsertBacklogItemsToStatus(
             user_id: userId,
             work_id: action.item.works!.id,
             status: targetStatus,
-            display_title: action.item.display_title ?? null,
+            display_title: options.display_title ?? action.item.display_title ?? null,
             primary_platform: action.item.primary_platform,
             note: action.item.note,
             sort_order: sortOrder,

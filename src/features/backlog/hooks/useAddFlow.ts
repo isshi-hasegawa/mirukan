@@ -131,6 +131,7 @@ export function useAddFlow({ items, session, onClose, onAdded }: UseAddFlowOptio
 
     if (
       !selectedTmdbResult ||
+      draftState.selectedTitleOverride.trim() ||
       hasJapaneseText(selectedTmdbResult.title) ||
       (selectedTmdbResult.originalTitle &&
         selectedTmdbResult.originalTitle.trim() !== selectedTmdbResult.title.trim())
