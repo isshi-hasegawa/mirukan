@@ -1,6 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
+  "dependencyDashboard": false,
   "automergeType": "pr",
   "separateMajorMinor": true,
   "separateMinorPatch": true,
@@ -9,10 +10,6 @@
     "automerge": true
   },
   "packageRules": [
-    {
-      "matchUpdateTypes": ["major"],
-      "dependencyDashboardApproval": true
-    },
     {
       "matchManagers": ["github-actions"],
       "groupName": "github actions"
