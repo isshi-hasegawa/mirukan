@@ -1,5 +1,6 @@
 import "./edge-runtime.d.ts";
 import { fetchOmdbDetails, type OmdbWorkDetails } from "./omdb.ts";
+import { translateSearchQuery } from "./gemini.ts";
 import { getSupabaseAdminClient } from "./supabase-admin.ts";
 
 type TmdbMediaType = "movie" | "tv";
@@ -696,6 +697,18 @@ export async function searchTmdbWorks(query: string): Promise<TmdbSearchResult[]
   for (const fallback of buildFallbackQueries(query)) {
     const fallbackResults = await fetchSearchResults(fallback);
     if (fallbackResults.length > 0) return fallbackResults;
+  }
+
+  try {
+    const translatedQuery = await translateSearchQuery(query);
+    if (translatedQuery) {
+      const translatedResults = await fetchSearchResults(translatedQuery);
+      if (translatedResults.length > 0) {
+        return translatedResults;
+      }
+    }
+  } catch {
+    // Gemini translation is an optional fallback and must not block TMDb search.
   }
 
   return results;

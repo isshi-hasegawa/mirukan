@@ -9,6 +9,7 @@ import type { PrimaryPlatform, WorkType } from "./types.ts";
 //   any → idle                  (clearSubmissionState)
 
 type BacklogOptions = {
+  display_title: string | null;
   note: string | null;
   primary_platform: PrimaryPlatform;
 };
@@ -30,6 +31,7 @@ type AddFlowDraftState = {
   primaryPlatform: PrimaryPlatform;
   note: string;
   manualTitle: string;
+  selectedTitleOverride: string;
   workType: Extract<WorkType, "movie" | "series">;
 };
 
@@ -37,12 +39,14 @@ type AddFlowDraftAction =
   | { type: "set_primary_platform"; primaryPlatform: PrimaryPlatform }
   | { type: "set_note"; note: string }
   | { type: "set_manual_title"; manualTitle: string }
+  | { type: "set_selected_title_override"; selectedTitleOverride: string }
   | { type: "set_work_type"; workType: Extract<WorkType, "movie" | "series"> };
 
 export const initialAddFlowDraftState: AddFlowDraftState = {
   primaryPlatform: null,
   note: "",
   manualTitle: "",
+  selectedTitleOverride: "",
   workType: "movie",
 };
 
@@ -57,6 +61,8 @@ export function addFlowDraftReducer(
       return { ...state, note: action.note };
     case "set_manual_title":
       return { ...state, manualTitle: action.manualTitle };
+    case "set_selected_title_override":
+      return { ...state, selectedTitleOverride: action.selectedTitleOverride };
     case "set_work_type":
       return { ...state, workType: action.workType };
     default:
@@ -69,7 +75,9 @@ export function resolveAddFlowDraft(
   selectedTmdbResult: TmdbSearchResult | null,
 ) {
   return {
-    resolvedTitle: selectedTmdbResult?.title ?? state.manualTitle,
+    resolvedTitle: selectedTmdbResult
+      ? state.selectedTitleOverride || selectedTmdbResult.title
+      : state.manualTitle,
     resolvedWorkType: selectedTmdbResult?.workType ?? state.workType,
   };
 }

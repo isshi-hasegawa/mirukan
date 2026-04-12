@@ -48,11 +48,8 @@ export function AddModalDetailsPane({
         aria-label="タイトル"
         maxLength={120}
         value={resolvedTitle}
-        readOnly={!!selectedTmdbResult}
         onChange={(e) => {
-          if (!selectedTmdbResult) {
-            onChangeTitle(e.target.value);
-          }
+          onChangeTitle(e.target.value);
         }}
         required
       />

@@ -42,6 +42,7 @@ export type WorkSummary = {
 export type BacklogItem = {
   id: string;
   status: BacklogStatus;
+  display_title?: string | null;
   primary_platform: PrimaryPlatform;
   note: string | null;
   sort_order: number;

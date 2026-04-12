@@ -70,6 +70,7 @@ describe("resolveAddFlowDraft", () => {
           primaryPlatform: null,
           note: "",
           manualTitle: "手動作品",
+          selectedTitleOverride: "",
           workType: "series",
         },
         createSearchResult({ title: "TMDb作品", workType: "movie" }),

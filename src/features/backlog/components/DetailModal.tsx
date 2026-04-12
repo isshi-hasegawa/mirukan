@@ -59,7 +59,7 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onRelo
   }
 
   const work = item.works;
-  const title = work.title;
+  const title = item.display_title?.trim() || work.title;
   const WorkTypeIcon = work.work_type === "movie" ? FilmIcon : TvIcon;
   const workTypeLabel = getWorkTypeLabel(work.work_type);
   const metadataLabels = getWorkMetadataLabels(work, {

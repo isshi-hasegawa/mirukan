@@ -34,7 +34,7 @@ cp .env.example .env.local
 cp supabase/functions/.env.example supabase/functions/.env
 ```
 
-`supabase/functions/.env` にはローカル開発用の `TMDB_API_KEY` を設定してください。リモート環境は `supabase secrets set TMDB_API_KEY=...` で管理します。
+`supabase/functions/.env` にはローカル開発用の `TMDB_API_KEY` と `GEMINI_API_KEY` を設定してください。リモート環境は `supabase secrets set ...` で管理します。
 
 ローカル DB の初期データは `supabase/seed.sql` に最小構成で入ります。盤面を増やしたいときだけ、追加で `supabase/seed.sample.sql` を流してください。
 
@@ -65,6 +65,7 @@ TMDb 検索系の API は Supabase Edge Functions 経由で実行します。
   - `VITE_SUPABASE_PUBLISHABLE_KEY`
 - `supabase/functions/.env`
   - `TMDB_API_KEY`
+  - `GEMINI_API_KEY`
 
 ローカルで TMDb 検索を使うには、次の条件を満たす必要があります。
 
@@ -72,6 +73,7 @@ TMDb 検索系の API は Supabase Edge Functions 経由で実行します。
 - ローカル Supabase が起動している
 - Edge Functions が起動している
 - `supabase/functions/.env` に `TMDB_API_KEY` が設定されている
+- Gemini 補助機能も使う場合は `GEMINI_API_KEY` が設定されている
 
 `VITE_SUPABASE_URL` が `http://127.0.0.1:54321` を向いていれば、ローカル Supabase を使っています。
 
@@ -89,10 +91,11 @@ TMDb 検索系の API は Supabase Edge Functions 経由で実行します。
 - Repository variable: `SUPABASE_PROJECT_REF`
 
 この workflow は `supabase/functions/**` または `supabase/config.toml` の変更時だけ動きます。
-なお、`TMDB_API_KEY` などの Supabase secret 自体は GitHub から同期せず、引き続き Supabase 側で管理します。
+なお、`TMDB_API_KEY` や `GEMINI_API_KEY` などの Supabase secret 自体は GitHub から同期せず、引き続き Supabase 側で管理します。
 
 ```bash
 supabase secrets set TMDB_API_KEY=...
+supabase secrets set GEMINI_API_KEY=...
 supabase functions deploy
 ```
 
@@ -106,6 +109,8 @@ supabase functions deploy
   - Edge Function を直接叩いたが、Supabase の認証ヘッダーが付いていない
 - `Missing environment variable: TMDB_API_KEY`
   - `supabase/functions/.env` または Supabase secrets に `TMDB_API_KEY` が設定されていない
+- Gemini 補助が反映されない
+  - `supabase/functions/.env` または Supabase secrets に `GEMINI_API_KEY` が設定されていない
 - `メールアドレスまたはパスワードが正しくありません。` が急に出る
   - 別プロジェクトの Supabase が `54321` - `54324` を使用中で、このリポジトリのローカル Supabase ではなく別の DB に接続している可能性がある
   - `docker ps` で `supabase_*` コンテナ名を確認し、`supabase stop --project-id <other-project-id>` で競合プロジェクトを停止してから、このリポジトリで `supabase start` を実行する

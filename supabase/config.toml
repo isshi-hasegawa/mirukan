@@ -72,3 +72,6 @@ verify_jwt = false
 
 [functions.fetch-omdb-work-details]
 verify_jwt = false
+
+[functions.suggest-display-title]
+verify_jwt = false

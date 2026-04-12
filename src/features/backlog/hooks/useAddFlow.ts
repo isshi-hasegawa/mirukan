@@ -1,5 +1,6 @@
-import { useReducer } from "react";
+import { useEffect, useReducer, useRef } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { suggestDisplayTitle } from "../../../lib/tmdb.ts";
 import {
   addFlowDraftReducer,
   initialAddFlowDraftState,
@@ -8,6 +9,10 @@ import {
 import type { BacklogItem, PrimaryPlatform } from "../types.ts";
 import { useAddSubmit } from "./useAddSubmit.ts";
 import { useTmdbSearch } from "./useTmdbSearch.ts";
+
+function hasJapaneseText(value: string) {
+  return /[\u3040-\u30ff\u3400-\u9fff]/.test(value);
+}
 
 type UseAddFlowOptions = {
   items: BacklogItem[];
@@ -18,6 +23,7 @@ type UseAddFlowOptions = {
 
 export function useAddFlow({ items, session, onClose, onAdded }: UseAddFlowOptions) {
   const [draftState, dispatchDraft] = useReducer(addFlowDraftReducer, initialAddFlowDraftState);
+  const titleSuggestionRequestIdRef = useRef(0);
   const {
     searchQuery,
     searchResults,
@@ -81,6 +87,7 @@ export function useAddFlow({ items, session, onClose, onAdded }: UseAddFlowOptio
 
   const handleSelectResult = (result: NonNullable<typeof selectedTmdbResult>) => {
     clearSubmissionState();
+    dispatchDraft({ type: "set_selected_title_override", selectedTitleOverride: "" });
     void handleTmdbSelectResult(result);
   };
 
@@ -96,7 +103,11 @@ export function useAddFlow({ items, session, onClose, onAdded }: UseAddFlowOptio
 
   const setManualTitle = (manualTitle: string) => {
     clearSubmissionState();
-    dispatchDraft({ type: "set_manual_title", manualTitle });
+    dispatchDraft(
+      selectedTmdbResult
+        ? { type: "set_selected_title_override", selectedTitleOverride: manualTitle }
+        : { type: "set_manual_title", manualTitle },
+    );
   };
 
   const setWorkType = (workType: typeof draftState.workType) => {
@@ -113,6 +124,42 @@ export function useAddFlow({ items, session, onClose, onAdded }: UseAddFlowOptio
     clearSubmissionState();
     dispatchDraft({ type: "set_note", note });
   };
+
+  useEffect(() => {
+    titleSuggestionRequestIdRef.current += 1;
+    const requestId = titleSuggestionRequestIdRef.current;
+
+    if (
+      !selectedTmdbResult ||
+      draftState.selectedTitleOverride.trim() ||
+      hasJapaneseText(selectedTmdbResult.title) ||
+      (selectedTmdbResult.originalTitle &&
+        selectedTmdbResult.originalTitle.trim() !== selectedTmdbResult.title.trim())
+    ) {
+      return;
+    }
+
+    void suggestDisplayTitle({
+      title: selectedTmdbResult.title,
+      originalTitle: selectedTmdbResult.originalTitle,
+      workType: selectedTmdbResult.workType,
+    })
+      .then((suggestedTitle) => {
+        if (
+          requestId !== titleSuggestionRequestIdRef.current ||
+          !suggestedTitle ||
+          draftState.selectedTitleOverride.trim()
+        ) {
+          return;
+        }
+
+        dispatchDraft({
+          type: "set_selected_title_override",
+          selectedTitleOverride: suggestedTitle,
+        });
+      })
+      .catch(() => {});
+  }, [draftState.selectedTitleOverride, selectedTmdbResult]);
 
   return {
     searchQuery,

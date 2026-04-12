@@ -8,9 +8,11 @@ import {
   resetTmdbRecommendationCachesForTest,
   resolveSeasonTitle,
   searchTmdbWorks,
+  suggestDisplayTitle,
 } from "./tmdb.ts";
 import { setupTestLifecycle } from "../test/test-lifecycle.ts";
 import {
+  setMockDisplayTitleSuggestion,
   setMockTmdbSearchResults,
   setMockTmdbSeasonOptions,
   setMockTmdbSimilarResults,
@@ -291,6 +293,20 @@ describe("recommendation caches", () => {
     await Promise.all([first, second]);
 
     expect(requestCount).toBe(1);
+  });
+});
+
+describe("suggestDisplayTitle", () => {
+  test("suggest-display-title function returns a suggested Japanese title", async () => {
+    setMockDisplayTitleSuggestion("Original Only", "邦題候補");
+
+    await expect(
+      suggestDisplayTitle({
+        title: "Original Only",
+        originalTitle: "Original Only",
+        workType: "movie",
+      }),
+    ).resolves.toBe("邦題候補");
   });
 });
 
