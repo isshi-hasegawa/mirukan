@@ -3,6 +3,7 @@
  */
 
 export {
+  setMockTmdbSearchResults,
   resetMockTmdbData,
   setMockTmdbSeasonOptions,
   setMockTmdbSimilarResults,

@@ -11,6 +11,7 @@ import {
 } from "./tmdb.ts";
 import { setupTestLifecycle } from "../test/test-lifecycle.ts";
 import {
+  setMockTmdbSearchResults,
   setMockTmdbSeasonOptions,
   setMockTmdbSimilarResults,
   setMockTmdbTrendingResults,
@@ -260,10 +261,11 @@ describe("recommendation caches", () => {
 
     const results = await fetchTmdbTrending();
 
-    expect(results.map((result) => `${result.tmdbMediaType}-${result.tmdbId}`).sort()).toEqual([
-      "movie-10",
-      "tv-10",
-    ]);
+    expect(
+      results
+        .map((result) => `${result.tmdbMediaType}-${result.tmdbId}`)
+        .sort((left, right) => left.localeCompare(right)),
+    ).toEqual(["movie-10", "tv-10"]);
   });
 
   test("fetchTmdbTrending reuses an in-flight request", async () => {
@@ -320,28 +322,36 @@ describe("API boundary wrappers", () => {
     seriesTitle: "Series",
   };
 
-  test("searchTmdbWorks passes query and returns results", async () => {
+  test("searchTmdbWorks passes query", async () => {
     let receivedQuery = "";
     server.use(
       http.post(`${SUPABASE_URL}/functions/v1/search-tmdb-works`, async ({ request }) => {
         const body = (await request.json()) as { query: string };
         receivedQuery = body.query;
-        return HttpResponse.json([
-          {
-            tmdbId: 1,
-            tmdbMediaType: "movie",
-            workType: "movie",
-            title: "Search Result",
-            originalTitle: null,
-            overview: null,
-            posterPath: null,
-            releaseDate: "2025-01-01",
-            jpWatchPlatforms: [],
-            hasJapaneseRelease: true,
-          },
-        ]);
+        return HttpResponse.json([]);
       }),
     );
+
+    await searchTmdbWorks("query text");
+
+    expect(receivedQuery).toBe("query text");
+  });
+
+  test("searchTmdbWorks returns results configured in the default mock handler", async () => {
+    setMockTmdbSearchResults("query text", [
+      {
+        tmdbId: 1,
+        tmdbMediaType: "movie",
+        workType: "movie",
+        title: "Search Result",
+        originalTitle: null,
+        overview: null,
+        posterPath: null,
+        releaseDate: "2025-01-01",
+        jpWatchPlatforms: [],
+        hasJapaneseRelease: true,
+      },
+    ]);
 
     await expect(searchTmdbWorks("query text")).resolves.toEqual([
       expect.objectContaining({
@@ -349,7 +359,6 @@ describe("API boundary wrappers", () => {
         title: "Search Result",
       }),
     ]);
-    expect(receivedQuery).toBe("query text");
   });
 
   test("fetchTmdbSeasonOptions passes result and returns season options", async () => {
