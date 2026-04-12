@@ -14,6 +14,10 @@
 - 変更は作業ブランチ上でコミットし、PR 経由で `main` に取り込む。
 - 変更後は適切な単位でコミットする。
 - ユーザーが明示的に不要と言わない限り、変更作業はコミット後に PR 作成まで完了して終了する。
+- `implementation` ラベルが付いていない Issue には、コーディングエージェントは着手しない。着手前の整理が必要な場合は `issue-open` を使う。
+- GitHub Issue を起点に着手するときは、Issue 本文だけでなく最新コメントまで確認してから作業判断する。
+- コメントに本文より新しい決定、昇格理由、スコープ変更がある場合はコメントを優先する。
+- Issue 着手前に「Issue 本文の要点」と「コメント反映後の確定スコープ」を要約し、コメント未確認のまま branch 作成や実装開始に進まない。
 
 ## ブランチ命名
 
@@ -23,11 +27,21 @@
 
 ## 作業フロー
 
+- Issue 整理: 実装前のアイデア整理や Issue 起票・昇格が必要なときは `issue-open` を使う。
 - 作業開始: コード変更を始めるときは必ず `task-start` に従う。
 - 実装後: 必ず `self-review` に従う。
 - PR 作成: `self-review` 通過後、PR が未作成なら必ず `pr-open` に従う。
 - PR 追従: レビュー指摘や CI 失敗への対応は `pr-followup` に従う。
 - 後始末: `cleanup` に従う。
+
+作業フローは `issue-open → task-start → self-review → pr-open → pr-followup → cleanup` を基本とする。
+
+## Issue 管理
+
+- `discovery` ラベルは、必要性や採用条件を整理中の Issue に付ける。
+- `implementation` ラベルは、必要性が確認できており、コーディングエージェントへ渡せる粒度の Issue に付ける。
+- discovery と implementation は別 Issue に分けず、同一 Issue を育てる。必要になったらラベルを `discovery` から `implementation` へ切り替える。
+- 新規アイデアの起票や discovery から implementation への昇格には `issue-open` を使う。
 
 ## Skill の命名と構成
 
