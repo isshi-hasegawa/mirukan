@@ -95,7 +95,7 @@ importers:
         version: 4.1.4(vitest@4.1.4)
       autoprefixer:
         specifier: ^10.4.27
-        version: 10.4.27(postcss@8.5.9)
+        version: 10.5.0(postcss@8.5.9)
       jsdom:
         specifier: ^29.0.1
         version: 29.0.2(@noble/hashes@1.8.0)
@@ -1540,8 +1540,8 @@ packages:
   ast-v8-to-istanbul@1.0.0:
     resolution: {integrity: sha512-1fSfIwuDICFA4LKkCzRPO7F0hzFf0B7+Xqrl27ynQaa+Rh0e1Es0v6kWHPott3lU10AyAr7oKHa65OppjLn3Rg==}
 
-  autoprefixer@10.4.27:
-    resolution: {integrity: sha512-NP9APE+tO+LuJGn7/9+cohklunJsXWiaWEfV3si4Gi/XHDwVNgkwr1J3RQYFIvPy76GmJ9/bW8vyoU1LcxwKHA==}
+  autoprefixer@10.5.0:
+    resolution: {integrity: sha512-FMhOoZV4+qR6aTUALKX2rEqGG+oyATvwBt9IIzVR5rMa2HRWPkxf+P+PAJLD1I/H5/II+HuZcBJYEFBpq39ong==}
     engines: {node: ^10 || ^12 || >=14}
     hasBin: true
     peerDependencies:
@@ -4384,7 +4384,7 @@ snapshots:
       estree-walker: 3.0.3
       js-tokens: 10.0.0
 
-  autoprefixer@10.4.27(postcss@8.5.9):
+  autoprefixer@10.5.0(postcss@8.5.9):
     dependencies:
       browserslist: 4.28.2
       caniuse-lite: 1.0.30001787
