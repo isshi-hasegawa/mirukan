@@ -7,6 +7,7 @@ import {
   createRouter,
   Outlet,
 } from "@tanstack/react-router";
+import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import { Button } from "@/components/ui/button.tsx";
 import { LazyViewBoundary } from "./components/LazyViewBoundary.tsx";
 import { getSession, onAuthStateChange } from "./lib/auth-repository.ts";
@@ -166,7 +167,14 @@ function AuthenticatedApp() {
   );
 }
 
-const rootRoute = createRootRoute({ component: Outlet, notFoundComponent: AuthenticatedApp });
+const rootRoute = createRootRoute({
+  component: () => (
+    <NuqsAdapter>
+      <Outlet />
+    </NuqsAdapter>
+  ),
+  notFoundComponent: AuthenticatedApp,
+});
 
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
