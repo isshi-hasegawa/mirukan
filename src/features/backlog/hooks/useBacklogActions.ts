@@ -164,7 +164,7 @@ export function useBacklogActions({
       items,
       workIds,
       "stacked",
-      { primary_platform: null, note: null },
+      { display_title: null, primary_platform: null, note: null },
     );
 
     if (insertError) {

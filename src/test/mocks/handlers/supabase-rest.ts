@@ -55,7 +55,7 @@ function ensureBacklogItemDefaults(item: Partial<BacklogItem>): BacklogItem {
     work_id: item.work_id ?? "mock-work",
     status: item.status ?? "stacked",
     sort_order: item.sort_order ?? 1000,
-    display_title: item.display_title ?? "",
+    display_title: item.display_title ?? null,
     primary_platform: item.primary_platform ?? null,
     note: item.note ?? null,
   };

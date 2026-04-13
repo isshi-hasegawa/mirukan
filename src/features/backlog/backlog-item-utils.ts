@@ -94,6 +94,7 @@ function normalizeBacklogItem(value: unknown): BacklogItem | null {
     !isRecord(value) ||
     typeof value.id !== "string" ||
     !isBacklogStatus(value.status) ||
+    !(value.display_title === undefined || isNullableString(value.display_title)) ||
     !isPrimaryPlatform(value.primary_platform) ||
     !isNullableString(value.note) ||
     typeof value.sort_order !== "number"
@@ -109,6 +110,8 @@ function normalizeBacklogItem(value: unknown): BacklogItem | null {
   return {
     id: value.id,
     status: value.status,
+    display_title:
+      typeof value.display_title === "string" ? value.display_title.trim() || null : null,
     primary_platform: value.primary_platform,
     note: value.note,
     sort_order: value.sort_order,
