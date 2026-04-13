@@ -1,6 +1,7 @@
 import { act, render, screen } from "@testing-library/react";
+import { RouterProvider, createMemoryHistory, createRouter } from "@tanstack/react-router";
 import { setupTestLifecycle } from "./test/test-lifecycle.ts";
-import { App } from "./App.tsx";
+import { routeTree } from "./App.tsx";
 
 const authState = vi.hoisted(() => ({
   callback: null as ((event: string, session: unknown) => void) | null,
@@ -37,6 +38,14 @@ vi.mock("./features/backlog/components/TermsOfServicePage.tsx", () => ({
 
 setupTestLifecycle();
 
+function renderApp(path = "/") {
+  const testRouter = createRouter({
+    routeTree,
+    history: createMemoryHistory({ initialEntries: [path] }),
+  });
+  return render(<RouterProvider router={testRouter} />);
+}
+
 describe("App", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -65,7 +74,7 @@ describe("App", () => {
     });
     globalThis.history.replaceState({}, "", "/#type=recovery&access_token=token");
 
-    render(<App />);
+    renderApp("/");
 
     expect(await screen.findByText("RESET_PASSWORD_PAGE")).toBeInTheDocument();
     expect(screen.queryByText("BOARD_PAGE")).not.toBeInTheDocument();
@@ -74,7 +83,7 @@ describe("App", () => {
   test("recovery パラメータが残っていてもセッションがなければログイン画面を表示する", async () => {
     globalThis.history.replaceState({}, "", "/#type=recovery");
 
-    render(<App />);
+    renderApp("/");
 
     expect(await screen.findByText("LOGIN_PAGE")).toBeInTheDocument();
     expect(screen.queryByText("RESET_PASSWORD_PAGE")).not.toBeInTheDocument();
@@ -83,7 +92,7 @@ describe("App", () => {
   test("SIGNED_IN が先に来る recovery フローでも再設定画面を維持する", async () => {
     globalThis.history.replaceState({}, "", "/?type=recovery");
 
-    render(<App />);
+    renderApp("/");
     expect(await screen.findByText("LOGIN_PAGE")).toBeInTheDocument();
 
     act(() => {
@@ -99,7 +108,7 @@ describe("App", () => {
     });
     globalThis.history.replaceState({}, "", "/?type=recovery");
 
-    render(<App />);
+    renderApp("/");
     expect(await screen.findByText("RESET_PASSWORD_PAGE")).toBeInTheDocument();
 
     act(() => {
@@ -114,7 +123,7 @@ describe("App", () => {
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     authRepositoryMock.getSession.mockRejectedValueOnce(new Error("network error"));
 
-    render(<App />);
+    renderApp("/");
 
     expect(await screen.findByText("LOGIN_PAGE")).toBeInTheDocument();
     expect(screen.queryByText("LOGIN_LOADING")).not.toBeInTheDocument();
@@ -123,21 +132,17 @@ describe("App", () => {
     consoleErrorSpy.mockRestore();
   });
 
-  test("/privacy では認証処理を通さずプライバシーポリシーを表示する", () => {
-    globalThis.history.replaceState({}, "", "/privacy");
+  test("/privacy では認証処理を通さずプライバシーポリシーを表示する", async () => {
+    renderApp("/privacy");
 
-    render(<App />);
-
-    expect(screen.getByText("PRIVACY_POLICY_PAGE")).toBeInTheDocument();
+    expect(await screen.findByText("PRIVACY_POLICY_PAGE")).toBeInTheDocument();
     expect(authRepositoryMock.getSession).not.toHaveBeenCalled();
   });
 
-  test("/terms では認証処理を通さず利用規約を表示する", () => {
-    globalThis.history.replaceState({}, "", "/terms");
+  test("/terms では認証処理を通さず利用規約を表示する", async () => {
+    renderApp("/terms");
 
-    render(<App />);
-
-    expect(screen.getByText("TERMS_OF_SERVICE_PAGE")).toBeInTheDocument();
+    expect(await screen.findByText("TERMS_OF_SERVICE_PAGE")).toBeInTheDocument();
     expect(authRepositoryMock.getSession).not.toHaveBeenCalled();
   });
 });
