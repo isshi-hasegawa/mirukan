@@ -10,15 +10,15 @@ import {
 } from "@/components/ui/dropdown-menu.tsx";
 
 const AboutDialog = lazyNamed(() => import("./AboutDialog.tsx"), "AboutDialog");
+const ContactDialog = lazyNamed(() => import("./ContactDialog.tsx"), "ContactDialog");
 
 type Props = {
   email: string | null | undefined;
 };
 
-const BUG_REPORT_URL = "https://github.com/isshi-hasegawa/mirukan/issues/new/choose";
-
 export function UserMenu({ email }: Props) {
   const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [isContactOpen, setIsContactOpen] = useState(false);
   const displayEmail = email ?? "ログイン中のユーザー";
   // 小画面用：最初の2文字のみ表示
   const shortEmail = displayEmail.slice(0, 2);
@@ -57,10 +57,10 @@ export function UserMenu({ email }: Props) {
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
-              globalThis.open(BUG_REPORT_URL, "_blank", "noopener,noreferrer");
+              setIsContactOpen(true);
             }}
           >
-            不具合を報告
+            お問い合わせ
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
@@ -75,6 +75,11 @@ export function UserMenu({ email }: Props) {
       {isAboutOpen ? (
         <Suspense fallback={null}>
           <AboutDialog onClose={() => setIsAboutOpen(false)} />
+        </Suspense>
+      ) : null}
+      {isContactOpen ? (
+        <Suspense fallback={null}>
+          <ContactDialog onClose={() => setIsContactOpen(false)} />
         </Suspense>
       ) : null}
     </>

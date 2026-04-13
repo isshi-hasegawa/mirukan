@@ -78,7 +78,7 @@ describe("UserMenu", () => {
     );
   });
 
-  test("メニューから GitHub Issues の不具合報告導線を開ける", async () => {
+  test("お問い合わせからメールと GitHub Issues の導線を確認できる", async () => {
     const user = userEvent.setup();
 
     render(<UserMenu email="user@example.com" />);
@@ -86,14 +86,15 @@ describe("UserMenu", () => {
     const trigger = screen.getByRole("button", { name: /user@example.com/i });
     trigger.focus();
     await user.keyboard("{Enter}");
-    await user.click(await screen.findByRole("menuitem", { name: "不具合を報告" }));
+    await user.click(await screen.findByRole("menuitem", { name: "お問い合わせ" }));
 
-    await waitFor(() =>
-      expect(openMock).toHaveBeenCalledWith(
-        "https://github.com/isshi-hasegawa/mirukan/issues/new/choose",
-        "_blank",
-        "noopener,noreferrer",
-      ),
+    expect(await screen.findByRole("dialog", { name: "お問い合わせ" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /support@mirukan\.app/ })).toHaveAttribute(
+      "href",
+      "mailto:support@mirukan.app",
     );
+    expect(
+      screen.getByRole("link", { name: /github\.com\/isshi-hasegawa\/mirukan\/issues/ }),
+    ).toHaveAttribute("href", "https://github.com/isshi-hasegawa/mirukan/issues/new/choose");
   });
 });
