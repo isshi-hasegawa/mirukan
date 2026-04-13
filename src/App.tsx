@@ -166,7 +166,7 @@ function AuthenticatedApp() {
   );
 }
 
-const rootRoute = createRootRoute({ component: Outlet });
+const rootRoute = createRootRoute({ component: Outlet, notFoundComponent: AuthenticatedApp });
 
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -188,7 +188,7 @@ const termsRoute = createRoute({
 
 export const routeTree = rootRoute.addChildren([indexRoute, privacyRoute, termsRoute]);
 
-export const router = createRouter({ routeTree });
+const router = createRouter({ routeTree });
 
 declare module "@tanstack/react-router" {
   interface Register {
