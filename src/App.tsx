@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import {
+  RouterProvider,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  Outlet,
+} from "@tanstack/react-router";
 import { Button } from "@/components/ui/button.tsx";
 import { LazyViewBoundary } from "./components/LazyViewBoundary.tsx";
 import { getSession, onAuthStateChange } from "./lib/auth-repository.ts";
@@ -159,9 +166,36 @@ function AuthenticatedApp() {
   );
 }
 
+const rootRoute = createRootRoute({ component: Outlet, notFoundComponent: AuthenticatedApp });
+
+const indexRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/",
+  component: AuthenticatedApp,
+});
+
+const privacyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/privacy",
+  component: PrivacyPolicyPage,
+});
+
+const termsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/terms",
+  component: TermsOfServicePage,
+});
+
+export const routeTree = rootRoute.addChildren([indexRoute, privacyRoute, termsRoute]);
+
+const router = createRouter({ routeTree });
+
+declare module "@tanstack/react-router" {
+  interface Register {
+    router: typeof router;
+  }
+}
+
 export function App() {
-  const pathname = globalThis.location.pathname;
-  if (pathname === "/privacy") return <PrivacyPolicyPage />;
-  if (pathname === "/terms") return <TermsOfServicePage />;
-  return <AuthenticatedApp />;
+  return <RouterProvider router={router} />;
 }
