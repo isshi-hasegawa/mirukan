@@ -88,11 +88,14 @@ describe("LoginPage", () => {
     }
   });
 
-  test("ログイン画面にお問い合わせリンクが表示される", () => {
+  test("ログイン画面のお問い合わせからモーダルを開ける", async () => {
+    const user = userEvent.setup();
+
     render(<LoginPage />);
 
-    const link = screen.getByRole("link", { name: "お問い合わせ" });
-    expect(link).toHaveAttribute("href", "mailto:support@mirukan.app");
+    await user.click(screen.getByRole("button", { name: "お問い合わせ" }));
+
+    expect(await screen.findByRole("dialog", { name: "お問い合わせ" })).toBeInTheDocument();
   });
 
   test("送信中は入力と送信を無効化し、完了後に再入力できる", async () => {

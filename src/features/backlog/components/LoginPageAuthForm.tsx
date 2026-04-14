@@ -1,7 +1,11 @@
+import { Suspense, useState } from "react";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Label } from "@/components/ui/label.tsx";
+import { lazyNamed } from "../../../lib/lazy-component.ts";
 import { useLoginPageAuth } from "../hooks/useLoginPageAuth.ts";
+
+const ContactDialog = lazyNamed(() => import("./ContactDialog.tsx"), "ContactDialog");
 
 type LoginPageAuthModel = ReturnType<typeof useLoginPageAuth>;
 
@@ -39,7 +43,7 @@ function GoogleIcon() {
   );
 }
 
-function TermsAndPrivacyLinks() {
+function TermsAndPrivacyLinks({ onOpenContact }: { onOpenContact: () => void }) {
   return (
     <div className="flex justify-center">
       <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
@@ -59,12 +63,13 @@ function TermsAndPrivacyLinks() {
         >
           プライバシーポリシー
         </a>
-        <a
-          href="mailto:support@mirukan.app"
+        <button
+          type="button"
           className="underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
+          onClick={onOpenContact}
         >
           お問い合わせ
-        </a>
+        </button>
       </div>
     </div>
   );
@@ -127,7 +132,7 @@ function ModeSwitcher({ auth }: Props) {
   );
 }
 
-function LoginFormContent({ auth }: Props) {
+function LoginFormContent({ auth, onOpenContact }: Props & { onOpenContact: () => void }) {
   return (
     <>
       <div className="grid gap-2">
@@ -201,12 +206,12 @@ function LoginFormContent({ auth }: Props) {
         disabled={auth.isSubmitting}
         onClick={() => void auth.handleGoogleLogin()}
       />
-      <TermsAndPrivacyLinks />
+      <TermsAndPrivacyLinks onOpenContact={onOpenContact} />
     </>
   );
 }
 
-function SignUpFormContent({ auth }: Props) {
+function SignUpFormContent({ auth, onOpenContact }: Props & { onOpenContact: () => void }) {
   return (
     <>
       {auth.hasSentConfirmationEmail ? (
@@ -310,7 +315,7 @@ function SignUpFormContent({ auth }: Props) {
             disabled={auth.isSubmitting}
             onClick={() => void auth.handleGoogleLogin()}
           />
-          <TermsAndPrivacyLinks />
+          <TermsAndPrivacyLinks onOpenContact={onOpenContact} />
         </>
       )}
     </>
@@ -368,32 +373,41 @@ function ForgotPasswordFormContent({ auth }: Props) {
 }
 
 export function LoginPageAuthForm({ auth }: Props) {
+  const [isContactOpen, setIsContactOpen] = useState(false);
+
   return (
-    <form
-      className="grid gap-4.5"
-      onSubmit={(e) => {
-        e.preventDefault();
-        void auth.handleSubmit();
-      }}
-    >
-      <ModeSwitcher auth={auth} />
-      <div className="grid min-h-[29rem] content-center gap-4.5">
-        {auth.isForgotPasswordMode ? (
-          <ForgotPasswordFormContent auth={auth} />
-        ) : auth.isSignUpMode ? (
-          <SignUpFormContent auth={auth} />
-        ) : (
-          <LoginFormContent auth={auth} />
-        )}
-      </div>
-      {auth.errorMessage ? (
-        <p
-          className="rounded-[20px] border border-destructive/40 bg-destructive/10 px-4 py-3 text-[0.94rem] text-foreground"
-          aria-live="polite"
-        >
-          {auth.errorMessage}
-        </p>
+    <>
+      <form
+        className="grid gap-4.5"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void auth.handleSubmit();
+        }}
+      >
+        <ModeSwitcher auth={auth} />
+        <div className="grid min-h-[29rem] content-center gap-4.5">
+          {auth.isForgotPasswordMode ? (
+            <ForgotPasswordFormContent auth={auth} />
+          ) : auth.isSignUpMode ? (
+            <SignUpFormContent auth={auth} onOpenContact={() => setIsContactOpen(true)} />
+          ) : (
+            <LoginFormContent auth={auth} onOpenContact={() => setIsContactOpen(true)} />
+          )}
+        </div>
+        {auth.errorMessage ? (
+          <p
+            className="rounded-[20px] border border-destructive/40 bg-destructive/10 px-4 py-3 text-[0.94rem] text-foreground"
+            aria-live="polite"
+          >
+            {auth.errorMessage}
+          </p>
+        ) : null}
+      </form>
+      {isContactOpen ? (
+        <Suspense fallback={null}>
+          <ContactDialog onClose={() => setIsContactOpen(false)} />
+        </Suspense>
       ) : null}
-    </form>
+    </>
   );
 }

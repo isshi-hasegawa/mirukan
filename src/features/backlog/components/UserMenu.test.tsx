@@ -89,10 +89,8 @@ describe("UserMenu", () => {
     await user.click(await screen.findByRole("menuitem", { name: "お問い合わせ" }));
 
     expect(await screen.findByRole("dialog", { name: "お問い合わせ" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /support@mirukan\.app/ })).toHaveAttribute(
-      "href",
-      "mailto:support@mirukan.app",
-    );
+    expect(screen.getByText("support@mirukan.app")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "メールアドレスをコピー" })).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /github\.com\/isshi-hasegawa\/mirukan\/issues/ }),
     ).toHaveAttribute("href", "https://github.com/isshi-hasegawa/mirukan/issues/new/choose");
