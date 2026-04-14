@@ -88,6 +88,13 @@ describe("LoginPage", () => {
     }
   });
 
+  test("ログイン画面にお問い合わせリンクが表示される", () => {
+    render(<LoginPage />);
+
+    const link = screen.getByRole("link", { name: "お問い合わせ" });
+    expect(link).toHaveAttribute("href", "mailto:support@mirukan.app");
+  });
+
   test("送信中は入力と送信を無効化し、完了後に再入力できる", async () => {
     const user = userEvent.setup();
     let resolveSignIn: ((value: { error: null }) => void) | undefined;

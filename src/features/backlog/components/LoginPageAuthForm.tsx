@@ -59,6 +59,12 @@ function TermsAndPrivacyLinks() {
         >
           プライバシーポリシー
         </a>
+        <a
+          href="mailto:support@mirukan.app"
+          className="underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
+        >
+          お問い合わせ
+        </a>
       </div>
     </div>
   );
