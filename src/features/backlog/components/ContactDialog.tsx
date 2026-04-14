@@ -14,10 +14,16 @@ function CopyEmailButton() {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
-    void navigator.clipboard.writeText(SUPPORT_EMAIL).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+    if (!navigator.clipboard?.writeText) return;
+    void navigator.clipboard.writeText(SUPPORT_EMAIL).then(
+      () => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      },
+      () => {
+        // Clipboard permission denied or API unavailable — silently ignore
+      },
+    );
   };
 
   return (
