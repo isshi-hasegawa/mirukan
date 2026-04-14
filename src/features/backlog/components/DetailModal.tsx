@@ -71,13 +71,15 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onRelo
   const rtScore = work.rotten_tomatoes_score;
 
   return (
-    <div
-      className="fixed inset-0 z-10 grid place-items-center p-5 bg-[rgba(51,34,23,0.4)] backdrop-blur-[10px]"
-      id="detail-modal-backdrop"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
+    <div className="fixed inset-0 z-10 grid place-items-center p-5 bg-[rgba(51,34,23,0.4)] backdrop-blur-[10px]">
+      {/* Backdrop: native button for click-outside-to-close (keyboard users use Escape) */}
+      <button
+        type="button"
+        aria-hidden="true"
+        tabIndex={-1}
+        className="fixed inset-0 cursor-default"
+        onClick={onClose}
+      />
       <section
         className="relative w-full max-w-[860px] max-h-[min(88svh,920px)] border border-border rounded-[28px] bg-[#2a2a2a] shadow-[0_24px_60px_rgba(0,0,0,0.5)] p-6 flex flex-col overflow-hidden max-[720px]:p-5 max-[720px]:rounded-[22px]"
         role="dialog"
