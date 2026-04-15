@@ -229,6 +229,23 @@ export function buildDetailFieldUpdate(
   };
 }
 
+function appendSortOrder(targetItems: BacklogItem[]) {
+  return targetItems.length > 0 ? targetItems.at(-1)!.sort_order + 1000 : 1000;
+}
+
+function interpolateSortOrder(previous: BacklogItem | null, next: BacklogItem | null) {
+  if (previous && next) {
+    return (previous.sort_order + next.sort_order) / 2;
+  }
+  if (previous) {
+    return previous.sort_order + 1000;
+  }
+  if (next) {
+    return next.sort_order - 1000;
+  }
+  return 1000;
+}
+
 export function getSortOrderForDrop(
   items: BacklogItem[],
   itemId: string,
@@ -241,30 +258,17 @@ export function getSortOrderForDrop(
     .sort((left, right) => left.sort_order - right.sort_order);
 
   if (!targetItemId) {
-    return targetItems.length > 0 ? targetItems.at(-1)!.sort_order + 1000 : 1000;
+    return appendSortOrder(targetItems);
   }
 
   const targetIndex = targetItems.findIndex((item) => item.id === targetItemId);
-
   if (targetIndex === -1) {
-    return targetItems.length > 0 ? targetItems.at(-1)!.sort_order + 1000 : 1000;
+    return appendSortOrder(targetItems);
   }
 
   const insertionIndex = side === "before" ? targetIndex : targetIndex + 1;
   const previous = insertionIndex > 0 ? targetItems[insertionIndex - 1] : null;
   const next = insertionIndex < targetItems.length ? targetItems[insertionIndex] : null;
 
-  if (!previous && !next) {
-    return 1000;
-  }
-
-  if (!previous && next) {
-    return next.sort_order - 1000;
-  }
-
-  if (previous && !next) {
-    return previous.sort_order + 1000;
-  }
-
-  return (previous!.sort_order + next!.sort_order) / 2;
+  return interpolateSortOrder(previous, next);
 }
