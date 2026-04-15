@@ -11,6 +11,13 @@ vi.mock("../../../lib/auth-repository.ts", () => authRepositoryMock);
 
 setupTestLifecycle();
 
+async function openMenuItem(user: ReturnType<typeof userEvent.setup>, name: string) {
+  const trigger = screen.getByRole("button", { name: /user@example.com/i });
+  trigger.focus();
+  await user.keyboard("{Enter}");
+  await user.click(await screen.findByRole("menuitem", { name }));
+}
+
 describe("UserMenu", () => {
   const openMock = vi.fn();
 
@@ -28,11 +35,7 @@ describe("UserMenu", () => {
     const user = userEvent.setup();
 
     render(<UserMenu email="user@example.com" />);
-
-    const trigger = screen.getByRole("button", { name: /user@example.com/i });
-    trigger.focus();
-    await user.keyboard("{Enter}");
-    await user.click(await screen.findByRole("menuitem", { name: "About" }));
+    await openMenuItem(user, "About");
 
     expect(await screen.findByRole("dialog", { name: "みるカンについて" })).toBeInTheDocument();
     expect(
@@ -52,11 +55,7 @@ describe("UserMenu", () => {
     const user = userEvent.setup();
 
     render(<UserMenu email="user@example.com" />);
-
-    const trigger = screen.getByRole("button", { name: /user@example.com/i });
-    trigger.focus();
-    await user.keyboard("{Enter}");
-    await user.click(await screen.findByRole("menuitem", { name: "利用規約" }));
+    await openMenuItem(user, "利用規約");
 
     await waitFor(() =>
       expect(openMock).toHaveBeenCalledWith("/terms", "_blank", "noopener,noreferrer"),
@@ -67,11 +66,7 @@ describe("UserMenu", () => {
     const user = userEvent.setup();
 
     render(<UserMenu email="user@example.com" />);
-
-    const trigger = screen.getByRole("button", { name: /user@example.com/i });
-    trigger.focus();
-    await user.keyboard("{Enter}");
-    await user.click(await screen.findByRole("menuitem", { name: "プライバシーポリシー" }));
+    await openMenuItem(user, "プライバシーポリシー");
 
     await waitFor(() =>
       expect(openMock).toHaveBeenCalledWith("/privacy", "_blank", "noopener,noreferrer"),
@@ -82,11 +77,7 @@ describe("UserMenu", () => {
     const user = userEvent.setup();
 
     render(<UserMenu email="user@example.com" />);
-
-    const trigger = screen.getByRole("button", { name: /user@example.com/i });
-    trigger.focus();
-    await user.keyboard("{Enter}");
-    await user.click(await screen.findByRole("menuitem", { name: "お問い合わせ" }));
+    await openMenuItem(user, "お問い合わせ");
 
     expect(await screen.findByRole("dialog", { name: "お問い合わせ" })).toBeInTheDocument();
     expect(screen.getByText("support@mirukan.app")).toBeInTheDocument();
