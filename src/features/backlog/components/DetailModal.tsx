@@ -80,9 +80,9 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onRelo
         className="fixed inset-0 cursor-default"
         onClick={onClose}
       />
-      <section
+      <dialog
+        open
         className="relative w-full max-w-[860px] max-h-[min(88svh,920px)] border border-border rounded-[28px] bg-[#2a2a2a] shadow-[0_24px_60px_rgba(0,0,0,0.5)] p-6 flex flex-col overflow-hidden max-[720px]:p-5 max-[720px]:rounded-[22px]"
-        role="dialog"
         aria-modal="true"
         aria-labelledby="detail-modal-title"
       >
@@ -150,7 +150,7 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onRelo
                       ? " bg-primary border-primary text-primary-foreground font-semibold"
                       : " border-[rgba(92,59,35,0.2)] bg-transparent text-muted-foreground hover:bg-[rgba(92,59,35,0.08)] hover:text-foreground"
                   }`}
-                  onClick={() => void handleStatusSelect(s)}
+                  onClick={() => handleStatusSelect(s)}
                 >
                   {statusLabels[s]}
                 </button>
@@ -177,7 +177,7 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onRelo
             )}
           </div>
         </div>
-      </section>
+      </dialog>
     </div>
   );
 }

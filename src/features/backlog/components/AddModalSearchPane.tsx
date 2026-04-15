@@ -166,6 +166,38 @@ export function AddModalSearchPane({
               const useInlineFooter =
                 isSelected && !isTvSelection && !formMessage && !pendingSaveMessage;
 
+              let cardFooter = null;
+              if (isSelected) {
+                cardFooter = useInlineFooter ? (
+                  <Button
+                    type="submit"
+                    disabled={isSelectedTmdbSubmitDisabled}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                    }}
+                  >
+                    {selectedTmdbSubmitLabel}
+                  </Button>
+                ) : (
+                  <SelectedResultFooter
+                    isTvSelection={isTvSelection}
+                    seasonOptions={seasonOptions}
+                    selectedSeasonNumbers={selectedSeasonNumbers}
+                    stackedSeasonNumbers={stackedSeasonNumbers}
+                    isLoadingSeasons={isLoadingSeasons}
+                    canToggleAllSeasons={canToggleAllSeasons}
+                    hasAllSeasonsSelected={hasAllSeasonsSelected}
+                    formMessage={formMessage}
+                    pendingSaveMessage={pendingSaveMessage}
+                    isSelectedTmdbSubmitDisabled={isSelectedTmdbSubmitDisabled}
+                    selectedTmdbSubmitLabel={selectedTmdbSubmitLabel}
+                    onToggleSeason={onToggleSeason}
+                    onToggleAllSeasons={onToggleAllSeasons}
+                    onConfirmPendingSave={onConfirmPendingSave}
+                    onCancelPendingSave={onCancelPendingSave}
+                  />
+                );
+              }
               return (
                 <TmdbWorkCard
                   key={`${result.tmdbMediaType}-${result.tmdbId}`}
@@ -173,39 +205,7 @@ export function AddModalSearchPane({
                   isSelected={isSelected}
                   onSelect={() => onSelectResult(result)}
                   footerLayout={useInlineFooter ? "inline" : "panel"}
-                  footer={
-                    isSelected ? (
-                      useInlineFooter ? (
-                        <Button
-                          type="submit"
-                          disabled={isSelectedTmdbSubmitDisabled}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                          }}
-                        >
-                          {selectedTmdbSubmitLabel}
-                        </Button>
-                      ) : (
-                        <SelectedResultFooter
-                          isTvSelection={isTvSelection}
-                          seasonOptions={seasonOptions}
-                          selectedSeasonNumbers={selectedSeasonNumbers}
-                          stackedSeasonNumbers={stackedSeasonNumbers}
-                          isLoadingSeasons={isLoadingSeasons}
-                          canToggleAllSeasons={canToggleAllSeasons}
-                          hasAllSeasonsSelected={hasAllSeasonsSelected}
-                          formMessage={formMessage}
-                          pendingSaveMessage={pendingSaveMessage}
-                          isSelectedTmdbSubmitDisabled={isSelectedTmdbSubmitDisabled}
-                          selectedTmdbSubmitLabel={selectedTmdbSubmitLabel}
-                          onToggleSeason={onToggleSeason}
-                          onToggleAllSeasons={onToggleAllSeasons}
-                          onConfirmPendingSave={onConfirmPendingSave}
-                          onCancelPendingSave={onCancelPendingSave}
-                        />
-                      )
-                    ) : null
-                  }
+                  footer={cardFooter}
                 />
               );
             })

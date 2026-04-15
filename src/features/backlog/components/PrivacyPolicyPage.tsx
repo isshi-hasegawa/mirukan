@@ -117,33 +117,37 @@ export function PrivacyPolicyPage() {
           {sections.map((section) => (
             <section key={section.title} className="grid gap-2">
               <h2 className="text-base font-semibold text-foreground">{section.title}</h2>
-              {section.body.map((paragraph) =>
-                paragraph.startsWith("メールアドレス: ") ? (
-                  <p key={paragraph}>
-                    メールアドレス:{" "}
-                    <a
-                      href="mailto:support@mirukan.app"
-                      className="underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
-                    >
-                      support@mirukan.app
-                    </a>
-                  </p>
-                ) : paragraph.startsWith("GitHub Issues: ") ? (
-                  <p key={paragraph}>
-                    GitHub Issues:{" "}
-                    <a
-                      href={BUG_REPORT_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
-                    >
-                      github.com/isshi-hasegawa/mirukan/issues
-                    </a>
-                  </p>
-                ) : (
-                  <p key={paragraph}>{paragraph}</p>
-                ),
-              )}
+              {section.body.map((paragraph) => {
+                if (paragraph.startsWith("メールアドレス: ")) {
+                  return (
+                    <p key={paragraph}>
+                      メールアドレス:{" "}
+                      <a
+                        href="mailto:support@mirukan.app"
+                        className="underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
+                      >
+                        support@mirukan.app
+                      </a>
+                    </p>
+                  );
+                }
+                if (paragraph.startsWith("GitHub Issues: ")) {
+                  return (
+                    <p key={paragraph}>
+                      GitHub Issues:{" "}
+                      <a
+                        href={BUG_REPORT_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
+                      >
+                        github.com/isshi-hasegawa/mirukan/issues
+                      </a>
+                    </p>
+                  );
+                }
+                return <p key={paragraph}>{paragraph}</p>;
+              })}
               {"items" in section ? (
                 <ul className="grid gap-2 pl-5 list-disc">
                   {section.items.map((item) => (

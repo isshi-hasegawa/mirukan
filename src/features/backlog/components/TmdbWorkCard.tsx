@@ -29,7 +29,10 @@ export function TmdbWorkCard({
     ? `https://image.tmdb.org/t/p/w185${result.posterPath}`
     : null;
   const rtScore = result.rottenTomatoesScore ?? null;
-  const rtVariant = rtScore === null ? null : rtScore >= 60 ? "fresh" : "rotten";
+  let rtVariant: "fresh" | "rotten" | null = null;
+  if (rtScore !== null) {
+    rtVariant = rtScore >= 60 ? "fresh" : "rotten";
+  }
   const metadataLabels = getTmdbSearchResultMetadataLabels(result);
 
   const checkButton = onAddToStacked ? (

@@ -20,9 +20,8 @@ type Props = Readonly<{
 
 export function ViewingModeFilter({ activeViewingMode, onViewingModeToggle }: Props) {
   return (
-    <div
-      className="grid grid-cols-2 gap-2 pb-1 max-[380px]:grid-cols-1"
-      role="group"
+    <fieldset
+      className="grid grid-cols-2 gap-2 pb-1 max-[380px]:grid-cols-1 border-0 p-0 m-0"
       aria-label="おすすめの絞り込み"
     >
       {viewingModeOrder.map((mode) => {
@@ -59,6 +58,6 @@ export function ViewingModeFilter({ activeViewingMode, onViewingModeToggle }: Pr
           </button>
         );
       })}
-    </div>
+    </fieldset>
   );
 }

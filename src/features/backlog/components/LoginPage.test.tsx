@@ -206,7 +206,7 @@ describe("LoginPage", () => {
       screen.getByText(
         (_, element) =>
           element?.textContent ===
-          "登録することで、利用規約およびプライバシーポリシーに同意したものとみなします。",
+          "登録することで、 利用規約 および プライバシーポリシー に同意したものとみなします。",
       ),
     ).toBeInTheDocument();
   });

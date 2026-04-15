@@ -26,26 +26,26 @@ const modalBackdrop =
 const modalCard =
   "w-[min(calc(100%_-_48px),520px)] rounded-[28px] border border-border bg-[#2a2a2a] shadow-[0_24px_60px_rgba(0,0,0,0.5)] p-6 grid gap-3 max-[720px]:w-full max-[720px]:max-w-[560px] max-[720px]:p-5 max-[720px]:rounded-[22px]";
 
-type ModalBoundaryProps = {
+type ModalBoundaryProps = Readonly<{
   isOpen: boolean;
   onClose: () => void;
   loadingTitle: string;
   errorTitle: string;
   children: ReactNode;
-};
+}>;
 
 function ModalFallback({
   title,
   description,
   onClose,
-}: {
+}: Readonly<{
   title: string;
   description: string;
   onClose: () => void;
-}) {
+}>) {
   return (
     <div className={modalBackdrop}>
-      <section className={modalCard} role="dialog" aria-modal="true" aria-label={title}>
+      <dialog open className={modalCard} aria-modal="true" aria-label={title}>
         <div className="grid gap-2">
           <h2 className="text-[1.2rem] leading-tight text-foreground">{title}</h2>
           <p className="text-sm leading-6 text-muted-foreground">{description}</p>
@@ -55,7 +55,7 @@ function ModalFallback({
             閉じる
           </Button>
         </div>
-      </section>
+      </dialog>
     </div>
   );
 }
@@ -113,7 +113,7 @@ export function BoardPage({ session }: Props) {
             variant="outline"
             className="rounded-full"
             type="button"
-            onClick={() => void signOut()}
+            onClick={() => signOut()}
           >
             ログアウト
           </Button>
@@ -132,7 +132,7 @@ export function BoardPage({ session }: Props) {
         onDragStart={dnd.handleDragStart}
         onDragOver={dnd.handleDragOver}
         onDragCancel={dnd.handleDragCancel}
-        onDragEnd={(e) => void dnd.handleDragEnd(e)}
+        onDragEnd={(e) => dnd.handleDragEnd(e)}
       >
         <KanbanBoard {...board} />
         <DragOverlay dropAnimation={null}>

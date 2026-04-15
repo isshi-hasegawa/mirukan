@@ -59,7 +59,7 @@ function filterVisibleResults(items: BacklogItem[], results: TmdbSearchResult[])
 function getLocalizationScore(result: TmdbSearchResult) {
   let score = 0;
 
-  if (!result.originalTitle || result.title.trim() !== result.originalTitle.trim()) {
+  if (result.title.trim() !== result.originalTitle?.trim()) {
     score += 2;
   }
 
