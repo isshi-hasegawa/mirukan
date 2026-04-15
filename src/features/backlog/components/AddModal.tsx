@@ -67,15 +67,17 @@ export function AddModal({ items, session, onClose, onAdded }: Props) {
   }, [onClose]);
 
   return (
-    <div
-      className="fixed inset-0 z-10 grid place-items-center p-5 bg-[rgba(51,34,23,0.4)] backdrop-blur-[10px]"
-      id="add-modal-backdrop"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
+    <div className="fixed inset-0 z-10 grid place-items-center p-5 bg-[rgba(51,34,23,0.4)] backdrop-blur-[10px]">
+      {/* Backdrop: native button for click-outside-to-close (keyboard users use Escape) */}
+      <button
+        type="button"
+        aria-hidden="true"
+        tabIndex={-1}
+        className="fixed inset-0 cursor-default"
+        onClick={onClose}
+      />
       <section
-        className="w-[min(calc(100%_-_48px),960px)] h-[min(88svh,920px)] border border-border rounded-[28px] bg-[#2a2a2a] shadow-[0_24px_60px_rgba(0,0,0,0.5)] p-6 flex flex-col overflow-hidden max-[720px]:w-full max-[720px]:max-w-[560px] max-[720px]:p-5 max-[720px]:rounded-[22px] max-[720px]:h-[min(88svh,920px)]"
+        className="relative z-10 w-[min(calc(100%_-_48px),960px)] h-[min(88svh,920px)] border border-border rounded-[28px] bg-[#2a2a2a] shadow-[0_24px_60px_rgba(0,0,0,0.5)] p-6 flex flex-col overflow-hidden max-[720px]:w-full max-[720px]:max-w-[560px] max-[720px]:p-5 max-[720px]:rounded-[22px] max-[720px]:h-[min(88svh,920px)]"
         role="dialog"
         aria-modal="true"
         aria-label="作品を追加"
