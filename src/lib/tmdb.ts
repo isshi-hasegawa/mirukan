@@ -174,17 +174,33 @@ function isTmdbWatchPlatform(value: unknown): value is TmdbWatchPlatform {
   return isRecord(value) && typeof value.key === "string" && isNullableString(value.logoPath);
 }
 
-function isTmdbSearchResult(value: unknown): value is TmdbSearchResult {
+type TmdbMediaBasics = {
+  tmdbId: number;
+  tmdbMediaType: "movie" | "tv";
+  title: string;
+  originalTitle: string | null;
+  overview: string | null;
+  posterPath: string | null;
+  releaseDate: string | null;
+};
+
+function hasTmdbMediaBasics(value: unknown): value is Record<string, unknown> & TmdbMediaBasics {
   return (
     isRecord(value) &&
     typeof value.tmdbId === "number" &&
     isTmdbMediaType(value.tmdbMediaType) &&
-    isTmdbSearchWorkType(value.workType) &&
     typeof value.title === "string" &&
     isNullableString(value.originalTitle) &&
     isNullableString(value.overview) &&
     isNullableString(value.posterPath) &&
-    isNullableString(value.releaseDate) &&
+    isNullableString(value.releaseDate)
+  );
+}
+
+function isTmdbSearchResult(value: unknown): value is TmdbSearchResult {
+  return (
+    hasTmdbMediaBasics(value) &&
+    isTmdbSearchWorkType(value.workType) &&
     Array.isArray(value.jpWatchPlatforms) &&
     value.jpWatchPlatforms.every(isTmdbWatchPlatform) &&
     typeof value.hasJapaneseRelease === "boolean" &&
@@ -214,15 +230,8 @@ function isTmdbSeasonOptionArray(value: unknown): value is TmdbSeasonOption[] {
 
 function isTmdbWorkDetails(value: unknown): value is TmdbWorkDetails {
   return (
-    isRecord(value) &&
-    typeof value.tmdbId === "number" &&
-    isTmdbMediaType(value.tmdbMediaType) &&
+    hasTmdbMediaBasics(value) &&
     isTmdbWorkType(value.workType) &&
-    typeof value.title === "string" &&
-    isNullableString(value.originalTitle) &&
-    isNullableString(value.overview) &&
-    isNullableString(value.posterPath) &&
-    isNullableString(value.releaseDate) &&
     Array.isArray(value.genres) &&
     value.genres.every((genre) => typeof genre === "string") &&
     isNullableNumber(value.runtimeMinutes) &&
