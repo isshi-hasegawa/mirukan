@@ -2,7 +2,7 @@ import type { MutableRefObject } from "react";
 import { DocumentTextIcon } from "@heroicons/react/24/outline";
 import type { DetailModalState } from "../types.ts";
 
-type Props = {
+type Props = Readonly<{
   note: string | null;
   state: DetailModalState;
   inputRef: MutableRefObject<HTMLTextAreaElement | HTMLInputElement | HTMLSelectElement | null>;
@@ -10,7 +10,7 @@ type Props = {
   onCancelEditing: () => void;
   onChangeDraft: (value: string) => void;
   onSave: () => Promise<void>;
-};
+}>;
 
 export function DetailModalNoteField({
   note,

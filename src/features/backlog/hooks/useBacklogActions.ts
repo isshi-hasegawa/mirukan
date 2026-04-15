@@ -15,7 +15,7 @@ import { upsertTmdbWork } from "../work-repository.ts";
 import type { BacklogItem } from "../types.ts";
 import { browserBacklogFeedback, type BacklogFeedback } from "../ui-feedback.ts";
 
-type Props = {
+type Props = Readonly<{
   items: BacklogItem[];
   localItems: BacklogItem[];
   setLocalItems: Dispatch<SetStateAction<BacklogItem[]>>;
@@ -25,7 +25,7 @@ type Props = {
   onItemDeleted: (itemId: string) => void;
   onWorksAdded: () => void;
   feedback?: BacklogFeedback;
-};
+}>;
 
 function buildWorkFailureMessage(failedTitles: string[], prefix: string) {
   if (failedTitles.length === 0) {

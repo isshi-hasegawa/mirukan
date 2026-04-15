@@ -31,13 +31,13 @@ const ModeIcon: Record<
   background: SpeakerWaveIcon,
 };
 
-type Props = {
+type Props = Readonly<{
   item: BacklogItem;
   showModeBadge?: boolean;
   onOpenDetail: () => void;
   onDeleteItem: (itemId: string) => void;
   onMarkAsWatched: (itemId: string) => void;
-};
+}>;
 
 export function BacklogCard({
   item,

@@ -6,7 +6,7 @@ import { PendingSaveNotice } from "./PendingSaveNotice.tsx";
 import { SeasonPicker } from "./SeasonPicker.tsx";
 import { TmdbWorkCard } from "./TmdbWorkCard.tsx";
 
-type Props = {
+type Props = Readonly<{
   searchInputRef: RefObject<HTMLInputElement | null>;
   isComposingRef: MutableRefObject<boolean>;
   searchQuery: string;
@@ -33,7 +33,7 @@ type Props = {
   onToggleAllSeasons: () => void;
   onConfirmPendingSave: () => void;
   onCancelPendingSave: () => void;
-};
+}>;
 
 type SelectedResultFooterProps = Omit<
   Props,

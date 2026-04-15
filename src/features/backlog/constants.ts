@@ -66,7 +66,7 @@ export const platformBackgrounds: Record<PlatformKey, string> = {
 };
 
 export function isPrimaryPlatformValue(value: unknown): value is PlatformKey {
-  return typeof value === "string" && platformKeys.some((platform) => platform === value);
+  return typeof value === "string" && platformKeys.includes(value);
 }
 
 export const viewingModeOrder = [

@@ -12,9 +12,9 @@ import {
 const AboutDialog = lazyNamed(() => import("./AboutDialog.tsx"), "AboutDialog");
 const ContactDialog = lazyNamed(() => import("./ContactDialog.tsx"), "ContactDialog");
 
-type Props = {
+type Props = Readonly<{
   email: string | null | undefined;
-};
+}>;
 
 export function UserMenu({ email }: Props) {
   const [isAboutOpen, setIsAboutOpen] = useState(false);

@@ -10,14 +10,14 @@ import { DetailModalNoteField } from "./DetailModalNoteField.tsx";
 import { DetailModalPlatformField } from "./DetailModalPlatformField.tsx";
 import type { BacklogItem, DetailModalState } from "../types.ts";
 
-type Props = {
+type Props = Readonly<{
   item: BacklogItem | null;
   state: DetailModalState;
   items: BacklogItem[];
   onStateChange: Dispatch<SetStateAction<DetailModalState>>;
   onClose: () => void;
   onReload: () => Promise<void>;
-};
+}>;
 
 export function DetailModal({ item, state, items, onStateChange, onClose, onReload }: Props) {
   const inputRef = useRef<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null>(null);
@@ -54,7 +54,7 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onRelo
     }
   }, [state.editingField]);
 
-  if (!item || !item.works) {
+  if (!item?.works) {
     return null;
   }
 

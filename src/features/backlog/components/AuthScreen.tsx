@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
 
-type Props = {
+type Props = Readonly<{
   badge?: string;
   title?: string;
   description?: string;
   sideContent?: ReactNode;
   children: ReactNode;
-};
+}>;
 
 export function AuthScreen({ badge, title, description, sideContent, children }: Props) {
   return (

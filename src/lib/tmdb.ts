@@ -9,7 +9,6 @@ import {
   fetchCachedTrendingResults,
   mergeRecommendationResults,
   normalizeRecommendationSources,
-  resetTmdbRecommendationCachesForTest,
 } from "./tmdb-recommendation-cache.ts";
 
 export type TmdbWatchPlatform = {
@@ -281,7 +280,7 @@ export async function fetchTmdbTrending(): Promise<TmdbSearchResult[]> {
   });
 }
 
-export { resetTmdbRecommendationCachesForTest };
+export { resetTmdbRecommendationCachesForTest } from "./tmdb-recommendation-cache.ts";
 
 export function searchTmdbWorks(query: string) {
   return invokeTmdbFunction<TmdbSearchResult[]>(

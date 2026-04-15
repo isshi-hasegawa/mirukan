@@ -2,9 +2,9 @@ import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import tmdbLogoUrl from "../../../assets/logos/tmdb.svg";
 import { DialogShell } from "./DialogShell.tsx";
 
-type Props = {
+type Props = Readonly<{
   onClose: () => void;
-};
+}>;
 
 export function AboutDialog({ onClose }: Props) {
   return (

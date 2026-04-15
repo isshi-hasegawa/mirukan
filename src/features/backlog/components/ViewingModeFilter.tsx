@@ -13,10 +13,10 @@ const viewingModeIcons: Record<
   background: SpeakerWaveIcon,
 };
 
-type Props = {
+type Props = Readonly<{
   activeViewingMode: ViewingMode | null;
   onViewingModeToggle: (mode: ViewingMode) => void;
-};
+}>;
 
 export function ViewingModeFilter({ activeViewingMode, onViewingModeToggle }: Props) {
   return (

@@ -48,8 +48,8 @@ export async function deleteCard(page: Page, status: string, title: string) {
 }
 
 export function buildUniqueTitle(testInfo: TestInfo, prefix = "e2e-manual") {
-  const projectSlug = testInfo.project.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-  const testSlug = testInfo.title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const projectSlug = testInfo.project.name.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-");
+  const testSlug = testInfo.title.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-");
   return `${prefix}-${projectSlug}-${testInfo.workerIndex}-${Date.now()}-${testSlug}`;
 }
 

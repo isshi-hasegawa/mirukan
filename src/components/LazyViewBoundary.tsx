@@ -36,12 +36,12 @@ class LazyErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
   }
 }
 
-type Props = {
+type Props = Readonly<{
   children: ReactNode;
   loadingFallback: ReactNode;
   errorFallback?: ReactNode;
   resetKey?: string;
-};
+}>;
 
 export function LazyViewBoundary({
   children,

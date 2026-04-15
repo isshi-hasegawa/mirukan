@@ -2,9 +2,9 @@ import { useRef, useState } from "react";
 import { createDetailModalState } from "../helpers.ts";
 import type { BacklogStatus, DetailModalState } from "../types.ts";
 
-type Props = {
+type Props = Readonly<{
   isMobileLayout: boolean;
-};
+}>;
 
 export function useBoardPageState({ isMobileLayout }: Props) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);

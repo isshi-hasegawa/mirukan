@@ -1,9 +1,9 @@
-type Props = {
+type Props = Readonly<{
   className?: string;
   titleClassName?: string;
   subtitleClassName?: string;
   symbolClassName?: string;
-};
+}>;
 
 export function BrandWordmark({
   className,

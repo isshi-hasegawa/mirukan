@@ -65,7 +65,7 @@ function createItem(
     works: createWorkSummaryFromFixtures({
       id: `work-${id}`,
       title,
-      tmdb_id: Number(id.replace(/\D/g, "")) || 1,
+      tmdb_id: Number(id.replaceAll(/\D/g, "")) || 1,
     }),
     ...overrides,
   };

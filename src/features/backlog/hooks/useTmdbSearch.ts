@@ -107,7 +107,7 @@ export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
   };
 
   const toggleSeasonSelection = (seasonNumber: number) => {
-    if (!selectedTmdbResult || selectedTmdbResult.tmdbMediaType !== "tv") return;
+    if (selectedTmdbResult?.tmdbMediaType !== "tv") return;
     if (stackedSeasonNumbers.includes(seasonNumber)) return;
 
     const nextSelectedSeasonNumbers = selectedSeasonNumbersState.includes(seasonNumber)
@@ -126,7 +126,7 @@ export function useTmdbSearch({ items }: UseTmdbSearchOptions) {
   };
 
   const toggleAllSeasons = () => {
-    if (!selectedTmdbResult || selectedTmdbResult.tmdbMediaType !== "tv") return;
+    if (selectedTmdbResult?.tmdbMediaType !== "tv") return;
     if (!canToggleAllSeasons) return;
 
     const toggleableSeasonNumbers = allSeasonNumbers.filter(

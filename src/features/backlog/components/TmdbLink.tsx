@@ -1,14 +1,14 @@
 import { siThemoviedatabase } from "simple-icons";
 import { cn } from "../../../lib/utils.ts";
 
-type Props = {
+type Props = Readonly<{
   href: string;
   className?: string;
   iconClassName?: string;
   ariaLabel?: string;
   title?: string;
   onClick?: React.MouseEventHandler<HTMLAnchorElement>;
-};
+}>;
 
 export function TmdbLink({
   href,
