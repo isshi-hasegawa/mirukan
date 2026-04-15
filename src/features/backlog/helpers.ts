@@ -16,7 +16,7 @@ export function getStringField(formData: FormData, key: string) {
 
 export function getNullableStringField(formData: FormData, key: string) {
   const value = getStringField(formData, key).trim();
-  return value ? value : null;
+  return value || null;
 }
 
 export function isPrimaryPlatform(value: unknown): value is PrimaryPlatform {

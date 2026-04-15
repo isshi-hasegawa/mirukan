@@ -6,13 +6,13 @@ import type { KanbanColumnProps } from "./kanban-board-shared.ts";
 
 const SWIPE_THRESHOLD_PX = 50;
 
-type Props = {
+type Props = Readonly<{
   selectedTabStatus: BacklogStatus;
   isMobileDragging: boolean;
   onTabChange: (status: BacklogStatus) => void;
   getColumnProps: (status: BacklogStatus) => KanbanColumnProps;
   columnRef: (status: BacklogStatus, el: HTMLElement | null) => void;
-};
+}>;
 
 export function MobileKanbanBoard({
   selectedTabStatus,

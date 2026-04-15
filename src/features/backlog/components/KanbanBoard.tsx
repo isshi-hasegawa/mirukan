@@ -6,7 +6,7 @@ import { sortStackedItemsByViewingMode } from "../viewing-mode.ts";
 import { DesktopKanbanBoard } from "./DesktopKanbanBoard.tsx";
 import { MobileKanbanBoard } from "./MobileKanbanBoard.tsx";
 
-type Props = {
+type Props = Readonly<{
   items: BacklogItem[];
   isDragging: boolean;
   isMobileLayout: boolean;
@@ -18,7 +18,7 @@ type Props = {
   onDeleteItem: (itemId: string) => void;
   onMarkAsWatched: (itemId: string) => void;
   columnRef: (status: BacklogStatus, el: HTMLElement | null) => void;
-};
+}>;
 
 export function KanbanBoard({
   items,

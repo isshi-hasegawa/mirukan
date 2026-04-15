@@ -1,7 +1,7 @@
 import { CheckIcon } from "@heroicons/react/24/outline";
 import type { TmdbSeasonOption } from "../../../lib/tmdb.ts";
 
-type Props = {
+type Props = Readonly<{
   seasonOptions: TmdbSeasonOption[];
   selectedSeasonNumbers: number[];
   stackedSeasonNumbers: number[];
@@ -10,7 +10,7 @@ type Props = {
   hasAllSeasonsSelected: boolean;
   onToggleSeason: (seasonNumber: number) => void;
   onToggleAll: () => void;
-};
+}>;
 
 const seasonBtnClass = (active: boolean, locked: boolean) =>
   `inline-flex items-center gap-2 px-3.5 py-2.5 border rounded-full text-[0.88rem] cursor-pointer transition-[background,color,border-color,box-shadow] duration-150${

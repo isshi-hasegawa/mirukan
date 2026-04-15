@@ -6,7 +6,7 @@ import type { PrimaryPlatform } from "../types.ts";
 import { PendingSaveNotice } from "./PendingSaveNotice.tsx";
 import { PlatformPicker } from "./PlatformPicker.tsx";
 
-type Props = {
+type Props = Readonly<{
   selectedTmdbResult: { title: string } | null;
   resolvedTitle: string;
   resolvedWorkType: "movie" | "series";
@@ -20,7 +20,7 @@ type Props = {
   onChangeNote: (note: string) => void;
   onConfirmPendingSave: () => void;
   onCancelPendingSave: () => void;
-};
+}>;
 
 export function AddModalDetailsPane({
   selectedTmdbResult,

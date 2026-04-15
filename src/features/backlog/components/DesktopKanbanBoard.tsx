@@ -3,10 +3,10 @@ import { statusOrder } from "../constants.ts";
 import { KanbanColumn } from "./KanbanColumn.tsx";
 import type { KanbanColumnProps } from "./kanban-board-shared.ts";
 
-type Props = {
+type Props = Readonly<{
   getColumnProps: (status: BacklogStatus) => KanbanColumnProps;
   columnRef: (status: BacklogStatus, el: HTMLElement | null) => void;
-};
+}>;
 
 export function DesktopKanbanBoard({ getColumnProps, columnRef }: Props) {
   return (

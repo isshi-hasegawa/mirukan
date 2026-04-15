@@ -1,8 +1,8 @@
 import type { BacklogItem } from "../types.ts";
 
-type Props = {
+type Props = Readonly<{
   item: BacklogItem | null;
-};
+}>;
 
 export function DraggedBacklogCardOverlay({ item }: Props) {
   if (!item?.works) {

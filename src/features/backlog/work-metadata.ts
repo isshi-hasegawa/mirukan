@@ -79,9 +79,11 @@ function isHighlyRated({ imdbRating, rottenTomatoesScore }: RatingInfo): boolean
   );
 }
 
+const DEFAULT_RATING_INFO: RatingInfo = { imdbRating: null, rottenTomatoesScore: null };
+
 export function calcBackgroundFitScore(
   genres: string[],
-  ratings: RatingInfo = { imdbRating: null, rottenTomatoesScore: null },
+  ratings: RatingInfo = DEFAULT_RATING_INFO,
 ): number {
   if (genres.some((genre) => BG_LOW_GENRES.has(genre))) return 0;
   const genreScore = genres.some((genre) => BG_HIGH_GENRES.has(genre))

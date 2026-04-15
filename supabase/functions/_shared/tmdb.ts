@@ -680,11 +680,11 @@ function buildFallbackQueries(query: string): string[] {
   const variants: string[] = [];
 
   // ・をスペースに置換（例: "インディ・ジョーンズ" → "インディ ジョーンズ"）
-  const withSpace = query.replace(/・/g, " ").replace(/\s+/g, " ").trim();
+  const withSpace = query.replaceAll("・", " ").replaceAll(/\s+/g, " ").trim();
   if (withSpace !== query) variants.push(withSpace);
 
   // ・を除去（例: "インディ・ジョーンズ" → "インディジョーンズ"）
-  const withoutDot = query.replace(/・/g, "").trim();
+  const withoutDot = query.replaceAll("・", "").trim();
   if (withoutDot !== query && withoutDot !== withSpace) variants.push(withoutDot);
 
   return variants;

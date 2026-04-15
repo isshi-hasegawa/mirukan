@@ -2,9 +2,9 @@ import type { Session } from "@supabase/supabase-js";
 import { BrandWordmark } from "./BrandWordmark.tsx";
 import { UserMenu } from "./UserMenu.tsx";
 
-type Props = {
+type Props = Readonly<{
   session: Session;
-};
+}>;
 
 export function Header({ session }: Props) {
   return (

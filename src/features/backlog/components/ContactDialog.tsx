@@ -3,9 +3,9 @@ import { CheckIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import { DialogShell } from "./DialogShell.tsx";
 
-type Props = {
+type Props = Readonly<{
   onClose: () => void;
-};
+}>;
 
 const GITHUB_ISSUES_URL = "https://github.com/isshi-hasegawa/mirukan/issues/new/choose";
 const SUPPORT_EMAIL = "support@mirukan.app";

@@ -6,7 +6,7 @@ import { getTmdbSearchResultMetadataLabels } from "../helpers.ts";
 import { RottenTomatoesBadge } from "./RottenTomatoesBadge.tsx";
 import { TmdbLink } from "./TmdbLink.tsx";
 
-type Props = {
+type Props = Readonly<{
   result: TmdbSearchResult;
   isSelected?: boolean;
   onSelect?: () => void;
@@ -14,7 +14,7 @@ type Props = {
   isChecked?: boolean;
   footer?: ReactNode;
   footerLayout?: "panel" | "inline";
-};
+}>;
 
 export function TmdbWorkCard({
   result,

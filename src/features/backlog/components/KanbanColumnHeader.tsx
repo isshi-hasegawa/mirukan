@@ -2,12 +2,12 @@ import { Button } from "@/components/ui/button.tsx";
 import { statusLabels } from "../constants.ts";
 import type { BacklogStatus } from "../types.ts";
 
-type Props = {
+type Props = Readonly<{
   status: BacklogStatus;
   itemCount: number;
   isMobileLayout: boolean;
   onOpenAddModal: () => void;
-};
+}>;
 
 export function KanbanColumnHeader({ status, itemCount, isMobileLayout, onOpenAddModal }: Props) {
   return (

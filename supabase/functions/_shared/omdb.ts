@@ -24,27 +24,27 @@ function getOmdbApiKey(): string {
 }
 
 function parseRottenTomatoesScore(value: string): number | null {
-  const match = value.match(/^(\d+)%$/);
+  const match = /^(\d+)%$/.exec(value);
   if (!match) return null;
   const score = Number.parseInt(match[1], 10);
   return score >= 0 && score <= 100 ? score : null;
 }
 
 function parseImdbRating(value: string): number | null {
-  const match = value.match(/^(\d+(?:\.\d+)?)\/10$/);
+  const match = /^(\d+(?:\.\d+)?)\/10$/.exec(value);
   if (!match) return null;
   const rating = Number.parseFloat(match[1]);
   return rating >= 0 && rating <= 10 ? rating : null;
 }
 
 function parseImdbVotes(value: string): number | null {
-  const cleaned = value.replace(/,/g, "");
+  const cleaned = value.replaceAll(",", "");
   const votes = Number.parseInt(cleaned, 10);
   return Number.isNaN(votes) ? null : votes;
 }
 
 function parseMetacriticScore(value: string): number | null {
-  const match = value.match(/^(\d+)\/100$/);
+  const match = /^(\d+)\/100$/.exec(value);
   if (!match) return null;
   const score = Number.parseInt(match[1], 10);
   return score >= 0 && score <= 100 ? score : null;

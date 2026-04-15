@@ -5,12 +5,12 @@ import { useAddFlow } from "../hooks/useAddFlow.ts";
 import { AddModalDetailsPane } from "./AddModalDetailsPane.tsx";
 import { AddModalSearchPane } from "./AddModalSearchPane.tsx";
 
-type Props = {
+type Props = Readonly<{
   items: BacklogItem[];
   session: Session;
   onClose: () => void;
   onAdded: () => void | Promise<void>;
-};
+}>;
 
 export function AddModal({ items, session, onClose, onAdded }: Props) {
   const {

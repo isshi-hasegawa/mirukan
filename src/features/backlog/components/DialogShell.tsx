@@ -2,14 +2,14 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
-type Props = {
+type Props = Readonly<{
   titleId: string;
   badge: string;
   title: string;
   closeLabel: string;
   onClose: () => void;
   children: ReactNode;
-};
+}>;
 
 export function DialogShell({ titleId, badge, title, closeLabel, onClose, children }: Props) {
   useEffect(() => {

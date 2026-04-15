@@ -14,13 +14,13 @@ import { browserBacklogFeedback, type BacklogFeedback } from "../ui-feedback.ts"
 
 const EMPTY_PENDING_DELETES: ReadonlySet<string> = new Set();
 
-type Props = {
+type Props = Readonly<{
   items: BacklogItem[];
   pendingDeleteIds?: ReadonlySet<string>;
   isMobileLayout: boolean;
   onAfterDrop: () => Promise<void>;
   feedback?: BacklogFeedback;
-};
+}>;
 
 type RectLike = Pick<DOMRect, "top" | "height">;
 type TouchListKey = "touches" | "changedTouches";

@@ -1,19 +1,15 @@
 import { AuthScreen } from "./AuthScreen.tsx";
 import { BrandWordmark } from "./BrandWordmark.tsx";
 import { LoginPageAuthForm } from "./LoginPageAuthForm.tsx";
-import {
-  getAuthRedirectUrl,
-  useLoginPageAuth,
-  type DevLoginCredentials,
-} from "../hooks/useLoginPageAuth.ts";
+import { useLoginPageAuth, type DevLoginCredentials } from "../hooks/useLoginPageAuth.ts";
 
-type Props = {
+type Props = Readonly<{
   devLoginCredentials?: DevLoginCredentials | null;
   isSessionLoading?: boolean;
   showDevLoginHint?: boolean;
-};
+}>;
 
-export { getAuthRedirectUrl };
+export { getAuthRedirectUrl } from "../hooks/useLoginPageAuth.ts";
 
 function getDevLoginCredentials(): DevLoginCredentials | null {
   if (!import.meta.env.DEV || import.meta.env.MODE === "test") {

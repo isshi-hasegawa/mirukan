@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 
-type Props = {
+type Props = Readonly<{
   posterPath: string | null;
   alt: string;
   size?: "w92" | "w185" | "w500";
   fallback?: string;
   className?: string;
   fallbackClassName?: string;
-};
+}>;
 
 export function PosterImage({
   posterPath,

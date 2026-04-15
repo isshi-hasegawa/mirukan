@@ -1,10 +1,10 @@
 import { Button } from "@/components/ui/button.tsx";
 
-type Props = {
+type Props = Readonly<{
   message: string;
   onConfirm: () => void;
   onCancel: () => void;
-};
+}>;
 
 export function PendingSaveNotice({ message, onConfirm, onCancel }: Props) {
   return (

@@ -38,9 +38,9 @@ function matchesGlobPattern(path: string, pattern: string) {
   const normalizedPattern = normalizePathForMatch(pattern);
   const source = normalizedPattern
     .replaceAll(/[|\\{}()[\]^$+?.]/g, String.raw`\$&`)
-    .replaceAll(/\*\*/g, "__DOUBLE_STAR__")
-    .replaceAll(/\*/g, "[^/]*")
-    .replaceAll(/__DOUBLE_STAR__/g, ".*");
+    .replaceAll("**", "__DOUBLE_STAR__")
+    .replaceAll("*", "[^/]*")
+    .replaceAll("__DOUBLE_STAR__", ".*");
   return new RegExp(`^${source}$`).test(normalizedPath);
 }
 

@@ -9,9 +9,9 @@ const ContactDialog = lazyNamed(() => import("./ContactDialog.tsx"), "ContactDia
 
 type LoginPageAuthModel = ReturnType<typeof useLoginPageAuth>;
 
-type Props = {
+type Props = Readonly<{
   auth: LoginPageAuthModel;
-};
+}>;
 
 function GoogleIcon() {
   return (

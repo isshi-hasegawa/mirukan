@@ -2,12 +2,12 @@ import { cn } from "../../../lib/utils.ts";
 
 type RottenTomatoesBadgeVariant = "fresh" | "rotten";
 
-type Props = {
+type Props = Readonly<{
   score: number;
   variant: RottenTomatoesBadgeVariant;
   appearance?: "pill" | "plain";
   className?: string;
-};
+}>;
 
 function FreshIcon() {
   return (

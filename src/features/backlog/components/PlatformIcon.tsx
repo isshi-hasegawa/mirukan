@@ -1,9 +1,9 @@
 import type { PrimaryPlatform } from "../types.ts";
 import { platformBackgrounds, platformIcons, platformLabels } from "../constants.ts";
 
-type Props = {
+type Props = Readonly<{
   platform: Exclude<PrimaryPlatform, null>;
-};
+}>;
 
 export function PlatformIcon({ platform }: Props) {
   return (
