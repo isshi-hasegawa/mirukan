@@ -1,4 +1,4 @@
-import { Suspense, useState } from "react";
+import { Suspense, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Label } from "@/components/ui/label.tsx";
@@ -43,7 +43,7 @@ function GoogleIcon() {
   );
 }
 
-function TermsAndPrivacyLinks({ onOpenContact }: { onOpenContact: () => void }) {
+function TermsAndPrivacyLinks({ onOpenContact }: Readonly<{ onOpenContact: () => void }>) {
   return (
     <div className="flex justify-center">
       <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
@@ -75,7 +75,10 @@ function TermsAndPrivacyLinks({ onOpenContact }: { onOpenContact: () => void }) 
   );
 }
 
-function GoogleLoginButton({ disabled, onClick }: { disabled: boolean; onClick: () => void }) {
+function GoogleLoginButton({
+  disabled,
+  onClick,
+}: Readonly<{ disabled: boolean; onClick: () => void }>) {
   return (
     <button
       type="button"
@@ -132,7 +135,10 @@ function ModeSwitcher({ auth }: Props) {
   );
 }
 
-function LoginFormContent({ auth, onOpenContact }: Props & { onOpenContact: () => void }) {
+function LoginFormContent({
+  auth,
+  onOpenContact,
+}: Props & Readonly<{ onOpenContact: () => void }>) {
   return (
     <>
       <div className="grid gap-2">
@@ -202,16 +208,16 @@ function LoginFormContent({ auth, onOpenContact }: Props & { onOpenContact: () =
         または
         <div className="h-px flex-1 bg-border/60" />
       </div>
-      <GoogleLoginButton
-        disabled={auth.isSubmitting}
-        onClick={() => void auth.handleGoogleLogin()}
-      />
+      <GoogleLoginButton disabled={auth.isSubmitting} onClick={() => auth.handleGoogleLogin()} />
       <TermsAndPrivacyLinks onOpenContact={onOpenContact} />
     </>
   );
 }
 
-function SignUpFormContent({ auth, onOpenContact }: Props & { onOpenContact: () => void }) {
+function SignUpFormContent({
+  auth,
+  onOpenContact,
+}: Props & Readonly<{ onOpenContact: () => void }>) {
   return (
     <>
       {auth.hasSentConfirmationEmail ? (
@@ -278,24 +284,24 @@ function SignUpFormContent({ auth, onOpenContact }: Props & { onOpenContact: () 
             確認メールのリンクを開くと、アカウント登録が完了します。
           </p>
           <p className="text-xs leading-6 text-muted-foreground">
-            登録することで、
+            登録することで、{" "}
             <a
               href="/terms"
               target="_blank"
               rel="noopener noreferrer"
-              className="mx-1 underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
+              className="underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
             >
               利用規約
-            </a>
-            および
+            </a>{" "}
+            および{" "}
             <a
               href="/privacy"
               target="_blank"
               rel="noopener noreferrer"
-              className="mx-1 underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
+              className="underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground/60"
             >
               プライバシーポリシー
-            </a>
+            </a>{" "}
             に同意したものとみなします。
           </p>
           <Button
@@ -313,7 +319,7 @@ function SignUpFormContent({ auth, onOpenContact }: Props & { onOpenContact: () 
           </div>
           <GoogleLoginButton
             disabled={auth.isSubmitting}
-            onClick={() => void auth.handleGoogleLogin()}
+            onClick={() => auth.handleGoogleLogin()}
           />
           <TermsAndPrivacyLinks onOpenContact={onOpenContact} />
         </>
@@ -372,8 +378,15 @@ function ForgotPasswordFormContent({ auth }: Props) {
   );
 }
 
+function getFormContent(auth: LoginPageAuthModel, onOpenContact: () => void): ReactNode {
+  if (auth.isForgotPasswordMode) return <ForgotPasswordFormContent auth={auth} />;
+  if (auth.isSignUpMode) return <SignUpFormContent auth={auth} onOpenContact={onOpenContact} />;
+  return <LoginFormContent auth={auth} onOpenContact={onOpenContact} />;
+}
+
 export function LoginPageAuthForm({ auth }: Props) {
   const [isContactOpen, setIsContactOpen] = useState(false);
+  const onOpenContact = () => setIsContactOpen(true);
 
   return (
     <>
@@ -381,18 +394,12 @@ export function LoginPageAuthForm({ auth }: Props) {
         className="grid gap-4.5"
         onSubmit={(e) => {
           e.preventDefault();
-          void auth.handleSubmit();
+          auth.handleSubmit();
         }}
       >
         <ModeSwitcher auth={auth} />
         <div className="grid min-h-[29rem] content-center gap-4.5">
-          {auth.isForgotPasswordMode ? (
-            <ForgotPasswordFormContent auth={auth} />
-          ) : auth.isSignUpMode ? (
-            <SignUpFormContent auth={auth} onOpenContact={() => setIsContactOpen(true)} />
-          ) : (
-            <LoginFormContent auth={auth} onOpenContact={() => setIsContactOpen(true)} />
-          )}
+          {getFormContent(auth, onOpenContact)}
         </div>
         {auth.errorMessage ? (
           <p

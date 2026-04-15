@@ -40,7 +40,7 @@ export function KanbanBoard({
     }),
   );
   const handleViewingModeToggle = useCallback((mode: ViewingMode) => {
-    void setActiveViewingMode((current) => (current === mode ? null : mode));
+    setActiveViewingMode((current) => (current === mode ? null : mode));
   }, []);
   const lastStableItemsRef = useRef<BacklogItem[] | null>(null);
   const lastStableStackedItemsRef = useRef<BacklogItem[] | null>(null);

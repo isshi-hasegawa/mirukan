@@ -19,7 +19,7 @@ const seasonBtnClass = (active: boolean, locked: boolean) =>
       : " border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.06)] text-foreground hover:bg-[rgba(255,255,255,0.1)]"
   }${locked ? " cursor-default opacity-70 hover:bg-[rgba(191,90,54,0.08)]" : ""}`;
 
-function SeasonCheckbox({ active }: { active: boolean }) {
+function SeasonCheckbox({ active }: Readonly<{ active: boolean }>) {
   return (
     <span
       className={`grid w-4 h-4 place-items-center rounded-full border ${

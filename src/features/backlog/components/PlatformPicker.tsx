@@ -12,7 +12,7 @@ export function PlatformPicker({ value, onChange }: Props) {
   };
 
   return (
-    <div className="flex gap-2 flex-wrap" role="group" aria-label="視聴先">
+    <fieldset className="flex gap-2 flex-wrap border-0 p-0 m-0" aria-label="視聴先">
       {platformKeys.map((platform) => (
         <button
           key={platform}
@@ -29,6 +29,6 @@ export function PlatformPicker({ value, onChange }: Props) {
           />
         </button>
       ))}
-    </div>
+    </fieldset>
   );
 }

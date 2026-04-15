@@ -76,7 +76,7 @@ export function MobileKanbanBoard({
 
   return (
     <section className="mt-3 flex w-full min-w-0 flex-col gap-0 overflow-hidden max-w-full max-[500px]:mt-2 max-[400px]:mt-1.5">
-      <nav
+      <div
         className="hide-scrollbar flex w-full min-w-0 max-w-full gap-[6px] overflow-x-auto pb-[10px] max-[500px]:gap-1 max-[500px]:pb-2 max-[400px]:gap-0.5 max-[400px]:pb-1.5"
         role="tablist"
       >
@@ -103,7 +103,7 @@ export function MobileKanbanBoard({
             </button>
           );
         })}
-      </nav>
+      </div>
       <div
         ref={tabContentRef}
         className="board-tab-content flex-1 w-full min-w-0 overflow-y-auto"

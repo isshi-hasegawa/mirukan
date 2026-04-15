@@ -54,13 +54,13 @@ function DetailModalHarness({
   initialState,
   onClose,
   onReload,
-}: {
+}: Readonly<{
   item: BacklogItem;
   items: BacklogItem[];
   initialState: DetailModalState;
   onClose: () => void;
   onReload: () => Promise<void>;
-}) {
+}>) {
   const [state, setState] = useState(initialState);
 
   return (

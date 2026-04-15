@@ -106,7 +106,7 @@ function AuthenticatedApp() {
   );
 
   useEffect(() => {
-    void getSession()
+    getSession()
       .then(({ data }) => {
         setSession(data.session);
       })

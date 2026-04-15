@@ -64,7 +64,7 @@ export function UserMenu({ email }: Props) {
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
-              void signOut();
+              signOut();
             }}
           >
             ログアウト

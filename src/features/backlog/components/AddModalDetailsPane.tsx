@@ -53,7 +53,7 @@ export function AddModalDetailsPane({
         }}
         required
       />
-      <div className="flex flex-wrap gap-1.5" role="group" aria-label="種別">
+      <fieldset className="flex flex-wrap gap-1.5 border-0 p-0 m-0" aria-label="種別">
         {(["movie", "series"] as const).map((workType) => (
           <button
             key={workType}
@@ -85,7 +85,7 @@ export function AddModalDetailsPane({
             )}
           </button>
         ))}
-      </div>
+      </fieldset>
       <PlatformPicker value={primaryPlatform} onChange={onChangePrimaryPlatform} />
       <div className="flex items-start gap-2 w-full">
         <label htmlFor={noteId}>

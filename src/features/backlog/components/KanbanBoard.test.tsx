@@ -75,7 +75,7 @@ function createWorkSummary(id: string, title: string, runtimeMinutes: number) {
   return createWorkSummaryFromFixtures({
     id: `work-${id}`,
     title,
-    tmdb_id: Number(id.replace(/\D/g, "")) || 1,
+    tmdb_id: Number(id.replaceAll(/\D/g, "")) || 1,
     runtime_minutes: runtimeMinutes,
   });
 }

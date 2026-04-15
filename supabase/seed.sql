@@ -23,7 +23,8 @@ declare
   two_days_ago constant interval := interval '2 days';
   platform_netflix constant public.primary_platform := 'netflix';
   manual_movie_title constant text := 'あの日の街角';
-  genres_drama_crime constant text[] := array['Drama', 'Crime'];
+  genre_drama constant text := 'Drama';
+  genres_drama_crime constant text[] := array[genre_drama, 'Crime'];
 begin
   insert into auth.users (
     instance_id,
@@ -200,7 +201,7 @@ begin
       null,
       null,
       null,
-      array['Drama', 'Family'],
+      array[genre_drama, 'Family'],
       50,
       25,
       25
@@ -325,7 +326,7 @@ begin
       null,
       null,
       null,
-      array['Adventure', 'Drama', 'Science Fiction'],
+      array['Adventure', genre_drama, 'Science Fiction'],
       100,
       0,
       100

@@ -71,7 +71,7 @@ export function buildDuplicateState(
   if (result.tmdbMediaType === "tv") {
     const canAddAnySelectedSeason = seasonNumbers.some((seasonNumber) => {
       const existingItem = findMatchingTvItem(items, result, seasonNumber);
-      return !existingItem || existingItem.status !== "stacked";
+      return existingItem?.status !== "stacked";
     });
     return { canAddToStacked: canAddAnySelectedSeason };
   }
