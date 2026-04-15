@@ -105,6 +105,37 @@ function resolveDropSide(
   return getDropSideFromRect(rect, clientY);
 }
 
+function reorderWithinColumn(
+  prev: BacklogItem[],
+  overStatus: BacklogStatus,
+  activeId: string,
+  overId: string,
+  side: "before" | "after",
+) {
+  const colItems = prev.filter((i) => i.status === overStatus);
+  const others = prev.filter((i) => i.status !== overStatus);
+  return [...others, ...getReorderedColumnItems(colItems, activeId, overId, side)];
+}
+
+function moveToColumnEdge(prev: BacklogItem[], activeId: string, overStatus: BacklogStatus) {
+  return overStatus === "watched"
+    ? moveItemToColumnTop(prev, activeId, overStatus)
+    : moveItemToColumnEnd(prev, activeId, overStatus);
+}
+
+function moveAcrossColumns(
+  prev: BacklogItem[],
+  activeId: string,
+  overStatus: BacklogStatus,
+  overId: string,
+  side: "before" | "after",
+) {
+  const withUpdatedStatus = prev.map((i) => (i.id === activeId ? { ...i, status: overStatus } : i));
+  const newColItems = withUpdatedStatus.filter((i) => i.status === overStatus);
+  const others = withUpdatedStatus.filter((i) => i.status !== overStatus);
+  return [...others, ...getReorderedColumnItems(newColItems, activeId, overId, side)];
+}
+
 function calculateInsertedSortOrder(
   prevSortOrder: number | null,
   nextSortOrder: number | null,
@@ -177,27 +208,18 @@ export function useBacklogDnd({
       if (activeStatus === overStatus) {
         // 同列内での並び替え
         if (overId.startsWith("column:")) return prev;
-        const colItems = prev.filter((i) => i.status === overStatus);
-        const others = prev.filter((i) => i.status !== overStatus);
         const side = resolveDropSide(activatorEvent, over.rect);
-        return [...others, ...getReorderedColumnItems(colItems, activeId, overId, side)];
+        return reorderWithinColumn(prev, overStatus, activeId, overId, side);
       }
 
       // 列またぎ: ステータスを変更して over アイテムの位置に挿入
       // watched への列端ドロップは先頭挿入（handleMarkAsWatched と同じ並び順）
       if (overId.startsWith("column:")) {
-        return overStatus === "watched"
-          ? moveItemToColumnTop(prev, activeId, overStatus)
-          : moveItemToColumnEnd(prev, activeId, overStatus);
+        return moveToColumnEdge(prev, activeId, overStatus);
       }
 
-      const withUpdatedStatus = prev.map((i) =>
-        i.id === activeId ? { ...i, status: overStatus } : i,
-      );
-      const newColItems = withUpdatedStatus.filter((i) => i.status === overStatus);
-      const others = withUpdatedStatus.filter((i) => i.status !== overStatus);
       const side = resolveDropSide(activatorEvent, over.rect);
-      return [...others, ...getReorderedColumnItems(newColItems, activeId, overId, side)];
+      return moveAcrossColumns(prev, activeId, overStatus, overId, side);
     });
   };
 

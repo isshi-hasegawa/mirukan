@@ -356,6 +356,35 @@ type OmdbFields = {
   omdb_fetched_at?: string;
 };
 
+function buildOmdbNullImdbFields(
+  existing: ExistingTmdbWorkRow | null,
+  omdbFetchedAt: string,
+): OmdbFields {
+  if (shouldKeepExistingNullOmdbState(existing)) {
+    return {};
+  }
+  return {
+    rotten_tomatoes_score: null,
+    imdb_rating: null,
+    imdb_votes: null,
+    metacritic_score: null,
+    omdb_fetched_at: omdbFetchedAt,
+  };
+}
+
+function toOmdbFields(
+  omdb: Awaited<ReturnType<typeof fetchOmdbWorkDetails>>,
+  omdbFetchedAt: string,
+): OmdbFields {
+  return {
+    rotten_tomatoes_score: omdb.rottenTomatoesScore,
+    imdb_rating: omdb.imdbRating,
+    imdb_votes: omdb.imdbVotes,
+    metacritic_score: omdb.metacriticScore,
+    omdb_fetched_at: omdbFetchedAt,
+  };
+}
+
 async function buildOmdbFields(
   details: Awaited<ReturnType<typeof fetchTmdbWorkDetails>>,
   existing: ExistingTmdbWorkRow | null,
@@ -363,15 +392,7 @@ async function buildOmdbFields(
   const omdbFetchedAt = new Date().toISOString();
 
   if (details.imdbId === null) {
-    return shouldKeepExistingNullOmdbState(existing)
-      ? {}
-      : {
-          rotten_tomatoes_score: null,
-          imdb_rating: null,
-          imdb_votes: null,
-          metacritic_score: null,
-          omdb_fetched_at: omdbFetchedAt,
-        };
+    return buildOmdbNullImdbFields(existing, omdbFetchedAt);
   }
 
   if (!details.imdbId || shouldSkipOmdbRefresh(existing, details.imdbId)) {
@@ -380,13 +401,7 @@ async function buildOmdbFields(
 
   try {
     const omdb = await fetchOmdbWorkDetails(details.imdbId);
-    return {
-      rotten_tomatoes_score: omdb.rottenTomatoesScore,
-      imdb_rating: omdb.imdbRating,
-      imdb_votes: omdb.imdbVotes,
-      metacritic_score: omdb.metacriticScore,
-      omdb_fetched_at: omdbFetchedAt,
-    };
+    return toOmdbFields(omdb, omdbFetchedAt);
   } catch {
     return {};
   }
