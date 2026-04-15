@@ -66,24 +66,16 @@ describe("LoginPage", () => {
     expect(screen.getByLabelText("パスワード")).toHaveValue("password123");
   });
 
-  test("ログイン画面に利用規約リンクが表示される", () => {
+  test.each([
+    ["利用規約", "/terms"],
+    ["プライバシーポリシー", "/privacy"],
+  ])("ログイン画面に %s リンクが表示される", (name, href) => {
     render(<LoginPage />);
 
-    const links = screen.getAllByRole("link", { name: "利用規約" });
+    const links = screen.getAllByRole("link", { name });
     expect(links.length).toBeGreaterThan(0);
     for (const link of links) {
-      expect(link).toHaveAttribute("href", "/terms");
-      expect(link).toHaveAttribute("target", "_blank");
-    }
-  });
-
-  test("ログイン画面にプライバシーポリシーリンクが表示される", () => {
-    render(<LoginPage />);
-
-    const links = screen.getAllByRole("link", { name: "プライバシーポリシー" });
-    expect(links.length).toBeGreaterThan(0);
-    for (const link of links) {
-      expect(link).toHaveAttribute("href", "/privacy");
+      expect(link).toHaveAttribute("href", href);
       expect(link).toHaveAttribute("target", "_blank");
     }
   });

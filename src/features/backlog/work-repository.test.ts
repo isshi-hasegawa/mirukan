@@ -22,10 +22,14 @@ import type {
   TmdbSearchResult,
   TmdbSeasonOption,
   TmdbSeasonSelectionTarget,
-  TmdbWorkDetails,
 } from "../../lib/tmdb.ts";
 import { getMockWorks, setMockWorks } from "../../test/mocks/handlers";
 import { server } from "../../test/mocks/server";
+import {
+  createSeasonTmdbDetails,
+  createSeriesTmdbDetails,
+  createTmdbDetails,
+} from "../../test/backlog-fixtures.ts";
 import { setupTestLifecycle } from "../../test/test-lifecycle.ts";
 import {
   buildSelectedSeasonTargets,
@@ -40,26 +44,37 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "http://localhost:5432
 
 setupTestLifecycle();
 
-function createTmdbDetails(overrides: Partial<TmdbWorkDetails> = {}): TmdbWorkDetails {
-  return {
-    tmdbId: 1,
-    tmdbMediaType: "movie",
-    workType: "movie",
-    title: "テスト作品",
-    originalTitle: "Test Work",
-    overview: "overview",
-    posterPath: "/poster.jpg",
-    releaseDate: "2024-01-01",
-    genres: ["ドラマ"],
-    runtimeMinutes: 120,
-    typicalEpisodeRuntimeMinutes: null,
-    episodeCount: null,
-    seasonCount: null,
-    seasonNumber: null,
-    imdbId: null,
-    ...overrides,
-  };
-}
+const sharedSeriesResult: TmdbSearchResult = {
+  tmdbId: 100,
+  tmdbMediaType: "tv",
+  workType: "series",
+  title: "テストシリーズ",
+  originalTitle: "Test Series",
+  overview: "overview",
+  posterPath: "/poster.jpg",
+  releaseDate: "2024-01-01",
+  jpWatchPlatforms: [],
+  hasJapaneseRelease: true,
+};
+
+const sharedSeasonOptions: TmdbSeasonOption[] = [
+  {
+    seasonNumber: 2,
+    title: "テストシリーズ シーズン2",
+    overview: "season 2",
+    posterPath: "/season2.jpg",
+    releaseDate: "2025-01-01",
+    episodeCount: 8,
+  },
+  {
+    seasonNumber: 3,
+    title: "テストシリーズ シーズン3",
+    overview: "season 3",
+    posterPath: "/season3.jpg",
+    releaseDate: "2026-01-01",
+    episodeCount: 10,
+  },
+];
 
 function createOmdbDetails() {
   return {
@@ -104,36 +119,6 @@ function failSeasonLookup(seasonNumber: number) {
   );
 }
 
-function createSeriesTmdbDetails(seriesResult: TmdbSearchResult, seasonCount: number) {
-  return createTmdbDetails({
-    tmdbId: seriesResult.tmdbId,
-    tmdbMediaType: "tv",
-    workType: "series",
-    title: seriesResult.title,
-    originalTitle: seriesResult.originalTitle,
-    runtimeMinutes: null,
-    typicalEpisodeRuntimeMinutes: 48,
-    seasonCount,
-  });
-}
-
-function createSeasonTmdbDetails(seriesResult: TmdbSearchResult, seasonOption: TmdbSeasonOption) {
-  return createTmdbDetails({
-    tmdbId: seriesResult.tmdbId,
-    tmdbMediaType: "tv",
-    workType: "season",
-    title: seasonOption.title,
-    originalTitle: seriesResult.originalTitle,
-    overview: seasonOption.overview,
-    posterPath: seasonOption.posterPath,
-    releaseDate: seasonOption.releaseDate,
-    runtimeMinutes: null,
-    typicalEpisodeRuntimeMinutes: 48,
-    episodeCount: seasonOption.episodeCount,
-    seasonNumber: seasonOption.seasonNumber,
-  });
-}
-
 beforeEach(() => {
   tmdbMocks.fetchTmdbWorkDetails.mockReset();
   omdbMocks.fetchOmdbWorkDetails.mockReset();
@@ -144,43 +129,15 @@ afterEach(() => {
 });
 
 describe("buildSelectedSeasonTargets", () => {
-  const seriesResult: TmdbSearchResult = {
-    tmdbId: 100,
-    tmdbMediaType: "tv",
-    workType: "series",
-    title: "テストシリーズ",
-    originalTitle: "Test Series",
-    overview: "overview",
-    posterPath: "/poster.jpg",
-    releaseDate: "2024-01-01",
-    jpWatchPlatforms: [],
-    hasJapaneseRelease: true,
-  };
-
-  const seasonOptions: TmdbSeasonOption[] = [
-    {
-      seasonNumber: 2,
-      title: "テストシリーズ シーズン2",
-      overview: "season 2",
-      posterPath: "/season2.jpg",
-      releaseDate: "2025-01-01",
-      episodeCount: 8,
-    },
-    {
-      seasonNumber: 3,
-      title: "テストシリーズ シーズン3",
-      overview: "season 3",
-      posterPath: "/season3.jpg",
-      releaseDate: "2026-01-01",
-      episodeCount: 10,
-    },
-  ];
-
   test("シーズン1はシリーズとして扱い、重複を除いて昇順で返す", () => {
-    const targets = buildSelectedSeasonTargets(seriesResult, seasonOptions, [3, 1, 3, 2]);
+    const targets = buildSelectedSeasonTargets(
+      sharedSeriesResult,
+      sharedSeasonOptions,
+      [3, 1, 3, 2],
+    );
 
     expect(targets).toHaveLength(3);
-    expect(targets[0]).toEqual(seriesResult);
+    expect(targets[0]).toEqual(sharedSeriesResult);
     expect(targets[1]).toMatchObject({
       workType: "season",
       seasonNumber: 2,
@@ -194,7 +151,7 @@ describe("buildSelectedSeasonTargets", () => {
   });
 
   test("不足しているシーズン情報を選ぶと例外を投げる", () => {
-    expect(() => buildSelectedSeasonTargets(seriesResult, seasonOptions, [4])).toThrow(
+    expect(() => buildSelectedSeasonTargets(sharedSeriesResult, sharedSeasonOptions, [4])).toThrow(
       "シーズン4の情報が見つかりません",
     );
   });
@@ -548,32 +505,27 @@ describe("upsertTmdbWork", () => {
   test("シーズン追加時は親 series を先に解決してから insert する", async () => {
     tmdbMocks.fetchTmdbWorkDetails
       .mockResolvedValueOnce(
-        createTmdbDetails({
-          tmdbId: seasonTarget.tmdbId,
-          tmdbMediaType: "tv",
-          workType: "series",
-          title: seasonTarget.seriesTitle,
-          originalTitle: seasonTarget.originalTitle,
-          runtimeMinutes: null,
-          typicalEpisodeRuntimeMinutes: 48,
-          seasonCount: 3,
-        }),
+        createSeriesTmdbDetails(
+          {
+            tmdbId: seasonTarget.tmdbId,
+            title: seasonTarget.seriesTitle,
+            originalTitle: seasonTarget.originalTitle,
+          },
+          3,
+        ),
       )
       .mockResolvedValueOnce(
-        createTmdbDetails({
-          tmdbId: seasonTarget.tmdbId,
-          tmdbMediaType: "tv",
-          workType: "season",
-          title: seasonTarget.title,
-          originalTitle: seasonTarget.originalTitle,
-          overview: seasonTarget.overview,
-          posterPath: seasonTarget.posterPath,
-          releaseDate: seasonTarget.releaseDate,
-          runtimeMinutes: null,
-          typicalEpisodeRuntimeMinutes: 48,
-          episodeCount: seasonTarget.episodeCount,
-          seasonNumber: seasonTarget.seasonNumber,
-        }),
+        createSeasonTmdbDetails(
+          { tmdbId: seasonTarget.tmdbId, originalTitle: seasonTarget.originalTitle },
+          {
+            seasonNumber: seasonTarget.seasonNumber,
+            title: seasonTarget.title,
+            overview: seasonTarget.overview,
+            posterPath: seasonTarget.posterPath,
+            releaseDate: seasonTarget.releaseDate,
+            episodeCount: seasonTarget.episodeCount,
+          },
+        ),
       );
 
     await expect(upsertTmdbWork(seasonTarget, "user-1")).resolves.toMatchObject({
@@ -603,41 +555,11 @@ describe("upsertTmdbWork", () => {
 });
 
 describe("resolveSelectedSeasonWorkIds", () => {
-  const seriesResult: TmdbSearchResult = {
-    tmdbId: 100,
-    tmdbMediaType: "tv",
-    workType: "series",
-    title: "テストシリーズ",
-    originalTitle: "Test Series",
-    overview: "overview",
-    posterPath: "/poster.jpg",
-    releaseDate: "2024-01-01",
-    jpWatchPlatforms: [],
-    hasJapaneseRelease: true,
-  };
-
-  const seasonOptions: TmdbSeasonOption[] = [
-    {
-      seasonNumber: 2,
-      title: "テストシリーズ シーズン2",
-      overview: "season 2",
-      posterPath: "/season2.jpg",
-      releaseDate: "2025-01-01",
-      episodeCount: 8,
-    },
-    {
-      seasonNumber: 3,
-      title: "テストシリーズ シーズン3",
-      overview: "season 3",
-      posterPath: "/season3.jpg",
-      releaseDate: "2026-01-01",
-      episodeCount: 10,
-    },
-  ];
-
   test("空入力時はエラーを返す", async () => {
     await expect(
-      resolveSelectedSeasonWorkIds(seriesResult, "user-1", [], { seasonOptions }),
+      resolveSelectedSeasonWorkIds(sharedSeriesResult, "user-1", [], {
+        seasonOptions: sharedSeasonOptions,
+      }),
     ).resolves.toEqual({
       error: "追加するシーズンを1つ以上選択してください",
       workIds: [],
@@ -646,7 +568,9 @@ describe("resolveSelectedSeasonWorkIds", () => {
 
   test("シーズン情報組み立て失敗時はエラーを返す", async () => {
     await expect(
-      resolveSelectedSeasonWorkIds(seriesResult, "user-1", [4], { seasonOptions }),
+      resolveSelectedSeasonWorkIds(sharedSeriesResult, "user-1", [4], {
+        seasonOptions: sharedSeasonOptions,
+      }),
     ).resolves.toEqual({
       error: "シーズン4の情報が見つかりません",
       workIds: [],
@@ -654,10 +578,14 @@ describe("resolveSelectedSeasonWorkIds", () => {
   });
 
   test("シーズン1のみ選択時は series を保存して返す", async () => {
-    tmdbMocks.fetchTmdbWorkDetails.mockResolvedValueOnce(createSeriesTmdbDetails(seriesResult, 3));
+    tmdbMocks.fetchTmdbWorkDetails.mockResolvedValueOnce(
+      createSeriesTmdbDetails(sharedSeriesResult, 3),
+    );
 
     await expect(
-      resolveSelectedSeasonWorkIds(seriesResult, "user-1", [1], { seasonOptions }),
+      resolveSelectedSeasonWorkIds(sharedSeriesResult, "user-1", [1], {
+        seasonOptions: sharedSeasonOptions,
+      }),
     ).resolves.toMatchObject({
       error: null,
       workIds: [expect.any(String)],
@@ -666,18 +594,18 @@ describe("resolveSelectedSeasonWorkIds", () => {
     expect(getMockWorks()).toContainEqual(
       expect.objectContaining({
         work_type: "series",
-        tmdb_id: seriesResult.tmdbId,
+        tmdb_id: sharedSeriesResult.tmdbId,
       }),
     );
   });
 
   test("複数シーズン追加時は親 series を一度だけ解決して workIds を順序どおり返す", async () => {
     tmdbMocks.fetchTmdbWorkDetails
-      .mockResolvedValueOnce(createSeriesTmdbDetails(seriesResult, 2))
-      .mockResolvedValueOnce(createSeasonTmdbDetails(seriesResult, seasonOptions[0]));
+      .mockResolvedValueOnce(createSeriesTmdbDetails(sharedSeriesResult, 2))
+      .mockResolvedValueOnce(createSeasonTmdbDetails(sharedSeriesResult, sharedSeasonOptions[0]));
 
-    const result = await resolveSelectedSeasonWorkIds(seriesResult, "user-1", [1, 2], {
-      seasonOptions,
+    const result = await resolveSelectedSeasonWorkIds(sharedSeriesResult, "user-1", [1, 2], {
+      seasonOptions: sharedSeasonOptions,
     });
 
     expect(result.error).toBeNull();
@@ -689,13 +617,13 @@ describe("resolveSelectedSeasonWorkIds", () => {
 
     expect(seriesWork).toEqual(
       expect.objectContaining({
-        tmdb_id: seriesResult.tmdbId,
+        tmdb_id: sharedSeriesResult.tmdbId,
         parent_work_id: null,
       }),
     );
     expect(seasonWork).toEqual(
       expect.objectContaining({
-        tmdb_id: seriesResult.tmdbId,
+        tmdb_id: sharedSeriesResult.tmdbId,
         season_number: 2,
         parent_work_id: seriesWork?.id,
       }),
@@ -708,7 +636,9 @@ describe("resolveSelectedSeasonWorkIds", () => {
     failSeasonLookup(2);
 
     await expect(
-      resolveSelectedSeasonWorkIds(seriesResult, "user-1", [1, 2], { seasonOptions }),
+      resolveSelectedSeasonWorkIds(sharedSeriesResult, "user-1", [1, 2], {
+        seasonOptions: sharedSeasonOptions,
+      }),
     ).resolves.toEqual({
       error: "season fetch failed",
       workIds: [],
@@ -720,11 +650,13 @@ describe("resolveSelectedSeasonWorkIds", () => {
     setExistingSeriesWork();
     failSeasonLookup(2);
     tmdbMocks.fetchTmdbWorkDetails.mockResolvedValue(
-      createSeasonTmdbDetails(seriesResult, seasonOptions[1]),
+      createSeasonTmdbDetails(sharedSeriesResult, sharedSeasonOptions[1]),
     );
 
     await expect(
-      resolveSelectedSeasonWorkIds(seriesResult, "user-1", [2, 3], { seasonOptions }),
+      resolveSelectedSeasonWorkIds(sharedSeriesResult, "user-1", [2, 3], {
+        seasonOptions: sharedSeasonOptions,
+      }),
     ).resolves.toEqual({
       error: "season fetch failed",
       workIds: [],
