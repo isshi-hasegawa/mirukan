@@ -77,7 +77,7 @@ export function AddModal({ items, session, onClose, onAdded }: Props) {
         onClick={onClose}
       />
       <section
-        className="w-[min(calc(100%_-_48px),960px)] h-[min(88svh,920px)] border border-border rounded-[28px] bg-[#2a2a2a] shadow-[0_24px_60px_rgba(0,0,0,0.5)] p-6 flex flex-col overflow-hidden max-[720px]:w-full max-[720px]:max-w-[560px] max-[720px]:p-5 max-[720px]:rounded-[22px] max-[720px]:h-[min(88svh,920px)]"
+        className="relative z-10 w-[min(calc(100%_-_48px),960px)] h-[min(88svh,920px)] border border-border rounded-[28px] bg-[#2a2a2a] shadow-[0_24px_60px_rgba(0,0,0,0.5)] p-6 flex flex-col overflow-hidden max-[720px]:w-full max-[720px]:max-w-[560px] max-[720px]:p-5 max-[720px]:rounded-[22px] max-[720px]:h-[min(88svh,920px)]"
         role="dialog"
         aria-modal="true"
         aria-label="作品を追加"
