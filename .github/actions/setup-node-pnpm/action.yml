@@ -1,0 +1,38 @@
+name: Setup Node.js and pnpm
+description: Node.js のセットアップ、pnpm キャッシュの復元、依存インストールを行う
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
+      with:
+        node-version: 24
+        package-manager-cache: false
+
+    - name: Enable Corepack
+      shell: bash
+      run: |
+        corepack enable
+        corepack install
+
+    - name: Get pnpm store path
+      id: pnpm-cache-dir
+      shell: bash
+      run: echo "STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+    - name: Cache pnpm store
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      with:
+        path: ${{ steps.pnpm-cache-dir.outputs.STORE_PATH }}
+        key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          pnpm-store-${{ runner.os }}-
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm --package="vite-plus@${VP_BOOTSTRAP_VERSION}" dlx vp install --frozen-lockfile
+
+    - name: Add local binaries to PATH
+      shell: bash
+      run: echo "${GITHUB_WORKSPACE}/node_modules/.bin" >> "$GITHUB_PATH"
