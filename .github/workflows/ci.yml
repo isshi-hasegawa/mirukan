@@ -245,7 +245,19 @@ jobs:
         uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2.0.4
 
       - name: Run Deno tests
-        run: deno test --allow-env supabase/functions/
+        run: deno test --allow-env --coverage=coverage/deno supabase/functions/
+
+      - name: Append coverage summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Deno Coverage"
+            echo
+            echo '```'
+            deno coverage coverage/deno
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
   build:
     runs-on: ubuntu-latest
