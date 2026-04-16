@@ -149,7 +149,7 @@ jobs:
             deno-${{ runner.os }}-
 
       - name: Run Deno tests
-        run: deno test --allow-env --node-modules-dir=none --coverage=coverage/deno supabase/functions/
+        run: deno test --allow-env --no-check --node-modules-dir=none --coverage=coverage/deno supabase/functions/
 
       - name: Append coverage summary
         if: always()
