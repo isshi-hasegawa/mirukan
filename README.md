@@ -15,15 +15,40 @@
 
 このリポジトリではコマンド実行に `vp` を使います。
 
+### セットアップ
+
+ローカル開発を始める前に、次を用意してください。
+
+- Node.js
+- `vp`
+- Docker Desktop など、Supabase ローカル環境を起動できる Docker 実行環境
+- Supabase CLI
+
+依存のインストールは `vp install` で行います。
+`deno` は dev dependency として入っているため、Edge Functions のテストは別途グローバル導入しなくても `vp exec deno ...` または `vp run test:functions` で実行できます。
+
 ```bash
+vp install
 vp dev
 vp build
 vp run build:analyze
-vp check --fix
+vp check
 vp test
+vp run test:functions
 ```
 
 `vp run build:analyze` を実行すると、`dist/bundle-stats.html` と `dist/bundle-stats.json` が出力されます。`@supabase/supabase-js` や icon / UI 系依存の重さ、初期チャンクへの混入状況の確認に使います。
+
+### 主要コマンド
+
+```bash
+vp dev                 # フロントエンド開発サーバー
+vp build               # 本番ビルド（型チェック込み）
+vp check               # Lint / format / typecheck
+vp test                # Vitest
+vp run test:functions  # Supabase Edge Functions の Deno テスト
+vp exec playwright test --project chromium  # Playwright
+```
 
 クライアント側の環境変数は `.env.example` を参照してください。
 
@@ -44,6 +69,14 @@ supabase db query --file supabase/seed.sample.sql
 ```
 
 コミット時の pre-commit では `vp check --fix` を実行します。secret scan は GitHub Actions の Betterleaks workflow で実行します。
+
+### ローカルで使うランタイム
+
+- フロントエンドと通常のユニットテスト: Node.js
+- `supabase/functions/`: Deno
+- ローカル DB / Edge Functions: Supabase CLI + Docker
+
+`vp install` 後は `node_modules/.bin/deno` が利用できるため、CI と同じコマンド系で Edge Functions のテストを流せます。
 
 ## TMDB Attribution
 

@@ -155,7 +155,7 @@ PR ごとの CI では `chromium` のみを実行し、実行時間と flaky 率
 | `Mobile Chrome` | モバイルのタブ切り替えや導線確認     |
 
 任意ラインは通常の CI チェックに含めない。
-ローカルで `pnpm test:e2e --project firefox` のように個別実行する。
+ローカルで `vp exec playwright test --project firefox` のように個別実行する。
 
 モバイル回帰は `Mobile Chrome` 1 本に絞り、
 確認内容はタブ切り替えや導線確認などの閲覧系に限定する。
