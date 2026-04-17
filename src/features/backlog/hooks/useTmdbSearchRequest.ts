@@ -80,6 +80,18 @@ function prioritizeLocalizedResults(results: TmdbSearchResult[]) {
     .map(({ result }) => result);
 }
 
+function resolveSearchMessage(results: TmdbSearchResult[], visibleResults: TmdbSearchResult[]) {
+  if (visibleResults.length > 0) {
+    return null;
+  }
+
+  if (results.length > 0) {
+    return "すでにストック済みの作品は候補から除外しています。";
+  }
+
+  return "候補が見つかりませんでした。このまま入力して追加できます。";
+}
+
 const MAX_RECOMMENDATION_SOURCE_ITEMS = 8;
 const SEARCH_DEBOUNCE_MS = 250;
 
@@ -210,12 +222,7 @@ export function useTmdbSearchRequest({
       const results = await searchTmdbWorks(trimmed);
       if (requestId !== searchRequestIdRef.current) return;
       const visibleResults = prioritizeLocalizedResults(filterVisibleResults(items, results));
-      const searchMessage =
-        visibleResults.length > 0
-          ? null
-          : results.length > 0
-            ? "すでにストック済みの作品は候補から除外しています。"
-            : "候補が見つかりませんでした。このまま入力して追加できます。";
+      const searchMessage = resolveSearchMessage(results, visibleResults);
       dispatchRequest({ type: "set_search_results", results: visibleResults });
       onSetSearchMessage(searchMessage);
     } catch (error) {

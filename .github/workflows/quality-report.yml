@@ -52,7 +52,7 @@ jobs:
 
       - name: Run Deno tests with coverage
         continue-on-error: true
-        run: deno test --allow-env --no-check --node-modules-dir=none --coverage=coverage/deno supabase/functions/
+        run: deno test --allow-env --node-modules-dir=none --coverage=coverage/deno supabase/functions/
 
       - name: Save Deno coverage report
         continue-on-error: true

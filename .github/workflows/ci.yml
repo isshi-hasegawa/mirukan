@@ -121,7 +121,7 @@ jobs:
             deno-${{ runner.os }}-
 
       - name: Run Deno tests
-        run: deno test --allow-env --no-check --node-modules-dir=none supabase/functions/
+        run: deno test --allow-env --node-modules-dir=none supabase/functions/
 
   build:
     runs-on: ubuntu-latest

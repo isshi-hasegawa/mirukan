@@ -71,7 +71,44 @@ async function renderCard(): Promise<RenderResult> {
   };
 }
 
+function renderClosedCard() {
+  const onOpenDetail = vi.fn();
+  const onDeleteItem = vi.fn();
+  const onMarkAsWatched = vi.fn();
+
+  render(
+    <BacklogCard
+      item={createItem()}
+      onOpenDetail={onOpenDetail}
+      onDeleteItem={onDeleteItem}
+      onMarkAsWatched={onMarkAsWatched}
+    />,
+  );
+
+  return { onOpenDetail, onDeleteItem, onMarkAsWatched };
+}
+
 describe("BacklogCard", () => {
+  test("カード本体は button role で詳細を開ける", async () => {
+    const { onOpenDetail } = renderClosedCard();
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: /テスト作品/ }));
+
+    expect(onOpenDetail).toHaveBeenCalledTimes(1);
+  });
+
+  test("Enter キーで詳細を開く", async () => {
+    const { onOpenDetail } = renderClosedCard();
+    const user = userEvent.setup();
+
+    const card = screen.getByRole("button", { name: /テスト作品/ });
+    card.focus();
+    await user.keyboard("{Enter}");
+
+    expect(onOpenDetail).toHaveBeenCalledTimes(1);
+  });
+
   test("メニューを開いても詳細は開かない", async () => {
     const { onOpenDetail } = await renderCard();
 

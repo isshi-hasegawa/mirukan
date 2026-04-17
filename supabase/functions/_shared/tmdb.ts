@@ -315,6 +315,12 @@ type TmdbMetadataCacheRow = {
   expires_at: string | null;
 };
 
+type TmdbTrendingCacheRow = {
+  payload: unknown;
+  rank: number;
+  expires_at: string | null;
+};
+
 async function readTmdbMetadataCache(
   cacheKey: string,
 ): Promise<{ fresh: boolean; payload: unknown } | null> {
@@ -794,16 +800,16 @@ async function readTrendingCache() {
     throw new Error(`Failed to read trending cache: ${error.message}`);
   }
 
-  const results = (data ?? [])
-    .flatMap((row) => {
+  const rows = (data ?? []) as TmdbTrendingCacheRow[];
+  const results = rows
+    .flatMap((row): TmdbSearchResult[] => {
       const result = normalizeCachedSearchResult(row.payload);
       return result ? [result] : [];
     })
-    .filter((result) => !!result);
+    .filter((result): result is TmdbSearchResult => result !== null);
 
   return {
-    fresh:
-      (data ?? []).length > 0 && (data ?? []).every((row) => isCacheEntryFresh(row.expires_at)),
+    fresh: rows.length > 0 && rows.every((row) => isCacheEntryFresh(row.expires_at)),
     results,
     admin,
   };
@@ -1104,13 +1110,20 @@ async function fetchImdbId(
   }
 }
 
+function buildTmdbWorkDetailsPath(target: TmdbSelectionTarget): string {
+  if (target.tmdbMediaType === "movie") {
+    return `/movie/${target.tmdbId}`;
+  }
+
+  if (target.workType === "season") {
+    return `/tv/${target.tmdbId}/season/${target.seasonNumber}`;
+  }
+
+  return `/tv/${target.tmdbId}`;
+}
+
 export async function fetchTmdbWorkDetails(target: TmdbSelectionTarget): Promise<TmdbWorkDetails> {
-  const path =
-    target.tmdbMediaType === "movie"
-      ? `/movie/${target.tmdbId}`
-      : target.workType === "season"
-        ? `/tv/${target.tmdbId}/season/${target.seasonNumber}`
-        : `/tv/${target.tmdbId}`;
+  const path = buildTmdbWorkDetailsPath(target);
 
   const [response, translatedTitle, imdbId] = await Promise.all([
     fetchTmdbJson<TmdbMovieDetailsResponse | TmdbTvDetailsResponse | TmdbSeasonDetailsResponse>(

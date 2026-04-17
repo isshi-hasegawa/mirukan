@@ -1,6 +1,11 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
 
-function createSupabaseAdminClient(supabaseUrl: string, serviceRoleKey: string) {
+type SupabaseAdminClient = SupabaseClient;
+
+function createSupabaseAdminClient(
+  supabaseUrl: string,
+  serviceRoleKey: string,
+): SupabaseAdminClient {
   return createClient(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
@@ -9,9 +14,9 @@ function createSupabaseAdminClient(supabaseUrl: string, serviceRoleKey: string) 
   });
 }
 
-let cachedClient = null;
+let cachedClient: SupabaseAdminClient | null = null;
 
-export function getSupabaseAdminClient() {
+export function getSupabaseAdminClient(): SupabaseAdminClient | null {
   if (cachedClient) {
     return cachedClient;
   }
