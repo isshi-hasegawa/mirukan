@@ -5,7 +5,7 @@ import {
   filterBacklogIssues,
   filterBacklogSignals,
   normalizeComponentPath,
-  parseDenoCoverageReport,
+  parseDenoCoverageArtifacts,
   parseMeasureValue,
   parseMinutes,
   parseVitestCoverageSummary,
@@ -91,8 +91,11 @@ async function main() {
     readOptionalFile("coverage/coverage-summary.json").then((value) =>
       value ? parseVitestCoverageSummary(value) : null,
     ),
-    readOptionalFile("coverage/deno/report.txt").then((value) =>
-      value ? parseDenoCoverageReport(value) : null,
+    Promise.all([
+      readOptionalFile("coverage/deno/lcov.info"),
+      readOptionalFile("coverage/deno/report.txt"),
+    ]).then(([lcovReport, summaryReport]) =>
+      parseDenoCoverageArtifacts({ lcovReport, summaryReport }),
     ),
   ]);
 

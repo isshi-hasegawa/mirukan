@@ -4,6 +4,7 @@ import {
   filterBacklogSignals,
   normalizeComponentPath,
   parseDenoCoverageReport,
+  parseDenoCoverageArtifacts,
   parseMeasureValue,
   parseMinutes,
   parseVitestCoverageSummary,
@@ -57,12 +58,30 @@ describe("coverage parsers", () => {
             branches: { pct: 70 },
             functions: { pct: 76 },
           },
+          "src/lib/low.ts": {
+            lines: { pct: 62.5 },
+            branches: { pct: 40 },
+            functions: { pct: 50 },
+          },
+          "src/lib/high.ts": {
+            lines: { pct: 92 },
+            branches: { pct: 85 },
+            functions: { pct: 88 },
+          },
         }),
       ),
     ).toEqual({
       lines: 75,
       branches: 70,
       functions: 76,
+      lowCoverageFiles: [
+        {
+          path: "src/lib/low.ts",
+          lines: 62.5,
+          branches: 40,
+          functions: 50,
+        },
+      ],
     });
   });
 
@@ -71,18 +90,68 @@ describe("coverage parsers", () => {
     expect(parseVitestCoverageSummary(JSON.stringify({ total: {} }))).toBeNull();
   });
 
-  test("deno coverage の summary 行から lines を読む", () => {
+  test("deno coverage の lcov から集計値と低カバレッジファイルを読む", () => {
     expect(
       parseDenoCoverageReport(`
-File                 | Branch % | Line % |
-foo.ts               |   100.0  |   80.0 |
-
-cover 66.7% (20/30)
+TN:
+SF:file:///workspace/supabase/functions/_shared/gemini.ts
+FNF:4
+FNH:3
+BRF:15
+BRH:7
+LF:110
+LH:49
+end_of_record
+SF:file:///workspace/supabase/functions/_shared/tmdb.ts
+FNF:13
+FNH:12
+BRF:43
+BRH:28
+LF:330
+LH:238
+end_of_record
 `),
+    ).toEqual({
+      lines: 65.22727272727272,
+      branches: 60.3448275862069,
+      functions: 88.23529411764706,
+      lowCoverageFiles: [
+        {
+          path: "/workspace/supabase/functions/_shared/gemini.ts",
+          lines: 44.54545454545455,
+          branches: 46.666666666666664,
+          functions: 75,
+        },
+        {
+          path: "/workspace/supabase/functions/_shared/tmdb.ts",
+          lines: 72.12121212121212,
+          branches: 65.11627906976744,
+          functions: 92.3076923076923,
+        },
+      ],
+    });
+  });
+
+  test("deno coverage の旧 summary 行も fallback で読める", () => {
+    expect(parseDenoCoverageReport("cover 66.7% (20/30)")).toEqual({
+      lines: 66.7,
+      branches: null,
+      functions: null,
+      lowCoverageFiles: [],
+    });
+  });
+
+  test("deno coverage artifacts は lcov が壊れていたら summary に fallback する", () => {
+    expect(
+      parseDenoCoverageArtifacts({
+        lcovReport: "not a valid lcov",
+        summaryReport: "cover 66.7% (20/30)",
+      }),
     ).toEqual({
       lines: 66.7,
       branches: null,
       functions: null,
+      lowCoverageFiles: [],
     });
   });
 
@@ -348,13 +417,38 @@ describe("buildQualityReportIssue", () => {
         longFiles: [{ path: "src/lib/example.ts", value: 520, detail: "8 code smells" }],
         complexFiles: [{ path: "src/lib/example.ts", value: 21, detail: "complexity 30" }],
         duplicateFiles: [{ path: "src/lib/example.ts", value: 6.5, detail: "520 lines" }],
-        vitestCoverage: { lines: 75, branches: 70, functions: 76 },
-        denoCoverage: { lines: 66.7, branches: null, functions: null },
+        vitestCoverage: {
+          lines: 75,
+          branches: 70,
+          functions: 76,
+          lowCoverageFiles: [
+            {
+              path: "src/lib/example.ts",
+              lines: 61,
+              branches: 58,
+              functions: 74,
+            },
+          ],
+        },
+        denoCoverage: {
+          lines: 66.7,
+          branches: null,
+          functions: null,
+          lowCoverageFiles: [
+            {
+              path: "supabase/functions/_shared/gemini.ts",
+              lines: 44.5,
+              branches: 46.7,
+              functions: 75,
+            },
+          ],
+        },
       }),
     );
 
-    expect(result.title).toBe("quality report");
+    expect(result.title).toBe("quality report snapshot (main / 2026-04-11)");
     expect(result.body).toContain("<!-- quality-report:sonarcloud -->");
+    expect(result.body).toContain("# Quality report snapshot");
     expect(result.body).toContain("この Issue は定期生成される quality report snapshot です。");
     expect(result.body).toContain("## 進め方");
     expect(result.body).toContain("## 観測情報");
@@ -379,16 +473,30 @@ describe("buildQualityReportIssue", () => {
     expect(result.body).not.toContain("/opt/clone123");
     expect(result.body).toContain("| `src/lib/example.ts` | 6.5% | 520 lines |");
     expect(result.body).toContain(
-      "- ユニットテスト (vitest): lines 75.0% / branches 70.0% / functions 76.0%",
+      "- アプリ本体のテスト (vitest / src): lines 75.0% / branches 70.0% / functions 76.0%",
     );
-    expect(result.body).toContain("- deno test: lines 66.7%");
+    expect(result.body).toContain(
+      "- Edge Functions のテスト (deno / supabase/functions): lines 66.7%",
+    );
+    expect(result.body).toContain("#### 低カバレッジファイル (アプリ本体 / vitest)");
+    expect(result.body).toContain("| `src/lib/example.ts` | 61.0% | 58.0% | 74.0% |");
+    expect(result.body).toContain("#### 低カバレッジファイル (Edge Functions / deno)");
+    expect(result.body).toContain(
+      "| `supabase/functions/_shared/gemini.ts` | 44.5% | 46.7% | 75.0% |",
+    );
   });
 
   test("カバレッジが null のとき取得不可と表示する", () => {
     const result = buildQualityReportIssue(buildIssueInput());
 
-    expect(result.body).toContain("- ユニットテスト (vitest): 取得不可");
-    expect(result.body).toContain("- deno test: 取得不可");
+    expect(result.body).toContain("- アプリ本体のテスト (vitest / src): 取得不可");
+    expect(result.body).toContain(
+      "- Edge Functions のテスト (deno / supabase/functions): 取得不可",
+    );
+    expect(result.body).toContain("#### 低カバレッジファイル (アプリ本体 / vitest)\n\n- 取得不可");
+    expect(result.body).toContain(
+      "#### 低カバレッジファイル (Edge Functions / deno)\n\n- 取得不可",
+    );
   });
 
   test("絶対パスだけを repo 相対に正規化し、相対パスの quick win label は壊さない", () => {
