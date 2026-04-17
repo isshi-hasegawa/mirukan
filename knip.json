@@ -19,6 +19,7 @@
   "ignoreDependencies": [
     "@tailwindcss/postcss",
     "autoprefixer",
+    "deno",
     "jsr",
     "npm",
     "shadcn",
