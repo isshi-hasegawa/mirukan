@@ -15,6 +15,13 @@ type RankedSignalLike = {
   detail: string;
 };
 
+type CoverageFileLike = {
+  path: string;
+  lines: number;
+  branches?: number | null;
+  functions?: number | null;
+};
+
 type QuickWinGroup = {
   key: string;
   label: string;
@@ -70,6 +77,21 @@ export function renderRankedSignals(
   ];
 }
 
+export function renderCoverageFiles(rows: CoverageFileLike[]) {
+  if (rows.length === 0) {
+    return ["- 該当なし"];
+  }
+
+  return [
+    "| file | lines | branches | functions |",
+    "| --- | ---: | ---: | ---: |",
+    ...rows.map(
+      (row) =>
+        `| \`${toDisplayPath(row.path)}\` | ${formatPercent(row.lines)} | ${formatOptionalPercent(row.branches)} | ${formatOptionalPercent(row.functions)} |`,
+    ),
+  ];
+}
+
 export function formatMinutes(value: number | undefined) {
   if (value == null) {
     return "-";
@@ -121,6 +143,10 @@ function renderQuickWinExample(example: SonarIssueLike, projectKey: string, sona
 
 function formatRankValue(label: string, value: number) {
   return label === "duplicated lines density" ? formatPercent(value) : formatNumber(value);
+}
+
+function formatOptionalPercent(value: number | null | undefined) {
+  return value == null ? "-" : formatPercent(value);
 }
 
 function groupQuickWinIssues(issues: SonarIssueLike[], projectKey: string): QuickWinGroup[] {

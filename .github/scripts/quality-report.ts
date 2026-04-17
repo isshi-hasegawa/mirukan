@@ -91,9 +91,9 @@ async function main() {
     readOptionalFile("coverage/coverage-summary.json").then((value) =>
       value ? parseVitestCoverageSummary(value) : null,
     ),
-    readOptionalFile("coverage/deno/report.txt").then((value) =>
-      value ? parseDenoCoverageReport(value) : null,
-    ),
+    readOptionalFile("coverage/deno/lcov.info")
+      .then((value) => value ?? readOptionalFile("coverage/deno/report.txt"))
+      .then((value) => (value ? parseDenoCoverageReport(value) : null)),
   ]);
 
   const observedAt =
