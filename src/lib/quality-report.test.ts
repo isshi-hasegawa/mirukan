@@ -335,8 +335,13 @@ describe("buildQualityReportIssue", () => {
     expect(result.title).toBe("quality report");
     expect(result.body).toContain("<!-- quality-report:sonarcloud -->");
     expect(result.body).toContain("この Issue は定期生成される quality report snapshot です。");
+    expect(result.body).toContain("## 進め方");
+    expect(result.body).toContain("## 観測情報");
     expect(result.body).toContain("- まず `バグ`、次に `脆弱性`、その次に `すぐ直す` を優先");
     expect(result.body).toContain("- PR では原則 `Closes` を使わず、必要なら `Refs` に留める");
+    expect(result.body).toContain(
+      "- 大きすぎる変更を 1 PR に詰め込みすぎない\n\n## 観測情報\n\n- 観測日時: 2026-04-11 10:00 JST",
+    );
     expect(result.body).not.toContain("workflow:");
     expect(result.body).toContain("maintainability debt: 2 h 15 min");
     expect(result.body).toContain("## バグ (0件)");
