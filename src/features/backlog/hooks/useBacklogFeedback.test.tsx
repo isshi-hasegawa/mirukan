@@ -1,18 +1,27 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { useBacklogFeedback } from "./useBacklogFeedback.tsx";
 
+function settleFeedback<T>(result: T | Promise<T>) {
+  Promise.resolve(result).catch(() => undefined);
+}
+
 function FeedbackHarness() {
   const { feedback, feedbackUi } = useBacklogFeedback();
 
   return (
     <>
-      <button type="button" onClick={() => void feedback.alert("通知メッセージ")}>
+      <button
+        type="button"
+        onClick={() => {
+          settleFeedback(feedback.alert("通知メッセージ"));
+        }}
+      >
         alert
       </button>
       <button
         type="button"
         onClick={() => {
-          void feedback.confirm("本当に続けますか?");
+          settleFeedback(feedback.confirm("本当に続けますか?"));
         }}
       >
         confirm
@@ -20,7 +29,9 @@ function FeedbackHarness() {
       <button
         type="button"
         onClick={() => {
-          void feedback.toast("保存しました", { undoLabel: "元に戻す", timeoutMs: 1000 });
+          settleFeedback(
+            feedback.toast("保存しました", { undoLabel: "元に戻す", timeoutMs: 1000 }),
+          );
         }}
       >
         toast
@@ -28,7 +39,7 @@ function FeedbackHarness() {
       <button
         type="button"
         onClick={() => {
-          void feedback.toast("別の保存", { timeoutMs: 1000 });
+          settleFeedback(feedback.toast("別の保存", { timeoutMs: 1000 }));
         }}
       >
         replace toast
@@ -59,7 +70,7 @@ describe("useBacklogFeedback", () => {
           <button
             type="button"
             onClick={() => {
-              void feedback.confirm("本当に続けますか?").then(resolver);
+              Promise.resolve(feedback.confirm("本当に続けますか?")).then(resolver);
             }}
           >
             open confirm
@@ -93,9 +104,9 @@ describe("useBacklogFeedback", () => {
           <button
             type="button"
             onClick={() => {
-              void feedback
-                .toast("保存しました", { undoLabel: "元に戻す", timeoutMs: 1000 })
-                .then(firstResolver);
+              Promise.resolve(
+                feedback.toast("保存しました", { undoLabel: "元に戻す", timeoutMs: 1000 }),
+              ).then(firstResolver);
             }}
           >
             open first toast
@@ -103,7 +114,7 @@ describe("useBacklogFeedback", () => {
           <button
             type="button"
             onClick={() => {
-              void feedback.toast("次の保存", { timeoutMs: 1000 }).then(secondResolver);
+              Promise.resolve(feedback.toast("次の保存", { timeoutMs: 1000 })).then(secondResolver);
             }}
           >
             open second toast
@@ -151,7 +162,7 @@ describe("useBacklogFeedback", () => {
           <button
             type="button"
             onClick={() => {
-              void feedback.confirm("確認").then(resolver);
+              Promise.resolve(feedback.confirm("確認")).then(resolver);
             }}
           >
             open confirm
