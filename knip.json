@@ -1,6 +1,12 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "entry": ["supabase/functions/*/index.ts", "supabase/functions/**/*_test.ts"],
+  "entry": [
+    "supabase/functions/*/index.ts",
+    "supabase/functions/**/*_test.ts",
+    "playwright.integration.config.ts",
+    "e2e/global-setup.ts",
+    "e2e/mock-supabase-server.ts"
+  ],
   "project": [
     "src/**/*.{ts,tsx}",
     "supabase/functions/**/*.ts",

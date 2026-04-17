@@ -1,13 +1,13 @@
 import { expect, type Locator, type Page, type TestInfo } from "@playwright/test";
 
 const TEST_USER_EMAIL = process.env.TEST_USER_EMAIL || "akari@example.com";
-const TEST_USER_PASSWORD = process.env.TEST_USER_PASSWORD || "password123";
+const TEST_USER_SECRET = process.env.TEST_USER_SECRET || "ci-login-token";
 
 export async function login(page: Page) {
   await page.goto("/");
   const submitButton = page.locator('form button[type="submit"]');
   await page.getByLabel("メールアドレス").fill(TEST_USER_EMAIL);
-  await page.getByLabel("パスワード").fill(TEST_USER_PASSWORD);
+  await page.getByLabel("パスワード").fill(TEST_USER_SECRET);
   await submitButton.click();
   await expect(page.getByRole("button", { name: "作品を検索してストックに追加" })).toBeVisible();
 }
@@ -37,6 +37,14 @@ export async function addManualWork(page: Page, title: string) {
   await page.locator('button[type="submit"]').click();
   await expect(page.getByRole("dialog", { name: "作品を追加" })).not.toBeVisible();
   await expect(getCardInColumn(page, "stacked", title)).toBeVisible();
+}
+
+export async function closeDetailModal(page: Page, title: string) {
+  const dialog = page.getByRole("dialog", { name: title });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("textbox")).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await expect(dialog).not.toBeVisible();
 }
 
 export async function deleteCard(page: Page, status: string, title: string) {

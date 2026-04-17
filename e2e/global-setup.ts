@@ -3,7 +3,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 const TEST_USER_EMAIL = process.env.TEST_USER_EMAIL || "akari@example.com";
-const TEST_USER_PASSWORD = process.env.TEST_USER_PASSWORD || "password123";
+const TEST_USER_SECRET = process.env.TEST_USER_SECRET || "password123";
 const AUTH_FILE = path.resolve("e2e/.auth/user.json");
 
 export default async function globalSetup() {
@@ -15,7 +15,7 @@ export default async function globalSetup() {
 
   await page.goto("/");
   await page.getByLabel("メールアドレス").fill(TEST_USER_EMAIL);
-  await page.getByLabel("パスワード").fill(TEST_USER_PASSWORD);
+  await page.getByLabel("パスワード").fill(TEST_USER_SECRET);
   await page.locator('form button[type="submit"]').click();
   await page.getByRole("button", { name: "作品を検索してストックに追加" }).waitFor();
 
