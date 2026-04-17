@@ -1,21 +1,18 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const mockSupabasePort = process.env.MOCK_SUPABASE_PORT || "55432";
+const mockSupabaseUrl = `http://127.0.0.1:${mockSupabasePort}`;
+
 /**
- * Playwright configuration for E2E testing
- * See https://playwright.dev/docs/test-configuration
+ * Playwright configuration for PR browser tests.
  *
- * Project ライン:
- *   必須ライン（CI で常時実行）: chromium
- *   任意ライン（手動 QA・必要時の追加確認）: firefox, webkit, Mobile Chrome
- *
- * CI では `--project chromium` のみを実行する。
- * firefox / webkit / Mobile Chrome は `pnpm test:e2e` でローカル確認するか、
- * 必要なときに `pnpm test:e2e --project firefox` のように個別に実行する。
+ * PR では Supabase の mock backend を併用して高速な browser test を回す。
+ * 本物の Supabase を使う統合確認は `playwright.integration.config.ts` 側で扱う。
  */
 export default defineConfig({
   testDir: "./e2e",
   testMatch: "**/*.spec.ts",
-  globalSetup: "./e2e/global-setup.ts",
+  globalSetup: "./e2e/global-setup-mock.ts",
 
   /* Run tests in files in parallel */
   fullyParallel: true,
@@ -60,7 +57,7 @@ export default defineConfig({
 
     // ── 任意ライン（手動 QA・必要時の追加確認） ──────────────────────────
     // 通常の CI チェックには含めない。
-    // ローカルで `pnpm test:e2e --project firefox` のように個別実行する。
+    // ローカルで `vp test:e2e -- --project firefox` のように個別実行する。
     {
       name: "firefox",
       use: { ...devices["Desktop Firefox"] },
@@ -79,10 +76,16 @@ export default defineConfig({
     },
   ],
 
-  /* Run your local dev server before starting the tests */
-  webServer: {
-    command: "vp dev",
-    url: "http://localhost:5173",
-    reuseExistingServer: !process.env.CI,
-  },
+  webServer: [
+    {
+      command: `MOCK_SUPABASE_PORT=${mockSupabasePort} vp exec node --experimental-strip-types e2e/mock-supabase-server.ts`,
+      url: `${mockSupabaseUrl}/health`,
+      reuseExistingServer: !process.env.CI,
+    },
+    {
+      command: `zsh -lc 'VITE_SUPABASE_URL=${mockSupabaseUrl} vp build && VITE_SUPABASE_URL=${mockSupabaseUrl} vp preview --host 127.0.0.1 --port 5173'`,
+      url: "http://localhost:5173",
+      reuseExistingServer: !process.env.CI,
+    },
+  ],
 });

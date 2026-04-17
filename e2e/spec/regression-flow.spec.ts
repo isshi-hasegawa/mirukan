@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import {
   addManualWork,
   buildUniqueTitle,
+  closeDetailModal,
   deleteCard,
   dragCardToColumn,
   getCardInColumn,
@@ -19,7 +20,7 @@ test("手動追加したカードを編集して列移動し、最後に削除�
   const stackedCard = getCardInColumn(page, "stacked", title);
   await stackedCard.click();
 
-  const detailModal = page.getByRole("dialog");
+  const detailModal = page.getByRole("dialog", { name: title });
   await expect(detailModal).toBeVisible();
 
   await detailModal.getByRole("button", { name: "メモを追加" }).click();
@@ -30,15 +31,21 @@ test("手動追加したカードを編集して列移動し、最後に削除�
   await expect(detailModal.getByText(note)).toBeVisible();
   await detailModal.getByRole("button", { name: "Netflix" }).click();
 
-  await page.keyboard.press("Escape");
-  await expect(detailModal).not.toBeVisible();
+  await closeDetailModal(page, title);
 
   await page.reload();
   const reloadedStackedCard = getCardInColumn(page, "stacked", title);
   await expect(reloadedStackedCard).toBeVisible();
   await expect(reloadedStackedCard.getByText(note, { exact: true })).toBeVisible();
 
+  const persistMove = page.waitForResponse(
+    (response) =>
+      response.request().method() === "PATCH" &&
+      response.url().includes("/rest/v1/backlog_items") &&
+      response.ok(),
+  );
   await dragCardToColumn(page, reloadedStackedCard, "want_to_watch");
+  await persistMove;
   await expect(getCardInColumn(page, "want_to_watch", title)).toBeVisible();
   await expect(getCardInColumn(page, "stacked", title)).toHaveCount(0);
 

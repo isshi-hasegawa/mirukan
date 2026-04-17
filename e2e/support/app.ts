@@ -39,6 +39,14 @@ export async function addManualWork(page: Page, title: string) {
   await expect(getCardInColumn(page, "stacked", title)).toBeVisible();
 }
 
+export async function closeDetailModal(page: Page, title: string) {
+  const dialog = page.getByRole("dialog", { name: title });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("textbox")).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await expect(dialog).not.toBeVisible();
+}
+
 export async function deleteCard(page: Page, status: string, title: string) {
   const card = getCardInColumn(page, status, title);
   await expect(card).toBeVisible();
