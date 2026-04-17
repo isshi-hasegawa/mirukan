@@ -4,6 +4,7 @@ import { ContactDialog } from "./ContactDialog.tsx";
 describe("ContactDialog", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   test("問い合わせ先と不具合報告先を表示する", () => {
