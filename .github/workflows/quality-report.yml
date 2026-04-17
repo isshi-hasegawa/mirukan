@@ -13,7 +13,6 @@ env:
   VP_BOOTSTRAP_VERSION: 0.1.14
   IMPLEMENTATION_LABEL: implementation
   QUALITY_REPORT_MARKER: <!-- quality-report:sonarcloud -->
-  QUALITY_REPORT_TITLE: quality report
   QUALITY_REPORT_OUTPUT_DIR: artifacts/quality-report
   SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
   SONAR_BRANCH: main
@@ -77,7 +76,7 @@ jobs:
             --color "1f883d" \
             || true
 
-          issue_title="$QUALITY_REPORT_TITLE"
+          issue_title="$(<"$QUALITY_REPORT_OUTPUT_DIR/title.txt")"
           new_issue_url=$(
             gh issue create \
               --title "$issue_title" \

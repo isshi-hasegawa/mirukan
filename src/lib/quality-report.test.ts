@@ -431,8 +431,9 @@ describe("buildQualityReportIssue", () => {
       }),
     );
 
-    expect(result.title).toBe("quality report");
+    expect(result.title).toBe("quality report snapshot (main / 2026-04-11)");
     expect(result.body).toContain("<!-- quality-report:sonarcloud -->");
+    expect(result.body).toContain("# Quality report snapshot");
     expect(result.body).toContain("この Issue は定期生成される quality report snapshot です。");
     expect(result.body).toContain("## 進め方");
     expect(result.body).toContain("## 観測情報");

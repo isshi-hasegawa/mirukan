@@ -284,11 +284,11 @@ export function buildQualityReportIssue({
   const base = trimTrailingSlash(sonarBaseUrl);
   const encodedKey = encodeURIComponent(projectKey);
   const overallDashboardUrl = `${base}/summary/overall?id=${encodedKey}&branch=${encodeURIComponent(branchName)}`;
-  const issueTitle = "quality report";
+  const issueTitle = buildQualityReportTitle({ observedAt, branchName });
   const issueBody = [
     QUALITY_REPORT_MARKER,
     "",
-    "# Quality report",
+    "# Quality report snapshot",
     "",
     "この Issue は定期生成される quality report snapshot です。最新の観測結果をもとに、今回対応する項目を自分で選んで進めてください。",
     "",
@@ -385,6 +385,15 @@ function renderCoverageFileSection(coverage: TestCoverage | null) {
   }
 
   return renderCoverageFiles(coverage.lowCoverageFiles);
+}
+
+function buildQualityReportTitle(input: { observedAt: string; branchName: string }) {
+  return `quality report snapshot (${input.branchName} / ${extractObservedDate(input.observedAt)})`;
+}
+
+function extractObservedDate(value: string) {
+  const matched = /^(\d{4}-\d{2}-\d{2})/.exec(value);
+  return matched?.[1] ?? value;
 }
 
 function trimTrailingSlash(value: string) {
