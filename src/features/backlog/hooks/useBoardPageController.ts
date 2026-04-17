@@ -80,7 +80,7 @@ export function useBoardPageController({ session }: UseBoardPageControllerOption
       onClose: boardPageState.handleCloseAddModal,
       onAdded: () => {
         boardPageState.handleNavigateToStacked();
-        void loadItems();
+        loadItems().catch(() => {});
       },
     },
     detailModal: {

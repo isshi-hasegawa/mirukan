@@ -75,7 +75,7 @@ function HookHarness({
   onWorksAdded = vi.fn(),
   results = [createSearchResult()],
   feedback = createToastFeedback(),
-}: {
+}: Readonly<{
   items?: BacklogItem[];
   localItems?: BacklogItem[];
   setLocalItems?: React.Dispatch<React.SetStateAction<BacklogItem[]>>;
@@ -85,7 +85,7 @@ function HookHarness({
   onWorksAdded?: () => void;
   results?: TmdbSearchResult[];
   feedback?: ReturnType<typeof createToastFeedback>;
-}) {
+}>) {
   const { handleDeleteItem, handleAddTmdbWorksToStacked } = useBacklogActions({
     items,
     localItems: localItems ?? items,

@@ -86,11 +86,12 @@ export function calcBackgroundFitScore(
   ratings: RatingInfo = DEFAULT_RATING_INFO,
 ): number {
   if (genres.some((genre) => BG_LOW_GENRES.has(genre))) return 0;
-  const genreScore = genres.some((genre) => BG_HIGH_GENRES.has(genre))
-    ? 75
-    : genres.some((genre) => BG_MED_GENRES.has(genre))
-      ? 50
-      : 25;
+  let genreScore = 25;
+  if (genres.some((genre) => BG_HIGH_GENRES.has(genre))) {
+    genreScore = 75;
+  } else if (genres.some((genre) => BG_MED_GENRES.has(genre))) {
+    genreScore = 50;
+  }
   if (genreScore >= 50 && isHighlyRated(ratings)) return 25;
   return genreScore;
 }
