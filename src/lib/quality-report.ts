@@ -99,7 +99,12 @@ export function parseVitestCoverageSummary(value: string): TestCoverage | null {
     return null;
   }
 
-  const total = getRecordValue(parsed, "total");
+  const parsedRecord = asRecord(parsed);
+  if (!parsedRecord) {
+    return null;
+  }
+
+  const total = getRecordValue(parsedRecord, "total");
   if (!total) {
     return null;
   }
@@ -114,7 +119,7 @@ export function parseVitestCoverageSummary(value: string): TestCoverage | null {
     branches: getCoverageMetricPct(total, "branches"),
     functions: getCoverageMetricPct(total, "functions"),
     lowCoverageFiles: rankLowCoverageFiles(
-      Object.entries(parsed)
+      Object.entries(parsedRecord)
         .filter(([path]) => path !== "total")
         .flatMap(([path, metrics]) => {
           const coverageFile = parseCoverageFile(path, metrics);
@@ -452,6 +457,14 @@ function getRecordValue(
     | number
     | string
     | null;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  return value as Record<string, unknown>;
 }
 
 type CoverageCounts = {
