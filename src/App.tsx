@@ -99,6 +99,11 @@ function LazyRouteErrorFallback() {
   );
 }
 
+function clearRecoveryState(setIsPasswordRecovery: (value: boolean) => void) {
+  setIsPasswordRecovery(false);
+  clearPasswordRecoveryLocation();
+}
+
 function AuthenticatedApp() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(() =>
@@ -118,16 +123,19 @@ function AuthenticatedApp() {
     const {
       data: { subscription },
     } = onAuthStateChange((event, session) => {
-      if (event === "PASSWORD_RECOVERY") {
-        setIsPasswordRecovery(true);
-      } else if (event === "USER_UPDATED") {
-        setIsPasswordRecovery(false);
-        clearPasswordRecoveryLocation();
-      } else if (event === "SIGNED_IN") {
-        setIsPasswordRecovery(isPasswordRecoveryLocation(globalThis.location));
-      } else if (event === "SIGNED_OUT") {
-        setIsPasswordRecovery(false);
-        clearPasswordRecoveryLocation();
+      switch (event) {
+        case "PASSWORD_RECOVERY":
+          setIsPasswordRecovery(true);
+          break;
+        case "USER_UPDATED":
+        case "SIGNED_OUT":
+          clearRecoveryState(setIsPasswordRecovery);
+          break;
+        case "SIGNED_IN":
+          setIsPasswordRecovery(isPasswordRecoveryLocation(globalThis.location));
+          break;
+        default:
+          break;
       }
 
       setSession(session);

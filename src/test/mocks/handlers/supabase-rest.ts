@@ -159,22 +159,55 @@ function sortByOrderParams<T extends Record<string, unknown>>(rows: T[], url: UR
 
   return [...rows].sort((left, right) => {
     for (const orderParam of orderParams) {
-      const [column, direction = "asc"] = orderParam.split(".");
-      const leftValue = left[column];
-      const rightValue = right[column];
-      if (leftValue === rightValue) {
-        continue;
+      const comparison = compareByOrderParam(left, right, orderParam);
+      if (comparison !== 0) {
+        return comparison;
       }
-
-      if (leftValue === null || leftValue === undefined) return direction === "desc" ? 1 : -1;
-      if (rightValue === null || rightValue === undefined) return direction === "desc" ? -1 : 1;
-
-      if (leftValue < rightValue) return direction === "desc" ? 1 : -1;
-      if (leftValue > rightValue) return direction === "desc" ? -1 : 1;
     }
 
     return 0;
   });
+}
+
+function compareByOrderParam<T extends Record<string, unknown>>(
+  left: T,
+  right: T,
+  orderParam: string,
+) {
+  const [column, direction = "asc"] = orderParam.split(".");
+  return compareOrderedValues(
+    left[column] as string | number | boolean | null | undefined,
+    right[column] as string | number | boolean | null | undefined,
+    direction,
+  );
+}
+
+function compareOrderedValues(
+  leftValue: string | number | boolean | null | undefined,
+  rightValue: string | number | boolean | null | undefined,
+  direction: string,
+) {
+  if (leftValue === rightValue) {
+    return 0;
+  }
+
+  if (leftValue === null || leftValue === undefined) {
+    return direction === "desc" ? 1 : -1;
+  }
+
+  if (rightValue === null || rightValue === undefined) {
+    return direction === "desc" ? -1 : 1;
+  }
+
+  if (leftValue < rightValue) {
+    return direction === "desc" ? 1 : -1;
+  }
+
+  if (leftValue > rightValue) {
+    return direction === "desc" ? -1 : 1;
+  }
+
+  return 0;
 }
 
 function materializeBacklogRows(url: URL) {

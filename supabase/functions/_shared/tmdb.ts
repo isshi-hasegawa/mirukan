@@ -1229,12 +1229,13 @@ export async function fetchTmdbWorkDetails(target: TmdbSelectionTarget): Promise
 }
 
 async function fetchPreferredJapaneseTitle(target: TmdbSelectionTarget) {
-  const path =
-    target.tmdbMediaType === "movie"
-      ? `/movie/${target.tmdbId}/translations`
-      : target.workType === "season"
-        ? `/tv/${target.tmdbId}/season/${target.seasonNumber}/translations`
-        : `/tv/${target.tmdbId}/translations`;
+  let path = `/tv/${target.tmdbId}/translations`;
+
+  if (target.tmdbMediaType === "movie") {
+    path = `/movie/${target.tmdbId}/translations`;
+  } else if (target.workType === "season") {
+    path = `/tv/${target.tmdbId}/season/${target.seasonNumber}/translations`;
+  }
 
   return fetchPreferredJapaneseTitleForPath(path, target.tmdbMediaType);
 }
@@ -1251,9 +1252,11 @@ async function fetchPreferredJapaneseTitleForPath(path: string, mediaType: TmdbM
       return null;
     }
 
-    return mediaType === "movie"
-      ? (japaneseTranslation.data.title ?? null)
-      : (japaneseTranslation.data.name ?? null);
+    if (mediaType === "movie") {
+      return japaneseTranslation.data.title ?? null;
+    }
+
+    return japaneseTranslation.data.name ?? null;
   } catch {
     return null;
   }
