@@ -1,15 +1,40 @@
 import {
-  buildRefactoringBacklogIssue,
+  buildQualityReportIssue,
   filterBacklogIssues,
   filterBacklogSignals,
   normalizeComponentPath,
+  parseDenoCoverageReport,
   parseMeasureValue,
   parseMinutes,
+  parseVitestCoverageSummary,
   rankComplexFiles,
   rankDuplicateFiles,
   rankLongFiles,
   selectQuickWinIssues,
-} from "./refactoring-backlog.ts";
+} from "./quality-report.ts";
+
+type BuildQualityReportIssueInput = Parameters<typeof buildQualityReportIssue>[0];
+
+function buildIssueInput(
+  overrides: Partial<BuildQualityReportIssueInput> = {},
+): BuildQualityReportIssueInput {
+  return {
+    projectKey: "mirukan",
+    observedAt: "2026-04-11 10:00 JST",
+    sonarBaseUrl: "https://sonarcloud.io",
+    branchName: "main",
+    projectMeasures: {},
+    bugIssues: [],
+    vulnerabilityIssues: [],
+    quickWinIssues: [],
+    longFiles: [],
+    complexFiles: [],
+    duplicateFiles: [],
+    vitestCoverage: null,
+    denoCoverage: null,
+    ...overrides,
+  };
+}
 
 describe("parseMeasureValue", () => {
   test("数値文字列を number に変換する", () => {
@@ -19,6 +44,50 @@ describe("parseMeasureValue", () => {
   test("空値は null を返す", () => {
     expect(parseMeasureValue("")).toBeNull();
     expect(parseMeasureValue(undefined)).toBeNull();
+  });
+});
+
+describe("coverage parsers", () => {
+  test("vitest coverage-summary.json から集計値を読む", () => {
+    expect(
+      parseVitestCoverageSummary(
+        JSON.stringify({
+          total: {
+            lines: { pct: 75 },
+            branches: { pct: 70 },
+            functions: { pct: 76 },
+          },
+        }),
+      ),
+    ).toEqual({
+      lines: 75,
+      branches: 70,
+      functions: 76,
+    });
+  });
+
+  test("vitest coverage summary が壊れていたら null を返す", () => {
+    expect(parseVitestCoverageSummary("{")).toBeNull();
+    expect(parseVitestCoverageSummary(JSON.stringify({ total: {} }))).toBeNull();
+  });
+
+  test("deno coverage の summary 行から lines を読む", () => {
+    expect(
+      parseDenoCoverageReport(`
+File                 | Branch % | Line % |
+foo.ts               |   100.0  |   80.0 |
+
+cover 66.7% (20/30)
+`),
+    ).toEqual({
+      lines: 66.7,
+      branches: null,
+      functions: null,
+    });
+  });
+
+  test("deno coverage の summary 行がなければ null を返す", () => {
+    expect(parseDenoCoverageReport("no summary")).toBeNull();
   });
 });
 
@@ -233,64 +302,67 @@ describe("selectQuickWinIssues", () => {
   });
 });
 
-describe("buildRefactoringBacklogIssue", () => {
+describe("buildQualityReportIssue", () => {
   test("issue 本文に summary と候補一覧を含める", () => {
-    const result = buildRefactoringBacklogIssue({
-      projectKey: "mirukan",
-      observedAt: "2026-04-11 10:00 JST",
-      sonarBaseUrl: "https://sonarcloud.io",
-      branchName: "main",
-      projectMeasures: {
-        code_smells: 12,
-        sqale_index: 135,
-        duplicated_lines_density: 4.2,
-        duplicated_blocks: 3,
-        cognitive_complexity: 48,
-        complexity: 90,
-        ncloc: 1500,
-      },
-      bugIssues: [],
-      vulnerabilityIssues: [],
-      quickWinIssues: [
-        {
-          key: "issue-1",
-          message:
-            "This assertion is unnecessary since it does not change the type of the expression.",
-          component: "mirukan:src/lib/example.ts",
-          line: 42,
-          rule: "typescript:S4325",
-          effortMinutes: 1,
+    const result = buildQualityReportIssue(
+      buildIssueInput({
+        projectMeasures: {
+          code_smells: 12,
+          sqale_index: 135,
+          duplicated_lines_density: 4.2,
+          duplicated_blocks: 3,
+          cognitive_complexity: 48,
+          complexity: 90,
+          ncloc: 1500,
         },
-        {
-          key: "issue-2",
-          message:
-            "This assertion is unnecessary since it does not change the type of the expression.",
-          component: "mirukan:src/lib/example.test.ts",
-          line: 18,
-          rule: "typescript:S4325",
-          effortMinutes: 1,
-        },
-        {
-          key: "issue-3",
-          message: "'/opt/clone123/src/lib/example.ts' imported multiple times.",
-          component: "mirukan:src/lib/consumer.ts",
-          line: 7,
-          rule: "typescript:S3863",
-          effortMinutes: 1,
-        },
-      ],
-      longFiles: [{ path: "src/lib/example.ts", value: 520, detail: "8 code smells" }],
-      complexFiles: [{ path: "src/lib/example.ts", value: 21, detail: "complexity 30" }],
-      duplicateFiles: [{ path: "src/lib/example.ts", value: 6.5, detail: "520 lines" }],
-    });
-
-    expect(result.title).toBe("refactoring backlog");
-    expect(result.body).toContain("<!-- refactoring-backlog:sonarcloud -->");
-    expect(result.body).toContain(
-      "この Issue は定期生成される refactoring backlog snapshot です。",
+        bugIssues: [],
+        vulnerabilityIssues: [],
+        quickWinIssues: [
+          {
+            key: "issue-1",
+            message:
+              "This assertion is unnecessary since it does not change the type of the expression.",
+            component: "mirukan:src/lib/example.ts",
+            line: 42,
+            rule: "typescript:S4325",
+            effortMinutes: 1,
+          },
+          {
+            key: "issue-2",
+            message:
+              "This assertion is unnecessary since it does not change the type of the expression.",
+            component: "mirukan:src/lib/example.test.ts",
+            line: 18,
+            rule: "typescript:S4325",
+            effortMinutes: 1,
+          },
+          {
+            key: "issue-3",
+            message: "'/opt/clone123/src/lib/example.ts' imported multiple times.",
+            component: "mirukan:src/lib/consumer.ts",
+            line: 7,
+            rule: "typescript:S3863",
+            effortMinutes: 1,
+          },
+        ],
+        longFiles: [{ path: "src/lib/example.ts", value: 520, detail: "8 code smells" }],
+        complexFiles: [{ path: "src/lib/example.ts", value: 21, detail: "complexity 30" }],
+        duplicateFiles: [{ path: "src/lib/example.ts", value: 6.5, detail: "520 lines" }],
+        vitestCoverage: { lines: 75, branches: 70, functions: 76 },
+        denoCoverage: { lines: 66.7, branches: null, functions: null },
+      }),
     );
+
+    expect(result.title).toBe("quality report");
+    expect(result.body).toContain("<!-- quality-report:sonarcloud -->");
+    expect(result.body).toContain("この Issue は定期生成される quality report snapshot です。");
+    expect(result.body).toContain("## 進め方");
+    expect(result.body).toContain("## 観測情報");
     expect(result.body).toContain("- まず `バグ`、次に `脆弱性`、その次に `すぐ直す` を優先");
     expect(result.body).toContain("- PR では原則 `Closes` を使わず、必要なら `Refs` に留める");
+    expect(result.body).toContain(
+      "- 大きすぎる変更を 1 PR に詰め込みすぎない\n\n## 観測情報\n\n- 観測日時: 2026-04-11 10:00 JST",
+    );
     expect(result.body).not.toContain("workflow:");
     expect(result.body).toContain("maintainability debt: 2 h 15 min");
     expect(result.body).toContain("## バグ (0件)");
@@ -306,52 +378,55 @@ describe("buildRefactoringBacklogIssue", () => {
     );
     expect(result.body).not.toContain("/opt/clone123");
     expect(result.body).toContain("| `src/lib/example.ts` | 6.5% | 520 lines |");
+    expect(result.body).toContain(
+      "- ユニットテスト (vitest): lines 75.0% / branches 70.0% / functions 76.0%",
+    );
+    expect(result.body).toContain("- deno test: lines 66.7%");
+  });
+
+  test("カバレッジが null のとき取得不可と表示する", () => {
+    const result = buildQualityReportIssue(buildIssueInput());
+
+    expect(result.body).toContain("- ユニットテスト (vitest): 取得不可");
+    expect(result.body).toContain("- deno test: 取得不可");
   });
 
   test("絶対パスだけを repo 相対に正規化し、相対パスの quick win label は壊さない", () => {
-    const result = buildRefactoringBacklogIssue({
-      projectKey: "mirukan",
-      observedAt: "2026-04-11 10:00 JST",
-      sonarBaseUrl: "https://sonarcloud.io",
-      branchName: "main",
-      projectMeasures: {},
-      bugIssues: [],
-      vulnerabilityIssues: [],
-      quickWinIssues: [
-        {
-          key: "issue-1",
-          message: "'/tmp/clone123/src/lib/example.ts' imported multiple times.",
-          component: "mirukan:src/lib/consumer-a.ts",
-          rule: "typescript:S3863",
-          effortMinutes: 1,
-        },
-        {
-          key: "issue-2",
-          message:
-            "'/opt/actions-runner/_work/mirukan/mirukan/src/features/backlog/types.ts' imported multiple times.",
-          component: "mirukan:src/lib/consumer-b.ts",
-          rule: "typescript:S3863",
-          effortMinutes: 1,
-        },
-        {
-          key: "issue-3",
-          message: "'src/lib/example.ts' imported multiple times.",
-          component: "mirukan:src/lib/consumer-c.ts",
-          rule: "typescript:S3863",
-          effortMinutes: 1,
-        },
-        {
-          key: "issue-4",
-          message: "'supabase/functions/foo.ts' imported multiple times.",
-          component: "mirukan:src/lib/consumer-d.ts",
-          rule: "typescript:S3863",
-          effortMinutes: 1,
-        },
-      ],
-      longFiles: [],
-      complexFiles: [],
-      duplicateFiles: [],
-    });
+    const result = buildQualityReportIssue(
+      buildIssueInput({
+        quickWinIssues: [
+          {
+            key: "issue-1",
+            message: "'/tmp/clone123/src/lib/example.ts' imported multiple times.",
+            component: "mirukan:src/lib/consumer-a.ts",
+            rule: "typescript:S3863",
+            effortMinutes: 1,
+          },
+          {
+            key: "issue-2",
+            message:
+              "'/opt/actions-runner/_work/mirukan/mirukan/src/features/backlog/types.ts' imported multiple times.",
+            component: "mirukan:src/lib/consumer-b.ts",
+            rule: "typescript:S3863",
+            effortMinutes: 1,
+          },
+          {
+            key: "issue-3",
+            message: "'src/lib/example.ts' imported multiple times.",
+            component: "mirukan:src/lib/consumer-c.ts",
+            rule: "typescript:S3863",
+            effortMinutes: 1,
+          },
+          {
+            key: "issue-4",
+            message: "'supabase/functions/foo.ts' imported multiple times.",
+            component: "mirukan:src/lib/consumer-d.ts",
+            rule: "typescript:S3863",
+            effortMinutes: 1,
+          },
+        ],
+      }),
+    );
 
     expect(result.body).toContain(
       "- 'src/lib/example.ts' imported multiple times. - 2件 (最短 1 min)",
@@ -369,27 +444,19 @@ describe("buildRefactoringBacklogIssue", () => {
   });
 
   test("通常の slash を含むだけのメッセージは変更しない", () => {
-    const result = buildRefactoringBacklogIssue({
-      projectKey: "mirukan",
-      observedAt: "2026-04-11 10:00 JST",
-      sonarBaseUrl: "https://sonarcloud.io",
-      branchName: "main",
-      projectMeasures: {},
-      bugIssues: [],
-      vulnerabilityIssues: [],
-      quickWinIssues: [
-        {
-          key: "issue-1",
-          message: "See docs/ui.md and keep src/lib/example.ts as-is.",
-          component: "mirukan:src/lib/consumer.ts",
-          rule: "custom:message",
-          effortMinutes: 1,
-        },
-      ],
-      longFiles: [],
-      complexFiles: [],
-      duplicateFiles: [],
-    });
+    const result = buildQualityReportIssue(
+      buildIssueInput({
+        quickWinIssues: [
+          {
+            key: "issue-1",
+            message: "See docs/ui.md and keep src/lib/example.ts as-is.",
+            component: "mirukan:src/lib/consumer.ts",
+            rule: "custom:message",
+            effortMinutes: 1,
+          },
+        ],
+      }),
+    );
 
     expect(result.body).toContain(
       "- See docs/ui.md and keep src/lib/example.ts as-is. - 1件 (最短 1 min)",
@@ -397,34 +464,26 @@ describe("buildRefactoringBacklogIssue", () => {
   });
 
   test("bugs が存在する場合にセクションと issue リンクを出力する", () => {
-    const result = buildRefactoringBacklogIssue({
-      projectKey: "mirukan",
-      observedAt: "2026-04-11 10:00 JST",
-      sonarBaseUrl: "https://sonarcloud.io",
-      branchName: "main",
-      projectMeasures: {},
-      bugIssues: [
-        {
-          key: "bug-1",
-          message: "Null pointer dereference.",
-          component: "mirukan:src/lib/example.ts",
-          line: 10,
-          rule: "typescript:S2259",
-        },
-        {
-          key: "bug-2",
-          message: "This condition always evaluates to true.",
-          component: "mirukan:src/features/backlog/types.ts",
-          line: 5,
-          rule: "typescript:S2589",
-        },
-      ],
-      vulnerabilityIssues: [],
-      quickWinIssues: [],
-      longFiles: [],
-      complexFiles: [],
-      duplicateFiles: [],
-    });
+    const result = buildQualityReportIssue(
+      buildIssueInput({
+        bugIssues: [
+          {
+            key: "bug-1",
+            message: "Null pointer dereference.",
+            component: "mirukan:src/lib/example.ts",
+            line: 10,
+            rule: "typescript:S2259",
+          },
+          {
+            key: "bug-2",
+            message: "This condition always evaluates to true.",
+            component: "mirukan:src/features/backlog/types.ts",
+            line: 5,
+            rule: "typescript:S2589",
+          },
+        ],
+      }),
+    );
 
     expect(result.body).toContain("## バグ (2件)");
     expect(result.body).toContain("[src/lib/example.ts:10]");
@@ -434,19 +493,7 @@ describe("buildRefactoringBacklogIssue", () => {
   });
 
   test("bugs / vulnerabilities が 0 件の場合も空セクションを出力する", () => {
-    const result = buildRefactoringBacklogIssue({
-      projectKey: "mirukan",
-      observedAt: "2026-04-11 10:00 JST",
-      sonarBaseUrl: "https://sonarcloud.io",
-      branchName: "main",
-      projectMeasures: {},
-      bugIssues: [],
-      vulnerabilityIssues: [],
-      quickWinIssues: [],
-      longFiles: [],
-      complexFiles: [],
-      duplicateFiles: [],
-    });
+    const result = buildQualityReportIssue(buildIssueInput());
 
     expect(result.body).toContain("## バグ (0件)");
     expect(result.body).toContain("## 脆弱性 (0件)");

@@ -1,4 +1,4 @@
-import { matchesAnyPattern } from "./refactoring-backlog-paths.ts";
+import { matchesAnyPattern } from "./quality-report-paths.ts";
 import {
   formatMinutes,
   formatNumber,
@@ -6,9 +6,9 @@ import {
   renderIssueList,
   renderQuickWinIssues,
   renderRankedSignals,
-} from "./refactoring-backlog-render.ts";
+} from "./quality-report-render.ts";
 
-const REFACTORING_BACKLOG_MARKER = "<!-- refactoring-backlog:sonarcloud -->";
+const QUALITY_REPORT_MARKER = "<!-- quality-report:sonarcloud -->";
 const DEFAULT_BACKLOG_EXCLUDE_PATTERNS = [
   "pnpm-lock.yaml",
   "supabase/migrations/**",
@@ -41,13 +41,19 @@ export type SonarFileSignal = {
   measures: SonarMeasureMap;
 };
 
+type TestCoverage = {
+  lines: number;
+  branches?: number | null;
+  functions?: number | null;
+};
+
 type RankedSignal = {
   path: string;
   value: number;
   detail: string;
 };
 
-type RefactoringBacklogInput = {
+type QualityReportInput = {
   projectKey: string;
   observedAt: string;
   sonarBaseUrl: string;
@@ -59,6 +65,8 @@ type RefactoringBacklogInput = {
   longFiles: RankedSignal[];
   complexFiles: RankedSignal[];
   duplicateFiles: RankedSignal[];
+  vitestCoverage: TestCoverage | null;
+  denoCoverage: TestCoverage | null;
 };
 
 export function parseMeasureValue(value: string | number | null | undefined): number | null {
@@ -72,6 +80,44 @@ export function parseMeasureValue(value: string | number | null | undefined): nu
 
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+export function parseVitestCoverageSummary(value: string): TestCoverage | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value);
+  } catch {
+    return null;
+  }
+
+  const total = getRecordValue(parsed, "total");
+  if (!total) {
+    return null;
+  }
+
+  const lines = getCoverageMetricPct(total, "lines");
+  if (lines == null) {
+    return null;
+  }
+
+  return {
+    lines,
+    branches: getCoverageMetricPct(total, "branches"),
+    functions: getCoverageMetricPct(total, "functions"),
+  };
+}
+
+export function parseDenoCoverageReport(value: string): TestCoverage | null {
+  const coverMatch = /\bcover\s+(\d+(?:\.\d+)?)%\s+\(\d+\/\d+\)/i.exec(value);
+  if (!coverMatch) {
+    return null;
+  }
+
+  return {
+    lines: Number(coverMatch[1]),
+    branches: null,
+    functions: null,
+  };
 }
 
 const MINUTES_PER_UNIT = {
@@ -195,7 +241,7 @@ function effortOrInfinity(value: number | undefined) {
   return value ?? Number.POSITIVE_INFINITY;
 }
 
-export function buildRefactoringBacklogIssue({
+export function buildQualityReportIssue({
   projectKey,
   observedAt,
   sonarBaseUrl,
@@ -207,17 +253,21 @@ export function buildRefactoringBacklogIssue({
   longFiles,
   complexFiles,
   duplicateFiles,
-}: RefactoringBacklogInput) {
+  vitestCoverage,
+  denoCoverage,
+}: QualityReportInput) {
   const base = trimTrailingSlash(sonarBaseUrl);
   const encodedKey = encodeURIComponent(projectKey);
   const overallDashboardUrl = `${base}/summary/overall?id=${encodedKey}&branch=${encodeURIComponent(branchName)}`;
-  const issueTitle = "refactoring backlog";
+  const issueTitle = "quality report";
   const issueBody = [
-    REFACTORING_BACKLOG_MARKER,
+    QUALITY_REPORT_MARKER,
     "",
-    "# Refactoring backlog",
+    "# Quality report",
     "",
-    "この Issue は定期生成される refactoring backlog snapshot です。最新の観測結果をもとに、今回対応する項目を自分で選んで進めてください。",
+    "この Issue は定期生成される quality report snapshot です。最新の観測結果をもとに、今回対応する項目を自分で選んで進めてください。",
+    "",
+    "## 進め方",
     "",
     "- まず `バグ`、次に `脆弱性`、その次に `すぐ直す` を優先",
     "- 余力があれば `構造改善が必要` から安全に触れられるものを追加",
@@ -226,6 +276,8 @@ export function buildRefactoringBacklogIssue({
     "- PR / 最終報告では、対応した項目・見送った項目・実施した検証を整理する",
     "- PR では原則 `Closes` を使わず、必要なら `Refs` に留める",
     "- 大きすぎる変更を 1 PR に詰め込みすぎない",
+    "",
+    "## 観測情報",
     "",
     `- 観測日時: ${observedAt}`,
     `- 対象ブランチ: \`${branchName}\``,
@@ -240,6 +292,11 @@ export function buildRefactoringBacklogIssue({
     `- cognitive complexity: ${formatNumber(projectMeasures.cognitive_complexity)}`,
     `- complexity: ${formatNumber(projectMeasures.complexity)}`,
     `- ncloc: ${formatNumber(projectMeasures.ncloc)}`,
+    "",
+    "### テストカバレッジ",
+    "",
+    `- ユニットテスト (vitest): ${formatCoverage(vitestCoverage)}`,
+    `- deno test: ${formatCoverage(denoCoverage)}`,
     "",
     `## バグ (${bugIssues.length}件)`,
     "",
@@ -275,6 +332,20 @@ export function buildRefactoringBacklogIssue({
   };
 }
 
+function formatCoverage(coverage: TestCoverage | null): string {
+  if (!coverage) {
+    return "取得不可";
+  }
+
+  const metrics = [
+    `lines ${coverage.lines.toFixed(1)}%`,
+    coverage.branches == null ? null : `branches ${coverage.branches.toFixed(1)}%`,
+    coverage.functions == null ? null : `functions ${coverage.functions.toFixed(1)}%`,
+  ].filter((metric): metric is string => metric != null);
+
+  return metrics.length > 0 ? metrics.join(" / ") : "取得不可";
+}
+
 function trimTrailingSlash(value: string) {
   return value.endsWith("/") ? value.slice(0, -1) : value;
 }
@@ -285,4 +356,32 @@ function renderIssueSection(projectKey: string, sonarBaseUrl: string, issues: So
   }
 
   return renderIssueList(projectKey, sonarBaseUrl, issues);
+}
+
+function getCoverageMetricPct(
+  value: unknown,
+  key: "lines" | "branches" | "functions",
+): number | null {
+  const metric = getRecordValue(value, key);
+  if (!metric) {
+    return null;
+  }
+
+  const pct = getRecordValue(metric, "pct");
+  return typeof pct === "number" || typeof pct === "string" ? parseMeasureValue(pct) : null;
+}
+
+function getRecordValue(
+  value: unknown,
+  key: string,
+): Record<string, unknown> | number | string | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  return (value as Record<string, unknown>)[key] as
+    | Record<string, unknown>
+    | number
+    | string
+    | null;
 }

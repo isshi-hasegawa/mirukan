@@ -1,12 +1,14 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import {
-  buildRefactoringBacklogIssue,
+  buildQualityReportIssue,
   filterBacklogIssues,
   filterBacklogSignals,
   normalizeComponentPath,
+  parseDenoCoverageReport,
   parseMeasureValue,
   parseMinutes,
+  parseVitestCoverageSummary,
   rankComplexFiles,
   rankDuplicateFiles,
   rankLongFiles,
@@ -15,7 +17,7 @@ import {
   type SonarIssue,
   type SonarMeasureKey,
   type SonarMeasureMap,
-} from "../../src/lib/refactoring-backlog.ts";
+} from "../../src/lib/quality-report.ts";
 
 const REQUIRED_ENV_KEYS = ["SONAR_PROJECT_KEY", "SONAR_TOKEN"] as const;
 const SONAR_BASE_URL = "https://sonarcloud.io";
@@ -70,16 +72,28 @@ async function main() {
 
   const projectKey = process.env.SONAR_PROJECT_KEY!;
   const branchName = process.env.SONAR_BRANCH || "main";
-  const outputDir = resolve(
-    process.env.REFACTORING_BACKLOG_OUTPUT_DIR || "artifacts/refactoring-backlog",
-  );
+  const outputDir = resolve(process.env.QUALITY_REPORT_OUTPUT_DIR || "artifacts/quality-report");
 
-  const [projectMeasures, fileSignals, codeSmells, bugs, vulnerabilities] = await Promise.all([
+  const [
+    projectMeasures,
+    fileSignals,
+    codeSmells,
+    bugs,
+    vulnerabilities,
+    vitestCoverage,
+    denoCoverage,
+  ] = await Promise.all([
     fetchProjectMeasures({ projectKey, branchName }),
     fetchFileSignals({ projectKey, branchName }),
     fetchIssuesByType({ projectKey, branchName, type: "CODE_SMELL" }),
     fetchIssuesByType({ projectKey, branchName, type: "BUG" }),
     fetchIssuesByType({ projectKey, branchName, type: "VULNERABILITY" }),
+    readOptionalFile("coverage/coverage-summary.json").then((value) =>
+      value ? parseVitestCoverageSummary(value) : null,
+    ),
+    readOptionalFile("coverage/deno/report.txt").then((value) =>
+      value ? parseDenoCoverageReport(value) : null,
+    ),
   ]);
 
   const observedAt =
@@ -96,7 +110,7 @@ async function main() {
   const longFiles = rankLongFiles(filteredFileSignals);
   const complexFiles = rankComplexFiles(filteredFileSignals);
   const duplicateFiles = rankDuplicateFiles(filteredFileSignals);
-  const issue = buildRefactoringBacklogIssue({
+  const issue = buildQualityReportIssue({
     projectKey,
     observedAt,
     sonarBaseUrl: SONAR_BASE_URL,
@@ -108,6 +122,8 @@ async function main() {
     longFiles,
     complexFiles,
     duplicateFiles,
+    vitestCoverage,
+    denoCoverage,
   });
 
   await mkdir(outputDir, { recursive: true });
@@ -115,7 +131,7 @@ async function main() {
   await writeFile(resolve(outputDir, "body.md"), issue.body);
 
   const summary = [
-    "## Refactoring Backlog",
+    "## Quality Report",
     "",
     `- project: \`${projectKey}\``,
     `- code smells: ${projectMeasures.code_smells ?? "-"}`,
@@ -126,6 +142,18 @@ async function main() {
     "",
   ].join("\n");
   await appendStepSummary(summary);
+}
+
+async function readOptionalFile(path: string) {
+  try {
+    return await readFile(resolve(path), "utf8");
+  } catch (error) {
+    if (isMissingFileError(error)) {
+      return null;
+    }
+
+    throw error;
+  }
 }
 
 async function fetchProjectMeasures(input: { projectKey: string; branchName: string }) {
@@ -254,4 +282,8 @@ function assertRequiredEnv() {
   if (missing.length > 0) {
     throw new Error(`Missing required environment variables: ${missing.join(", ")}`);
   }
+}
+
+function isMissingFileError(error: unknown): error is NodeJS.ErrnoException {
+  return error instanceof Error && "code" in error && error.code === "ENOENT";
 }

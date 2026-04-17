@@ -1,0 +1,104 @@
+name: Quality Report
+
+on:
+  schedule:
+    # Sat 00:00 JST
+    - cron: "0 15 * * 5"
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  VITE_SUPABASE_URL: http://127.0.0.1:54321
+  VITE_SUPABASE_PUBLISHABLE_KEY: ci-publishable-key
+  VP_BOOTSTRAP_VERSION: 0.1.14
+  IMPLEMENTATION_LABEL: implementation
+  QUALITY_REPORT_MARKER: <!-- quality-report:sonarcloud -->
+  QUALITY_REPORT_TITLE: quality report
+  QUALITY_REPORT_OUTPUT_DIR: artifacts/quality-report
+  SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
+  SONAR_BRANCH: main
+
+concurrency:
+  group: quality-report-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Run unit tests with coverage
+        continue-on-error: true
+        run: vp exec vitest --coverage --reporter=dot --coverage.reporter=json-summary
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2.0.4
+
+      - name: Cache Deno dependencies
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ~/.cache/deno
+          key: deno-${{ runner.os }}-${{ hashFiles('supabase/functions/**/*.ts') }}
+          restore-keys: |
+            deno-${{ runner.os }}-
+
+      - name: Run Deno tests with coverage
+        continue-on-error: true
+        run: deno test --allow-env --no-check --node-modules-dir=none --coverage=coverage/deno supabase/functions/
+
+      - name: Save Deno coverage report
+        continue-on-error: true
+        run: deno coverage coverage/deno > coverage/deno/report.txt
+
+      - name: Build quality report issue body
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: node --experimental-strip-types .github/scripts/quality-report.ts
+
+      - name: Create report issue and close superseded snapshots
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          gh label create "$IMPLEMENTATION_LABEL" \
+            --description "Ready for coding-agent implementation" \
+            --color "1f883d" \
+            || true
+
+          issue_title="$QUALITY_REPORT_TITLE"
+          new_issue_url=$(
+            gh issue create \
+              --title "$issue_title" \
+              --body-file "$QUALITY_REPORT_OUTPUT_DIR/body.md" \
+              --label "$IMPLEMENTATION_LABEL"
+          )
+          new_issue_number="${new_issue_url##*/}"
+
+          mapfile -t report_issue_numbers < <(
+            gh issue list \
+              --state open \
+              --limit 100 \
+              --json number,body \
+              --jq '.[] | select(.body | contains(env.QUALITY_REPORT_MARKER)) | .number'
+          )
+
+          for issue_number in "${report_issue_numbers[@]}"; do
+            if [[ "$issue_number" == "$new_issue_number" ]]; then
+              continue
+            fi
+
+            gh issue comment "$issue_number" --body "Superseded by #$new_issue_number" || true
+            gh issue close "$issue_number"
+          done
