@@ -1104,13 +1104,20 @@ async function fetchImdbId(
   }
 }
 
+function buildTmdbWorkDetailsPath(target: TmdbSelectionTarget): string {
+  if (target.tmdbMediaType === "movie") {
+    return `/movie/${target.tmdbId}`;
+  }
+
+  if (target.workType === "season") {
+    return `/tv/${target.tmdbId}/season/${target.seasonNumber}`;
+  }
+
+  return `/tv/${target.tmdbId}`;
+}
+
 export async function fetchTmdbWorkDetails(target: TmdbSelectionTarget): Promise<TmdbWorkDetails> {
-  const path =
-    target.tmdbMediaType === "movie"
-      ? `/movie/${target.tmdbId}`
-      : target.workType === "season"
-        ? `/tv/${target.tmdbId}/season/${target.seasonNumber}`
-        : `/tv/${target.tmdbId}`;
+  const path = buildTmdbWorkDetailsPath(target);
 
   const [response, translatedTitle, imdbId] = await Promise.all([
     fetchTmdbJson<TmdbMovieDetailsResponse | TmdbTvDetailsResponse | TmdbSeasonDetailsResponse>(

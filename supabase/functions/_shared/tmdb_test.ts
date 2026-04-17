@@ -52,8 +52,7 @@ async function withMockFetch(
   const originalFetch = globalThis.fetch;
 
   globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
-    const url =
-      input instanceof Request ? new URL(input.url) : input instanceof URL ? input : new URL(input);
+    const url = resolveFetchUrl(input);
     return await handler(url, init);
   }) as typeof fetch;
 
@@ -62,6 +61,218 @@ async function withMockFetch(
   } finally {
     globalThis.fetch = originalFetch;
   }
+}
+
+function resolveFetchUrl(input: string | URL | Request): URL {
+  if (input instanceof Request) {
+    return new URL(input.url);
+  }
+
+  if (input instanceof URL) {
+    return input;
+  }
+
+  return new URL(input);
+}
+
+function isTmdbRequest(url: URL, pathname: string): boolean {
+  return url.hostname === "api.themoviedb.org" && url.pathname === pathname;
+}
+
+function isGeminiGenerateContentRequest(url: URL): boolean {
+  return (
+    url.hostname === "generativelanguage.googleapis.com" &&
+    url.pathname.endsWith(":generateContent")
+  );
+}
+
+function handleLocalizedSearchFallbackFetch(url: URL, init?: RequestInit): Response {
+  if (isTmdbRequest(url, "/3/search/multi")) {
+    if (url.searchParams.get("query") === "Seven Samurai") {
+      return jsonResponse({
+        results: [
+          {
+            id: 20,
+            media_type: "movie",
+            title: "Seven Samurai",
+            original_title: "Seven Samurai",
+            overview: "",
+            poster_path: null,
+            release_date: "1954-04-26",
+          },
+        ],
+      });
+    }
+
+    return jsonResponse({ results: [] });
+  }
+
+  if (isGeminiGenerateContentRequest(url)) {
+    assertEquals(init?.method, "POST");
+    return jsonResponse({
+      candidates: [
+        {
+          content: {
+            parts: [{ text: '{"query":"Seven Samurai"}' }],
+          },
+        },
+      ],
+    });
+  }
+
+  if (isTmdbRequest(url, "/3/movie/20/watch/providers")) {
+    return jsonResponse({ results: { JP: { flatrate: [] } } });
+  }
+
+  if (isTmdbRequest(url, "/3/movie/20/release_dates")) {
+    return jsonResponse({
+      results: [
+        {
+          iso_3166_1: "US",
+          release_dates: [{ release_date: "1954-10-01" }],
+        },
+      ],
+    });
+  }
+
+  if (isTmdbRequest(url, "/3/movie/20/external_ids")) {
+    return jsonResponse({ imdb_id: null });
+  }
+
+  if (isTmdbRequest(url, "/3/movie/20")) {
+    return jsonResponse({
+      id: 20,
+      title: "Seven Samurai",
+      original_title: "七人の侍",
+      overview: "黒澤明による時代劇。",
+      poster_path: "/seven-samurai.jpg",
+      release_date: "1954-04-26",
+    });
+  }
+
+  if (isTmdbRequest(url, "/3/movie/20/translations")) {
+    return jsonResponse({
+      translations: [
+        {
+          iso_639_1: "ja",
+          iso_3166_1: "JP",
+          data: { title: "七人の侍" },
+        },
+      ],
+    });
+  }
+
+  throw new Error(`Unhandled fetch: ${url.toString()}`);
+}
+
+function handleTrendingFetch(url: URL): Response {
+  if (isTmdbRequest(url, "/3/trending/all/week")) {
+    const page = url.searchParams.get("page");
+    if (page === "1") {
+      return jsonResponse({
+        results: [
+          {
+            id: 31,
+            media_type: "movie",
+            title: "Movie One",
+            original_title: "Movie One Original",
+            overview: "movie overview",
+            poster_path: "/movie-one.jpg",
+            release_date: "2024-01-01",
+          },
+        ],
+      });
+    }
+
+    if (page === "2") {
+      return jsonResponse({
+        results: [
+          {
+            id: 31,
+            media_type: "movie",
+            title: "Movie One",
+            original_title: "Movie One Original",
+            overview: "movie overview",
+            poster_path: "/movie-one.jpg",
+            release_date: "2024-01-01",
+          },
+          {
+            id: 32,
+            media_type: "tv",
+            name: "Show Two",
+            original_name: "Show Two Original",
+            overview: "series overview",
+            poster_path: "/show-two.jpg",
+            first_air_date: "2024-02-01",
+          },
+        ],
+      });
+    }
+
+    return jsonResponse({
+      results: [{ id: 99, media_type: "person", name: "ignored" }],
+    });
+  }
+
+  if (isTmdbRequest(url, "/3/movie/31/watch/providers")) {
+    return jsonResponse({
+      results: {
+        JP: {
+          flatrate: [
+            {
+              provider_id: 97,
+              provider_name: "U-NEXT",
+              logo_path: "/u.png",
+            },
+          ],
+        },
+      },
+    });
+  }
+
+  if (isTmdbRequest(url, "/3/movie/31/release_dates")) {
+    return jsonResponse({
+      results: [
+        {
+          iso_3166_1: "JP",
+          release_dates: [{ release_date: "2024-01-10" }],
+        },
+      ],
+    });
+  }
+
+  if (isTmdbRequest(url, "/3/movie/31/external_ids")) {
+    return jsonResponse({ imdb_id: "tt0000031" });
+  }
+
+  if (url.hostname === "www.omdbapi.com" && url.searchParams.get("i") === "tt0000031") {
+    return jsonResponse({
+      Response: "True",
+      Ratings: [{ Source: "Rotten Tomatoes", Value: "88%" }],
+    });
+  }
+
+  if (isTmdbRequest(url, "/3/tv/32/watch/providers")) {
+    return jsonResponse({
+      results: {
+        JP: {
+          flatrate: [
+            {
+              provider_id: 337,
+              provider_name: "Disney+",
+              logo_path: "/d.png",
+            },
+          ],
+        },
+      },
+    });
+  }
+
+  if (isTmdbRequest(url, "/3/tv/32/external_ids")) {
+    return jsonResponse({}, { status: 503 });
+  }
+
+  throw new Error(`Unhandled fetch: ${url.toString()}`);
 }
 
 function createMovieResult(
@@ -290,99 +501,7 @@ Deno.test("searchTmdbWorks は翻訳 fallback と localized metadata を使う",
     },
     async () => {
       await withMockFetch(
-        async (url, init) => {
-          if (url.hostname === "api.themoviedb.org" && url.pathname === "/3/search/multi") {
-            if (url.searchParams.get("query") === "Seven Samurai") {
-              return jsonResponse({
-                results: [
-                  {
-                    id: 20,
-                    media_type: "movie",
-                    title: "Seven Samurai",
-                    original_title: "Seven Samurai",
-                    overview: "",
-                    poster_path: null,
-                    release_date: "1954-04-26",
-                  },
-                ],
-              });
-            }
-
-            return jsonResponse({ results: [] });
-          }
-
-          if (
-            url.hostname === "generativelanguage.googleapis.com" &&
-            url.pathname.endsWith(":generateContent")
-          ) {
-            assertEquals(init?.method, "POST");
-            return jsonResponse({
-              candidates: [
-                {
-                  content: {
-                    parts: [{ text: '{"query":"Seven Samurai"}' }],
-                  },
-                },
-              ],
-            });
-          }
-
-          if (
-            url.hostname === "api.themoviedb.org" &&
-            url.pathname === "/3/movie/20/watch/providers"
-          ) {
-            return jsonResponse({ results: { JP: { flatrate: [] } } });
-          }
-
-          if (
-            url.hostname === "api.themoviedb.org" &&
-            url.pathname === "/3/movie/20/release_dates"
-          ) {
-            return jsonResponse({
-              results: [
-                {
-                  iso_3166_1: "US",
-                  release_dates: [{ release_date: "1954-10-01" }],
-                },
-              ],
-            });
-          }
-
-          if (
-            url.hostname === "api.themoviedb.org" &&
-            url.pathname === "/3/movie/20/external_ids"
-          ) {
-            return jsonResponse({ imdb_id: null });
-          }
-
-          if (url.hostname === "api.themoviedb.org" && url.pathname === "/3/movie/20") {
-            return jsonResponse({
-              id: 20,
-              title: "Seven Samurai",
-              original_title: "七人の侍",
-              overview: "黒澤明による時代劇。",
-              poster_path: "/seven-samurai.jpg",
-              release_date: "1954-04-26",
-            });
-          }
-
-          if (
-            url.hostname === "api.themoviedb.org" &&
-            url.pathname === "/3/movie/20/translations"
-          ) {
-            return jsonResponse({
-              translations: [
-                {
-                  iso_639_1: "ja",
-                  iso_3166_1: "JP",
-                  data: { title: "七人の侍" },
-                },
-              ],
-            });
-          }
-
-          throw new Error(`Unhandled fetch: ${url.toString()}`);
-        },
+        (url, init) => handleLocalizedSearchFallbackFetch(url, init),
         async () => {
           const results = await searchTmdbWorks("七人の侍");
 
@@ -417,125 +536,7 @@ Deno.test("fetchTmdbTrending は 3 ページを集約して重複を除外する
     },
     async () => {
       await withMockFetch(
-        async (url) => {
-          if (url.hostname === "api.themoviedb.org" && url.pathname === "/3/trending/all/week") {
-            switch (url.searchParams.get("page")) {
-              case "1":
-                return jsonResponse({
-                  results: [
-                    {
-                      id: 31,
-                      media_type: "movie",
-                      title: "Movie One",
-                      original_title: "Movie One Original",
-                      overview: "movie overview",
-                      poster_path: "/movie-one.jpg",
-                      release_date: "2024-01-01",
-                    },
-                  ],
-                });
-              case "2":
-                return jsonResponse({
-                  results: [
-                    {
-                      id: 31,
-                      media_type: "movie",
-                      title: "Movie One",
-                      original_title: "Movie One Original",
-                      overview: "movie overview",
-                      poster_path: "/movie-one.jpg",
-                      release_date: "2024-01-01",
-                    },
-                    {
-                      id: 32,
-                      media_type: "tv",
-                      name: "Show Two",
-                      original_name: "Show Two Original",
-                      overview: "series overview",
-                      poster_path: "/show-two.jpg",
-                      first_air_date: "2024-02-01",
-                    },
-                  ],
-                });
-              default:
-                return jsonResponse({
-                  results: [{ id: 99, media_type: "person", name: "ignored" }],
-                });
-            }
-          }
-
-          if (
-            url.hostname === "api.themoviedb.org" &&
-            url.pathname === "/3/movie/31/watch/providers"
-          ) {
-            return jsonResponse({
-              results: {
-                JP: {
-                  flatrate: [
-                    {
-                      provider_id: 97,
-                      provider_name: "U-NEXT",
-                      logo_path: "/u.png",
-                    },
-                  ],
-                },
-              },
-            });
-          }
-
-          if (
-            url.hostname === "api.themoviedb.org" &&
-            url.pathname === "/3/movie/31/release_dates"
-          ) {
-            return jsonResponse({
-              results: [
-                {
-                  iso_3166_1: "JP",
-                  release_dates: [{ release_date: "2024-01-10" }],
-                },
-              ],
-            });
-          }
-
-          if (
-            url.hostname === "api.themoviedb.org" &&
-            url.pathname === "/3/movie/31/external_ids"
-          ) {
-            return jsonResponse({ imdb_id: "tt0000031" });
-          }
-
-          if (url.hostname === "www.omdbapi.com" && url.searchParams.get("i") === "tt0000031") {
-            return jsonResponse({
-              Response: "True",
-              Ratings: [{ Source: "Rotten Tomatoes", Value: "88%" }],
-            });
-          }
-
-          if (
-            url.hostname === "api.themoviedb.org" &&
-            url.pathname === "/3/tv/32/watch/providers"
-          ) {
-            return jsonResponse({
-              results: {
-                JP: {
-                  flatrate: [
-                    {
-                      provider_id: 337,
-                      provider_name: "Disney+",
-                      logo_path: "/d.png",
-                    },
-                  ],
-                },
-              },
-            });
-          }
-
-          if (url.hostname === "api.themoviedb.org" && url.pathname === "/3/tv/32/external_ids") {
-            return jsonResponse({}, { status: 503 });
-          }
-
-          throw new Error(`Unhandled fetch: ${url.toString()}`);
-        },
+        (url) => handleTrendingFetch(url),
         async () => {
           const results = await fetchTmdbTrending();
 

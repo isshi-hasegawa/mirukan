@@ -65,7 +65,7 @@ export function BacklogCard({
   return (
     <article
       ref={setNodeRef}
-      className="relative grid w-full min-w-0 cursor-grab gap-[10px] rounded-[18px] border border-[rgba(92,59,35,0.08)] bg-[var(--surface-strong)] pt-[18px] pr-11 pb-4 pl-4 transition-[box-shadow,border-color] duration-[140ms] ease-[ease] active:cursor-grabbing hover:border-primary/[0.18] hover:shadow-[0_14px_32px_rgba(75,48,30,0.08)] focus-visible:outline-2 focus-visible:outline-primary/45 focus-visible:border-primary/[0.18] focus-visible:shadow-[0_14px_32px_rgba(75,48,30,0.08)]"
+      className="relative"
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
@@ -83,7 +83,59 @@ export function BacklogCard({
       {...listeners}
       {...attributes}
     >
-      <div className="absolute top-[10px] right-[10px]">
+      <button
+        type="button"
+        className="relative grid w-full min-w-0 cursor-grab gap-[10px] rounded-[18px] border border-[rgba(92,59,35,0.08)] bg-[var(--surface-strong)] pt-[18px] pr-11 pb-4 pl-4 text-left transition-[box-shadow,border-color] duration-[140ms] ease-[ease] active:cursor-grabbing hover:border-primary/[0.18] hover:shadow-[0_14px_32px_rgba(75,48,30,0.08)] focus-visible:outline-2 focus-visible:outline-primary/45 focus-visible:border-primary/[0.18] focus-visible:shadow-[0_14px_32px_rgba(75,48,30,0.08)]"
+        onClick={onOpenDetail}
+      >
+        {item.primary_platform && (
+          <div className="absolute top-[10px] left-[10px] z-[2]">
+            <PlatformIcon platform={item.primary_platform} />
+          </div>
+        )}
+        {viewingMode &&
+          (() => {
+            const Icon = ModeIcon[viewingMode];
+            return (
+              <div className="absolute bottom-[10px] right-[10px] flex items-center gap-[3px] bg-primary/15 border border-primary/25 rounded-[6px] px-[7px] py-[3px] text-primary text-[0.68rem] font-bold leading-none pointer-events-none">
+                <Icon className="w-[11px] h-[11px] shrink-0" aria-hidden />
+                <span>{viewingModeLabels[viewingMode]}</span>
+              </div>
+            );
+          })()}
+        <div
+          className={`grid grid-cols-[64px_minmax(0,1fr)] gap-3 items-start${viewingMode ? " pb-6" : ""}`}
+        >
+          <div className="relative aspect-[2/3]">
+            <div className="overflow-hidden rounded-[14px] w-full h-full border border-[rgba(92,59,35,0.08)] [background:radial-gradient(circle_at_top_left,rgba(255,208,143,0.42),transparent_36%),linear-gradient(180deg,rgba(191,90,54,0.14),rgba(92,59,35,0.08))]">
+              <PosterImage
+                posterPath={work.poster_path}
+                alt={`${title} のポスター`}
+                fallbackClassName="w-full h-full grid place-items-center p-2 text-muted-foreground text-[0.68rem] text-center leading-[1.3]"
+              />
+            </div>
+          </div>
+          <div className="grid gap-2 min-w-0">
+            <p className="text-[1rem] font-bold">{title}</p>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground text-[0.9rem]">
+              <span className="inline-flex items-center">
+                <WorkTypeIcon
+                  className="w-[14px] h-[14px] inline-block align-[-2px] mr-[3px] shrink-0"
+                  aria-hidden="true"
+                />
+                {workTypeLabel}
+              </span>
+              {metadataLabels.map((label) => (
+                <span key={label} className="text-[0.82rem] leading-none text-muted-foreground/80">
+                  {label}
+                </span>
+              ))}
+            </div>
+            {item.note && <p className="text-muted-foreground text-[0.9rem]">{item.note}</p>}
+          </div>
+        </div>
+      </button>
+      <div className="absolute top-[10px] right-[10px] z-[1]">
         <DropdownMenu>
           <DropdownMenuTrigger
             className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-transparent text-muted-foreground cursor-pointer hover:bg-accent hover:text-accent-foreground focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-1"
@@ -124,52 +176,6 @@ export function BacklogCard({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
-      {item.primary_platform && (
-        <div className="absolute top-[10px] left-[10px] z-[2]">
-          <PlatformIcon platform={item.primary_platform} />
-        </div>
-      )}
-      {viewingMode &&
-        (() => {
-          const Icon = ModeIcon[viewingMode];
-          return (
-            <div className="absolute bottom-[10px] right-[10px] flex items-center gap-[3px] bg-primary/15 border border-primary/25 rounded-[6px] px-[7px] py-[3px] text-primary text-[0.68rem] font-bold leading-none pointer-events-none">
-              <Icon className="w-[11px] h-[11px] shrink-0" aria-hidden />
-              <span>{viewingModeLabels[viewingMode]}</span>
-            </div>
-          );
-        })()}
-      <div
-        className={`grid grid-cols-[64px_minmax(0,1fr)] gap-3 items-start${viewingMode ? " pb-6" : ""}`}
-      >
-        <div className="relative aspect-[2/3]">
-          <div className="overflow-hidden rounded-[14px] w-full h-full border border-[rgba(92,59,35,0.08)] [background:radial-gradient(circle_at_top_left,rgba(255,208,143,0.42),transparent_36%),linear-gradient(180deg,rgba(191,90,54,0.14),rgba(92,59,35,0.08))]">
-            <PosterImage
-              posterPath={work.poster_path}
-              alt={`${title} のポスター`}
-              fallbackClassName="w-full h-full grid place-items-center p-2 text-muted-foreground text-[0.68rem] text-center leading-[1.3]"
-            />
-          </div>
-        </div>
-        <div className="grid gap-2 min-w-0">
-          <p className="text-[1rem] font-bold">{title}</p>
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground text-[0.9rem]">
-            <span className="inline-flex items-center">
-              <WorkTypeIcon
-                className="w-[14px] h-[14px] inline-block align-[-2px] mr-[3px] shrink-0"
-                aria-hidden="true"
-              />
-              {workTypeLabel}
-            </span>
-            {metadataLabels.map((label) => (
-              <span key={label} className="text-[0.82rem] leading-none text-muted-foreground/80">
-                {label}
-              </span>
-            ))}
-          </div>
-          {item.note && <p className="text-muted-foreground text-[0.9rem]">{item.note}</p>}
-        </div>
       </div>
     </article>
   );

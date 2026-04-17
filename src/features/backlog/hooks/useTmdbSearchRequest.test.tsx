@@ -188,4 +188,45 @@ describe("useTmdbSearchRequest", () => {
       expect.stringContaining("候補が見つかりませんでした"),
     );
   });
+
+  test("検索結果がすべて既存ストックと重なると除外メッセージを出す", async () => {
+    tmdbMocks.searchTmdbWorks.mockResolvedValue([
+      {
+        tmdbId: 10,
+        tmdbMediaType: "movie",
+        workType: "movie",
+        title: "既存作品",
+        originalTitle: "既存作品",
+        overview: "",
+        posterPath: null,
+        releaseDate: "2024-01-01",
+        jpWatchPlatforms: [],
+        hasJapaneseRelease: true,
+      },
+    ]);
+
+    const { result } = renderHook(() =>
+      useTmdbSearchRequest({
+        items: [createItem("stacked-1", "stacked", 10)],
+        onResetSelection,
+        onSetSearchMessage,
+      }),
+    );
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    act(() => {
+      result.current.handleQueryChange("既存作品");
+    });
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    expect(onSetSearchMessage).toHaveBeenCalledWith(
+      "すでにストック済みの作品は候補から除外しています。",
+    );
+  });
 });
