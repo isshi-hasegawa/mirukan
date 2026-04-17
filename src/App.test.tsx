@@ -119,6 +119,23 @@ describe("App", () => {
     expect(globalThis.location.search).toBe("");
   });
 
+  test("SIGNED_OUT でも recovery パラメータを消してログイン画面へ戻す", async () => {
+    authRepositoryMock.getSession.mockResolvedValue({
+      data: { session: { user: { id: "user-1" } } },
+    });
+    globalThis.history.replaceState({}, "", "/?type=recovery");
+
+    renderApp("/");
+    expect(await screen.findByText("RESET_PASSWORD_PAGE")).toBeInTheDocument();
+
+    act(() => {
+      authState.callback?.("SIGNED_OUT", null);
+    });
+
+    expect(await screen.findByText("LOGIN_PAGE")).toBeInTheDocument();
+    expect(globalThis.location.search).toBe("");
+  });
+
   test("getSession が失敗してもローディング状態で止まらずログイン画面に戻る", async () => {
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     authRepositoryMock.getSession.mockRejectedValueOnce(new Error("network error"));
