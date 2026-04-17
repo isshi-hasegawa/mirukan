@@ -95,7 +95,7 @@ describe("BacklogCard", () => {
 
     await user.click(screen.getByRole("button", { name: /テスト作品/ }));
 
-    expect(onOpenDetail).toHaveBeenCalled();
+    expect(onOpenDetail).toHaveBeenCalledTimes(1);
   });
 
   test("Enter キーで詳細を開く", async () => {
