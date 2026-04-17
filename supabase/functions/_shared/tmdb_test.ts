@@ -53,7 +53,7 @@ async function withMockFetch(
 
   globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
     const url =
-      input instanceof Request ? new URL(input.url) : new URL(input instanceof URL ? input : input);
+      input instanceof Request ? new URL(input.url) : input instanceof URL ? input : new URL(input);
     return await handler(url, init);
   }) as typeof fetch;
 

@@ -64,7 +64,7 @@ function HookHarness({
   selectedSeasonNumbers = [],
   onClose = vi.fn(),
   onAdded = vi.fn(),
-}: HarnessProps) {
+}: Readonly<HarnessProps>) {
   const {
     formMessage,
     pendingSaveMessage,

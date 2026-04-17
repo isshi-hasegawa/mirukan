@@ -13,17 +13,13 @@ export function useBacklogItems(userId: string) {
   const loadItems = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: backlogItemsQueryKey(userId) });
   }, [queryClient, userId]);
+  const error = query.data || !(query.error instanceof Error) ? null : query.error.message;
 
   return {
     items: query.data ?? [],
     isLoading: query.isPending,
     // キャッシュデータがない場合のみエラーを表示（バックグラウンド refetch エラーはキャッシュがあれば無視）
-    error:
-      !query.data && query.error
-        ? query.error instanceof Error
-          ? query.error.message
-          : null
-        : null,
+    error,
     loadItems,
   };
 }

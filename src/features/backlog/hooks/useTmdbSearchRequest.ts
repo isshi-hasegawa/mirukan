@@ -210,14 +210,14 @@ export function useTmdbSearchRequest({
       const results = await searchTmdbWorks(trimmed);
       if (requestId !== searchRequestIdRef.current) return;
       const visibleResults = prioritizeLocalizedResults(filterVisibleResults(items, results));
-      dispatchRequest({ type: "set_search_results", results: visibleResults });
-      onSetSearchMessage(
+      const searchMessage =
         visibleResults.length > 0
           ? null
           : results.length > 0
             ? "すでにストック済みの作品は候補から除外しています。"
-            : "候補が見つかりませんでした。このまま入力して追加できます。",
-      );
+            : "候補が見つかりませんでした。このまま入力して追加できます。";
+      dispatchRequest({ type: "set_search_results", results: visibleResults });
+      onSetSearchMessage(searchMessage);
     } catch (error) {
       if (requestId !== searchRequestIdRef.current) return;
       onSetSearchMessage(
@@ -231,7 +231,7 @@ export function useTmdbSearchRequest({
       globalThis.clearTimeout(searchTimerRef.current);
     }
     searchTimerRef.current = globalThis.setTimeout(() => {
-      void runSearch(query);
+      runSearch(query).catch(() => {});
     }, SEARCH_DEBOUNCE_MS);
   };
 
