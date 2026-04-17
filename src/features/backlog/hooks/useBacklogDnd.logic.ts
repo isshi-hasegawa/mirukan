@@ -19,7 +19,7 @@ type DropPersistenceInput = Readonly<{
   activeId: string;
 }>;
 
-export type DropPersistence = Readonly<{
+type DropPersistence = Readonly<{
   activeId: string;
   status: BacklogStatus;
   sortOrder: number;
