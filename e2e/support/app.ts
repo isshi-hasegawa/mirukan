@@ -1,7 +1,8 @@
 import { expect, type Locator, type Page, type TestInfo } from "@playwright/test";
 
 const TEST_USER_EMAIL = process.env.TEST_USER_EMAIL || "akari@example.com";
-const TEST_USER_PASSWORD = process.env.TEST_USER_PASSWORD || "password123";
+const TEST_USER_PASSWORD =
+  process.env.TEST_USER_PASSWORD || process.env.TEST_USER_SECRET || "ci-login-token";
 
 export async function login(page: Page) {
   await page.goto("/");

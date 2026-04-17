@@ -2,6 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 const mockSupabasePort = process.env.MOCK_SUPABASE_PORT || "55432";
 const mockSupabaseUrl = `http://127.0.0.1:${mockSupabasePort}`;
+process.env.TEST_USER_SECRET ??= "ci-login-token";
 
 /**
  * Playwright configuration for PR browser tests.
@@ -83,7 +84,7 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
     },
     {
-      command: `zsh -lc 'VITE_SUPABASE_URL=${mockSupabaseUrl} vp build && VITE_SUPABASE_URL=${mockSupabaseUrl} vp preview --host 127.0.0.1 --port 5173'`,
+      command: `bash -lc 'VITE_SUPABASE_URL=${mockSupabaseUrl} vp build && VITE_SUPABASE_URL=${mockSupabaseUrl} vp preview --host 127.0.0.1 --port 5173'`,
       url: "http://localhost:5173",
       reuseExistingServer: !process.env.CI,
     },
