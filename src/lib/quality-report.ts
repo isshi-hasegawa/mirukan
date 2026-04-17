@@ -143,6 +143,24 @@ export function parseDenoCoverageReport(value: string): TestCoverage | null {
   };
 }
 
+export function parseDenoCoverageArtifacts(input: {
+  lcovReport: string | null;
+  summaryReport: string | null;
+}): TestCoverage | null {
+  if (input.lcovReport) {
+    const lcovCoverage = parseDenoCoverageReport(input.lcovReport);
+    if (lcovCoverage) {
+      return lcovCoverage;
+    }
+  }
+
+  if (input.summaryReport) {
+    return parseDenoCoverageReport(input.summaryReport);
+  }
+
+  return null;
+}
+
 const MINUTES_PER_UNIT = {
   d: 60 * 8,
   h: 60,

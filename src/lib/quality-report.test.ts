@@ -4,6 +4,7 @@ import {
   filterBacklogSignals,
   normalizeComponentPath,
   parseDenoCoverageReport,
+  parseDenoCoverageArtifacts,
   parseMeasureValue,
   parseMinutes,
   parseVitestCoverageSummary,
@@ -133,6 +134,20 @@ end_of_record
 
   test("deno coverage の旧 summary 行も fallback で読める", () => {
     expect(parseDenoCoverageReport("cover 66.7% (20/30)")).toEqual({
+      lines: 66.7,
+      branches: null,
+      functions: null,
+      lowCoverageFiles: [],
+    });
+  });
+
+  test("deno coverage artifacts は lcov が壊れていたら summary に fallback する", () => {
+    expect(
+      parseDenoCoverageArtifacts({
+        lcovReport: "not a valid lcov",
+        summaryReport: "cover 66.7% (20/30)",
+      }),
+    ).toEqual({
       lines: 66.7,
       branches: null,
       functions: null,
