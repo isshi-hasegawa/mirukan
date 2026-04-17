@@ -328,7 +328,7 @@ describe("buildQualityReportIssue", () => {
       longFiles: [{ path: "src/lib/example.ts", value: 520, detail: "8 code smells" }],
       complexFiles: [{ path: "src/lib/example.ts", value: 21, detail: "complexity 30" }],
       duplicateFiles: [{ path: "src/lib/example.ts", value: 6.5, detail: "520 lines" }],
-      vitestCoverage: { lines: 75.0, branches: 70.0, functions: 76.0 },
+      vitestCoverage: { lines: 75, branches: 70, functions: 76 },
       denoCoverage: { lines: 66.7, branches: null, functions: null },
     });
 

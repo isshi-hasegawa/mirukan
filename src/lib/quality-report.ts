@@ -41,7 +41,7 @@ export type SonarFileSignal = {
   measures: SonarMeasureMap;
 };
 
-export type TestCoverage = {
+type TestCoverage = {
   lines: number;
   branches?: number | null;
   functions?: number | null;
@@ -108,7 +108,7 @@ export function parseVitestCoverageSummary(value: string): TestCoverage | null {
 }
 
 export function parseDenoCoverageReport(value: string): TestCoverage | null {
-  const coverMatch = value.match(/\bcover\s+(\d+(?:\.\d+)?)%\s+\(\d+\/\d+\)/i);
+  const coverMatch = /\bcover\s+(\d+(?:\.\d+)?)%\s+\(\d+\/\d+\)/i.exec(value);
   if (!coverMatch) {
     return null;
   }
@@ -367,7 +367,8 @@ function getCoverageMetricPct(
     return null;
   }
 
-  return parseMeasureValue(getRecordValue(metric, "pct")?.toString());
+  const pct = getRecordValue(metric, "pct");
+  return typeof pct === "number" || typeof pct === "string" ? parseMeasureValue(pct) : null;
 }
 
 function getRecordValue(
