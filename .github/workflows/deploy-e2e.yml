@@ -45,7 +45,7 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
 
       - name: Setup Supabase CLI
-        uses: supabase/setup-cli@b60b5899c73b63a2d2d651b1e90db8d4c9392f51 # v1.6.0
+        uses: supabase/setup-cli@2eca1b4d35d9016e560c763c9159a350aa80c370 # v2.0.0 prep
         with:
           version: latest
 
@@ -58,9 +58,9 @@ jobs:
         run: >-
           vp exec playwright test
           --config=playwright.integration.config.ts
-          --project chromium
           e2e/spec/auth.spec.ts
           e2e/spec/regression-flow.spec.ts
+          --project=chromium
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
