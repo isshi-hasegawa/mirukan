@@ -458,12 +458,14 @@ describe("buildQualityReportIssue", () => {
     expect(result.body).not.toContain("/opt/clone123");
     expect(result.body).toContain("| `src/lib/example.ts` | 6.5% | 520 lines |");
     expect(result.body).toContain(
-      "- ユニットテスト (vitest): lines 75.0% / branches 70.0% / functions 76.0%",
+      "- アプリ本体のテスト (vitest / src): lines 75.0% / branches 70.0% / functions 76.0%",
     );
-    expect(result.body).toContain("- deno test: lines 66.7%");
-    expect(result.body).toContain("#### 低カバレッジファイル (vitest)");
+    expect(result.body).toContain(
+      "- Edge Functions のテスト (deno / supabase/functions): lines 66.7%",
+    );
+    expect(result.body).toContain("#### 低カバレッジファイル (アプリ本体 / vitest)");
     expect(result.body).toContain("| `src/lib/example.ts` | 61.0% | 58.0% | 74.0% |");
-    expect(result.body).toContain("#### 低カバレッジファイル (deno test)");
+    expect(result.body).toContain("#### 低カバレッジファイル (Edge Functions / deno)");
     expect(result.body).toContain(
       "| `supabase/functions/_shared/gemini.ts` | 44.5% | 46.7% | 75.0% |",
     );
@@ -472,10 +474,14 @@ describe("buildQualityReportIssue", () => {
   test("カバレッジが null のとき取得不可と表示する", () => {
     const result = buildQualityReportIssue(buildIssueInput());
 
-    expect(result.body).toContain("- ユニットテスト (vitest): 取得不可");
-    expect(result.body).toContain("- deno test: 取得不可");
-    expect(result.body).toContain("#### 低カバレッジファイル (vitest)\n\n- 取得不可");
-    expect(result.body).toContain("#### 低カバレッジファイル (deno test)\n\n- 取得不可");
+    expect(result.body).toContain("- アプリ本体のテスト (vitest / src): 取得不可");
+    expect(result.body).toContain(
+      "- Edge Functions のテスト (deno / supabase/functions): 取得不可",
+    );
+    expect(result.body).toContain("#### 低カバレッジファイル (アプリ本体 / vitest)\n\n- 取得不可");
+    expect(result.body).toContain(
+      "#### 低カバレッジファイル (Edge Functions / deno)\n\n- 取得不可",
+    );
   });
 
   test("絶対パスだけを repo 相対に正規化し、相対パスの quick win label は壊さない", () => {
