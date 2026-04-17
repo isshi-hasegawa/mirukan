@@ -3,8 +3,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 const HOST = "127.0.0.1";
 const PORT = Number(process.env.MOCK_SUPABASE_PORT || "55432");
 const TEST_USER_EMAIL = process.env.TEST_USER_EMAIL || "akari@example.com";
-const TEST_USER_SECRET =
-  process.env.TEST_USER_PASSWORD || process.env.TEST_USER_SECRET || "ci-login-token";
+const TEST_USER_SECRET = process.env.TEST_USER_SECRET || "ci-login-token";
 const TEST_USER_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1";
 const ACCESS_TOKEN = "mock-access-token";
 const REFRESH_TOKEN = "mock-refresh-token";
@@ -572,7 +571,7 @@ function resolveTmdbWorkType(target: Record<string, unknown>) {
 }
 
 function readStringValue(target: Record<string, unknown>, key: string, fallback: string) {
-  return typeof target[key] === "string" ? (target[key] as string) : fallback;
+  return typeof target[key] === "string" ? target[key] : fallback;
 }
 
 function readNullableStringValue(
@@ -585,7 +584,7 @@ function readNullableStringValue(
 }
 
 function readNullableNumberValue(target: Record<string, unknown>, key: string) {
-  return typeof target[key] === "number" ? (target[key] as number) : null;
+  return typeof target[key] === "number" ? target[key] : null;
 }
 
 function createTmdbWorkDetails(target: Record<string, unknown>) {

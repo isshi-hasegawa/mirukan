@@ -1,14 +1,13 @@
 import { expect, type Locator, type Page, type TestInfo } from "@playwright/test";
 
 const TEST_USER_EMAIL = process.env.TEST_USER_EMAIL || "akari@example.com";
-const TEST_USER_PASSWORD =
-  process.env.TEST_USER_PASSWORD || process.env.TEST_USER_SECRET || "ci-login-token";
+const TEST_USER_SECRET = process.env.TEST_USER_SECRET || "ci-login-token";
 
 export async function login(page: Page) {
   await page.goto("/");
   const submitButton = page.locator('form button[type="submit"]');
   await page.getByLabel("メールアドレス").fill(TEST_USER_EMAIL);
-  await page.getByLabel("パスワード").fill(TEST_USER_PASSWORD);
+  await page.getByLabel("パスワード").fill(TEST_USER_SECRET);
   await submitButton.click();
   await expect(page.getByRole("button", { name: "作品を検索してストックに追加" })).toBeVisible();
 }

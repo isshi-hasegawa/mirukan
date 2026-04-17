@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-process.env.TEST_USER_PASSWORD ??= "password123";
+process.env.TEST_USER_SECRET ??= "password123";
 
 export default defineConfig({
   testDir: "./e2e",
