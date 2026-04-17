@@ -1,4 +1,4 @@
-import { sanitizeAbsolutePaths, toDisplayPath } from "./refactoring-backlog-paths.ts";
+import { sanitizeAbsolutePaths, toDisplayPath } from "./quality-report-paths.ts";
 
 type SonarIssueLike = {
   key: string;

@@ -60,25 +60,7 @@ jobs:
         uses: ./.github/actions/setup-node-pnpm
 
       - name: Run unit tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p coverage
-          vp exec vitest --coverage | tee coverage/vitest-coverage.txt
-
-      - name: Append coverage summary
-        if: always()
-        shell: bash
-        run: |
-          {
-            echo "## Vitest Coverage"
-            echo
-            if [ -f coverage/vitest-coverage.txt ]; then
-              sed -n '/^% Coverage report from v8/,$p' coverage/vitest-coverage.txt
-            else
-              echo "Coverage summary unavailable because the test step did not produce coverage output."
-            fi
-          } >> "$GITHUB_STEP_SUMMARY"
+        run: vp test
 
   e2e:
     runs-on: ubuntu-latest
@@ -149,19 +131,7 @@ jobs:
             deno-${{ runner.os }}-
 
       - name: Run Deno tests
-        run: deno test --allow-env --no-check --node-modules-dir=none --coverage=coverage/deno supabase/functions/
-
-      - name: Append coverage summary
-        if: always()
-        shell: bash
-        run: |
-          {
-            echo "## Deno Coverage"
-            echo
-            echo '```'
-            deno coverage coverage/deno
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+        run: deno test --allow-env --no-check --node-modules-dir=none supabase/functions/
 
   build:
     runs-on: ubuntu-latest
