@@ -2,7 +2,14 @@ import { http, HttpResponse } from "msw";
 import type { BacklogItem, Work } from "../types";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "http://localhost:54321";
-const IGNORED_FILTER_KEYS = ["select", "order", "limit", "offset", "columns", "on_conflict"];
+const IGNORED_FILTER_KEYS = new Set([
+  "select",
+  "order",
+  "limit",
+  "offset",
+  "columns",
+  "on_conflict",
+]);
 
 const mockWorks = new Map<string, Work>();
 const mockBacklogItems = new Map<string, BacklogItem>();
@@ -138,7 +145,7 @@ function pickSelectedFields<T extends Record<string, unknown>>(row: T, selectVal
 
 function matchesFilters<T extends Record<string, unknown>>(row: T, url: URL) {
   for (const [key, value] of url.searchParams.entries()) {
-    if (IGNORED_FILTER_KEYS.includes(key)) {
+    if (IGNORED_FILTER_KEYS.has(key)) {
       continue;
     }
 
@@ -230,7 +237,10 @@ function jsonNoContent(status = 201) {
   return new HttpResponse(null, { status });
 }
 
-function createRows<T>(payload: T | T[], ensureDefaults: (value: T) => T) {
+function createRows<TInput, TOutput>(
+  payload: TInput | TInput[],
+  ensureDefaults: (value: TInput) => TOutput,
+) {
   return (Array.isArray(payload) ? payload : [payload]).map(ensureDefaults);
 }
 
