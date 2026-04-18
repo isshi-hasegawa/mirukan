@@ -100,11 +100,16 @@ export function GameAddModal({ items, session, onClose, onAdded }: Props) {
 
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
+
+  useEffect(() => {
+    return () => {
       if (searchTimerRef.current !== null) {
         globalThis.clearTimeout(searchTimerRef.current);
       }
     };
-  }, [onClose]);
+  }, []);
 
   const resetSearchState = () => {
     searchRequestIdRef.current += 1;
