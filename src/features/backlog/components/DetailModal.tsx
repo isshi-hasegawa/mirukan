@@ -1,4 +1,4 @@
-import { useEffect, useRef, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useRef, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { FilmIcon, TvIcon } from "@heroicons/react/24/outline";
 import {
   createDetailModalState,
@@ -21,6 +21,20 @@ import { useDetailModalActions } from "../hooks/useDetailModalActions.ts";
 import { DetailModalNoteField } from "./DetailModalNoteField.tsx";
 import { DetailModalPlatformField } from "./DetailModalPlatformField.tsx";
 import type { BacklogItem, BoardMode, DetailModalState } from "../types.ts";
+
+function GameInfoSection({ work }: { work: NonNullable<BacklogItem["works"]> }) {
+  if (!work.developer && !work.publisher && !work.franchise) return null;
+  return (
+    <section className="grid gap-2 rounded-2xl border border-border/70 bg-background/20 p-4">
+      <h3 className="text-sm font-semibold text-foreground">ゲーム情報</h3>
+      <div className="grid gap-1.5 text-sm text-muted-foreground">
+        {work.developer ? <p>Developer: {work.developer}</p> : null}
+        {work.publisher ? <p>Publisher: {work.publisher}</p> : null}
+        {work.franchise ? <p>Franchise: {work.franchise}</p> : null}
+      </div>
+    </section>
+  );
+}
 
 type Props = Readonly<{
   boardMode?: BoardMode;
@@ -92,6 +106,17 @@ export function DetailModal({
 
   const rtScore = work.rotten_tomatoes_score;
 
+  let workTypeIcon: ReactNode;
+  if (work.work_type === "game") {
+    workTypeIcon = (
+      <img src={workTypeIconUrls.game} alt="" className="w-4 h-4 shrink-0" aria-hidden="true" />
+    );
+  } else if (work.work_type === "movie") {
+    workTypeIcon = <FilmIcon className="w-4 h-4 shrink-0" aria-hidden="true" />;
+  } else {
+    workTypeIcon = <TvIcon className="w-4 h-4 shrink-0" aria-hidden="true" />;
+  }
+
   return (
     <div className="fixed inset-0 z-10 grid place-items-center p-5 bg-[rgba(51,34,23,0.4)] backdrop-blur-[10px]">
       {/* Backdrop: native button for click-outside-to-close (keyboard users use Escape) */}
@@ -143,18 +168,7 @@ export function DetailModal({
             </div>
             <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-muted-foreground text-[0.95rem]">
               <span className="inline-flex items-center gap-1">
-                {work.work_type === "game" ? (
-                  <img
-                    src={workTypeIconUrls.game}
-                    alt=""
-                    className="w-4 h-4 shrink-0"
-                    aria-hidden="true"
-                  />
-                ) : work.work_type === "movie" ? (
-                  <FilmIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
-                ) : (
-                  <TvIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
-                )}
+                {workTypeIcon}
                 {workTypeLabel}
               </span>
               {metadataLabels.map((label) => (
@@ -225,17 +239,7 @@ export function DetailModal({
                 </div>
               </section>
             ) : null}
-            {resolvedBoardMode === "game" &&
-            (work.developer || work.publisher || work.franchise) ? (
-              <section className="grid gap-2 rounded-2xl border border-border/70 bg-background/20 p-4">
-                <h3 className="text-sm font-semibold text-foreground">ゲーム情報</h3>
-                <div className="grid gap-1.5 text-sm text-muted-foreground">
-                  {work.developer ? <p>Developer: {work.developer}</p> : null}
-                  {work.publisher ? <p>Publisher: {work.publisher}</p> : null}
-                  {work.franchise ? <p>Franchise: {work.franchise}</p> : null}
-                </div>
-              </section>
-            ) : null}
+            {resolvedBoardMode === "game" && <GameInfoSection work={work} />}
             <DetailModalNoteField
               note={item.note}
               state={state}

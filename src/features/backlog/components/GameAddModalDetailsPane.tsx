@@ -65,8 +65,7 @@ export function GameAddModalDetailsPane({
           onConfirm={onConfirmPendingSave}
           onCancel={onCancelPendingSave}
         />
-      ) : null}
-      {!pendingSaveMessage ? (
+      ) : (
         <div className="flex justify-end items-center gap-3 pt-1">
           {formMessage ? (
             <p className="text-muted-foreground text-sm" aria-live="polite">
@@ -75,7 +74,7 @@ export function GameAddModalDetailsPane({
           ) : null}
           <Button type="submit">積みゲーに追加</Button>
         </div>
-      ) : null}
+      )}
     </div>
   );
 }

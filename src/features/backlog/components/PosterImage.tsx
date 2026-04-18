@@ -22,12 +22,12 @@ export function PosterImage({
   fallbackClassName,
 }: Props) {
   const [hasError, setHasError] = useState(false);
-  const url =
-    sourceType === "igdb"
-      ? buildIgdbImageUrl(posterPath, size === "w500" ? "cover_big" : "cover_small")
-      : posterPath
-        ? `https://image.tmdb.org/t/p/${size}${posterPath}`
-        : null;
+  let url: string | null;
+  if (sourceType === "igdb") {
+    url = buildIgdbImageUrl(posterPath, size === "w500" ? "cover_big" : "cover_small");
+  } else {
+    url = posterPath ? `https://image.tmdb.org/t/p/${size}${posterPath}` : null;
+  }
 
   useEffect(() => {
     setHasError(false);

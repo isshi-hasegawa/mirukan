@@ -78,7 +78,7 @@ export function GameWorkCard({
               className="h-4 w-4 shrink-0"
               aria-hidden="true"
             />
-            ゲーム
+            {"ゲーム"}
           </span>
           {result.releaseDate ? (
             <span className="text-[0.8rem] leading-none text-muted-foreground/80">

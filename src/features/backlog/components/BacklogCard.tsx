@@ -74,6 +74,53 @@ export function BacklogCard({
   const watchedLabel = getStatusActionLabel(work, "watched");
   const firstGamePlatform = getGamePlatformsFromReleaseDates(work.release_dates)[0] ?? null;
 
+  let platformBadge = null;
+  if (item.primary_platform) {
+    platformBadge = (
+      <div className="absolute top-[10px] left-[10px] z-[2]">
+        <PlatformIcon platform={item.primary_platform} />
+      </div>
+    );
+  } else if (firstGamePlatform) {
+    platformBadge = (
+      <div className="absolute top-[10px] left-[10px] z-[2]">
+        <img
+          src={gamePlatformIcons[firstGamePlatform]}
+          alt={gamePlatformLabels[firstGamePlatform]}
+          title={gamePlatformLabels[firstGamePlatform]}
+          className="w-9 h-9 object-contain p-[6px] rounded-lg [background-clip:padding-box]"
+          style={{ background: gamePlatformBackgrounds[firstGamePlatform] }}
+        />
+      </div>
+    );
+  }
+
+  let workTypeIcon = null;
+  if (work.work_type === "game") {
+    workTypeIcon = (
+      <img
+        src={workTypeIconUrls.game}
+        alt=""
+        className="w-[14px] h-[14px] inline-block align-[-2px] mr-[3px] shrink-0"
+        aria-hidden="true"
+      />
+    );
+  } else if (work.work_type === "movie") {
+    workTypeIcon = (
+      <FilmIcon
+        className="w-[14px] h-[14px] inline-block align-[-2px] mr-[3px] shrink-0"
+        aria-hidden="true"
+      />
+    );
+  } else {
+    workTypeIcon = (
+      <TvIcon
+        className="w-[14px] h-[14px] inline-block align-[-2px] mr-[3px] shrink-0"
+        aria-hidden="true"
+      />
+    );
+  }
+
   return (
     <article
       ref={setNodeRef}
@@ -93,21 +140,7 @@ export function BacklogCard({
         className="relative grid w-full min-w-0 cursor-grab gap-[10px] rounded-[18px] border border-[rgba(92,59,35,0.08)] bg-[var(--surface-strong)] pt-[18px] pr-11 pb-4 pl-4 text-left transition-[box-shadow,border-color] duration-[140ms] ease-[ease] active:cursor-grabbing hover:border-primary/[0.18] hover:shadow-[0_14px_32px_rgba(75,48,30,0.08)] focus-visible:outline-2 focus-visible:outline-primary/45 focus-visible:border-primary/[0.18] focus-visible:shadow-[0_14px_32px_rgba(75,48,30,0.08)]"
         onClick={onOpenDetail}
       >
-        {item.primary_platform ? (
-          <div className="absolute top-[10px] left-[10px] z-[2]">
-            <PlatformIcon platform={item.primary_platform} />
-          </div>
-        ) : firstGamePlatform ? (
-          <div className="absolute top-[10px] left-[10px] z-[2]">
-            <img
-              src={gamePlatformIcons[firstGamePlatform]}
-              alt={gamePlatformLabels[firstGamePlatform]}
-              title={gamePlatformLabels[firstGamePlatform]}
-              className="w-9 h-9 object-contain p-[6px] rounded-lg [background-clip:padding-box]"
-              style={{ background: gamePlatformBackgrounds[firstGamePlatform] }}
-            />
-          </div>
-        ) : null}
+        {platformBadge}
         {viewingMode &&
           (() => {
             const Icon = ModeIcon[viewingMode];
@@ -135,24 +168,7 @@ export function BacklogCard({
             <p className="text-[1rem] font-bold">{title}</p>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground text-[0.9rem]">
               <span className="inline-flex items-center">
-                {work.work_type === "game" ? (
-                  <img
-                    src={workTypeIconUrls.game}
-                    alt=""
-                    className="w-[14px] h-[14px] inline-block align-[-2px] mr-[3px] shrink-0"
-                    aria-hidden="true"
-                  />
-                ) : work.work_type === "movie" ? (
-                  <FilmIcon
-                    className="w-[14px] h-[14px] inline-block align-[-2px] mr-[3px] shrink-0"
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <TvIcon
-                    className="w-[14px] h-[14px] inline-block align-[-2px] mr-[3px] shrink-0"
-                    aria-hidden="true"
-                  />
-                )}
+                {workTypeIcon}
                 {workTypeLabel}
               </span>
               {metadataLabels.map((label) => (

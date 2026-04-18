@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { IgdbSearchResult } from "../../../lib/igdb.ts";
 import { searchIgdbWorks } from "../../../lib/igdb.ts";
@@ -164,6 +164,10 @@ export function GameAddModal({ items, session, onClose, onAdded }: Props) {
         setSelectedTitleOverride("");
         queueSearch(query);
       } else {
+        if (searchTimerRef.current !== null) {
+          globalThis.clearTimeout(searchTimerRef.current);
+          searchTimerRef.current = null;
+        }
         resetSearchState();
       }
     }
@@ -174,6 +178,56 @@ export function GameAddModal({ items, session, onClose, onAdded }: Props) {
     setSelectedTitleOverride("");
     setSelectedIgdbResult(result);
   };
+
+  const searchResultCards = searchResults.map((result) => {
+    const isSelected = selectedIgdbResult?.igdbId === result.igdbId;
+    const useInlineFooter = isSelected && !formMessage && !pendingSaveMessage;
+    let cardFooter: ReactNode = null;
+    if (isSelected) {
+      if (useInlineFooter) {
+        cardFooter = <Button type="submit">積みゲーに追加</Button>;
+      } else if (pendingSaveMessage) {
+        cardFooter = (
+          <div className="grid gap-2">
+            <p className="text-sm text-muted-foreground">{pendingSaveMessage}</p>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={cancelPendingSave}>
+                キャンセル
+              </Button>
+              <Button type="button" onClick={() => void confirmPendingSave()}>
+                積みゲーへ戻す
+              </Button>
+            </div>
+          </div>
+        );
+      } else {
+        cardFooter = (
+          <div className="flex items-end justify-end gap-3">
+            {formMessage ? (
+              <p className="text-muted-foreground text-sm text-right" aria-live="polite">
+                {formMessage}
+              </p>
+            ) : null}
+            <Button type="submit">積みゲーに追加</Button>
+          </div>
+        );
+      }
+    }
+    return (
+      <GameWorkCard
+        key={result.igdbId}
+        result={result}
+        isSelected={isSelected}
+        onSelect={() => handleSelectResult(result)}
+        footerLayout={useInlineFooter ? "inline" : "panel"}
+        footer={cardFooter}
+      />
+    );
+  });
+
+  const emptySearchContent = searchMessage ? (
+    <p className="text-muted-foreground text-[0.88rem]">{searchMessage}</p>
+  ) : null;
 
   return (
     <div className="fixed inset-0 z-10 grid place-items-center p-5 bg-[rgba(51,34,23,0.4)] backdrop-blur-[10px]">
@@ -213,55 +267,7 @@ export function GameAddModal({ items, session, onClose, onAdded }: Props) {
             />
 
             <div className="modal-scrollable grid w-full min-w-0 gap-2.5 overflow-y-auto max-[720px]:h-[min(56svh,480px)]">
-              {searchResults.length > 0 ? (
-                searchResults.map((result) => {
-                  const isSelected = selectedIgdbResult?.igdbId === result.igdbId;
-                  const useInlineFooter = isSelected && !formMessage && !pendingSaveMessage;
-
-                  return (
-                    <GameWorkCard
-                      key={result.igdbId}
-                      result={result}
-                      isSelected={isSelected}
-                      onSelect={() => handleSelectResult(result)}
-                      footerLayout={useInlineFooter ? "inline" : "panel"}
-                      footer={
-                        isSelected ? (
-                          useInlineFooter ? (
-                            <Button type="submit">積みゲーに追加</Button>
-                          ) : pendingSaveMessage ? (
-                            <div className="grid gap-2">
-                              <p className="text-sm text-muted-foreground">{pendingSaveMessage}</p>
-                              <div className="flex justify-end gap-2">
-                                <Button type="button" variant="outline" onClick={cancelPendingSave}>
-                                  キャンセル
-                                </Button>
-                                <Button type="button" onClick={() => void confirmPendingSave()}>
-                                  積みゲーへ戻す
-                                </Button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="flex items-end justify-end gap-3">
-                              {formMessage ? (
-                                <p
-                                  className="text-muted-foreground text-sm text-right"
-                                  aria-live="polite"
-                                >
-                                  {formMessage}
-                                </p>
-                              ) : null}
-                              <Button type="submit">積みゲーに追加</Button>
-                            </div>
-                          )
-                        ) : null
-                      }
-                    />
-                  );
-                })
-              ) : searchMessage ? (
-                <p className="text-muted-foreground text-[0.88rem]">{searchMessage}</p>
-              ) : null}
+              {searchResultCards.length > 0 ? searchResultCards : emptySearchContent}
             </div>
           </div>
 

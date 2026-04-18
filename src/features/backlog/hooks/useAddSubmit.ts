@@ -168,15 +168,17 @@ export function useAddSubmit({
 
   const createWork = async (title: string) => {
     try {
-      return selectedTmdbResult
-        ? await upsertTmdbWork(selectedTmdbResult, session.user.id)
-        : selectedIgdbResult
-          ? await upsertIgdbWork(selectedIgdbResult, session.user.id)
-          : await upsertManualWork(
-              title,
-              resolvedWorkType as Extract<WorkType, "movie" | "series" | "game">,
-              session.user.id,
-            );
+      if (selectedTmdbResult) {
+        return await upsertTmdbWork(selectedTmdbResult, session.user.id);
+      }
+      if (selectedIgdbResult) {
+        return await upsertIgdbWork(selectedIgdbResult, session.user.id);
+      }
+      return await upsertManualWork(
+        title,
+        resolvedWorkType as Extract<WorkType, "movie" | "series" | "game">,
+        session.user.id,
+      );
     } catch (error) {
       return {
         data: null,
