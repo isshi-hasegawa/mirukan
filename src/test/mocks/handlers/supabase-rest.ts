@@ -2,6 +2,7 @@ import { http, HttpResponse } from "msw";
 import type { BacklogItem, Work } from "../types";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "http://localhost:54321";
+const IGNORED_FILTER_KEYS = ["select", "order", "limit", "offset", "columns", "on_conflict"];
 
 const mockWorks = new Map<string, Work>();
 const mockBacklogItems = new Map<string, BacklogItem>();
@@ -90,6 +91,10 @@ export function getMockBacklogItems() {
   return Array.from(mockBacklogItems.values()).map(clone);
 }
 
+type ComparableValue = string | number | boolean | null | undefined;
+type BacklogPayload = Partial<BacklogItem> | Array<Partial<BacklogItem>>;
+type WorkPayload = Partial<Work> | Array<Partial<Work>>;
+
 function isObjectResponse(request: Request) {
   return request.headers.get("accept")?.includes("application/vnd.pgrst.object+json") ?? false;
 }
@@ -133,7 +138,7 @@ function pickSelectedFields<T extends Record<string, unknown>>(row: T, selectVal
 
 function matchesFilters<T extends Record<string, unknown>>(row: T, url: URL) {
   for (const [key, value] of url.searchParams.entries()) {
-    if (["select", "order", "limit", "offset", "columns", "on_conflict"].includes(key)) {
+    if (IGNORED_FILTER_KEYS.includes(key)) {
       continue;
     }
 
@@ -176,15 +181,15 @@ function compareByOrderParam<T extends Record<string, unknown>>(
 ) {
   const [column, direction = "asc"] = orderParam.split(".");
   return compareOrderedValues(
-    left[column] as string | number | boolean | null | undefined,
-    right[column] as string | number | boolean | null | undefined,
+    left[column] as ComparableValue,
+    right[column] as ComparableValue,
     direction,
   );
 }
 
 function compareOrderedValues(
-  leftValue: string | number | boolean | null | undefined,
-  rightValue: string | number | boolean | null | undefined,
+  leftValue: ComparableValue,
+  rightValue: ComparableValue,
   direction: string,
 ) {
   if (leftValue === rightValue) {
@@ -225,6 +230,72 @@ function jsonNoContent(status = 201) {
   return new HttpResponse(null, { status });
 }
 
+function createRows<T>(payload: T | T[], ensureDefaults: (value: T) => T) {
+  return (Array.isArray(payload) ? payload : [payload]).map(ensureDefaults);
+}
+
+function upsertBacklogRows(rows: BacklogItem[], url: URL) {
+  if (url.searchParams.get("on_conflict") !== "user_id,work_id") {
+    rows.forEach((row) => {
+      mockBacklogItems.set(row.id, row);
+    });
+    return;
+  }
+
+  rows.forEach((row) => {
+    const existing = Array.from(mockBacklogItems.values()).find(
+      (item) => item.user_id === row.user_id && item.work_id === row.work_id,
+    );
+    const merged = ensureBacklogItemDefaults({
+      ...existing,
+      ...row,
+      id: existing?.id ?? row.id,
+    });
+    mockBacklogItems.set(merged.id, merged);
+  });
+}
+
+function hasWorkConflict(rows: Work[]) {
+  return rows.some((row) =>
+    Array.from(mockWorks.values()).some(
+      (work) =>
+        work.created_by === row.created_by &&
+        work.source_type === row.source_type &&
+        work.work_type === row.work_type &&
+        work.search_text === row.search_text,
+    ),
+  );
+}
+
+function upsertWorks(rows: Work[], url: URL) {
+  if (!url.searchParams.get("on_conflict") && hasWorkConflict(rows)) {
+    return HttpResponse.json({ message: "duplicate key value", code: "23505" }, { status: 409 });
+  }
+
+  rows.forEach((row) => {
+    mockWorks.set(row.id, row);
+  });
+
+  return null;
+}
+
+function patchStoredRow<T extends Record<string, unknown>>(
+  store: Map<string, T>,
+  url: URL,
+  body: Partial<T>,
+  notFoundMessage: string,
+  ensureDefaults: (value: Partial<T>) => T,
+) {
+  const target = Array.from(store.values()).find((row) => matchesFilters(row, url));
+  if (!target) {
+    return HttpResponse.json({ message: notFoundMessage }, { status: 404 });
+  }
+
+  const updated = ensureDefaults({ ...target, ...body });
+  store.set(String(updated.id), updated);
+  return updated;
+}
+
 export const supabaseRestHandlers = [
   http.get(`${SUPABASE_URL}/rest/v1/backlog_items`, ({ request }) => {
     const url = new URL(request.url);
@@ -243,26 +314,9 @@ export const supabaseRestHandlers = [
 
   http.post(`${SUPABASE_URL}/rest/v1/backlog_items`, async ({ request }) => {
     const url = new URL(request.url);
-    const payload = (await request.json()) as Partial<BacklogItem> | Array<Partial<BacklogItem>>;
-    const rows = (Array.isArray(payload) ? payload : [payload]).map(ensureBacklogItemDefaults);
-
-    if (url.searchParams.get("on_conflict") === "user_id,work_id") {
-      rows.forEach((row) => {
-        const existing = Array.from(mockBacklogItems.values()).find(
-          (item) => item.user_id === row.user_id && item.work_id === row.work_id,
-        );
-        const merged = ensureBacklogItemDefaults({
-          ...existing,
-          ...row,
-          id: existing?.id ?? row.id,
-        });
-        mockBacklogItems.set(merged.id, merged);
-      });
-    } else {
-      rows.forEach((row) => {
-        mockBacklogItems.set(row.id, row);
-      });
-    }
+    const payload = (await request.json()) as BacklogPayload;
+    const rows = createRows(payload, ensureBacklogItemDefaults);
+    upsertBacklogRows(rows, url);
 
     if (!shouldReturnRepresentation(request)) {
       return jsonNoContent();
@@ -273,34 +327,11 @@ export const supabaseRestHandlers = [
 
   http.post(`${SUPABASE_URL}/rest/v1/works`, async ({ request }) => {
     const url = new URL(request.url);
-    const payload = (await request.json()) as Partial<Work> | Array<Partial<Work>>;
-    const rows = (Array.isArray(payload) ? payload : [payload]).map(ensureWorkDefaults);
-
-    if (url.searchParams.get("on_conflict")) {
-      rows.forEach((row) => {
-        mockWorks.set(row.id, row);
-      });
-    } else {
-      const hasConflict = rows.some((row) =>
-        Array.from(mockWorks.values()).some(
-          (work) =>
-            work.created_by === row.created_by &&
-            work.source_type === row.source_type &&
-            work.work_type === row.work_type &&
-            work.search_text === row.search_text,
-        ),
-      );
-
-      if (hasConflict) {
-        return HttpResponse.json(
-          { message: "duplicate key value", code: "23505" },
-          { status: 409 },
-        );
-      }
-
-      rows.forEach((row) => {
-        mockWorks.set(row.id, row);
-      });
+    const payload = (await request.json()) as WorkPayload;
+    const rows = createRows(payload, ensureWorkDefaults);
+    const conflictResponse = upsertWorks(rows, url);
+    if (conflictResponse) {
+      return conflictResponse;
     }
 
     if (!shouldReturnRepresentation(request)) {
@@ -314,14 +345,10 @@ export const supabaseRestHandlers = [
   http.patch(`${SUPABASE_URL}/rest/v1/works`, async ({ request }) => {
     const url = new URL(request.url);
     const body = (await request.json()) as Partial<Work>;
-    const target = Array.from(mockWorks.values()).find((work) => matchesFilters(work, url));
-
-    if (!target) {
-      return HttpResponse.json({ message: "Work not found" }, { status: 404 });
+    const updated = patchStoredRow(mockWorks, url, body, "Work not found", ensureWorkDefaults);
+    if (updated instanceof HttpResponse) {
+      return updated;
     }
-
-    const updated = ensureWorkDefaults({ ...target, ...body });
-    mockWorks.set(updated.id, updated);
 
     if (!shouldReturnRepresentation(request)) {
       return new HttpResponse(null, { status: 204 });
@@ -335,14 +362,16 @@ export const supabaseRestHandlers = [
   http.patch(`${SUPABASE_URL}/rest/v1/backlog_items`, async ({ request }) => {
     const url = new URL(request.url);
     const body = (await request.json()) as Partial<BacklogItem>;
-    const target = Array.from(mockBacklogItems.values()).find((item) => matchesFilters(item, url));
-
-    if (!target) {
-      return HttpResponse.json({ message: "Backlog item not found" }, { status: 404 });
+    const updated = patchStoredRow(
+      mockBacklogItems,
+      url,
+      body,
+      "Backlog item not found",
+      ensureBacklogItemDefaults,
+    );
+    if (updated instanceof HttpResponse) {
+      return updated;
     }
-
-    const updated = ensureBacklogItemDefaults({ ...target, ...body });
-    mockBacklogItems.set(updated.id, updated);
 
     if (!shouldReturnRepresentation(request)) {
       return new HttpResponse(null, { status: 204 });

@@ -11,6 +11,10 @@ vi.mock("../../../lib/auth-repository.ts", () => authRepositoryMock);
 
 setupTestLifecycle();
 
+function renderUserMenu() {
+  render(<UserMenu email="user@example.com" />);
+}
+
 async function openMenuItem(user: ReturnType<typeof userEvent.setup>, name: string) {
   const trigger = screen.getByRole("button", { name: /user@example.com/i });
   trigger.focus();
@@ -20,6 +24,19 @@ async function openMenuItem(user: ReturnType<typeof userEvent.setup>, name: stri
 
 describe("UserMenu", () => {
   const openMock = vi.fn();
+
+  async function expectNewTabOpened(
+    user: ReturnType<typeof userEvent.setup>,
+    name: string,
+    path: string,
+  ) {
+    renderUserMenu();
+    await openMenuItem(user, name);
+
+    await waitFor(() =>
+      expect(openMock).toHaveBeenCalledWith(path, "_blank", "noopener,noreferrer"),
+    );
+  }
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -34,7 +51,7 @@ describe("UserMenu", () => {
   test("About からアプリの説明と TMDB attribution を確認できる", async () => {
     const user = userEvent.setup();
 
-    render(<UserMenu email="user@example.com" />);
+    renderUserMenu();
     await openMenuItem(user, "About");
 
     expect(await screen.findByRole("dialog", { name: "みるカンについて" })).toBeInTheDocument();
@@ -53,30 +70,18 @@ describe("UserMenu", () => {
 
   test("メニューから利用規約ページを新しいタブで開ける", async () => {
     const user = userEvent.setup();
-
-    render(<UserMenu email="user@example.com" />);
-    await openMenuItem(user, "利用規約");
-
-    await waitFor(() =>
-      expect(openMock).toHaveBeenCalledWith("/terms", "_blank", "noopener,noreferrer"),
-    );
+    await expectNewTabOpened(user, "利用規約", "/terms");
   });
 
   test("メニューからプライバシーポリシーページを新しいタブで開ける", async () => {
     const user = userEvent.setup();
-
-    render(<UserMenu email="user@example.com" />);
-    await openMenuItem(user, "プライバシーポリシー");
-
-    await waitFor(() =>
-      expect(openMock).toHaveBeenCalledWith("/privacy", "_blank", "noopener,noreferrer"),
-    );
+    await expectNewTabOpened(user, "プライバシーポリシー", "/privacy");
   });
 
   test("お問い合わせからメールと GitHub Issues の導線を確認できる", async () => {
     const user = userEvent.setup();
 
-    render(<UserMenu email="user@example.com" />);
+    renderUserMenu();
     await openMenuItem(user, "お問い合わせ");
 
     expect(await screen.findByRole("dialog", { name: "お問い合わせ" })).toBeInTheDocument();
