@@ -8,6 +8,18 @@ import {
 
 setupTestLifecycle();
 
+function watchingIds(items: ReturnType<typeof createWatchingItemsFixture>) {
+  return items.filter((item) => item.status === "watching").map((item) => item.id);
+}
+
+function createWatchingItemsFixture() {
+  return [
+    createBacklogItem({ id: "item-1", status: "stacked" }),
+    createBacklogItem({ id: "item-2", status: "watching", sort_order: 1000 }),
+    createBacklogItem({ id: "item-3", status: "watching", sort_order: 2000 }),
+  ];
+}
+
 describe("resolveDragOverItems", () => {
   test("同列内では pointer 位置に応じて before/after を切り替える", () => {
     const items = [
@@ -37,50 +49,28 @@ describe("resolveDragOverItems", () => {
     expect(afterItems.map((item) => item.id)).toEqual(["item-2", "item-1", "item-3"]);
   });
 
-  test("touch event でも clientY を読んで列またぎ挿入位置を決める", () => {
-    const items = [
-      createBacklogItem({ id: "item-1", status: "stacked" }),
-      createBacklogItem({ id: "item-2", status: "watching", sort_order: 1000 }),
-      createBacklogItem({ id: "item-3", status: "watching", sort_order: 2000 }),
-    ];
-
-    const nextItems = resolveDragOverItems({
-      items,
-      activeId: "item-1",
+  test.each([
+    {
+      name: "touch event でも clientY を読んで列またぎ挿入位置を決める",
       overId: "item-3",
-      rect: makeLogicRect(),
       activatorEvent: createTouchEvent(120),
-      isMobileLayout: false,
-    });
-
-    expect(nextItems.filter((item) => item.status === "watching").map((item) => item.id)).toEqual([
-      "item-2",
-      "item-1",
-      "item-3",
-    ]);
-  });
-
-  test("touch event に座標が無ければ rect 中央を使って after 扱いにする", () => {
-    const items = [
-      createBacklogItem({ id: "item-1", status: "stacked" }),
-      createBacklogItem({ id: "item-2", status: "watching", sort_order: 1000 }),
-      createBacklogItem({ id: "item-3", status: "watching", sort_order: 2000 }),
-    ];
-
-    const nextItems = resolveDragOverItems({
-      items,
-      activeId: "item-1",
+    },
+    {
+      name: "touch event に座標が無ければ rect 中央を使って after 扱いにする",
       overId: "item-2",
-      rect: makeLogicRect(),
       activatorEvent: createTouchEvent(),
+    },
+  ])("$name", ({ overId, activatorEvent }) => {
+    const nextItems = resolveDragOverItems({
+      items: createWatchingItemsFixture(),
+      activeId: "item-1",
+      overId,
+      rect: makeLogicRect(),
+      activatorEvent,
       isMobileLayout: false,
     });
 
-    expect(nextItems.filter((item) => item.status === "watching").map((item) => item.id)).toEqual([
-      "item-2",
-      "item-1",
-      "item-3",
-    ]);
+    expect(watchingIds(nextItems)).toEqual(["item-2", "item-1", "item-3"]);
   });
 
   test("watched 列の背景ドロップでは列先頭に入れる", () => {
