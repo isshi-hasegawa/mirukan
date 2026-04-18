@@ -1,5 +1,5 @@
 import { statusLabels } from "./constants.ts";
-import { isPrimaryPlatform, normalizePrimaryPlatform } from "./helpers.ts";
+import { isStoredPlatform, normalizePrimaryPlatform } from "./helpers.ts";
 import type {
   BacklogItem,
   BacklogStatus,
@@ -127,7 +127,7 @@ function normalizeBacklogItem(value: unknown): BacklogItem | null {
     typeof value.id !== "string" ||
     !isBacklogStatus(value.status) ||
     !(value.display_title === undefined || isNullableString(value.display_title)) ||
-    !isPrimaryPlatform(value.primary_platform) ||
+    !isStoredPlatform(value.primary_platform) ||
     !isNullableString(value.note) ||
     typeof value.sort_order !== "number"
   ) {

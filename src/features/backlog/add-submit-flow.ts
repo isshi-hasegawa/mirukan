@@ -1,5 +1,5 @@
 import { buildMoveToStatusConfirmMessage, planBacklogItemUpserts } from "./backlog-item-utils.ts";
-import type { BacklogItem, PrimaryPlatform } from "./types.ts";
+import type { BacklogItem, GamePlatform, PrimaryPlatform } from "./types.ts";
 import type { IgdbSearchResult } from "../../lib/igdb.ts";
 import type { TmdbSearchResult } from "../../lib/tmdb.ts";
 
@@ -47,7 +47,10 @@ export function buildSelectedSubject({
   return `${selectedSeasonNumbers.length}シーズン`;
 }
 
-export function buildStackedBacklogOptions(primaryPlatform: PrimaryPlatform, note: string) {
+export function buildStackedBacklogOptions(
+  primaryPlatform: PrimaryPlatform | GamePlatform,
+  note: string,
+) {
   return {
     primary_platform: primaryPlatform,
     note: note.trim() || null,

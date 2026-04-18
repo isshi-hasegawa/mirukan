@@ -134,6 +134,10 @@ export const gamePlatformBackgrounds: Record<GamePlatformKey, string> = {
   android: "#0f2b1d",
 };
 
+export function isGamePlatformValue(value: unknown): value is GamePlatformKey {
+  return typeof value === "string" && (gamePlatformKeys as ReadonlyArray<string>).includes(value);
+}
+
 export const boardModeLabels: Record<BoardMode, string> = {
   video: "映像",
   game: "ゲーム",

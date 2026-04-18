@@ -9,7 +9,7 @@ import {
   upsertManualWork,
   upsertTmdbWork,
 } from "../work-repository.ts";
-import type { BacklogItem, PrimaryPlatform, WorkType } from "../types.ts";
+import type { BacklogItem, GamePlatform, PrimaryPlatform, WorkType } from "../types.ts";
 import {
   buildSelectedSubject,
   buildStackedBacklogOptions,
@@ -27,7 +27,7 @@ type UseAddSubmitOptions = {
   isTvSelection: boolean;
   resolvedTitle: string;
   resolvedWorkType: WorkType;
-  primaryPlatform: PrimaryPlatform;
+  primaryPlatform: PrimaryPlatform | GamePlatform;
   note: string;
   onClose: () => void;
   onAdded: () => void | Promise<void>;
@@ -91,7 +91,7 @@ export function useAddSubmit({
     backlogOptions: {
       display_title: string | null;
       note: string | null;
-      primary_platform: PrimaryPlatform;
+      primary_platform: PrimaryPlatform | GamePlatform;
     };
   }) => {
     const backlogResult = await upsertBacklogItemsToStatus(

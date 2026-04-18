@@ -11,7 +11,12 @@ import type {
   WorkType,
 } from "./types.ts";
 import type { TmdbSearchResult } from "../../lib/tmdb.ts";
-import { gamePlatformKeys, getStatusLabel, isPrimaryPlatformValue } from "./constants.ts";
+import {
+  gamePlatformKeys,
+  getStatusLabel,
+  isGamePlatformValue,
+  isPrimaryPlatformValue,
+} from "./constants.ts";
 
 export function getStringField(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -25,6 +30,10 @@ export function getNullableStringField(formData: FormData, key: string) {
 
 export function isPrimaryPlatform(value: unknown): value is PrimaryPlatform {
   return value === null || isPrimaryPlatformValue(value);
+}
+
+export function isStoredPlatform(value: unknown): value is PrimaryPlatform | GamePlatform {
+  return isPrimaryPlatform(value) || isGamePlatformValue(value);
 }
 
 export function normalizePrimaryPlatform(value: string | null): PrimaryPlatform {

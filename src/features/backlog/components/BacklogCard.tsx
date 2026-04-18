@@ -8,7 +8,7 @@ import {
   SpeakerWaveIcon,
   TvIcon,
 } from "@heroicons/react/24/outline";
-import type { BacklogItem, ViewingMode } from "../types.ts";
+import type { BacklogItem, PrimaryPlatform, ViewingMode } from "../types.ts";
 import { getViewingMode } from "../viewing-mode.ts";
 import { PlatformIcon } from "./PlatformIcon.tsx";
 import { PosterImage } from "./PosterImage.tsx";
@@ -28,6 +28,7 @@ import {
   gamePlatformBackgrounds,
   gamePlatformIcons,
   gamePlatformLabels,
+  isGamePlatformValue,
   viewingModeLabels,
   workTypeIconUrls,
 } from "../constants.ts";
@@ -75,10 +76,23 @@ export function BacklogCard({
   const firstGamePlatform = getGamePlatformsFromReleaseDates(work.release_dates)[0] ?? null;
 
   let platformBadge = null;
-  if (item.primary_platform) {
+  if (item.primary_platform && isGamePlatformValue(item.primary_platform)) {
+    const gp = item.primary_platform;
     platformBadge = (
       <div className="absolute top-[10px] left-[10px] z-[2]">
-        <PlatformIcon platform={item.primary_platform} />
+        <img
+          src={gamePlatformIcons[gp]}
+          alt={gamePlatformLabels[gp]}
+          title={gamePlatformLabels[gp]}
+          className="w-9 h-9 object-contain p-[6px] rounded-lg [background-clip:padding-box]"
+          style={{ background: gamePlatformBackgrounds[gp] }}
+        />
+      </div>
+    );
+  } else if (item.primary_platform) {
+    platformBadge = (
+      <div className="absolute top-[10px] left-[10px] z-[2]">
+        <PlatformIcon platform={item.primary_platform as Exclude<PrimaryPlatform, null>} />
       </div>
     );
   } else if (firstGamePlatform) {

@@ -2,14 +2,18 @@ import { useId } from "react";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { DocumentTextIcon } from "@heroicons/react/24/outline";
+import type { GamePlatform } from "../types.ts";
 import { PendingSaveNotice } from "./PendingSaveNotice.tsx";
+import { GamePlatformPicker } from "./GamePlatformPicker.tsx";
 
 type Props = Readonly<{
   resolvedTitle: string;
+  gamePlatform: GamePlatform | null;
   note: string;
   formMessage: string;
   pendingSaveMessage: string | null;
   onChangeTitle: (title: string) => void;
+  onChangeGamePlatform: (platform: GamePlatform | null) => void;
   onChangeNote: (note: string) => void;
   onConfirmPendingSave: () => void;
   onCancelPendingSave: () => void;
@@ -17,10 +21,12 @@ type Props = Readonly<{
 
 export function GameAddModalDetailsPane({
   resolvedTitle,
+  gamePlatform,
   note,
   formMessage,
   pendingSaveMessage,
   onChangeTitle,
+  onChangeGamePlatform,
   onChangeNote,
   onConfirmPendingSave,
   onCancelPendingSave,
@@ -39,12 +45,7 @@ export function GameAddModalDetailsPane({
         onChange={(e) => onChangeTitle(e.target.value)}
         required
       />
-      <div className="rounded-2xl border border-border/70 bg-background/25 px-4 py-3">
-        <p className="text-[0.72rem] font-semibold tracking-[0.18em] text-primary uppercase">
-          Work Type
-        </p>
-        <p className="mt-1 text-sm text-foreground">ゲーム</p>
-      </div>
+      <GamePlatformPicker value={gamePlatform} onChange={onChangeGamePlatform} />
       <div className="flex items-start gap-2 w-full">
         <label htmlFor={noteId}>
           <DocumentTextIcon className="w-5 h-5 shrink-0 stroke-[1.5] text-muted-foreground mt-0.5" />

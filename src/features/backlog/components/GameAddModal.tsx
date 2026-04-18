@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { IgdbSearchResult } from "../../../lib/igdb.ts";
 import { searchIgdbWorks } from "../../../lib/igdb.ts";
-import type { BacklogItem } from "../types.ts";
+import type { BacklogItem, GamePlatform } from "../types.ts";
 import { useAddSubmit } from "../hooks/useAddSubmit.ts";
 import { GameAddModalDetailsPane } from "./GameAddModalDetailsPane.tsx";
 import { GameWorkCard } from "./GameWorkCard.tsx";
@@ -51,6 +51,7 @@ export function GameAddModal({ items, session, onClose, onAdded }: Props) {
   const [selectedIgdbResult, setSelectedIgdbResult] = useState<IgdbSearchResult | null>(null);
   const [manualTitle, setManualTitle] = useState("");
   const [selectedTitleOverride, setSelectedTitleOverride] = useState("");
+  const [gamePlatform, setGamePlatform] = useState<GamePlatform | null>(null);
   const [note, setNote] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
   const isComposingRef = useRef(false);
@@ -78,7 +79,7 @@ export function GameAddModal({ items, session, onClose, onAdded }: Props) {
     isTvSelection: false,
     resolvedTitle,
     resolvedWorkType: "game",
-    primaryPlatform: null,
+    primaryPlatform: gamePlatform,
     note,
     onClose,
     onAdded,
@@ -273,6 +274,7 @@ export function GameAddModal({ items, session, onClose, onAdded }: Props) {
 
           <GameAddModalDetailsPane
             resolvedTitle={resolvedTitle}
+            gamePlatform={gamePlatform}
             note={note}
             formMessage={formMessage}
             pendingSaveMessage={pendingSaveMessage}
@@ -283,6 +285,10 @@ export function GameAddModal({ items, session, onClose, onAdded }: Props) {
               } else {
                 setManualTitle(title);
               }
+            }}
+            onChangeGamePlatform={(platform) => {
+              clearSubmissionState();
+              setGamePlatform(platform);
             }}
             onChangeNote={(nextNote) => {
               clearSubmissionState();

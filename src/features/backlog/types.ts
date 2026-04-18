@@ -51,7 +51,7 @@ export type BacklogItem = {
   id: string;
   status: BacklogStatus;
   display_title?: string | null;
-  primary_platform: PrimaryPlatform;
+  primary_platform: PrimaryPlatform | GamePlatform;
   note: string | null;
   sort_order: number;
   works: WorkSummary | null;
