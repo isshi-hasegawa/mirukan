@@ -53,6 +53,7 @@ type UpsertFetchedTmdbWorkOptions = {
 };
 type ExistingIgdbWorkRow = {
   id: string;
+  created_by: string | null;
 };
 
 export async function upsertTmdbWork(
@@ -80,13 +81,15 @@ export async function upsertIgdbWork(
   const updatePayload = buildIgdbWorkUpdate(details);
 
   if (existing) {
-    const { error: updateError } = await supabase
-      .from("works")
-      .update(updatePayload)
-      .eq("id", existing.id);
+    if (existing.created_by === userId) {
+      const { error: updateError } = await supabase
+        .from("works")
+        .update(updatePayload)
+        .eq("id", existing.id);
 
-    if (updateError) {
-      return buildErrorIdResponse(updateError);
+      if (updateError) {
+        return buildErrorIdResponse(updateError);
+      }
     }
 
     return buildOkIdResponse(existing.id);
@@ -299,7 +302,7 @@ async function findExistingIgdbWork(
 ): Promise<{ data: ExistingIgdbWorkRow | null; error: PostgrestError | null }> {
   return supabase
     .from("works")
-    .select("id")
+    .select("id, created_by")
     .eq("source_type", "igdb")
     .eq("igdb_id", igdbId)
     .eq("work_type", "game")
