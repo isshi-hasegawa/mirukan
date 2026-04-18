@@ -3,6 +3,13 @@ import type { DragEndEvent, DragOverEvent, DragStartEvent } from "@dnd-kit/core"
 import { useBacklogDnd } from "./useBacklogDnd.ts";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
 import type { BacklogItem } from "../types.ts";
+import {
+  createBacklogItem,
+  createMixedColumnItems,
+  createStackedItems,
+  createWatchingItems,
+  makeDomRect,
+} from "./useBacklogDnd.test-helpers.ts";
 
 const supabaseMocks = vi.hoisted(() => {
   const eq = vi.fn();
@@ -20,54 +27,12 @@ vi.mock("../../../lib/supabase.ts", () => ({
 
 setupTestLifecycle();
 
-function createItem(overrides: Partial<BacklogItem> = {}): BacklogItem {
-  return {
-    id: "item-1",
-    status: "stacked",
-    primary_platform: null,
-    note: null,
-    sort_order: 1000,
-    works: null,
-    ...overrides,
-  };
-}
-
-function makeRect(top = 100, height = 200): DOMRect {
-  return {
-    top,
-    height,
-    left: 0,
-    right: 100,
-    bottom: top + height,
-    width: 100,
-    x: 0,
-    y: top,
-    toJSON: () => ({}),
-  } as DOMRect;
-}
-
 function createDeferred<T>() {
   let resolve!: (value: T | PromiseLike<T>) => void;
   const promise = new Promise<T>((res) => {
     resolve = res;
   });
   return { promise, resolve };
-}
-
-function createWatchingItems(): BacklogItem[] {
-  return [
-    createItem({ id: "item-1", status: "stacked", sort_order: 1000 }),
-    createItem({ id: "item-2", status: "watching", sort_order: 1000 }),
-    createItem({ id: "item-3", status: "watching", sort_order: 2000 }),
-  ];
-}
-
-function createMixedColumnItems(): BacklogItem[] {
-  return [
-    createItem({ id: "item-1", status: "stacked", sort_order: 1000 }),
-    createItem({ id: "item-2", status: "stacked", sort_order: 2000 }),
-    createItem({ id: "item-3", status: "watching", sort_order: 1000 }),
-  ];
 }
 
 const onAfterDrop = vi.fn().mockResolvedValue(undefined);
@@ -106,7 +71,7 @@ function dragOver(
     result.current.handleDragStart({ active: { id: activeId } } as DragStartEvent);
     result.current.handleDragOver({
       active: { id: activeId },
-      over: { id: overId, rect: makeRect(100, 200) },
+      over: { id: overId, rect: makeDomRect(100, 200) },
       activatorEvent: { clientY } as MouseEvent,
     } as unknown as DragOverEvent);
   });
@@ -120,10 +85,7 @@ function getOrderByStatus(
 }
 
 describe("useBacklogDnd", () => {
-  const stackedItems = [
-    createItem({ id: "item-1", status: "stacked", sort_order: 1000 }),
-    createItem({ id: "item-2", status: "stacked", sort_order: 2000 }),
-  ];
+  const stackedItems = createStackedItems();
 
   beforeEach(() => {
     supabaseMocks.eq.mockResolvedValue({ error: null });
@@ -160,7 +122,7 @@ describe("useBacklogDnd", () => {
 
   test("handleDragEnd 成功時に supabase を更新して onAfterDrop を呼び dragItemId をクリアする", async () => {
     const { result } = renderDnd(stackedItems);
-    const rect = makeRect(100, 200);
+    const rect = makeDomRect(100, 200);
 
     await act(async () => {
       await result.current.handleDragEnd({
@@ -180,7 +142,7 @@ describe("useBacklogDnd", () => {
   test("handleDragEnd で supabase がエラーを返したら alert を出して onAfterDrop を呼ばない", async () => {
     supabaseMocks.eq.mockResolvedValueOnce({ error: { message: "DB エラー" } });
     const { result } = renderDnd(stackedItems);
-    const rect = makeRect(100, 200);
+    const rect = makeDomRect(100, 200);
 
     await act(async () => {
       await result.current.handleDragEnd({
@@ -208,7 +170,7 @@ describe("useBacklogDnd", () => {
     act(() => {
       dragEndPromise = result.current.handleDragEnd({
         active: { id: "item-1" },
-        over: { id: "item-2", rect: makeRect(100, 200) },
+        over: { id: "item-2", rect: makeDomRect(100, 200) },
         activatorEvent: null,
       } as unknown as DragEndEvent);
     });
@@ -227,8 +189,8 @@ describe("useBacklogDnd", () => {
   test("handleDragEnd 後に onAfterDrop が失敗しても次回同期をブロックし続けない", async () => {
     const failingOnAfterDrop = vi.fn().mockRejectedValue(new Error("reload failed"));
     const reorderedItems = [
-      createItem({ id: "item-2", status: "stacked", sort_order: 1000 }),
-      createItem({ id: "item-1", status: "stacked", sort_order: 2000 }),
+      createBacklogItem({ id: "item-2", status: "stacked", sort_order: 1000 }),
+      createBacklogItem({ id: "item-1", status: "stacked", sort_order: 2000 }),
     ];
     const { result, rerender } = renderHook(
       ({ items }) =>
@@ -247,7 +209,7 @@ describe("useBacklogDnd", () => {
       act(async () => {
         await result.current.handleDragEnd({
           active: { id: "item-1" },
-          over: { id: "item-2", rect: makeRect(100, 200) },
+          over: { id: "item-2", rect: makeDomRect(100, 200) },
           activatorEvent: null,
         } as unknown as DragEndEvent);
       }),
@@ -283,12 +245,12 @@ describe("useBacklogDnd", () => {
       result.current.handleDragStart({ active: { id: "item-1" } } as DragStartEvent);
       result.current.handleDragOver({
         active: { id: "item-1" },
-        over: { id: "item-3", rect: makeRect(100, 200) },
+        over: { id: "item-3", rect: makeDomRect(100, 200) },
         activatorEvent: { clientY: 120 } as MouseEvent,
       } as unknown as DragOverEvent);
       result.current.handleDragOver({
         active: { id: "item-1" },
-        over: { id: "item-2", rect: makeRect(100, 200) },
+        over: { id: "item-2", rect: makeDomRect(100, 200) },
         activatorEvent: { clientY: 120 } as MouseEvent,
       } as unknown as DragOverEvent);
     });
@@ -310,7 +272,7 @@ describe("useBacklogDnd", () => {
     await act(async () => {
       await result.current.handleDragEnd({
         active: { id: "item-1" },
-        over: { id: "column:watching", rect: makeRect(100, 200) },
+        over: { id: "column:watching", rect: makeDomRect(100, 200) },
         activatorEvent: null,
       } as unknown as DragEndEvent);
     });
@@ -324,8 +286,8 @@ describe("useBacklogDnd", () => {
   test("モバイルレイアウトでは handleDragOver が列間移動をブロックする", () => {
     const { result } = renderDnd(
       [
-        createItem({ id: "item-1", status: "stacked", sort_order: 1000 }),
-        createItem({ id: "item-2", status: "watching", sort_order: 1000 }),
+        createBacklogItem({ id: "item-1", status: "stacked", sort_order: 1000 }),
+        createBacklogItem({ id: "item-2", status: "watching", sort_order: 1000 }),
       ],
       { isMobileLayout: true },
     );
