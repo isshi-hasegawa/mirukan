@@ -5,9 +5,9 @@ import {
   getDefaultTwitchOauthClient,
 } from "./igdb-auth.ts";
 
-export type GamePlatform = "steam" | "playstation" | "switch" | "xbox" | "ios" | "android";
+type GamePlatform = "steam" | "playstation" | "switch" | "xbox" | "ios" | "android";
 
-export type IgdbSearchResult = {
+type IgdbSearchResult = {
   igdbId: number;
   title: string;
   coverImageId: string | null;
@@ -16,7 +16,7 @@ export type IgdbSearchResult = {
   summary: string | null;
 };
 
-export type IgdbWorkDetails = {
+type IgdbWorkDetails = {
   igdbId: number;
   title: string;
   summary: string | null;

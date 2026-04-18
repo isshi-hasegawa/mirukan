@@ -15,7 +15,7 @@ export type TwitchOauthClient = {
   fetchAccessToken(): Promise<TwitchAccessToken>;
 };
 
-export const TWITCH_TOKEN_REFRESH_BUFFER_MS = 60 * 1000;
+const TWITCH_TOKEN_REFRESH_BUFFER_MS = 60 * 1000;
 
 export function isTwitchTokenValid(
   token: TwitchAccessToken,
@@ -34,7 +34,7 @@ export function deriveTwitchExpiresAt(
   return new Date(now.getTime() + Math.max(expiresInMs - bufferMs, 0));
 }
 
-export type EnsureValidAccessTokenOptions = {
+type EnsureValidAccessTokenOptions = {
   now?: Date;
   bufferMs?: number;
   force?: boolean;
@@ -74,7 +74,7 @@ type TwitchOauthResponse = {
   token_type: string;
 };
 
-export function createTwitchOauthClient(options: {
+function createTwitchOauthClient(options: {
   clientId: string;
   clientSecret: string;
   now?: () => Date;
@@ -203,8 +203,4 @@ export function getDefaultTwitchOauthClient(): TwitchOauthClient {
 
   cachedEnvOauthClient = createTwitchOauthClient({ clientId, clientSecret });
   return cachedEnvOauthClient;
-}
-
-export function resetDefaultTwitchOauthClientForTest() {
-  cachedEnvOauthClient = null;
 }
