@@ -44,6 +44,7 @@ export function KanbanBoard({
   const handleViewingModeToggle = useCallback((mode: ViewingMode) => {
     setActiveViewingMode((current) => (current === mode ? null : mode));
   }, []);
+  const allowsViewingModeFilter = boardMode === "video";
   const lastStableItemsRef = useRef<BacklogItem[] | null>(null);
   const lastStableStackedItemsRef = useRef<BacklogItem[] | null>(null);
 
@@ -58,7 +59,7 @@ export function KanbanBoard({
 
     const sortedStackedItems = sortStackedItemsByViewingMode(
       nextGrouped.get("stacked") ?? [],
-      activeViewingMode,
+      allowsViewingModeFilter ? activeViewingMode : null,
     );
 
     if (!isDragging) {
@@ -71,7 +72,7 @@ export function KanbanBoard({
     }
 
     return nextGrouped;
-  }, [items, activeViewingMode, isDragging]);
+  }, [items, activeViewingMode, allowsViewingModeFilter, isDragging]);
 
   const columnPropsByStatus = useMemo(
     () =>
@@ -82,18 +83,21 @@ export function KanbanBoard({
             boardMode,
             status,
             items: grouped.get(status) ?? [],
-            activeViewingMode: status === "stacked" ? activeViewingMode : null,
+            activeViewingMode:
+              allowsViewingModeFilter && status === "stacked" ? activeViewingMode : null,
             isMobileLayout,
             onOpenAddModal,
             onOpenDetail,
             onDeleteItem,
             onMarkAsWatched,
-            onViewingModeToggle: status === "stacked" ? handleViewingModeToggle : undefined,
+            onViewingModeToggle:
+              allowsViewingModeFilter && status === "stacked" ? handleViewingModeToggle : undefined,
           },
         ]),
       ),
     [
       activeViewingMode,
+      allowsViewingModeFilter,
       boardMode,
       grouped,
       handleViewingModeToggle,

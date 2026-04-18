@@ -78,7 +78,7 @@ export function KanbanColumn({
                   <BacklogCard
                     key={item.id}
                     item={item}
-                    showModeBadge={status === "stacked"}
+                    showModeBadge={boardMode === "video" && status === "stacked"}
                     onOpenDetail={() => onOpenDetail(item.id)}
                     onDeleteItem={onDeleteItem}
                     onMarkAsWatched={onMarkAsWatched}

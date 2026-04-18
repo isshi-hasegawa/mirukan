@@ -42,18 +42,18 @@ export const statusOrder: BacklogStatus[] = [
 
 export const videoStatusLabels: Record<BacklogStatus, string> = {
   stacked: "ストック",
-  want_to_watch: "見たい",
+  want_to_watch: "次に見る",
   watching: "視聴中",
-  interrupted: "中断",
-  watched: "視聴済み",
+  interrupted: "保留",
+  watched: "鑑賞済み",
 };
 
 export const gameStatusLabels: Record<BacklogStatus, string> = {
   stacked: "積みゲー",
-  want_to_watch: "プレイしたい",
+  want_to_watch: "次にやる",
   watching: "プレイ中",
-  interrupted: "中断中",
-  watched: "クリア済み",
+  interrupted: "保留",
+  watched: "プレイ済み",
 };
 
 export const statusLabels = videoStatusLabels;

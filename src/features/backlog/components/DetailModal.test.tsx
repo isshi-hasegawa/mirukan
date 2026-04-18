@@ -116,7 +116,7 @@ describe("DetailModal", () => {
       works: {
         ...item.works!,
         id: "work-2",
-        title: "既存視聴済み作品",
+        title: "既存鑑賞済み作品",
         tmdb_id: 20,
       },
     });
@@ -129,7 +129,7 @@ describe("DetailModal", () => {
 
     expect(screen.getByText("古いメッセージ")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "視聴済み" }));
+    await user.click(screen.getByRole("button", { name: "鑑賞済み" }));
 
     await waitFor(() =>
       expect(dataMocks.updateBacklogItem).toHaveBeenCalledWith("item-1", {
@@ -146,7 +146,7 @@ describe("DetailModal", () => {
 
     const { user, onReload } = renderDetailModal();
 
-    await user.click(screen.getByRole("button", { name: "視聴済み" }));
+    await user.click(screen.getByRole("button", { name: "鑑賞済み" }));
 
     expect(await screen.findByText("更新に失敗しました: DB error")).toBeInTheDocument();
     expect(onReload).not.toHaveBeenCalled();

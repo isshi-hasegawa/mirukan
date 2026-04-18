@@ -9,6 +9,7 @@ describe("KanbanColumnHeader", () => {
   test("件数を表示し、stacked では追加ボタンを表示する", () => {
     render(
       <KanbanColumnHeader
+        boardMode="video"
         status="stacked"
         itemCount={3}
         isMobileLayout={false}
@@ -29,6 +30,7 @@ describe("KanbanColumnHeader", () => {
 
     render(
       <KanbanColumnHeader
+        boardMode="video"
         status="stacked"
         itemCount={1}
         isMobileLayout={true}
@@ -47,6 +49,7 @@ describe("KanbanColumnHeader", () => {
   test("stacked 以外では追加ボタンを表示しない", () => {
     render(
       <KanbanColumnHeader
+        boardMode="video"
         status="watching"
         itemCount={2}
         isMobileLayout={false}

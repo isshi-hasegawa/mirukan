@@ -13,7 +13,7 @@ type Props = Readonly<{
 export function Header({ session, boardMode = "video" }: Props) {
   return (
     <header className="w-full min-w-0 grid grid-cols-[minmax(0,1fr)_auto] gap-4 items-center px-[6px] py-[6px] max-[720px]:gap-3 max-[500px]:px-1 max-[500px]:py-1 max-[500px]:gap-2 max-[400px]:gap-1.5">
-      <div className="min-w-0 grid gap-3">
+      <div className="flex min-w-0 flex-wrap items-center gap-3">
         <BrandWordmark
           className="max-w-[180px]"
           titleClassName="block whitespace-nowrap text-[clamp(1.6rem,3vw,2.25rem)] leading-[0.9] tracking-[-0.06em] text-white"
@@ -21,7 +21,7 @@ export function Header({ session, boardMode = "video" }: Props) {
           symbolClassName="h-10 w-10 shrink-0 object-contain"
         />
         <nav
-          className="inline-flex w-fit items-center gap-1 rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] p-1"
+          className="inline-flex w-fit max-w-full items-center gap-1 rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] p-1"
           aria-label="ボード切り替え"
         >
           {(["video", "game"] as const).map((mode) => {
