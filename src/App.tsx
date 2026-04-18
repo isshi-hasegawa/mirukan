@@ -113,20 +113,28 @@ function isBoardMode(value: string | null): value is BoardMode {
 }
 
 function readLastBoardMode(): BoardMode {
-  if (typeof globalThis.localStorage === "undefined") {
+  if (globalThis.localStorage === undefined) {
     return "video";
   }
 
-  const value = globalThis.localStorage.getItem(LAST_BOARD_MODE_STORAGE_KEY);
-  return isBoardMode(value) ? value : "video";
+  try {
+    const value = globalThis.localStorage.getItem(LAST_BOARD_MODE_STORAGE_KEY);
+    return isBoardMode(value) ? value : "video";
+  } catch {
+    return "video";
+  }
 }
 
 function writeLastBoardMode(boardMode: BoardMode) {
-  if (typeof globalThis.localStorage === "undefined") {
+  if (globalThis.localStorage === undefined) {
     return;
   }
 
-  globalThis.localStorage.setItem(LAST_BOARD_MODE_STORAGE_KEY, boardMode);
+  try {
+    globalThis.localStorage.setItem(LAST_BOARD_MODE_STORAGE_KEY, boardMode);
+  } catch {
+    // Ignore storage access failures and keep the in-memory route state.
+  }
 }
 
 function AuthenticatedApp({ boardMode }: Readonly<{ boardMode?: BoardMode }>) {
@@ -216,7 +224,7 @@ const rootRoute = createRootRoute({
       <Outlet />
     </NuqsAdapter>
   ),
-  notFoundComponent: AuthenticatedApp,
+  notFoundComponent: () => <AuthenticatedApp />,
 });
 
 const indexRoute = createRoute({

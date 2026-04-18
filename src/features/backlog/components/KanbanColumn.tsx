@@ -13,7 +13,7 @@ type Props = KanbanColumnProps & {
 };
 
 export function KanbanColumn({
-  boardMode,
+  boardMode = "video",
   status,
   items,
   extra,

@@ -3,7 +3,7 @@ import { getStatusLabel } from "../constants.ts";
 import type { BacklogStatus, BoardMode } from "../types.ts";
 
 type Props = Readonly<{
-  boardMode: BoardMode;
+  boardMode?: BoardMode;
   status: BacklogStatus;
   itemCount: number;
   isMobileLayout: boolean;
@@ -11,7 +11,7 @@ type Props = Readonly<{
 }>;
 
 export function KanbanColumnHeader({
-  boardMode,
+  boardMode = "video",
   status,
   itemCount,
   isMobileLayout,

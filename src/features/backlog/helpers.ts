@@ -73,7 +73,7 @@ export function getWorkTypeLabel(workType: WorkType) {
   return "シリーズ";
 }
 
-export function getBoardModeForWorkType(workType: WorkType): BoardMode {
+function getBoardModeForWorkType(workType: WorkType): BoardMode {
   return workType === "game" ? "game" : "video";
 }
 

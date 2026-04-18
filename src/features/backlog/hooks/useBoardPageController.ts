@@ -10,10 +10,13 @@ import { useBoardPageState } from "./useBoardPageState.ts";
 
 type UseBoardPageControllerOptions = {
   session: Session;
-  boardMode: BoardMode;
+  boardMode?: BoardMode;
 };
 
-export function useBoardPageController({ session, boardMode }: UseBoardPageControllerOptions) {
+export function useBoardPageController({
+  session,
+  boardMode = "video",
+}: UseBoardPageControllerOptions) {
   const { isMobileLayout } = useBoardPageLayout();
   const { feedback, feedbackUi } = useBacklogFeedback();
   const { items: allItems, isLoading, error, loadItems } = useBacklogItems(session.user.id);

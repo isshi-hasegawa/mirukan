@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import type { BacklogItem, BacklogStatus, BoardMode, ViewingMode } from "../types.ts";
 
 export type KanbanColumnProps = {
-  boardMode: BoardMode;
+  boardMode?: BoardMode;
   status: BacklogStatus;
   items: BacklogItem[];
   extra?: ReactNode;

@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 
 type Props = Readonly<{
-  boardMode: "game";
   items: BacklogItem[];
   session: Session;
   onClose: () => void;
@@ -161,6 +160,8 @@ export function GameAddModal({ items, session, onClose, onAdded }: Props) {
 
     if (!isComposingRef.current) {
       if (query.trim()) {
+        setSelectedIgdbResult(null);
+        setSelectedTitleOverride("");
         queueSearch(query);
       } else {
         resetSearchState();

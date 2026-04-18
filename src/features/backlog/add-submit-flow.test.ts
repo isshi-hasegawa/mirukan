@@ -104,7 +104,7 @@ describe("confirmStackedSave", () => {
       }),
     ).toEqual({
       type: "confirm",
-      message: "「作品タイトル」はすでに「視聴済み」にあります。ストックに戻しますか？",
+      message: "「作品タイトル」はすでに「鑑賞済み」にあります。ストックに戻しますか？",
     });
   });
 

@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { BacklogStatus } from "../types.ts";
-import type { BoardMode } from "../types.ts";
+import type { BacklogStatus, BoardMode } from "../types.ts";
 import { getStatusLabel, statusOrder } from "../constants.ts";
 import { KanbanColumn } from "./KanbanColumn.tsx";
 import type { KanbanColumnProps } from "./kanban-board-shared.ts";

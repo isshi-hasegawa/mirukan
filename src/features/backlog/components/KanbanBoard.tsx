@@ -117,6 +117,7 @@ export function KanbanBoard({
   if (isMobileLayout) {
     return (
       <MobileKanbanBoard
+        boardMode={boardMode}
         selectedTabStatus={selectedTabStatus}
         isMobileDragging={isMobileDragging}
         onTabChange={onTabChange}

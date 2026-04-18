@@ -412,7 +412,7 @@ describe("AddModal", () => {
     await user.click(screen.getByRole("button", { name: "ストックに追加" }));
 
     expect(
-      await screen.findByText("「既存映画」はすでに「視聴済み」にあります。ストックに戻しますか？"),
+      await screen.findByText("「既存映画」はすでに「鑑賞済み」にあります。ストックに戻しますか？"),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "キャンセル" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "ストックへ戻す" })).toBeInTheDocument();
@@ -422,7 +422,7 @@ describe("AddModal", () => {
 
     await waitFor(() =>
       expect(
-        screen.queryByText("「既存映画」はすでに「視聴済み」にあります。ストックに戻しますか？"),
+        screen.queryByText("「既存映画」はすでに「鑑賞済み」にあります。ストックに戻しますか？"),
       ).not.toBeInTheDocument(),
     );
     expect(dataMocks.upsertBacklogItemsToStatus).not.toHaveBeenCalled();
@@ -457,7 +457,7 @@ describe("AddModal", () => {
 
     expect(
       await screen.findByText(
-        "「別既存映画」はすでに「視聴済み」にあります。ストックに戻しますか？",
+        "「別既存映画」はすでに「鑑賞済み」にあります。ストックに戻しますか？",
       ),
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "ストックに追加" })).not.toBeInTheDocument();
@@ -505,7 +505,7 @@ describe("AddModal", () => {
 
     expect(
       await screen.findByText(
-        "「confirm不要映画」はすでに「視聴済み」にあります。ストックに戻しますか？",
+        "「confirm不要映画」はすでに「鑑賞済み」にあります。ストックに戻しますか？",
       ),
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "ストックに追加" })).not.toBeInTheDocument();

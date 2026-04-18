@@ -1,25 +1,24 @@
 import { useEffect } from "react";
 import type { Session } from "@supabase/supabase-js";
-import type { BacklogItem } from "../types.ts";
+import type { BacklogItem, BoardMode } from "../types.ts";
 import { useAddFlow } from "../hooks/useAddFlow.ts";
 import { AddModalDetailsPane } from "./AddModalDetailsPane.tsx";
 import { AddModalSearchPane } from "./AddModalSearchPane.tsx";
 import { GameAddModal } from "./GameAddModal.tsx";
-import type { BoardMode } from "../types.ts";
 
 type Props = Readonly<{
-  boardMode: BoardMode;
+  boardMode?: BoardMode;
   items: BacklogItem[];
   session: Session;
   onClose: () => void;
   onAdded: () => void | Promise<void>;
 }>;
 
-export function AddModal(props: Props) {
-  return props.boardMode === "game" ? <GameAddModal {...props} /> : <VideoAddModal {...props} />;
+export function AddModal({ boardMode = "video", ...props }: Props) {
+  return boardMode === "game" ? <GameAddModal {...props} /> : <VideoAddModal {...props} />;
 }
 
-function VideoAddModal({ items, session, onClose, onAdded }: Props) {
+function VideoAddModal({ items, session, onClose, onAdded }: Omit<Props, "boardMode">) {
   const {
     searchQuery,
     searchResults,

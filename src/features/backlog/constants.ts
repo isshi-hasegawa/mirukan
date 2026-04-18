@@ -40,7 +40,7 @@ export const statusOrder: BacklogStatus[] = [
   "watched",
 ];
 
-export const videoStatusLabels: Record<BacklogStatus, string> = {
+const videoStatusLabels: Record<BacklogStatus, string> = {
   stacked: "ストック",
   want_to_watch: "次に見る",
   watching: "視聴中",
@@ -48,7 +48,7 @@ export const videoStatusLabels: Record<BacklogStatus, string> = {
   watched: "鑑賞済み",
 };
 
-export const gameStatusLabels: Record<BacklogStatus, string> = {
+const gameStatusLabels: Record<BacklogStatus, string> = {
   stacked: "積みゲー",
   want_to_watch: "次にやる",
   watching: "プレイ中",

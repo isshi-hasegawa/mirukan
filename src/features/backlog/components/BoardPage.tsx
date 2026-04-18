@@ -14,7 +14,7 @@ import { DraggedBacklogCardOverlay } from "./DraggedBacklogCardOverlay.tsx";
 const AddModal = lazyNamed(() => import("./AddModal.tsx"), "AddModal");
 const DetailModal = lazyNamed(() => import("./DetailModal.tsx"), "DetailModal");
 
-type Props = Readonly<{ session: Session; boardMode: BoardMode }>;
+type Props = Readonly<{ session: Session; boardMode?: BoardMode }>;
 
 const shellBase =
   "w-full min-w-0 max-w-[1680px] mx-auto px-3 max-[720px]:px-2.5 max-[500px]:px-2 max-[400px]:px-1.5";
@@ -94,7 +94,7 @@ function LazyModalBoundary({
   );
 }
 
-export function BoardPage({ session, boardMode }: Props) {
+export function BoardPage({ session, boardMode = "video" }: Props) {
   const { isLoading, error, board, dnd, addModal, detailModal, feedbackUi } =
     useBoardPageController({ session, boardMode });
 
