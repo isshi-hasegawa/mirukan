@@ -140,7 +140,7 @@ export function buildIgdbSearchBody(query: string, limit = 20): string {
   return [
     `fields ${SEARCH_FIELDS};`,
     `search "${escapedQuery}";`,
-    "where category = (0,8,9,10,11);",
+    "where game_type = (0,8,9,10,11);",
     `limit ${limit};`,
   ].join(" ");
 }

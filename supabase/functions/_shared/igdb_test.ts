@@ -69,7 +69,7 @@ Deno.test("unixSecondsToIsoDate は秒を YYYY-MM-DD に変換する", () => {
 Deno.test("buildIgdbSearchBody はクエリをエスケープしてカテゴリで絞る", () => {
   assertEquals(
     buildIgdbSearchBody('Zelda "BOTW"'),
-    `fields id,name,summary,cover.image_id,first_release_date,platforms.slug; search "Zelda \\"BOTW\\""; where category = (0,8,9,10,11); limit 20;`,
+    `fields id,name,summary,cover.image_id,first_release_date,platforms.slug; search "Zelda \\"BOTW\\""; where game_type = (0,8,9,10,11); limit 20;`,
   );
 });
 
