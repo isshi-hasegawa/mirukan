@@ -13,11 +13,12 @@ type Props = KanbanColumnProps & {
 };
 
 export function KanbanColumn({
+  boardMode,
   status,
   items,
   extra,
-  activeViewingMode = null,
-  isMobileLayout = false,
+  activeViewingMode,
+  isMobileLayout,
   onOpenAddModal,
   onOpenDetail,
   onDeleteItem,
@@ -51,6 +52,7 @@ export function KanbanColumn({
     >
       {extra}
       <KanbanColumnHeader
+        boardMode={boardMode}
         status={status}
         itemCount={items.length}
         isMobileLayout={isMobileLayout}

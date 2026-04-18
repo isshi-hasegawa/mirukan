@@ -1,9 +1,11 @@
 import { useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import type { IgdbSearchResult } from "../../../lib/igdb.ts";
 import type { TmdbSearchResult, TmdbSeasonOption } from "../../../lib/tmdb.ts";
 import { upsertBacklogItemsToStatus } from "../backlog-repository.ts";
 import {
   resolveSelectedSeasonWorkIds,
+  upsertIgdbWork,
   upsertManualWork,
   upsertTmdbWork,
 } from "../work-repository.ts";
@@ -19,6 +21,7 @@ type UseAddSubmitOptions = {
   items: BacklogItem[];
   session: Session;
   selectedTmdbResult: TmdbSearchResult | null;
+  selectedIgdbResult?: IgdbSearchResult | null;
   selectedSeasonNumbers: number[];
   seasonOptions: TmdbSeasonOption[];
   isTvSelection: boolean;
@@ -32,15 +35,16 @@ type UseAddSubmitOptions = {
 
 function buildDisplayTitle(
   selectedTmdbResult: TmdbSearchResult | null,
+  selectedIgdbResult: IgdbSearchResult | null,
   resolvedTitle: string,
   workCount: number,
 ) {
-  if (!selectedTmdbResult || workCount !== 1) {
+  if (workCount !== 1 || (!selectedTmdbResult && !selectedIgdbResult)) {
     return null;
   }
 
   const trimmedTitle = resolvedTitle.trim();
-  const defaultTitle = selectedTmdbResult.title.trim();
+  const defaultTitle = (selectedTmdbResult?.title ?? selectedIgdbResult?.title ?? "").trim();
 
   if (!trimmedTitle || trimmedTitle === defaultTitle) {
     return null;
@@ -57,6 +61,7 @@ export function useAddSubmit({
   items,
   session,
   selectedTmdbResult,
+  selectedIgdbResult = null,
   selectedSeasonNumbers,
   seasonOptions,
   isTvSelection,
@@ -165,11 +170,13 @@ export function useAddSubmit({
     try {
       return selectedTmdbResult
         ? await upsertTmdbWork(selectedTmdbResult, session.user.id)
-        : await upsertManualWork(
-            title,
-            resolvedWorkType as Extract<WorkType, "movie" | "series">,
-            session.user.id,
-          );
+        : selectedIgdbResult
+          ? await upsertIgdbWork(selectedIgdbResult, session.user.id)
+          : await upsertManualWork(
+              title,
+              resolvedWorkType as Extract<WorkType, "movie" | "series" | "game">,
+              session.user.id,
+            );
     } catch (error) {
       return {
         data: null,
@@ -232,8 +239,9 @@ export function useAddSubmit({
     await saveWithConfirmation({
       workIds: [result.data.id],
       subject,
-      emptyMessage: "すでにストックにあります。",
-      displayTitle: buildDisplayTitle(selectedTmdbResult, resolvedTitle, 1),
+      emptyMessage:
+        resolvedWorkType === "game" ? "すでに積みゲーにあります。" : "すでにストックにあります。",
+      displayTitle: buildDisplayTitle(selectedTmdbResult, selectedIgdbResult, resolvedTitle, 1),
     });
   };
 
@@ -243,6 +251,7 @@ export function useAddSubmit({
     const title = resolvedTitle.trim();
     const subject = buildSelectedSubject({
       selectedTmdbResult,
+      selectedIgdbResult,
       selectedSeasonNumbers,
       resolvedTitle,
     });

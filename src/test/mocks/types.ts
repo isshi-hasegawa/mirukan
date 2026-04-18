@@ -73,16 +73,18 @@ export type BacklogItem = {
 export type Work = {
   id: string;
   created_by?: string;
-  source_type?: "tmdb" | "manual";
-  work_type?: "movie" | "series" | "season";
+  source_type?: "tmdb" | "manual" | "igdb";
+  work_type?: "movie" | "series" | "season" | "game";
   search_text?: string;
   tmdb_id: number | null;
+  igdb_id?: number | null;
   tmdb_media_type: "movie" | "tv" | null;
   title: string;
   original_title: string | null;
   overview: string | null;
   poster_path: string | null;
   release_date: string | null;
+  release_dates?: Record<string, string> | null;
   parent_work_id?: string | null;
   runtime_minutes?: number | null;
   typical_episode_runtime_minutes?: number | null;
@@ -101,5 +103,8 @@ export type Work = {
   imdb_rating?: number | null;
   imdb_votes?: number | null;
   metacritic_score?: number | null;
+  developer?: string | null;
+  publisher?: string | null;
+  franchise?: string | null;
   series_title: string | null;
 };

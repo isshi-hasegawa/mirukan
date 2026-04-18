@@ -33,7 +33,7 @@ describe("DraggedBacklogCardOverlay", () => {
     expect(screen.getByText("ドラッグ中の作品")).toBeInTheDocument();
     expect(container.querySelector("img")).toHaveAttribute(
       "src",
-      "https://image.tmdb.org/t/p/w200/poster.jpg",
+      "https://image.tmdb.org/t/p/w185/poster.jpg",
     );
   });
 });

@@ -1,12 +1,14 @@
 import { useEffect, useRef } from "react";
 import type { BacklogStatus } from "../types.ts";
-import { statusLabels, statusOrder } from "../constants.ts";
+import type { BoardMode } from "../types.ts";
+import { getStatusLabel, statusOrder } from "../constants.ts";
 import { KanbanColumn } from "./KanbanColumn.tsx";
 import type { KanbanColumnProps } from "./kanban-board-shared.ts";
 
 const SWIPE_THRESHOLD_PX = 50;
 
 type Props = Readonly<{
+  boardMode: BoardMode;
   selectedTabStatus: BacklogStatus;
   isMobileDragging: boolean;
   onTabChange: (status: BacklogStatus) => void;
@@ -15,6 +17,7 @@ type Props = Readonly<{
 }>;
 
 export function MobileKanbanBoard({
+  boardMode,
   selectedTabStatus,
   isMobileDragging,
   onTabChange,
@@ -99,7 +102,7 @@ export function MobileKanbanBoard({
               ].join(" ")}
               onClick={() => onTabChange(status)}
             >
-              {statusLabels[status]}
+              {getStatusLabel(status, boardMode)}
             </button>
           );
         })}

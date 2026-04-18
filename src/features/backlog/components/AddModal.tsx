@@ -4,15 +4,22 @@ import type { BacklogItem } from "../types.ts";
 import { useAddFlow } from "../hooks/useAddFlow.ts";
 import { AddModalDetailsPane } from "./AddModalDetailsPane.tsx";
 import { AddModalSearchPane } from "./AddModalSearchPane.tsx";
+import { GameAddModal } from "./GameAddModal.tsx";
+import type { BoardMode } from "../types.ts";
 
 type Props = Readonly<{
+  boardMode: BoardMode;
   items: BacklogItem[];
   session: Session;
   onClose: () => void;
   onAdded: () => void | Promise<void>;
 }>;
 
-export function AddModal({ items, session, onClose, onAdded }: Props) {
+export function AddModal(props: Props) {
+  return props.boardMode === "game" ? <GameAddModal {...props} /> : <VideoAddModal {...props} />;
+}
+
+function VideoAddModal({ items, session, onClose, onAdded }: Props) {
   const {
     searchQuery,
     searchResults,

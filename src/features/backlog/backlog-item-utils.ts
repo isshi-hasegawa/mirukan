@@ -1,6 +1,12 @@
 import { statusLabels } from "./constants.ts";
 import { isPrimaryPlatform, normalizePrimaryPlatform } from "./helpers.ts";
-import type { BacklogItem, BacklogStatus, DetailModalEditableField, WorkSummary } from "./types.ts";
+import type {
+  BacklogItem,
+  BacklogStatus,
+  DetailModalEditableField,
+  GameReleaseDates,
+  WorkSummary,
+} from "./types.ts";
 
 export function normalizeBacklogItems(rows: unknown[]): BacklogItem[] {
   return rows.flatMap((row) => {
@@ -30,16 +36,37 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === "string");
 }
 
+function isReleaseDates(value: unknown): value is GameReleaseDates | null {
+  if (value === null) {
+    return true;
+  }
+
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  return Object.entries(value).every(
+    ([key, date]) =>
+      (key === "steam" ||
+        key === "playstation" ||
+        key === "switch" ||
+        key === "xbox" ||
+        key === "ios" ||
+        key === "android") &&
+      typeof date === "string",
+  );
+}
+
 function isBacklogStatus(value: unknown): value is BacklogStatus {
   return typeof value === "string" && value in statusLabels;
 }
 
 function isWorkType(value: unknown): value is WorkSummary["work_type"] {
-  return value === "movie" || value === "series" || value === "season";
+  return value === "movie" || value === "series" || value === "season" || value === "game";
 }
 
 function isSourceType(value: unknown): value is WorkSummary["source_type"] {
-  return value === "tmdb" || value === "manual";
+  return value === "tmdb" || value === "manual" || value === "igdb";
 }
 
 function isTmdbMediaType(value: unknown): value is WorkSummary["tmdb_media_type"] {
@@ -63,18 +90,23 @@ function isBacklogWork(value: unknown): value is NonNullable<BacklogItem["works"
     typeof value.title === "string" &&
     isWorkType(value.work_type) &&
     isSourceType(value.source_type) &&
-    isNullableNumber(value.tmdb_id) &&
+    (value.tmdb_id === undefined || isNullableNumber(value.tmdb_id)) &&
+    (value.igdb_id === undefined || isNullableNumber(value.igdb_id)) &&
     isTmdbMediaType(value.tmdb_media_type) &&
     isNullableString(value.original_title) &&
     isNullableString(value.overview) &&
     isNullableString(value.poster_path) &&
     isNullableString(value.release_date) &&
+    (value.release_dates === undefined || isReleaseDates(value.release_dates)) &&
     isNullableNumber(value.runtime_minutes) &&
     isNullableNumber(value.typical_episode_runtime_minutes) &&
     isDurationBucket(value.duration_bucket) &&
     isStringArray(value.genres) &&
     isNullableNumber(value.season_count) &&
     isNullableNumber(value.season_number) &&
+    (value.developer === undefined || isNullableString(value.developer)) &&
+    (value.publisher === undefined || isNullableString(value.publisher)) &&
+    (value.franchise === undefined || isNullableString(value.franchise)) &&
     isNullableNumber(value.focus_required_score) &&
     isNullableNumber(value.background_fit_score) &&
     isNullableNumber(value.completion_load_score)

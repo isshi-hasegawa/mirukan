@@ -1,9 +1,11 @@
 import { buildMoveToStatusConfirmMessage, planBacklogItemUpserts } from "./backlog-item-utils.ts";
 import type { BacklogItem, PrimaryPlatform } from "./types.ts";
+import type { IgdbSearchResult } from "../../lib/igdb.ts";
 import type { TmdbSearchResult } from "../../lib/tmdb.ts";
 
 type SelectedSubjectOptions = {
   selectedTmdbResult: TmdbSearchResult | null;
+  selectedIgdbResult?: IgdbSearchResult | null;
   selectedSeasonNumbers: number[];
   resolvedTitle: string;
 };
@@ -22,9 +24,14 @@ type StackedSaveReview =
 
 export function buildSelectedSubject({
   selectedTmdbResult,
+  selectedIgdbResult = null,
   selectedSeasonNumbers,
   resolvedTitle,
 }: SelectedSubjectOptions) {
+  if (selectedIgdbResult) {
+    return `「${selectedIgdbResult.title}」`;
+  }
+
   if (!selectedTmdbResult) {
     return `「${resolvedTitle.trim() || "この作品"}」`;
   }

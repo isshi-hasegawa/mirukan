@@ -1,12 +1,13 @@
 import { useCallback, useMemo, useRef } from "react";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
-import type { BacklogItem, BacklogStatus, ViewingMode } from "../types.ts";
+import type { BacklogItem, BacklogStatus, BoardMode, ViewingMode } from "../types.ts";
 import { statusOrder, viewingModeOrder } from "../constants.ts";
 import { sortStackedItemsByViewingMode } from "../viewing-mode.ts";
 import { DesktopKanbanBoard } from "./DesktopKanbanBoard.tsx";
 import { MobileKanbanBoard } from "./MobileKanbanBoard.tsx";
 
 type Props = Readonly<{
+  boardMode: BoardMode;
   items: BacklogItem[];
   isDragging: boolean;
   isMobileLayout: boolean;
@@ -21,6 +22,7 @@ type Props = Readonly<{
 }>;
 
 export function KanbanBoard({
+  boardMode,
   items,
   isDragging,
   isMobileLayout,
@@ -77,6 +79,7 @@ export function KanbanBoard({
         statusOrder.map((status) => [
           status,
           {
+            boardMode,
             status,
             items: grouped.get(status) ?? [],
             activeViewingMode: status === "stacked" ? activeViewingMode : null,
@@ -91,6 +94,7 @@ export function KanbanBoard({
       ),
     [
       activeViewingMode,
+      boardMode,
       grouped,
       handleViewingModeToggle,
       isMobileLayout,

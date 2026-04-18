@@ -1,4 +1,5 @@
 import type { PostgrestError, PostgrestSingleResponse } from "@supabase/supabase-js";
+import { fetchIgdbWorkDetails, type IgdbSearchResult } from "../../lib/igdb.ts";
 import { supabase } from "../../lib/supabase.ts";
 import {
   fetchTmdbWorkDetails,
@@ -10,7 +11,12 @@ import {
 import { fetchOmdbWorkDetails } from "../../lib/omdb.ts";
 import { buildSearchText } from "./helpers.ts";
 import type { WorkType } from "./types.ts";
-import { buildTmdbWorkUpdate, calcBackgroundFitScore, type RatingInfo } from "./work-metadata.ts";
+import {
+  buildIgdbWorkUpdate,
+  buildTmdbWorkUpdate,
+  calcBackgroundFitScore,
+  type RatingInfo,
+} from "./work-metadata.ts";
 import {
   buildErrorIdResponse,
   buildOkIdResponse,
@@ -45,6 +51,9 @@ type UpsertFetchedTmdbWorkOptions = {
   seasonNumber?: number;
   workType?: WorkType;
 };
+type ExistingIgdbWorkRow = {
+  id: string;
+};
 
 export async function upsertTmdbWork(
   target: TmdbSelectionTarget,
@@ -57,9 +66,48 @@ export async function upsertTmdbWork(
   return upsertFetchedTmdbWork(target, userId);
 }
 
+export async function upsertIgdbWork(
+  result: IgdbSearchResult,
+  userId: string,
+): Promise<TmdbWorkIdResponse> {
+  const { data: existing, error: selectError } = await findExistingIgdbWork(result.igdbId);
+
+  if (selectError) {
+    return buildErrorIdResponse(selectError);
+  }
+
+  const details = await fetchIgdbWorkDetails(result.igdbId);
+  const updatePayload = buildIgdbWorkUpdate(details);
+
+  if (existing) {
+    const { error: updateError } = await supabase
+      .from("works")
+      .update(updatePayload)
+      .eq("id", existing.id);
+
+    if (updateError) {
+      return buildErrorIdResponse(updateError);
+    }
+
+    return buildOkIdResponse(existing.id);
+  }
+
+  return supabase
+    .from("works")
+    .insert({
+      created_by: userId,
+      source_type: "igdb",
+      work_type: "game",
+      igdb_id: result.igdbId,
+      ...updatePayload,
+    })
+    .select("id")
+    .single();
+}
+
 export async function upsertManualWork(
   title: string,
-  workType: Extract<WorkType, "movie" | "series">,
+  workType: Extract<WorkType, "movie" | "series" | "game">,
   userId: string,
 ): Promise<PostgrestSingleResponse<{ id: string }>> {
   const searchText = buildSearchText(title);
@@ -244,6 +292,18 @@ async function findExistingTmdbWork({
   }
 
   return query.maybeSingle();
+}
+
+async function findExistingIgdbWork(
+  igdbId: number,
+): Promise<{ data: ExistingIgdbWorkRow | null; error: PostgrestError | null }> {
+  return supabase
+    .from("works")
+    .select("id")
+    .eq("source_type", "igdb")
+    .eq("igdb_id", igdbId)
+    .eq("work_type", "game")
+    .maybeSingle();
 }
 
 async function upsertFetchedTmdbWork(
