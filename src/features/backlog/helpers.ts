@@ -64,7 +64,9 @@ export function escapeHtml(value: string) {
 }
 
 export function getWorkTypeLabel(workType: WorkType) {
-  return workType === "movie" ? "映画" : "シリーズ";
+  if (workType === "movie") return "映画";
+  if (workType === "game") return "ゲーム";
+  return "シリーズ";
 }
 
 type WorkMetadataLabelOptions = {

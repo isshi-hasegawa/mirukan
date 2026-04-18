@@ -138,6 +138,10 @@ describe("getWorkTypeLabel", () => {
   test("returns series for season works", () => {
     expect(getWorkTypeLabel("season")).toBe("シリーズ");
   });
+
+  test("returns game for game works", () => {
+    expect(getWorkTypeLabel("game")).toBe("ゲーム");
+  });
 });
 
 describe("getWorkMetadataLabels", () => {
