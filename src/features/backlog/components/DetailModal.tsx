@@ -1,16 +1,43 @@
-import { useEffect, useRef, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useRef, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { FilmIcon, TvIcon } from "@heroicons/react/24/outline";
-import { createDetailModalState, getWorkMetadataLabels, getWorkTypeLabel } from "../helpers.ts";
-import { statusLabels, statusOrder } from "../constants.ts";
+import {
+  createDetailModalState,
+  getGamePlatformsFromReleaseDates,
+  getWorkMetadataLabels,
+  getWorkTypeLabel,
+} from "../helpers.ts";
+import {
+  gamePlatformBackgrounds,
+  gamePlatformIcons,
+  gamePlatformLabels,
+  getStatusLabel,
+  statusOrder,
+  workTypeIconUrls,
+} from "../constants.ts";
 import { PosterImage } from "./PosterImage.tsx";
 import { RottenTomatoesBadge } from "./RottenTomatoesBadge.tsx";
 import { TmdbLink } from "./TmdbLink.tsx";
 import { useDetailModalActions } from "../hooks/useDetailModalActions.ts";
 import { DetailModalNoteField } from "./DetailModalNoteField.tsx";
 import { DetailModalPlatformField } from "./DetailModalPlatformField.tsx";
-import type { BacklogItem, DetailModalState } from "../types.ts";
+import type { BacklogItem, BoardMode, DetailModalState } from "../types.ts";
+
+function GameInfoSection({ work }: Readonly<{ work: NonNullable<BacklogItem["works"]> }>) {
+  if (!work.developer && !work.publisher && !work.franchise) return null;
+  return (
+    <section className="grid gap-2 rounded-2xl border border-border/70 bg-background/20 p-4">
+      <h3 className="text-sm font-semibold text-foreground">ゲーム情報</h3>
+      <div className="grid gap-1.5 text-sm text-muted-foreground">
+        {work.developer ? <p>Developer: {work.developer}</p> : null}
+        {work.publisher ? <p>Publisher: {work.publisher}</p> : null}
+        {work.franchise ? <p>Franchise: {work.franchise}</p> : null}
+      </div>
+    </section>
+  );
+}
 
 type Props = Readonly<{
+  boardMode?: BoardMode;
   item: BacklogItem | null;
   state: DetailModalState;
   items: BacklogItem[];
@@ -19,7 +46,15 @@ type Props = Readonly<{
   onReload: () => Promise<void>;
 }>;
 
-export function DetailModal({ item, state, items, onStateChange, onClose, onReload }: Props) {
+export function DetailModal({
+  boardMode,
+  item,
+  state,
+  items,
+  onStateChange,
+  onClose,
+  onReload,
+}: Props) {
   const inputRef = useRef<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null>(null);
   const { cancelEditing, handlePlatformSelect, handleStatusSelect, saveField, startEditing } =
     useDetailModalActions({
@@ -59,16 +94,28 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onRelo
   }
 
   const work = item.works;
+  const resolvedBoardMode = boardMode ?? (work.work_type === "game" ? "game" : "video");
   const title = item.display_title?.trim() || work.title;
-  const WorkTypeIcon = work.work_type === "movie" ? FilmIcon : TvIcon;
   const workTypeLabel = getWorkTypeLabel(work.work_type);
   const metadataLabels = getWorkMetadataLabels(work, {
     includeReleaseYear: true,
     includeRuntime: true,
     includeSeasonCount: true,
   });
+  const gamePlatforms = getGamePlatformsFromReleaseDates(work.release_dates);
 
   const rtScore = work.rotten_tomatoes_score;
+
+  let workTypeIcon: ReactNode;
+  if (work.work_type === "game") {
+    workTypeIcon = (
+      <img src={workTypeIconUrls.game} alt="" className="w-4 h-4 shrink-0" aria-hidden="true" />
+    );
+  } else if (work.work_type === "movie") {
+    workTypeIcon = <FilmIcon className="w-4 h-4 shrink-0" aria-hidden="true" />;
+  } else {
+    workTypeIcon = <TvIcon className="w-4 h-4 shrink-0" aria-hidden="true" />;
+  }
 
   return (
     <div className="fixed inset-0 z-10 grid place-items-center p-5 bg-[rgba(51,34,23,0.4)] backdrop-blur-[10px]">
@@ -96,6 +143,7 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onRelo
           >
             <PosterImage
               posterPath={work.poster_path}
+              sourceType={work.source_type}
               alt={`${title} のポスター`}
               size="w500"
               className="block w-full h-full object-cover"
@@ -120,7 +168,7 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onRelo
             </div>
             <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-muted-foreground text-[0.95rem]">
               <span className="inline-flex items-center gap-1">
-                <WorkTypeIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
+                {workTypeIcon}
                 {workTypeLabel}
               </span>
               {metadataLabels.map((label) => (
@@ -152,14 +200,46 @@ export function DetailModal({ item, state, items, onStateChange, onClose, onRelo
                   }`}
                   onClick={() => handleStatusSelect(s)}
                 >
-                  {statusLabels[s]}
+                  {getStatusLabel(s, resolvedBoardMode)}
                 </button>
               ))}
             </div>
-            <DetailModalPlatformField
-              value={item.primary_platform}
-              onSelect={handlePlatformSelect}
-            />
+            {resolvedBoardMode === "video" ? (
+              <DetailModalPlatformField
+                value={item.primary_platform}
+                onSelect={handlePlatformSelect}
+              />
+            ) : null}
+            {resolvedBoardMode === "game" && gamePlatforms.length > 0 ? (
+              <section className="grid gap-2">
+                <h3 className="text-sm font-semibold text-foreground">対応プラットフォーム</h3>
+                <div className="flex flex-wrap gap-2">
+                  {gamePlatforms.map((platform) => (
+                    <div
+                      key={platform}
+                      className="inline-flex items-center gap-2 rounded-full border border-border/70 px-3 py-1.5"
+                    >
+                      <img
+                        src={gamePlatformIcons[platform]}
+                        alt=""
+                        className="h-5 w-5 rounded-md p-1"
+                        style={{ background: gamePlatformBackgrounds[platform] }}
+                        aria-hidden="true"
+                      />
+                      <span className="text-sm text-foreground">
+                        {gamePlatformLabels[platform]}
+                      </span>
+                      {work.release_dates?.[platform] ? (
+                        <span className="text-xs text-muted-foreground">
+                          {work.release_dates[platform]}
+                        </span>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+            {resolvedBoardMode === "game" && <GameInfoSection work={work} />}
             <DetailModalNoteField
               note={item.note}
               state={state}

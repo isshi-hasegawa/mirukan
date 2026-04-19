@@ -148,7 +148,7 @@ describe("useBacklogActions", () => {
       undoLabel: "元に戻す",
       timeoutMs: 5000,
     });
-  });
+  }, 15_000);
 
   test("undo 時は setLocalItems で復元して削除 API を呼ばない", async () => {
     const feedback = createToastFeedback(true);

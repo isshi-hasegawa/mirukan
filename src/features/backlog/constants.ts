@@ -1,4 +1,10 @@
-import type { BacklogStatus, PrimaryPlatform, ViewingMode } from "./types.ts";
+import type {
+  BacklogStatus,
+  BoardMode,
+  GamePlatform,
+  PrimaryPlatform,
+  ViewingMode,
+} from "./types.ts";
 import netflixUrl from "../../assets/icons/netflix.svg?url";
 import primeVideoUrl from "../../assets/icons/prime_video.svg?url";
 import unextUrl from "../../assets/icons/unext.svg?url";
@@ -6,6 +12,13 @@ import disneyPlusUrl from "../../assets/icons/disney_plus.svg?url";
 import huluUrl from "../../assets/icons/hulu.svg?url";
 import appleTvPlusUrl from "../../assets/icons/apple_tv_plus.svg?url";
 import appleTvUrl from "../../assets/icons/apple_tv.svg?url";
+import steamUrl from "../../assets/icons/steam.svg?url";
+import playstationUrl from "../../assets/icons/playstation.svg?url";
+import switchUrl from "../../assets/icons/switch.svg?url";
+import xboxUrl from "../../assets/icons/xbox.svg?url";
+import iosUrl from "../../assets/icons/ios.svg?url";
+import androidUrl from "../../assets/icons/android.svg?url";
+import gameWorkTypeUrl from "../../assets/icons/game_work.svg?url";
 
 export const platformKeys = [
   "netflix",
@@ -27,13 +40,27 @@ export const statusOrder: BacklogStatus[] = [
   "watched",
 ];
 
-export const statusLabels: Record<BacklogStatus, string> = {
+const videoStatusLabels: Record<BacklogStatus, string> = {
   stacked: "ストック",
-  want_to_watch: "見たい",
+  want_to_watch: "次に見る",
   watching: "視聴中",
-  interrupted: "中断",
-  watched: "視聴済み",
+  interrupted: "保留",
+  watched: "鑑賞済み",
 };
+
+const gameStatusLabels: Record<BacklogStatus, string> = {
+  stacked: "積みゲー",
+  want_to_watch: "次にやる",
+  watching: "プレイ中",
+  interrupted: "保留",
+  watched: "プレイ済み",
+};
+
+export const statusLabels = videoStatusLabels;
+
+export function getStatusLabel(status: BacklogStatus, boardMode: BoardMode) {
+  return boardMode === "game" ? gameStatusLabels[status] : videoStatusLabels[status];
+}
 
 export const platformLabels: Record<PlatformKey, string> = {
   netflix: "Netflix",
@@ -68,6 +95,57 @@ export const platformBackgrounds: Record<PlatformKey, string> = {
 export function isPrimaryPlatformValue(value: unknown): value is PlatformKey {
   return typeof value === "string" && (platformKeys as ReadonlyArray<string>).includes(value);
 }
+
+export const gamePlatformKeys = [
+  "steam",
+  "playstation",
+  "switch",
+  "xbox",
+  "ios",
+  "android",
+] as const satisfies readonly GamePlatform[];
+
+type GamePlatformKey = (typeof gamePlatformKeys)[number];
+
+export const gamePlatformLabels: Record<GamePlatformKey, string> = {
+  steam: "Steam",
+  playstation: "PlayStation",
+  switch: "Switch",
+  xbox: "Xbox",
+  ios: "iOS",
+  android: "Android",
+};
+
+export const gamePlatformIcons: Record<GamePlatformKey, string> = {
+  steam: steamUrl,
+  playstation: playstationUrl,
+  switch: switchUrl,
+  xbox: xboxUrl,
+  ios: iosUrl,
+  android: androidUrl,
+};
+
+export const gamePlatformBackgrounds: Record<GamePlatformKey, string> = {
+  steam: "#101822",
+  playstation: "#003087",
+  switch: "#e60012",
+  xbox: "#107c10",
+  ios: "#111827",
+  android: "#0f2b1d",
+};
+
+export function isGamePlatformValue(value: unknown): value is GamePlatformKey {
+  return typeof value === "string" && (gamePlatformKeys as ReadonlyArray<string>).includes(value);
+}
+
+export const boardModeLabels: Record<BoardMode, string> = {
+  video: "映像",
+  game: "ゲーム",
+};
+
+export const workTypeIconUrls = {
+  game: gameWorkTypeUrl,
+} as const;
 
 export const viewingModeOrder = [
   "focus",

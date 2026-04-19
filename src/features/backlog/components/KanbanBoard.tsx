@@ -1,12 +1,13 @@
 import { useCallback, useMemo, useRef } from "react";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
-import type { BacklogItem, BacklogStatus, ViewingMode } from "../types.ts";
+import type { BacklogItem, BacklogStatus, BoardMode, ViewingMode } from "../types.ts";
 import { statusOrder, viewingModeOrder } from "../constants.ts";
 import { sortStackedItemsByViewingMode } from "../viewing-mode.ts";
 import { DesktopKanbanBoard } from "./DesktopKanbanBoard.tsx";
 import { MobileKanbanBoard } from "./MobileKanbanBoard.tsx";
 
 type Props = Readonly<{
+  boardMode: BoardMode;
   items: BacklogItem[];
   isDragging: boolean;
   isMobileLayout: boolean;
@@ -21,6 +22,7 @@ type Props = Readonly<{
 }>;
 
 export function KanbanBoard({
+  boardMode,
   items,
   isDragging,
   isMobileLayout,
@@ -42,6 +44,7 @@ export function KanbanBoard({
   const handleViewingModeToggle = useCallback((mode: ViewingMode) => {
     setActiveViewingMode((current) => (current === mode ? null : mode));
   }, []);
+  const allowsViewingModeFilter = boardMode === "video";
   const lastStableItemsRef = useRef<BacklogItem[] | null>(null);
   const lastStableStackedItemsRef = useRef<BacklogItem[] | null>(null);
 
@@ -56,7 +59,7 @@ export function KanbanBoard({
 
     const sortedStackedItems = sortStackedItemsByViewingMode(
       nextGrouped.get("stacked") ?? [],
-      activeViewingMode,
+      allowsViewingModeFilter ? activeViewingMode : null,
     );
 
     if (!isDragging) {
@@ -69,7 +72,7 @@ export function KanbanBoard({
     }
 
     return nextGrouped;
-  }, [items, activeViewingMode, isDragging]);
+  }, [items, activeViewingMode, allowsViewingModeFilter, isDragging]);
 
   const columnPropsByStatus = useMemo(
     () =>
@@ -77,20 +80,25 @@ export function KanbanBoard({
         statusOrder.map((status) => [
           status,
           {
+            boardMode,
             status,
             items: grouped.get(status) ?? [],
-            activeViewingMode: status === "stacked" ? activeViewingMode : null,
+            activeViewingMode:
+              allowsViewingModeFilter && status === "stacked" ? activeViewingMode : null,
             isMobileLayout,
             onOpenAddModal,
             onOpenDetail,
             onDeleteItem,
             onMarkAsWatched,
-            onViewingModeToggle: status === "stacked" ? handleViewingModeToggle : undefined,
+            onViewingModeToggle:
+              allowsViewingModeFilter && status === "stacked" ? handleViewingModeToggle : undefined,
           },
         ]),
       ),
     [
       activeViewingMode,
+      allowsViewingModeFilter,
+      boardMode,
       grouped,
       handleViewingModeToggle,
       isMobileLayout,
@@ -109,6 +117,7 @@ export function KanbanBoard({
   if (isMobileLayout) {
     return (
       <MobileKanbanBoard
+        boardMode={boardMode}
         selectedTabStatus={selectedTabStatus}
         isMobileDragging={isMobileDragging}
         onTabChange={onTabChange}

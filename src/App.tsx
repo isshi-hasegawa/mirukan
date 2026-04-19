@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import {
+  Navigate,
   RouterProvider,
   createRootRoute,
   createRoute,
@@ -15,6 +16,7 @@ import { lazyNamed } from "./lib/lazy-component.ts";
 import { LoginPage } from "./features/backlog/components/LoginPage.tsx";
 import { PrivacyPolicyPage } from "./features/backlog/components/PrivacyPolicyPage.tsx";
 import { TermsOfServicePage } from "./features/backlog/components/TermsOfServicePage.tsx";
+import type { BoardMode } from "./features/backlog/types.ts";
 
 const BoardPage = lazyNamed(
   () => import("./features/backlog/components/BoardPage.tsx"),
@@ -104,7 +106,38 @@ function clearRecoveryState(setIsPasswordRecovery: (value: boolean) => void) {
   clearPasswordRecoveryLocation();
 }
 
-function AuthenticatedApp() {
+const LAST_BOARD_MODE_STORAGE_KEY = "mirukan:last-board-mode";
+
+function isBoardMode(value: string | null): value is BoardMode {
+  return value === "video" || value === "game";
+}
+
+function readLastBoardMode(): BoardMode {
+  if (globalThis.localStorage === undefined) {
+    return "video";
+  }
+
+  try {
+    const value = globalThis.localStorage.getItem(LAST_BOARD_MODE_STORAGE_KEY);
+    return isBoardMode(value) ? value : "video";
+  } catch {
+    return "video";
+  }
+}
+
+function writeLastBoardMode(boardMode: BoardMode) {
+  if (globalThis.localStorage === undefined) {
+    return;
+  }
+
+  try {
+    globalThis.localStorage.setItem(LAST_BOARD_MODE_STORAGE_KEY, boardMode);
+  } catch {
+    // Ignore storage access failures and keep the in-memory route state.
+  }
+}
+
+function AuthenticatedApp({ boardMode }: Readonly<{ boardMode?: BoardMode }>) {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(() =>
     isPasswordRecoveryLocation(globalThis.location),
@@ -144,6 +177,12 @@ function AuthenticatedApp() {
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (boardMode) {
+      writeLastBoardMode(boardMode);
+    }
+  }, [boardMode]);
+
   if (session === undefined) {
     return <LoginPage isSessionLoading />;
   }
@@ -164,13 +203,17 @@ function AuthenticatedApp() {
     return <LoginPage />;
   }
 
+  if (!boardMode) {
+    return <Navigate to={`/${readLastBoardMode()}`} replace />;
+  }
+
   return (
     <LazyViewBoundary
       loadingFallback={<LoginPage isSessionLoading />}
       errorFallback={<LazyRouteErrorFallback />}
-      resetKey="board"
+      resetKey={`board-${boardMode}`}
     >
-      <BoardPage session={session} />
+      <BoardPage session={session} boardMode={boardMode} />
     </LazyViewBoundary>
   );
 }
@@ -181,13 +224,25 @@ const rootRoute = createRootRoute({
       <Outlet />
     </NuqsAdapter>
   ),
-  notFoundComponent: AuthenticatedApp,
+  notFoundComponent: () => <AuthenticatedApp />,
 });
 
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  component: AuthenticatedApp,
+  component: () => <AuthenticatedApp />,
+});
+
+const videoRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/video",
+  component: () => <AuthenticatedApp boardMode="video" />,
+});
+
+const gameRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/game",
+  component: () => <AuthenticatedApp boardMode="game" />,
 });
 
 const privacyRoute = createRoute({
@@ -202,7 +257,13 @@ const termsRoute = createRoute({
   component: TermsOfServicePage,
 });
 
-export const routeTree = rootRoute.addChildren([indexRoute, privacyRoute, termsRoute]);
+export const routeTree = rootRoute.addChildren([
+  indexRoute,
+  videoRoute,
+  gameRoute,
+  privacyRoute,
+  termsRoute,
+]);
 
 const router = createRouter({ routeTree });
 

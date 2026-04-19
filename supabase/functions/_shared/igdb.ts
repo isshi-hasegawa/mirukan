@@ -13,7 +13,6 @@ type IgdbSearchResult = {
   coverImageId: string | null;
   releaseDate: string | null;
   platforms: GamePlatform[];
-  summary: string | null;
 };
 
 type IgdbWorkDetails = {
@@ -82,10 +81,10 @@ export function unixSecondsToIsoDate(seconds: number | null | undefined): string
 type IgdbSearchRow = {
   id: number;
   name?: string | null;
-  summary?: string | null;
   cover?: { image_id?: string | null } | null;
   first_release_date?: number | null;
   platforms?: Array<{ slug?: string | null }> | null;
+  alternative_names?: Array<{ name?: string | null; comment?: string | null }> | null;
 };
 
 type IgdbReleaseDateRow = {
@@ -109,10 +108,11 @@ type IgdbDetailsRow = IgdbSearchRow & {
 const SEARCH_FIELDS = [
   "id",
   "name",
-  "summary",
   "cover.image_id",
   "first_release_date",
   "platforms.slug",
+  "alternative_names.name",
+  "alternative_names.comment",
 ].join(",");
 
 const DETAILS_FIELDS = [
@@ -135,12 +135,23 @@ function escapeIgdbString(value: string): string {
   return value.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
 }
 
+function hasJapaneseChars(text: string): boolean {
+  return /[\u3040-\u30FF\u4E00-\u9FAF\u3400-\u4DBF]/.test(text);
+}
+
 export function buildIgdbSearchBody(query: string, limit = 20): string {
   const escapedQuery = escapeIgdbString(query);
+  if (hasJapaneseChars(query)) {
+    return [
+      `fields ${SEARCH_FIELDS};`,
+      `where (name ~ *"${escapedQuery}"* | alternative_names.name ~ *"${escapedQuery}"*) & game_type = (0,8,9,10,11);`,
+      `limit ${limit};`,
+    ].join(" ");
+  }
   return [
     `fields ${SEARCH_FIELDS};`,
     `search "${escapedQuery}";`,
-    "where category = (0,8,9,10,11);",
+    "where game_type = (0,8,9,10,11);",
     `limit ${limit};`,
   ].join(" ");
 }
@@ -190,17 +201,30 @@ export async function callIgdbEndpoint<T>(
   return (await response.json()) as T;
 }
 
+function selectJapaneseTitle(
+  alternativeNames: Array<{ name?: string | null; comment?: string | null }> | null | undefined,
+  fallback: string,
+): string {
+  const hasJapaneseChars = (text: string) => /[\u3040-\u30FF\u4E00-\u9FAF\u3400-\u4DBF]/.test(text);
+  for (const alt of alternativeNames ?? []) {
+    if (!alt.name) continue;
+    if (hasJapaneseChars(alt.name) || /japan/i.test(alt.comment ?? "")) {
+      return alt.name;
+    }
+  }
+  return fallback;
+}
+
 function mapSearchRow(row: IgdbSearchRow): IgdbSearchResult | null {
   if (typeof row.id !== "number" || !row.name) {
     return null;
   }
   return {
     igdbId: row.id,
-    title: row.name,
+    title: selectJapaneseTitle(row.alternative_names, row.name),
     coverImageId: row.cover?.image_id ?? null,
     releaseDate: unixSecondsToIsoDate(row.first_release_date ?? null),
     platforms: dedupePlatforms((row.platforms ?? []).map((p) => mapIgdbPlatformSlug(p.slug))),
-    summary: row.summary ?? null,
   };
 }
 

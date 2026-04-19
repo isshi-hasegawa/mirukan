@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import type { BoardMode } from "../types.ts";
 import { useBacklogActions } from "./useBacklogActions.ts";
 import { useBacklogDnd } from "./useBacklogDnd.ts";
 import { useBacklogFeedback } from "./useBacklogFeedback.tsx";
@@ -9,12 +10,19 @@ import { useBoardPageState } from "./useBoardPageState.ts";
 
 type UseBoardPageControllerOptions = {
   session: Session;
+  boardMode?: BoardMode;
 };
 
-export function useBoardPageController({ session }: UseBoardPageControllerOptions) {
+export function useBoardPageController({
+  session,
+  boardMode = "video",
+}: UseBoardPageControllerOptions) {
   const { isMobileLayout } = useBoardPageLayout();
   const { feedback, feedbackUi } = useBacklogFeedback();
-  const { items, isLoading, error, loadItems } = useBacklogItems(session.user.id);
+  const { items: allItems, isLoading, error, loadItems } = useBacklogItems(session.user.id);
+  const items = allItems.filter((item) =>
+    boardMode === "game" ? item.works?.work_type === "game" : item.works?.work_type !== "game",
+  );
   const boardPageState = useBoardPageState({ isMobileLayout });
   const [pendingDeleteIds, setPendingDeleteIds] = useState<ReadonlySet<string>>(new Set());
 
@@ -52,6 +60,7 @@ export function useBoardPageController({ session }: UseBoardPageControllerOption
     feedback,
     feedbackUi,
     board: {
+      boardMode,
       items: dnd.localItems,
       isDragging,
       isMobileLayout,
@@ -75,6 +84,7 @@ export function useBoardPageController({ session }: UseBoardPageControllerOption
     },
     addModal: {
       isOpen: boardPageState.isAddModalOpen,
+      boardMode,
       items,
       session,
       onClose: boardPageState.handleCloseAddModal,
@@ -84,6 +94,7 @@ export function useBoardPageController({ session }: UseBoardPageControllerOption
       },
     },
     detailModal: {
+      boardMode,
       item: detailItem,
       isOpen: boardPageState.detailModal.openItemId !== null,
       state: boardPageState.detailModal,

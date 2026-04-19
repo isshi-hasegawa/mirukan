@@ -13,11 +13,12 @@ type Props = KanbanColumnProps & {
 };
 
 export function KanbanColumn({
+  boardMode = "video",
   status,
   items,
   extra,
-  activeViewingMode = null,
-  isMobileLayout = false,
+  activeViewingMode,
+  isMobileLayout,
   onOpenAddModal,
   onOpenDetail,
   onDeleteItem,
@@ -51,6 +52,7 @@ export function KanbanColumn({
     >
       {extra}
       <KanbanColumnHeader
+        boardMode={boardMode}
         status={status}
         itemCount={items.length}
         isMobileLayout={isMobileLayout}
@@ -76,7 +78,7 @@ export function KanbanColumn({
                   <BacklogCard
                     key={item.id}
                     item={item}
-                    showModeBadge={status === "stacked"}
+                    showModeBadge={boardMode === "video" && status === "stacked"}
                     onOpenDetail={() => onOpenDetail(item.id)}
                     onDeleteItem={onDeleteItem}
                     onMarkAsWatched={onMarkAsWatched}

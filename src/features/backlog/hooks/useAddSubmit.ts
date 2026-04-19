@@ -1,13 +1,15 @@
 import { useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import type { IgdbSearchResult } from "../../../lib/igdb.ts";
 import type { TmdbSearchResult, TmdbSeasonOption } from "../../../lib/tmdb.ts";
 import { upsertBacklogItemsToStatus } from "../backlog-repository.ts";
 import {
   resolveSelectedSeasonWorkIds,
+  upsertIgdbWork,
   upsertManualWork,
   upsertTmdbWork,
 } from "../work-repository.ts";
-import type { BacklogItem, PrimaryPlatform, WorkType } from "../types.ts";
+import type { BacklogItem, GamePlatform, PrimaryPlatform, WorkType } from "../types.ts";
 import {
   buildSelectedSubject,
   buildStackedBacklogOptions,
@@ -19,12 +21,13 @@ type UseAddSubmitOptions = {
   items: BacklogItem[];
   session: Session;
   selectedTmdbResult: TmdbSearchResult | null;
+  selectedIgdbResult?: IgdbSearchResult | null;
   selectedSeasonNumbers: number[];
   seasonOptions: TmdbSeasonOption[];
   isTvSelection: boolean;
   resolvedTitle: string;
   resolvedWorkType: WorkType;
-  primaryPlatform: PrimaryPlatform;
+  primaryPlatform: PrimaryPlatform | GamePlatform;
   note: string;
   onClose: () => void;
   onAdded: () => void | Promise<void>;
@@ -32,15 +35,16 @@ type UseAddSubmitOptions = {
 
 function buildDisplayTitle(
   selectedTmdbResult: TmdbSearchResult | null,
+  selectedIgdbResult: IgdbSearchResult | null,
   resolvedTitle: string,
   workCount: number,
 ) {
-  if (!selectedTmdbResult || workCount !== 1) {
+  if (workCount !== 1 || (!selectedTmdbResult && !selectedIgdbResult)) {
     return null;
   }
 
   const trimmedTitle = resolvedTitle.trim();
-  const defaultTitle = selectedTmdbResult.title.trim();
+  const defaultTitle = (selectedTmdbResult?.title ?? selectedIgdbResult?.title ?? "").trim();
 
   if (!trimmedTitle || trimmedTitle === defaultTitle) {
     return null;
@@ -57,6 +61,7 @@ export function useAddSubmit({
   items,
   session,
   selectedTmdbResult,
+  selectedIgdbResult = null,
   selectedSeasonNumbers,
   seasonOptions,
   isTvSelection,
@@ -86,7 +91,7 @@ export function useAddSubmit({
     backlogOptions: {
       display_title: string | null;
       note: string | null;
-      primary_platform: PrimaryPlatform;
+      primary_platform: PrimaryPlatform | GamePlatform;
     };
   }) => {
     const backlogResult = await upsertBacklogItemsToStatus(
@@ -163,13 +168,17 @@ export function useAddSubmit({
 
   const createWork = async (title: string) => {
     try {
-      return selectedTmdbResult
-        ? await upsertTmdbWork(selectedTmdbResult, session.user.id)
-        : await upsertManualWork(
-            title,
-            resolvedWorkType as Extract<WorkType, "movie" | "series">,
-            session.user.id,
-          );
+      if (selectedTmdbResult) {
+        return await upsertTmdbWork(selectedTmdbResult, session.user.id);
+      }
+      if (selectedIgdbResult) {
+        return await upsertIgdbWork(selectedIgdbResult, session.user.id);
+      }
+      return await upsertManualWork(
+        title,
+        resolvedWorkType as Extract<WorkType, "movie" | "series" | "game">,
+        session.user.id,
+      );
     } catch (error) {
       return {
         data: null,
@@ -232,8 +241,9 @@ export function useAddSubmit({
     await saveWithConfirmation({
       workIds: [result.data.id],
       subject,
-      emptyMessage: "すでにストックにあります。",
-      displayTitle: buildDisplayTitle(selectedTmdbResult, resolvedTitle, 1),
+      emptyMessage:
+        resolvedWorkType === "game" ? "すでに積みゲーにあります。" : "すでにストックにあります。",
+      displayTitle: buildDisplayTitle(selectedTmdbResult, selectedIgdbResult, resolvedTitle, 1),
     });
   };
 
@@ -243,6 +253,7 @@ export function useAddSubmit({
     const title = resolvedTitle.trim();
     const subject = buildSelectedSubject({
       selectedTmdbResult,
+      selectedIgdbResult,
       selectedSeasonNumbers,
       resolvedTitle,
     });

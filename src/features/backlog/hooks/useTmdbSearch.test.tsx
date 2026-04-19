@@ -1,6 +1,7 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
 import type { TmdbSearchResult, TmdbSeasonOption } from "../../../lib/tmdb.ts";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
+import { createWorkSummary } from "../../../test/backlog-fixtures.ts";
 import type { BacklogItem } from "../types.ts";
 import { useTmdbSearch } from "./useTmdbSearch.ts";
 
@@ -174,31 +175,14 @@ describe("useTmdbSearch", () => {
     const stackedItem = createItem({
       id: "stacked-s1",
       status: "stacked",
-      works: {
+      works: createWorkSummary({
         id: "w-s1",
         title: "テストシリーズ",
         work_type: "series",
         source_type: "tmdb",
         tmdb_id: 10,
         tmdb_media_type: "tv",
-        original_title: null,
-        overview: null,
-        poster_path: null,
-        release_date: null,
-        runtime_minutes: null,
-        typical_episode_runtime_minutes: null,
-        duration_bucket: null,
-        genres: [],
-        season_count: null,
-        season_number: null,
-        focus_required_score: null,
-        background_fit_score: null,
-        completion_load_score: null,
-        rotten_tomatoes_score: null,
-        imdb_rating: null,
-        imdb_votes: null,
-        metacritic_score: null,
-      },
+      }),
     });
 
     const { result } = renderHook(() => useTmdbSearch({ items: [stackedItem] }));

@@ -112,14 +112,14 @@ describe("BacklogCard", () => {
   test("メニューを開いても詳細は開かない", async () => {
     const { onOpenDetail } = await renderCard();
 
-    expect(await screen.findByRole("menuitem", { name: "視聴済み" })).toBeInTheDocument();
+    expect(await screen.findByRole("menuitem", { name: "鑑賞済み" })).toBeInTheDocument();
     expect(onOpenDetail).not.toHaveBeenCalled();
   });
 
-  test("視聴済み押下で onMarkAsWatched を呼ぶ", async () => {
+  test("鑑賞済み押下で onMarkAsWatched を呼ぶ", async () => {
     const { onMarkAsWatched, onOpenDetail, user } = await renderCard();
 
-    await user.click(await screen.findByRole("menuitem", { name: "視聴済み" }));
+    await user.click(await screen.findByRole("menuitem", { name: "鑑賞済み" }));
 
     expect(onMarkAsWatched).toHaveBeenCalledWith("item-1");
     expect(onOpenDetail).not.toHaveBeenCalled();
