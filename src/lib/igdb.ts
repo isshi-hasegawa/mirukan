@@ -13,7 +13,6 @@ export type IgdbSearchResult = {
   coverImageId: string | null;
   releaseDate: string | null;
   platforms: IgdbGamePlatform[];
-  summary: string | null;
 };
 
 export type IgdbWorkDetails = {
@@ -71,8 +70,7 @@ function isIgdbSearchResult(value: unknown): value is IgdbSearchResult {
     typeof value.title === "string" &&
     isNullableString(value.coverImageId) &&
     isNullableString(value.releaseDate) &&
-    isGamePlatformArray(value.platforms) &&
-    isNullableString(value.summary)
+    isGamePlatformArray(value.platforms)
   );
 }
 

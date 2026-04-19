@@ -93,11 +93,6 @@ export function GameWorkCard({
             ))}
           </span>
         ) : null}
-        {result.summary?.trim() ? (
-          <span className="text-[0.88rem] text-muted-foreground [-webkit-box-orient:vertical] [-webkit-line-clamp:3] [display:-webkit-box] overflow-hidden">
-            {result.summary}
-          </span>
-        ) : null}
       </div>
     </>
   );
