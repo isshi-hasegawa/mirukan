@@ -28,7 +28,7 @@ export function getNullableStringField(formData: FormData, key: string) {
   return value || null;
 }
 
-export function isPrimaryPlatform(value: unknown): value is PrimaryPlatform {
+function isPrimaryPlatform(value: unknown): value is PrimaryPlatform {
   return value === null || isPrimaryPlatformValue(value);
 }
 

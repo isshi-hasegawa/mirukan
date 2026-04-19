@@ -92,7 +92,7 @@ export function BacklogCard({
   } else if (item.primary_platform) {
     platformBadge = (
       <div className="absolute top-[10px] left-[10px] z-[2]">
-        <PlatformIcon platform={item.primary_platform as Exclude<PrimaryPlatform, null>} />
+        <PlatformIcon platform={item.primary_platform} />
       </div>
     );
   } else if (firstGamePlatform) {

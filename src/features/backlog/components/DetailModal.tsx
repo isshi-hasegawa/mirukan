@@ -22,7 +22,7 @@ import { DetailModalNoteField } from "./DetailModalNoteField.tsx";
 import { DetailModalPlatformField } from "./DetailModalPlatformField.tsx";
 import type { BacklogItem, BoardMode, DetailModalState } from "../types.ts";
 
-function GameInfoSection({ work }: { work: NonNullable<BacklogItem["works"]> }) {
+function GameInfoSection({ work }: Readonly<{ work: NonNullable<BacklogItem["works"]> }>) {
   if (!work.developer && !work.publisher && !work.franchise) return null;
   return (
     <section className="grid gap-2 rounded-2xl border border-border/70 bg-background/20 p-4">
