@@ -135,8 +135,19 @@ function escapeIgdbString(value: string): string {
   return value.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
 }
 
+function hasJapaneseChars(text: string): boolean {
+  return /[\u3040-\u30FF\u4E00-\u9FAF\u3400-\u4DBF]/.test(text);
+}
+
 export function buildIgdbSearchBody(query: string, limit = 20): string {
   const escapedQuery = escapeIgdbString(query);
+  if (hasJapaneseChars(query)) {
+    return [
+      `fields ${SEARCH_FIELDS};`,
+      `where (name ~ *"${escapedQuery}"* | alternative_names.name ~ *"${escapedQuery}"*) & game_type = (0,8,9,10,11);`,
+      `limit ${limit};`,
+    ].join(" ");
+  }
   return [
     `fields ${SEARCH_FIELDS};`,
     `search "${escapedQuery}";`,
