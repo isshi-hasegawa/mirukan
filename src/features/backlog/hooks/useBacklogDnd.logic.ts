@@ -7,7 +7,7 @@ type DragOverResolutionInput = Readonly<{
   activeId: string;
   overId: string;
   overRect: RectLike;
-  activeCenterY: number;
+  pointerY: number;
   isMobileLayout: boolean;
 }>;
 
@@ -27,9 +27,8 @@ function findItemStatus(items: BacklogItem[], id: string): BacklogStatus | null 
   return items.find((item) => item.id === id)?.status ?? null;
 }
 
-function resolveDropSide(activeCenterY: number, overRect: RectLike): "before" | "after" {
-  const overCenterY = overRect.top + overRect.height / 2;
-  return activeCenterY < overCenterY ? "before" : "after";
+function resolveDropSide(pointerY: number, overRect: RectLike): "before" | "after" {
+  return pointerY < overRect.top + overRect.height / 2 ? "before" : "after";
 }
 
 function getReorderedColumnItems(
@@ -143,7 +142,7 @@ export function resolveDragOverItems({
   activeId,
   overId,
   overRect,
-  activeCenterY,
+  pointerY,
   isMobileLayout,
 }: DragOverResolutionInput): BacklogItem[] {
   if (activeId === overId) {
@@ -174,7 +173,7 @@ export function resolveDragOverItems({
       overStatus,
       activeId,
       overId,
-      resolveDropSide(activeCenterY, overRect),
+      resolveDropSide(pointerY, overRect),
     );
   }
 
@@ -187,7 +186,7 @@ export function resolveDragOverItems({
     activeId,
     overStatus,
     overId,
-    resolveDropSide(activeCenterY, overRect),
+    resolveDropSide(pointerY, overRect),
   );
 }
 

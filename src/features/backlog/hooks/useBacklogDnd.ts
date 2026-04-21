@@ -15,6 +15,19 @@ import { resolveDragOverItems, resolveDropPersistence } from "./useBacklogDnd.lo
 
 const EMPTY_PENDING_DELETES: ReadonlySet<string> = new Set();
 
+function getActivatorClientY(event: DragOverEvent["activatorEvent"]): number | null {
+  if (!event) return null;
+  if ("touches" in event && event.type.includes("touch")) {
+    const touchEvent = event as TouchEvent;
+    return touchEvent.touches?.[0]?.clientY ?? touchEvent.changedTouches?.[0]?.clientY ?? null;
+  }
+  if ("clientY" in event) {
+    const y = (event as MouseEvent).clientY;
+    return typeof y === "number" ? y : null;
+  }
+  return null;
+}
+
 type Props = Readonly<{
   items: BacklogItem[];
   pendingDeleteIds?: ReadonlySet<string>;
@@ -57,17 +70,17 @@ export function useBacklogDnd({
   };
 
   const handleDragOver = (event: DragOverEvent) => {
-    const { active, over, delta } = event;
+    const { active, over, delta, activatorEvent } = event;
     if (!over) {
       return;
     }
 
-    const initialRect = active.rect.current.initial;
-    if (!initialRect) {
+    const activatorY = getActivatorClientY(activatorEvent);
+    if (activatorY === null) {
       return;
     }
 
-    const activeCenterY = initialRect.top + initialRect.height / 2 + delta.y;
+    const pointerY = activatorY + delta.y;
 
     const activeId = active.id as string;
     const overId = over.id as string;
@@ -78,7 +91,7 @@ export function useBacklogDnd({
         activeId,
         overId,
         overRect: over.rect,
-        activeCenterY,
+        pointerY,
         isMobileLayout,
       });
     });

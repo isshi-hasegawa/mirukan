@@ -30,7 +30,7 @@ describe("resolveDragOverItems", () => {
       activeId: "item-3",
       overId: "item-2",
       overRect: makeLogicRect(100, 200),
-      activeCenterY: 120,
+      pointerY: 120,
       isMobileLayout: false,
     });
     // pointer Y=260 > over center=200 → after
@@ -39,7 +39,7 @@ describe("resolveDragOverItems", () => {
       activeId: "item-1",
       overId: "item-2",
       overRect: makeLogicRect(100, 200),
-      activeCenterY: 260,
+      pointerY: 260,
       isMobileLayout: false,
     });
 
@@ -59,7 +59,7 @@ describe("resolveDragOverItems", () => {
       activeId: "item-1",
       overId: "item-2",
       overRect: makeLogicRect(200, 100),
-      activeCenterY: 300,
+      pointerY: 300,
       isMobileLayout: false,
     });
     // item-2 を item-1 の上へ: pointer < over center → before
@@ -68,7 +68,7 @@ describe("resolveDragOverItems", () => {
       activeId: "item-2",
       overId: "item-1",
       overRect: makeLogicRect(100, 100),
-      activeCenterY: 50,
+      pointerY: 50,
       isMobileLayout: false,
     });
 
@@ -80,20 +80,20 @@ describe("resolveDragOverItems", () => {
     {
       name: "pointer が over より上なら before として列またぎ挿入する",
       overId: "item-3",
-      activeCenterY: 120, // < overRect center=200
+      pointerY: 120, // < overRect center=200
     },
     {
       name: "pointer が over 中心と同じなら after として列またぎ挿入する",
       overId: "item-2",
-      activeCenterY: 200, // = overRect center=200 → not < → after
+      pointerY: 200, // = overRect center=200 → not < → after
     },
-  ])("$name", ({ overId, activeCenterY }) => {
+  ])("$name", ({ overId, pointerY }) => {
     const nextItems = resolveDragOverItems({
       items: createWatchingItemsFixture(),
       activeId: "item-1",
       overId,
       overRect: makeLogicRect(),
-      activeCenterY,
+      pointerY,
       isMobileLayout: false,
     });
 
@@ -112,7 +112,7 @@ describe("resolveDragOverItems", () => {
       activeId: "item-1",
       overId: "column:watched",
       overRect: makeLogicRect(),
-      activeCenterY: 0,
+      pointerY: 0,
       isMobileLayout: false,
     });
 
@@ -135,7 +135,7 @@ describe("resolveDragOverItems", () => {
         activeId: "item-1",
         overId: "item-2",
         overRect: makeLogicRect(),
-        activeCenterY: 0,
+        pointerY: 0,
         isMobileLayout: true,
       }),
     ).toEqual(items);
@@ -150,7 +150,7 @@ describe("resolveDragOverItems", () => {
         activeId: "missing",
         overId: "item-2",
         overRect: makeLogicRect(),
-        activeCenterY: 0,
+        pointerY: 0,
         isMobileLayout: false,
       }),
     ).toBe(items);
@@ -160,7 +160,7 @@ describe("resolveDragOverItems", () => {
         activeId: "item-1",
         overId: "item-1",
         overRect: makeLogicRect(),
-        activeCenterY: 0,
+        pointerY: 0,
         isMobileLayout: false,
       }),
     ).toBe(items);

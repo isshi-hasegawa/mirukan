@@ -61,9 +61,7 @@ function renderDnd(
   );
 }
 
-// initial は origin 固定、delta.y で pointer Y を表現（initial.center + delta.y = 0 + 0 + pointerY = pointerY）
-const ZERO_RECT = { top: 0, height: 0, left: 0, right: 0, width: 0, bottom: 0 };
-
+// activatorEvent.clientY = 0, delta.y = pointerY で実際の pointer Y を表現
 function dragOver(
   result: ReturnType<typeof renderDnd>["result"],
   overId: string,
@@ -73,12 +71,10 @@ function dragOver(
   act(() => {
     result.current.handleDragStart({ active: { id: activeId } } as DragStartEvent);
     result.current.handleDragOver({
-      active: {
-        id: activeId,
-        rect: { current: { initial: ZERO_RECT } },
-      },
+      active: { id: activeId },
       over: { id: overId, rect: makeDomRect(100, 200) },
       delta: { x: 0, y: pointerY },
+      activatorEvent: { clientY: 0 } as MouseEvent,
     } as unknown as DragOverEvent);
   });
 }
@@ -250,14 +246,16 @@ describe("useBacklogDnd", () => {
     act(() => {
       result.current.handleDragStart({ active: { id: "item-1" } } as DragStartEvent);
       result.current.handleDragOver({
-        active: { id: "item-1", rect: { current: { initial: ZERO_RECT } } },
+        active: { id: "item-1" },
         over: { id: "item-3", rect: makeDomRect(100, 200) },
         delta: { x: 0, y: 120 },
+        activatorEvent: { clientY: 0 } as MouseEvent,
       } as unknown as DragOverEvent);
       result.current.handleDragOver({
-        active: { id: "item-1", rect: { current: { initial: ZERO_RECT } } },
+        active: { id: "item-1" },
         over: { id: "item-2", rect: makeDomRect(100, 200) },
         delta: { x: 0, y: 120 },
+        activatorEvent: { clientY: 0 } as MouseEvent,
       } as unknown as DragOverEvent);
     });
 
