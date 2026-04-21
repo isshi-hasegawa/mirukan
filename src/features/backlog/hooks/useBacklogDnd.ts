@@ -62,7 +62,7 @@ export function useBacklogDnd({
       return;
     }
 
-    const activeRect = active.rect.current.translated;
+    const activeRect = active.rect.current.translated ?? active.rect.current.initial;
     if (!activeRect) {
       return;
     }
