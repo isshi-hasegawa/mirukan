@@ -1,10 +1,6 @@
 import { resolveDragOverItems, resolveDropPersistence } from "./useBacklogDnd.logic.ts";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
-import {
-  createBacklogItem,
-  createTouchEvent,
-  makeLogicRect,
-} from "./useBacklogDnd.test-helpers.ts";
+import { createBacklogItem, makeLogicRect } from "./useBacklogDnd.test-helpers.ts";
 
 setupTestLifecycle();
 
@@ -21,27 +17,29 @@ function createWatchingItemsFixture() {
 }
 
 describe("resolveDragOverItems", () => {
-  test("同列内では pointer 位置に応じて before/after を切り替える", () => {
+  test("同列内では active item の位置に応じて before/after を切り替える", () => {
     const items = [
       createBacklogItem({ id: "item-1", sort_order: 1000 }),
       createBacklogItem({ id: "item-2", sort_order: 2000 }),
       createBacklogItem({ id: "item-3", sort_order: 3000 }),
     ];
 
+    // active center (50+50=100) < over center (100+100=200) → before
     const beforeItems = resolveDragOverItems({
       items,
       activeId: "item-3",
       overId: "item-2",
-      rect: makeLogicRect(),
-      activatorEvent: { clientY: 120 } as MouseEvent,
+      overRect: makeLogicRect(100, 200),
+      activeRect: makeLogicRect(50, 100),
       isMobileLayout: false,
     });
+    // active center (250+50=300) > over center (100+100=200) → after
     const afterItems = resolveDragOverItems({
       items,
       activeId: "item-1",
       overId: "item-2",
-      rect: makeLogicRect(),
-      activatorEvent: { clientY: 260 } as MouseEvent,
+      overRect: makeLogicRect(100, 200),
+      activeRect: makeLogicRect(250, 100),
       isMobileLayout: false,
     });
 
@@ -49,24 +47,53 @@ describe("resolveDragOverItems", () => {
     expect(afterItems.map((item) => item.id)).toEqual(["item-2", "item-1", "item-3"]);
   });
 
+  test("隣接要素への移動（1つ上・1つ下）が正しく動作する", () => {
+    const items = [
+      createBacklogItem({ id: "item-1", sort_order: 1000 }),
+      createBacklogItem({ id: "item-2", sort_order: 2000 }),
+    ];
+
+    // item-1 を item-2 の下へ: active center > over center → after
+    const moveDown = resolveDragOverItems({
+      items,
+      activeId: "item-1",
+      overId: "item-2",
+      overRect: makeLogicRect(200, 100),
+      activeRect: makeLogicRect(300, 100),
+      isMobileLayout: false,
+    });
+    // item-2 を item-1 の上へ: active center < over center → before
+    const moveUp = resolveDragOverItems({
+      items,
+      activeId: "item-2",
+      overId: "item-1",
+      overRect: makeLogicRect(100, 100),
+      activeRect: makeLogicRect(0, 100),
+      isMobileLayout: false,
+    });
+
+    expect(moveDown.map((item) => item.id)).toEqual(["item-2", "item-1"]);
+    expect(moveUp.map((item) => item.id)).toEqual(["item-2", "item-1"]);
+  });
+
   test.each([
     {
-      name: "touch event でも clientY を読んで列またぎ挿入位置を決める",
+      name: "active が over より上なら before として列またぎ挿入する",
       overId: "item-3",
-      activatorEvent: createTouchEvent(120),
+      activeRect: makeLogicRect(50, 100), // center=100 < overRect center=200
     },
     {
-      name: "touch event に座標が無ければ rect 中央を使って after 扱いにする",
+      name: "active が over と同じ中心なら after として列またぎ挿入する",
       overId: "item-2",
-      activatorEvent: createTouchEvent(),
+      activeRect: makeLogicRect(100, 200), // center=200 = overRect center=200 → not < → after
     },
-  ])("$name", ({ overId, activatorEvent }) => {
+  ])("$name", ({ overId, activeRect }) => {
     const nextItems = resolveDragOverItems({
       items: createWatchingItemsFixture(),
       activeId: "item-1",
       overId,
-      rect: makeLogicRect(),
-      activatorEvent,
+      overRect: makeLogicRect(),
+      activeRect,
       isMobileLayout: false,
     });
 
@@ -84,8 +111,8 @@ describe("resolveDragOverItems", () => {
       items,
       activeId: "item-1",
       overId: "column:watched",
-      rect: makeLogicRect(),
-      activatorEvent: new MouseEvent("mousemove"),
+      overRect: makeLogicRect(),
+      activeRect: makeLogicRect(),
       isMobileLayout: false,
     });
 
@@ -107,8 +134,8 @@ describe("resolveDragOverItems", () => {
         items,
         activeId: "item-1",
         overId: "item-2",
-        rect: makeLogicRect(),
-        activatorEvent: new MouseEvent("mousemove"),
+        overRect: makeLogicRect(),
+        activeRect: makeLogicRect(),
         isMobileLayout: true,
       }),
     ).toEqual(items);
@@ -122,8 +149,8 @@ describe("resolveDragOverItems", () => {
         items,
         activeId: "missing",
         overId: "item-2",
-        rect: makeLogicRect(),
-        activatorEvent: new MouseEvent("mousemove"),
+        overRect: makeLogicRect(),
+        activeRect: makeLogicRect(),
         isMobileLayout: false,
       }),
     ).toBe(items);
@@ -132,8 +159,8 @@ describe("resolveDragOverItems", () => {
         items,
         activeId: "item-1",
         overId: "item-1",
-        rect: makeLogicRect(),
-        activatorEvent: new MouseEvent("mousemove"),
+        overRect: makeLogicRect(),
+        activeRect: makeLogicRect(),
         isMobileLayout: false,
       }),
     ).toBe(items);

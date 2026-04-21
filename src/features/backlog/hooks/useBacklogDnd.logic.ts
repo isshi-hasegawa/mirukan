@@ -1,15 +1,13 @@
-import type { DragOverEvent } from "@dnd-kit/core";
 import type { BacklogItem, BacklogStatus } from "../types.ts";
 
 export type RectLike = Pick<DOMRect, "top" | "height">;
-type TouchListKey = "touches" | "changedTouches";
 
 type DragOverResolutionInput = Readonly<{
   items: BacklogItem[];
   activeId: string;
   overId: string;
-  rect: RectLike;
-  activatorEvent: DragOverEvent["activatorEvent"];
+  overRect: RectLike;
+  activeRect: RectLike;
   isMobileLayout: boolean;
 }>;
 
@@ -29,38 +27,10 @@ function findItemStatus(items: BacklogItem[], id: string): BacklogStatus | null 
   return items.find((item) => item.id === id)?.status ?? null;
 }
 
-function getDropSideFromRect(rect: RectLike, clientY: number) {
-  return clientY < rect.top + rect.height / 2 ? "before" : "after";
-}
-
-function getClientYFromPointerEvent(
-  event: MouseEvent | TouchEvent | null | undefined,
-  rect: RectLike,
-  touchListKey: TouchListKey = "touches",
-) {
-  const fallbackY = rect.top + rect.height / 2;
-
-  if (!event) {
-    return fallbackY;
-  }
-
-  if ("touches" in event && event.type.includes("touch")) {
-    const touchList = touchListKey === "changedTouches" ? event.changedTouches : event.touches;
-    return touchList?.[0]?.clientY ?? fallbackY;
-  }
-
-  return "clientY" in event ? (event.clientY ?? fallbackY) : fallbackY;
-}
-
-function resolveDropSide(
-  activatorEvent: DragOverEvent["activatorEvent"],
-  rect: RectLike,
-): "before" | "after" {
-  const clientY = getClientYFromPointerEvent(
-    activatorEvent as MouseEvent | TouchEvent | null | undefined,
-    rect,
-  );
-  return getDropSideFromRect(rect, clientY);
+function resolveDropSide(activeRect: RectLike, overRect: RectLike): "before" | "after" {
+  const activeCenterY = activeRect.top + activeRect.height / 2;
+  const overCenterY = overRect.top + overRect.height / 2;
+  return activeCenterY < overCenterY ? "before" : "after";
 }
 
 function getReorderedColumnItems(
@@ -173,8 +143,8 @@ export function resolveDragOverItems({
   items,
   activeId,
   overId,
-  rect,
-  activatorEvent,
+  overRect,
+  activeRect,
   isMobileLayout,
 }: DragOverResolutionInput): BacklogItem[] {
   if (activeId === overId) {
@@ -205,7 +175,7 @@ export function resolveDragOverItems({
       overStatus,
       activeId,
       overId,
-      resolveDropSide(activatorEvent, rect),
+      resolveDropSide(activeRect, overRect),
     );
   }
 
@@ -218,7 +188,7 @@ export function resolveDragOverItems({
     activeId,
     overStatus,
     overId,
-    resolveDropSide(activatorEvent, rect),
+    resolveDropSide(activeRect, overRect),
   );
 }
 
