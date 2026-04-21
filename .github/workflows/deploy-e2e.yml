@@ -45,7 +45,7 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
 
       - name: Setup Supabase CLI
-        uses: supabase/setup-cli@2eca1b4d35d9016e560c763c9159a350aa80c370 # v2.0.0 prep
+        uses: supabase/setup-cli@df56b21da46c98abb12a9804e4fb1f657773e333 # v2.0.0 prep
         with:
           version: latest
 
