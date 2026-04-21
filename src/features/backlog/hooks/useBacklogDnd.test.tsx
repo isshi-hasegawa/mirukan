@@ -61,14 +61,13 @@ function renderDnd(
   );
 }
 
-function makeActiveRect(top: number, height = 0) {
-  return { top, height, left: 0, right: 0, width: 0, bottom: top + height };
-}
+// initial は origin 固定、delta.y で pointer Y を表現（initial.center + delta.y = 0 + 0 + pointerY = pointerY）
+const ZERO_RECT = { top: 0, height: 0, left: 0, right: 0, width: 0, bottom: 0 };
 
 function dragOver(
   result: ReturnType<typeof renderDnd>["result"],
   overId: string,
-  activeCenterY: number,
+  pointerY: number,
   activeId = "item-1",
 ) {
   act(() => {
@@ -76,9 +75,10 @@ function dragOver(
     result.current.handleDragOver({
       active: {
         id: activeId,
-        rect: { current: { translated: makeActiveRect(activeCenterY) } },
+        rect: { current: { initial: ZERO_RECT } },
       },
       over: { id: overId, rect: makeDomRect(100, 200) },
+      delta: { x: 0, y: pointerY },
     } as unknown as DragOverEvent);
   });
 }
@@ -250,12 +250,14 @@ describe("useBacklogDnd", () => {
     act(() => {
       result.current.handleDragStart({ active: { id: "item-1" } } as DragStartEvent);
       result.current.handleDragOver({
-        active: { id: "item-1", rect: { current: { translated: makeActiveRect(120) } } },
+        active: { id: "item-1", rect: { current: { initial: ZERO_RECT } } },
         over: { id: "item-3", rect: makeDomRect(100, 200) },
+        delta: { x: 0, y: 120 },
       } as unknown as DragOverEvent);
       result.current.handleDragOver({
-        active: { id: "item-1", rect: { current: { translated: makeActiveRect(120) } } },
+        active: { id: "item-1", rect: { current: { initial: ZERO_RECT } } },
         over: { id: "item-2", rect: makeDomRect(100, 200) },
+        delta: { x: 0, y: 120 },
       } as unknown as DragOverEvent);
     });
 

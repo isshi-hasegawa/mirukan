@@ -57,15 +57,17 @@ export function useBacklogDnd({
   };
 
   const handleDragOver = (event: DragOverEvent) => {
-    const { active, over } = event;
+    const { active, over, delta } = event;
     if (!over) {
       return;
     }
 
-    const activeRect = active.rect.current.translated ?? active.rect.current.initial;
-    if (!activeRect) {
+    const initialRect = active.rect.current.initial;
+    if (!initialRect) {
       return;
     }
+
+    const activeCenterY = initialRect.top + initialRect.height / 2 + delta.y;
 
     const activeId = active.id as string;
     const overId = over.id as string;
@@ -76,7 +78,7 @@ export function useBacklogDnd({
         activeId,
         overId,
         overRect: over.rect,
-        activeRect,
+        activeCenterY,
         isMobileLayout,
       });
     });
