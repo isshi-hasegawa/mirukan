@@ -61,18 +61,24 @@ function renderDnd(
   );
 }
 
+function makeActiveRect(top: number, height = 0) {
+  return { top, height, left: 0, right: 0, width: 0, bottom: top + height };
+}
+
 function dragOver(
   result: ReturnType<typeof renderDnd>["result"],
   overId: string,
-  clientY: number,
+  activeCenterY: number,
   activeId = "item-1",
 ) {
   act(() => {
     result.current.handleDragStart({ active: { id: activeId } } as DragStartEvent);
     result.current.handleDragOver({
-      active: { id: activeId },
+      active: {
+        id: activeId,
+        rect: { current: { translated: makeActiveRect(activeCenterY) } },
+      },
       over: { id: overId, rect: makeDomRect(100, 200) },
-      activatorEvent: { clientY } as MouseEvent,
     } as unknown as DragOverEvent);
   });
 }
@@ -244,14 +250,12 @@ describe("useBacklogDnd", () => {
     act(() => {
       result.current.handleDragStart({ active: { id: "item-1" } } as DragStartEvent);
       result.current.handleDragOver({
-        active: { id: "item-1" },
+        active: { id: "item-1", rect: { current: { translated: makeActiveRect(120) } } },
         over: { id: "item-3", rect: makeDomRect(100, 200) },
-        activatorEvent: { clientY: 120 } as MouseEvent,
       } as unknown as DragOverEvent);
       result.current.handleDragOver({
-        active: { id: "item-1" },
+        active: { id: "item-1", rect: { current: { translated: makeActiveRect(120) } } },
         over: { id: "item-2", rect: makeDomRect(100, 200) },
-        activatorEvent: { clientY: 120 } as MouseEvent,
       } as unknown as DragOverEvent);
     });
 

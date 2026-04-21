@@ -12,8 +12,6 @@ export type PrimaryPlatform =
   | "apple_tv_plus"
   | "apple_tv"
   | null;
-export type GamePlatform = "steam" | "playstation" | "switch" | "xbox" | "ios" | "android";
-export type GameReleaseDates = Partial<Record<GamePlatform, string>>;
 
 export type WorkSummary = {
   id: string;
