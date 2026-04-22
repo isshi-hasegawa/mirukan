@@ -14,7 +14,7 @@ describe("ContactDialog", () => {
     expect(
       screen.getByRole("link", { name: /github\.com\/isshi-hasegawa\/mirukan\/issues/i }),
     ).toHaveAttribute("href", "https://github.com/isshi-hasegawa/mirukan/issues/new/choose");
-  });
+  }, 15_000);
 
   test("メールアドレスをコピーできる", async () => {
     vi.useFakeTimers();

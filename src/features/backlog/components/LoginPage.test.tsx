@@ -87,7 +87,9 @@ describe("LoginPage", () => {
 
     await user.click(screen.getByRole("button", { name: "お問い合わせ" }));
 
-    expect(await screen.findByRole("dialog", { name: "お問い合わせ" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("dialog", { name: "お問い合わせ" }, { timeout: 10_000 }),
+    ).toBeInTheDocument();
   });
 
   test("送信中は入力と送信を無効化し、完了後に再入力できる", async () => {

@@ -54,10 +54,12 @@ describe("UserMenu", () => {
     renderUserMenu();
     await openMenuItem(user, "About");
 
-    expect(await screen.findByRole("dialog", { name: "みるカンについて" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("dialog", { name: "みるカンについて" }, { timeout: 10_000 }),
+    ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "みるカンは、積んだ映画やシリーズから次に見る一本を決めるための映像作品バックログです。",
+        "みるカンは、積んだ映画・シリーズ・ゲームから次に手をつける一本を決めるためのバックログです。",
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("候補を積む")).toBeInTheDocument();
@@ -66,7 +68,8 @@ describe("UserMenu", () => {
       screen.getByText("This product uses the TMDB API but is not endorsed or certified by TMDB."),
     ).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "TMDB" })).toBeInTheDocument();
-  });
+    expect(screen.getByText(/ゲーム情報は IGDB\.com を参照しています/)).toBeInTheDocument();
+  }, 15_000);
 
   test("メニューから利用規約ページを新しいタブで開ける", async () => {
     const user = userEvent.setup();

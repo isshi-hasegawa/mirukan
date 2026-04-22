@@ -1,4 +1,5 @@
 import type { TmdbWorkDetails } from "../../lib/tmdb.ts";
+import type { IgdbWorkDetails } from "../../lib/igdb.ts";
 import { buildSearchText } from "./helpers.ts";
 
 const FOCUS_HIGH_GENRES = new Set([
@@ -140,5 +141,42 @@ export function buildTmdbWorkUpdate(details: TmdbWorkDetails, syncedAt = new Dat
     completion_load_score: calcCompletionLoadScore(details),
     last_tmdb_synced_at: syncedAt,
     ...(details.imdbId === undefined ? {} : { imdb_id: details.imdbId }),
+  };
+}
+
+export function buildIgdbWorkUpdate(details: IgdbWorkDetails) {
+  const releaseDateParts = Object.entries(details.releaseDates).flatMap(([platform, date]) =>
+    date ? [platform, date] : [platform],
+  );
+
+  return {
+    title: details.title,
+    original_title: null,
+    search_text: buildSearchText(
+      [details.title, details.developer, details.publisher, details.franchise, ...releaseDateParts]
+        .filter(Boolean)
+        .join(" "),
+    ),
+    overview: details.summary,
+    poster_path: details.coverImageId,
+    release_date: details.releaseDate,
+    release_dates: details.releaseDates,
+    runtime_minutes: null,
+    typical_episode_runtime_minutes: null,
+    duration_bucket: null,
+    episode_count: null,
+    season_count: null,
+    season_number: null,
+    genres: [],
+    developer: details.developer,
+    publisher: details.publisher,
+    franchise: details.franchise,
+    focus_required_score: null,
+    background_fit_score: null,
+    completion_load_score: null,
+    rotten_tomatoes_score: null,
+    imdb_rating: null,
+    imdb_votes: null,
+    metacritic_score: null,
   };
 }

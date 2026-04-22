@@ -1,4 +1,5 @@
 import type { BacklogItem } from "../types.ts";
+import { PosterImage } from "./PosterImage.tsx";
 
 type Props = Readonly<{
   item: BacklogItem | null;
@@ -14,13 +15,13 @@ export function DraggedBacklogCardOverlay({ item }: Props) {
       <div className="grid gap-[10px] pt-[18px] pr-11 pb-4 pl-4 rounded-[18px] bg-[var(--surface-strong)] border border-primary/20 cursor-grabbing pointer-events-none">
         <div className="grid grid-cols-[64px_minmax(0,1fr)] gap-3 items-start">
           <div className="relative aspect-[2/3] overflow-hidden rounded-[14px] border border-[rgba(92,59,35,0.08)]">
-            {item.works.poster_path && (
-              <img
-                src={`https://image.tmdb.org/t/p/w200${item.works.poster_path}`}
-                alt=""
-                className="w-full h-full object-cover"
-              />
-            )}
+            <PosterImage
+              posterPath={item.works.poster_path}
+              sourceType={item.works.source_type}
+              alt=""
+              className="w-full h-full object-cover"
+              fallback=""
+            />
           </div>
           <div className="grid gap-2 min-w-0">
             <p className="text-[1rem] font-bold">{item.works.title}</p>

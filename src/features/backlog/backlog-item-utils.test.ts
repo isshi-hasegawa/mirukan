@@ -95,7 +95,7 @@ describe("buildMoveToStatusConfirmMessage", () => {
     ];
 
     expect(buildMoveToStatusConfirmMessage(items, "stacked", "シーズン1・シーズン2")).toBe(
-      "シーズン1・シーズン2はすでに「視聴済み・中断」にあります。ストックに戻しますか？",
+      "シーズン1・シーズン2はすでに「鑑賞済み・保留」にあります。ストックに戻しますか？",
     );
   });
 });

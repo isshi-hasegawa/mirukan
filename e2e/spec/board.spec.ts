@@ -7,7 +7,7 @@ import { test, expect } from "@playwright/test";
 test("ボードのコラムが表示される", async ({ page }) => {
   await page.goto("/");
 
-  const columnText = ["ストック", "見たい", "視聴中", "中断", "視聴済み"];
+  const columnText = ["ストック", "次に見る", "視聴中", "保留", "鑑賞済み"];
   const isMobileLayout = page.viewportSize()?.width !== null && page.viewportSize()!.width <= 720;
 
   for (const text of columnText) {

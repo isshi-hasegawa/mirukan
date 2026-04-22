@@ -5,10 +5,10 @@ import {
   planBacklogItemUpserts,
   type BacklogItemUpdate,
 } from "./backlog-item-utils.ts";
-import type { BacklogItem, BacklogStatus, PrimaryPlatform } from "./types.ts";
+import type { BacklogItem, BacklogStatus, GamePlatform, PrimaryPlatform } from "./types.ts";
 
 export const BACKLOG_ITEM_SELECT =
-  "id, status, display_title, primary_platform, note, sort_order, works(id, title, work_type, source_type, tmdb_id, tmdb_media_type, original_title, overview, poster_path, release_date, runtime_minutes, typical_episode_runtime_minutes, duration_bucket, genres, season_count, season_number, focus_required_score, background_fit_score, completion_load_score, rotten_tomatoes_score, imdb_rating, imdb_votes, metacritic_score)";
+  "id, status, display_title, primary_platform, note, sort_order, works(id, title, work_type, source_type, tmdb_id, igdb_id, tmdb_media_type, original_title, overview, poster_path, release_date, release_dates, runtime_minutes, typical_episode_runtime_minutes, duration_bucket, genres, season_count, season_number, developer, publisher, franchise, focus_required_score, background_fit_score, completion_load_score, rotten_tomatoes_score, imdb_rating, imdb_votes, metacritic_score)";
 
 export async function fetchBacklogItems(): Promise<{
   data: BacklogItem[];
@@ -56,7 +56,7 @@ export async function updateBacklogItem(
 type UpsertBacklogItemsToStatusOptions = {
   display_title: string | null;
   note: string | null;
-  primary_platform: PrimaryPlatform;
+  primary_platform: PrimaryPlatform | GamePlatform;
 };
 
 export async function upsertBacklogItemsToStatus(

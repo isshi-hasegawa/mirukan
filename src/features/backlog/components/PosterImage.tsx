@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
+import type { SourceType } from "../types.ts";
+import { buildIgdbImageUrl } from "../../../lib/igdb.ts";
 
 type Props = Readonly<{
   posterPath: string | null;
+  sourceType?: SourceType;
   alt: string;
   size?: "w92" | "w185" | "w500";
   fallback?: string;
@@ -11,6 +14,7 @@ type Props = Readonly<{
 
 export function PosterImage({
   posterPath,
+  sourceType = "tmdb",
   alt,
   size = "w185",
   fallback = "No Poster",
@@ -18,7 +22,12 @@ export function PosterImage({
   fallbackClassName,
 }: Props) {
   const [hasError, setHasError] = useState(false);
-  const url = posterPath ? `https://image.tmdb.org/t/p/${size}${posterPath}` : null;
+  let url: string | null;
+  if (sourceType === "igdb") {
+    url = buildIgdbImageUrl(posterPath, size === "w500" ? "cover_big" : "cover_small");
+  } else {
+    url = posterPath ? `https://image.tmdb.org/t/p/${size}${posterPath}` : null;
+  }
 
   useEffect(() => {
     setHasError(false);

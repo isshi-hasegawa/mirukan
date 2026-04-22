@@ -1,13 +1,22 @@
 import type {
   BacklogItem,
+  BacklogStatus,
+  BoardMode,
   DetailModalEditableField,
+  GamePlatform,
+  GameReleaseDates,
   DetailModalState,
   PrimaryPlatform,
   WorkSummary,
   WorkType,
 } from "./types.ts";
 import type { TmdbSearchResult } from "../../lib/tmdb.ts";
-import { isPrimaryPlatformValue } from "./constants.ts";
+import {
+  gamePlatformKeys,
+  getStatusLabel,
+  isGamePlatformValue,
+  isPrimaryPlatformValue,
+} from "./constants.ts";
 
 export function getStringField(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -19,8 +28,12 @@ export function getNullableStringField(formData: FormData, key: string) {
   return value || null;
 }
 
-export function isPrimaryPlatform(value: unknown): value is PrimaryPlatform {
+function isPrimaryPlatform(value: unknown): value is PrimaryPlatform {
   return value === null || isPrimaryPlatformValue(value);
+}
+
+export function isStoredPlatform(value: unknown): value is PrimaryPlatform | GamePlatform {
+  return isPrimaryPlatform(value) || isGamePlatformValue(value);
 }
 
 export function normalizePrimaryPlatform(value: string | null): PrimaryPlatform {
@@ -69,6 +82,10 @@ export function getWorkTypeLabel(workType: WorkType) {
   return "シリーズ";
 }
 
+function getBoardModeForWorkType(workType: WorkType): BoardMode {
+  return workType === "game" ? "game" : "video";
+}
+
 type WorkMetadataLabelOptions = {
   includeReleaseYear?: boolean;
   includeRuntime?: boolean;
@@ -94,12 +111,16 @@ export function getWorkMetadataLabels(
       labels.push(`${work.runtime_minutes}分`);
     }
 
-    if (work.work_type !== "movie" && work.typical_episode_runtime_minutes) {
+    if (
+      work.work_type !== "movie" &&
+      work.work_type !== "game" &&
+      work.typical_episode_runtime_minutes
+    ) {
       labels.push(`1話約${work.typical_episode_runtime_minutes}分`);
     }
   }
 
-  if (includeSeasonCount && work.season_count) {
+  if (includeSeasonCount && work.work_type !== "game" && work.season_count) {
     labels.push(`全${work.season_count}シーズン`);
   }
 
@@ -108,4 +129,18 @@ export function getWorkMetadataLabels(
 
 export function getTmdbSearchResultMetadataLabels(result: TmdbSearchResult) {
   return [result.releaseDate ? `${result.releaseDate.slice(0, 4)}年` : null].filter(Boolean);
+}
+
+export function getGamePlatformsFromReleaseDates(
+  releaseDates: GameReleaseDates | null | undefined,
+) {
+  if (!releaseDates) {
+    return [] as GamePlatform[];
+  }
+
+  return gamePlatformKeys.filter((platform) => typeof releaseDates[platform] === "string");
+}
+
+export function getStatusActionLabel(work: WorkSummary, status: BacklogStatus) {
+  return getStatusLabel(status, getBoardModeForWorkType(work.work_type));
 }

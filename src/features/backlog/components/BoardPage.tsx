@@ -6,6 +6,7 @@ import { LazyViewBoundary } from "@/components/LazyViewBoundary.tsx";
 import { signOut } from "../../../lib/auth-repository.ts";
 import { lazyNamed } from "../../../lib/lazy-component.ts";
 import { useBoardPageController } from "../hooks/useBoardPageController.ts";
+import type { BoardMode } from "../types.ts";
 import { Header } from "./Header.tsx";
 import { KanbanBoard } from "./KanbanBoard.tsx";
 import { DraggedBacklogCardOverlay } from "./DraggedBacklogCardOverlay.tsx";
@@ -13,7 +14,7 @@ import { DraggedBacklogCardOverlay } from "./DraggedBacklogCardOverlay.tsx";
 const AddModal = lazyNamed(() => import("./AddModal.tsx"), "AddModal");
 const DetailModal = lazyNamed(() => import("./DetailModal.tsx"), "DetailModal");
 
-type Props = Readonly<{ session: Session }>;
+type Props = Readonly<{ session: Session; boardMode?: BoardMode }>;
 
 const shellBase =
   "w-full min-w-0 max-w-[1680px] mx-auto px-3 max-[720px]:px-2.5 max-[500px]:px-2 max-[400px]:px-1.5";
@@ -93,9 +94,9 @@ function LazyModalBoundary({
   );
 }
 
-export function BoardPage({ session }: Props) {
+export function BoardPage({ session, boardMode = "video" }: Props) {
   const { isLoading, error, board, dnd, addModal, detailModal, feedbackUi } =
-    useBoardPageController({ session });
+    useBoardPageController({ session, boardMode });
 
   if (isLoading) {
     return null;
@@ -124,7 +125,7 @@ export function BoardPage({ session }: Props) {
 
   return (
     <main className={shellBoard}>
-      <Header session={session} />
+      <Header session={session} boardMode={boardMode} />
 
       <DndContext
         sensors={dnd.sensors}
@@ -151,6 +152,7 @@ export function BoardPage({ session }: Props) {
         errorTitle="作品追加の画面を開けませんでした。"
       >
         <AddModal
+          boardMode={addModal.boardMode}
           items={addModal.items}
           session={addModal.session}
           onClose={addModal.onClose}
@@ -165,6 +167,7 @@ export function BoardPage({ session }: Props) {
         errorTitle="作品詳細の画面を開けませんでした。"
       >
         <DetailModal
+          boardMode={detailModal.boardMode}
           item={detailModal.item}
           state={detailModal.state}
           items={detailModal.items}

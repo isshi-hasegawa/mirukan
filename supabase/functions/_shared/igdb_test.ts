@@ -63,7 +63,14 @@ Deno.test("unixSecondsToIsoDate は秒を YYYY-MM-DD に変換する", () => {
 Deno.test("buildIgdbSearchBody はクエリをエスケープしてカテゴリで絞る", () => {
   assertEquals(
     buildIgdbSearchBody('Zelda "BOTW"'),
-    `fields id,name,summary,cover.image_id,first_release_date,platforms.slug; search "Zelda \\"BOTW\\""; where category = (0,8,9,10,11); limit 20;`,
+    `fields id,name,cover.image_id,first_release_date,platforms.slug,alternative_names.name,alternative_names.comment; search "Zelda \\"BOTW\\""; where game_type = (0,8,9,10,11); limit 20;`,
+  );
+});
+
+Deno.test("buildIgdbSearchBody は日本語クエリを where 句に切り替える", () => {
+  assertEquals(
+    buildIgdbSearchBody("バイオハザード"),
+    `fields id,name,cover.image_id,first_release_date,platforms.slug,alternative_names.name,alternative_names.comment; where (name ~ *"バイオハザード"* | alternative_names.name ~ *"バイオハザード"*) & game_type = (0,8,9,10,11); limit 20;`,
   );
 });
 
@@ -145,11 +152,14 @@ Deno.test("searchIgdbWorks は IGDB レスポンスを IgdbSearchResult[] に変
     return jsonResponse([
       {
         id: 11,
-        name: "Title A",
-        summary: "summary",
+        name: "Biohazard",
         cover: { image_id: "abc" },
         first_release_date: 1700000000,
         platforms: [{ slug: "win" }, { slug: "ps5" }, { slug: "unknown" }],
+        alternative_names: [
+          { name: "バイオハザード", comment: "Japanese title" },
+          { name: "Resident Evil", comment: "International title" },
+        ],
       },
       {
         id: 12,
@@ -168,11 +178,10 @@ Deno.test("searchIgdbWorks は IGDB レスポンスを IgdbSearchResult[] に変
   assertEquals(result, [
     {
       igdbId: 11,
-      title: "Title A",
+      title: "バイオハザード",
       coverImageId: "abc",
       releaseDate: "2023-11-14",
       platforms: ["steam", "playstation"],
-      summary: "summary",
     },
     {
       igdbId: 13,
@@ -180,7 +189,6 @@ Deno.test("searchIgdbWorks は IGDB レスポンスを IgdbSearchResult[] に変
       coverImageId: null,
       releaseDate: null,
       platforms: [],
-      summary: null,
     },
   ]);
 });

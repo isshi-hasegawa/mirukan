@@ -86,6 +86,7 @@ function renderKanbanBoard(
 ) {
   return render(
     <KanbanBoard
+      boardMode="video"
       items={[createItem("item-1", "stacked", "作品1"), createItem("item-2", "watching", "作品2")]}
       isDragging={false}
       isMobileLayout={false}
@@ -186,6 +187,13 @@ describe("KanbanBoard", () => {
     );
   });
 
+  test("ゲームでは stacked 列でも視聴モード切り替えを表示しない", () => {
+    renderKanbanBoard({ boardMode: "game" });
+
+    expect(screen.queryByRole("button", { name: /ガッツリ/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /サクッと/ })).not.toBeInTheDocument();
+  });
+
   test("view 絞り込み中にドラッグ開始しても stacked 列の表示順を維持する", () => {
     const items = [
       createItem("item-1", "stacked", "長編", {
@@ -207,6 +215,7 @@ describe("KanbanBoard", () => {
 
     rerender(
       <KanbanBoard
+        boardMode="video"
         items={items}
         isDragging
         isMobileLayout={false}
