@@ -10,72 +10,25 @@ import {
   mergeRecommendationResults,
   normalizeRecommendationSources,
 } from "./tmdb-recommendation-cache.ts";
-
-export type TmdbWatchPlatform = {
-  key: string;
-  logoPath: string | null;
-};
-
-export type TmdbSearchResult = {
-  tmdbId: number;
-  tmdbMediaType: "movie" | "tv";
-  workType: "movie" | "series";
-  title: string;
-  originalTitle: string | null;
-  overview: string | null;
-  posterPath: string | null;
-  releaseDate: string | null;
-  jpWatchPlatforms: TmdbWatchPlatform[];
-  hasJapaneseRelease: boolean;
-  rottenTomatoesScore?: number | null;
-};
-
-export type TmdbSeasonSelectionTarget = {
-  tmdbId: number;
-  tmdbMediaType: "tv";
-  workType: "season";
-  title: string;
-  originalTitle: string | null;
-  overview: string | null;
-  posterPath: string | null;
-  releaseDate: string | null;
-  seasonNumber: number;
-  episodeCount: number | null;
-  seriesTitle: string;
-};
-
-export type TmdbSeasonOption = {
-  seasonNumber: number;
-  title: string;
-  overview: string | null;
-  posterPath: string | null;
-  releaseDate: string | null;
-  episodeCount: number | null;
-};
-
-export type TmdbSelectionTarget = TmdbSearchResult | TmdbSeasonSelectionTarget;
+import {
+  type TmdbSearchResult,
+  type TmdbSeasonOption,
+  type TmdbSelectionTarget,
+  type TmdbWatchPlatform,
+  type TmdbWorkDetails,
+} from "./tmdb-shared.ts";
+export { resolveSeasonTitle } from "./tmdb-shared.ts";
+export type {
+  TmdbSearchResult,
+  TmdbSeasonOption,
+  TmdbSeasonSelectionTarget,
+  TmdbSelectionTarget,
+  TmdbWorkDetails,
+} from "./tmdb-shared.ts";
 type SuggestDisplayTitleRequest = {
   title: string;
   originalTitle: string | null;
   workType: "movie" | "series";
-};
-
-export type TmdbWorkDetails = {
-  tmdbId: number;
-  tmdbMediaType: "movie" | "tv";
-  workType: "movie" | "series" | "season";
-  title: string;
-  originalTitle: string | null;
-  overview: string | null;
-  posterPath: string | null;
-  releaseDate: string | null;
-  genres: string[];
-  runtimeMinutes: number | null;
-  typicalEpisodeRuntimeMinutes: number | null;
-  episodeCount: number | null;
-  seasonCount: number | null;
-  seasonNumber: number | null;
-  imdbId?: string | null;
 };
 
 type ResponseValidator<TResponse> = (data: unknown) => data is TResponse;
@@ -324,45 +277,5 @@ export function fetchTmdbWorkDetails(target: TmdbSelectionTarget): Promise<TmdbW
     "fetch-tmdb-work-details",
     { target },
     isTmdbWorkDetails,
-  );
-}
-
-function firstNonBlank(...values: Array<string | null | undefined>) {
-  for (const value of values) {
-    if (typeof value === "string" && value.trim()) {
-      return value.trim();
-    }
-  }
-
-  return "";
-}
-
-export function resolveSeasonTitle(
-  seriesTitle: string,
-  seasonNumber: number,
-  ...candidates: Array<string | null | undefined>
-) {
-  const fallback = `${seriesTitle} シーズン${seasonNumber}`;
-  const chosen = firstNonBlank(...candidates);
-
-  if (!chosen || isGenericSeasonLabel(chosen)) {
-    return fallback;
-  }
-
-  if (chosen.toLowerCase().includes(seriesTitle.toLowerCase())) {
-    return chosen;
-  }
-
-  return `${seriesTitle} ${chosen}`;
-}
-
-function isGenericSeasonLabel(value: string) {
-  const normalized = value.trim().toLowerCase();
-
-  return (
-    /^season\s*\d+$/i.test(value.trim()) ||
-    /^シーズン\s*\d+$/.test(value.trim()) ||
-    normalized === "season" ||
-    normalized === "シーズン"
   );
 }
