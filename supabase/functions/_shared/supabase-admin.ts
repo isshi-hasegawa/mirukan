@@ -32,3 +32,8 @@ export function getSupabaseAdminClient(): SupabaseAdminClient | null {
 
   return cachedClient;
 }
+
+// テスト用: モジュールスコープのクライアントキャッシュをリセットする
+export function _resetSupabaseAdminClientCacheForTesting() {
+  cachedClient = null;
+}
