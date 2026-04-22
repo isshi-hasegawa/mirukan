@@ -12,7 +12,6 @@ export type PrimaryPlatform =
   | "apple_tv_plus"
   | "apple_tv"
   | null;
-
 export type WorkSummary = {
   id: string;
   title: string;

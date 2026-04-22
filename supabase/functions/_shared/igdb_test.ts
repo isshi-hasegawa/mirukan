@@ -12,13 +12,7 @@ import {
   selectInvolvedCompany,
   unixSecondsToIsoDate,
 } from "./igdb.ts";
-
-function jsonResponse(payload: unknown, init: ResponseInit = {}) {
-  return new Response(JSON.stringify(payload), {
-    status: init.status ?? 200,
-    headers: { "Content-Type": "application/json", ...init.headers },
-  });
-}
+import { jsonResponse } from "./test-helpers.ts";
 
 function createContext(
   fetchImpl: typeof fetch,
