@@ -1,3 +1,4 @@
+import { normalizeComponentPath, trimTrailingSlash } from "./quality-report-core.ts";
 import { sanitizeAbsolutePaths, toDisplayPath } from "./quality-report-paths.ts";
 
 type SonarIssueLike = {
@@ -198,15 +199,6 @@ function compareQuickWinGroups(left: QuickWinGroup, right: QuickWinGroup, projec
     leftExamplePath.localeCompare(rightExamplePath) ||
     left.key.localeCompare(right.key)
   );
-}
-
-function normalizeComponentPath(component: string, projectKey: string) {
-  const prefix = `${projectKey}:`;
-  return component.startsWith(prefix) ? component.slice(prefix.length) : component;
-}
-
-function trimTrailingSlash(value: string) {
-  return value.endsWith("/") ? value.slice(0, -1) : value;
 }
 
 function effortOrInfinity(value: number | undefined) {
