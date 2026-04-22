@@ -1,4 +1,4 @@
-import { resolveSeasonTitle } from "../../../../src/lib/tmdb-shared.ts";
+import { resolveSeasonTitle as sharedResolveSeasonTitle } from "../../../../src/lib/tmdb-shared.ts";
 import { fetchTmdbJson } from "./http.ts";
 import {
   type TmdbSearchResult,
@@ -6,7 +6,7 @@ import {
   type TmdbTvDetailsResponse,
 } from "./types.ts";
 
-export { resolveSeasonTitle };
+export { resolveSeasonTitle } from "../../../../src/lib/tmdb-shared.ts";
 
 export async function fetchTmdbSeasonOptions(
   result: TmdbSearchResult,
@@ -23,7 +23,7 @@ export async function fetchTmdbSeasonOptions(
     .filter((season) => season.season_number > 1)
     .map((season) => ({
       seasonNumber: season.season_number,
-      title: resolveSeasonTitle(result.title, season.season_number, season.name?.trim()),
+      title: sharedResolveSeasonTitle(result.title, season.season_number, season.name?.trim()),
       overview: season.overview ?? null,
       posterPath: season.poster_path ?? null,
       releaseDate: season.air_date ?? null,

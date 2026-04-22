@@ -11,15 +11,13 @@ import {
   normalizeRecommendationSources,
 } from "./tmdb-recommendation-cache.ts";
 import {
-  resolveSeasonTitle,
   type TmdbSearchResult,
   type TmdbSeasonOption,
-  type TmdbSeasonSelectionTarget,
   type TmdbSelectionTarget,
   type TmdbWatchPlatform,
   type TmdbWorkDetails,
 } from "./tmdb-shared.ts";
-export { resolveSeasonTitle };
+export { resolveSeasonTitle } from "./tmdb-shared.ts";
 export type {
   TmdbSearchResult,
   TmdbSeasonOption,
