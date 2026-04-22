@@ -34,6 +34,11 @@ type ExistingTmdbWorkRow = {
   imdb_id: string | null;
   genres: string[];
 };
+type ExistingManualWorkRow = {
+  id: string;
+};
+type TmdbWorkDetails = Awaited<ReturnType<typeof fetchTmdbWorkDetails>>;
+type OmdbDetails = Awaited<ReturnType<typeof fetchOmdbWorkDetails>>;
 type TmdbWorkLookup = {
   tmdbMediaType: "movie" | "tv";
   tmdbId: number;
@@ -45,6 +50,20 @@ type UpsertFetchedTmdbWorkOptions = {
   seasonNumber?: number;
   workType?: WorkType;
 };
+type ManualWorkLookup = {
+  searchText: string;
+  userId: string;
+  workType: Extract<WorkType, "movie" | "series">;
+};
+type TmdbSyncState = {
+  shouldRefreshTmdb: boolean;
+  shouldRefreshOmdb: boolean;
+  shouldSyncTmdbForOmdb: boolean;
+};
+type OmdbDecision =
+  | { type: "skip" }
+  | { type: "clear"; omdbFetchedAt: string }
+  | { type: "fetch"; imdbId: string; omdbFetchedAt: string };
 
 export async function upsertTmdbWork(
   target: TmdbSelectionTarget,
@@ -63,14 +82,8 @@ export async function upsertManualWork(
   userId: string,
 ): Promise<PostgrestSingleResponse<{ id: string }>> {
   const searchText = buildSearchText(title);
-  const { data: existing, error: selectError } = await supabase
-    .from("works")
-    .select("id")
-    .eq("created_by", userId)
-    .eq("source_type", "manual")
-    .eq("work_type", workType)
-    .eq("search_text", searchText)
-    .maybeSingle();
+  const lookup = { searchText, userId, workType };
+  const { data: existing, error: selectError } = await findExistingManualWork(lookup);
 
   if (selectError) {
     return buildErrorIdResponse(selectError);
@@ -96,14 +109,7 @@ export async function upsertManualWork(
     return insertResult;
   }
 
-  const { data: conflicted, error: conflictError } = await supabase
-    .from("works")
-    .select("id")
-    .eq("created_by", userId)
-    .eq("source_type", "manual")
-    .eq("work_type", workType)
-    .eq("search_text", searchText)
-    .maybeSingle();
+  const { data: conflicted, error: conflictError } = await findExistingManualWork(lookup);
 
   if (conflictError) {
     return buildErrorIdResponse(conflictError, 409, "Conflict");
@@ -113,6 +119,20 @@ export async function upsertManualWork(
     return buildOkIdResponse(conflicted.id);
   }
   return buildErrorIdResponse(insertResult.error, 409, "Conflict");
+}
+
+async function findExistingManualWork({ searchText, userId, workType }: ManualWorkLookup): Promise<{
+  data: ExistingManualWorkRow | null;
+  error: PostgrestError | null;
+}> {
+  return supabase
+    .from("works")
+    .select("id")
+    .eq("created_by", userId)
+    .eq("source_type", "manual")
+    .eq("work_type", workType)
+    .eq("search_text", searchText)
+    .maybeSingle();
 }
 
 type ResolveSelectedSeasonWorkIdsOptions = {
@@ -259,38 +279,19 @@ async function upsertFetchedTmdbWork(
   }
 
   const syncState = buildTmdbSyncState(existing);
-  if (existing && !syncState.shouldRefreshTmdb && !syncState.shouldSyncTmdbForOmdb) {
-    await refreshExistingOmdbFields(existing, syncState.shouldRefreshOmdb);
-    return buildOkIdResponse(existing.id);
+  const reusableExisting = await reuseExistingTmdbWork(existing, syncState);
+  if (reusableExisting) {
+    return reusableExisting;
   }
 
   const details = await fetchTmdbWorkDetails(target);
   const omdbFields = await buildOmdbFields(details, existing);
-  const omdbRatings = buildOmdbRatings(omdbFields);
-  const updatePayload = buildTmdbUpdatePayload(details, omdbFields, options.parentWorkId);
 
   if (existing) {
-    const { error: updateError } = await supabase
-      .from("works")
-      .update(updatePayload)
-      .eq("id", existing.id);
-
-    if (updateError) {
-      return buildErrorIdResponse(updateError);
-    }
-
-    return buildOkIdResponse(existing.id);
+    return updateFetchedTmdbWork(existing.id, details, omdbFields, options.parentWorkId);
   }
 
-  return supabase
-    .from("works")
-    .insert({
-      ...buildTmdbWorkInsert(details, userId, lookup.workType, options.parentWorkId ?? null),
-      ...omdbFields,
-      background_fit_score: calcBackgroundFitScore(details.genres, omdbRatings),
-    })
-    .select("id")
-    .single();
+  return insertFetchedTmdbWork(details, omdbFields, userId, lookup.workType, options.parentWorkId);
 }
 
 function buildTmdbWorkLookup(
@@ -315,6 +316,50 @@ function buildTmdbSyncState(existing: ExistingTmdbWorkRow | null) {
     shouldRefreshOmdb,
     shouldSyncTmdbForOmdb: Boolean(existing && shouldRefreshOmdb && !existing.imdb_id),
   };
+}
+
+async function reuseExistingTmdbWork(
+  existing: ExistingTmdbWorkRow | null,
+  syncState: TmdbSyncState,
+): Promise<TmdbWorkIdResponse | null> {
+  if (!existing || syncState.shouldRefreshTmdb || syncState.shouldSyncTmdbForOmdb) {
+    return null;
+  }
+
+  await refreshExistingOmdbFields(existing, syncState.shouldRefreshOmdb);
+  return buildOkIdResponse(existing.id);
+}
+
+async function updateFetchedTmdbWork(
+  existingId: string,
+  details: TmdbWorkDetails,
+  omdbFields: OmdbFields,
+  parentWorkId: string | undefined,
+): Promise<TmdbWorkIdResponse> {
+  const { error: updateError } = await supabase
+    .from("works")
+    .update(buildTmdbUpdatePayload(details, omdbFields, parentWorkId))
+    .eq("id", existingId);
+
+  if (updateError) {
+    return buildErrorIdResponse(updateError);
+  }
+
+  return buildOkIdResponse(existingId);
+}
+
+function insertFetchedTmdbWork(
+  details: TmdbWorkDetails,
+  omdbFields: OmdbFields,
+  userId: string,
+  workType: WorkType,
+  parentWorkId: string | undefined,
+) {
+  return supabase
+    .from("works")
+    .insert(buildTmdbInsertPayload(details, omdbFields, userId, workType, parentWorkId))
+    .select("id")
+    .single();
 }
 
 async function refreshExistingOmdbFields(
@@ -356,13 +401,7 @@ type OmdbFields = {
   omdb_fetched_at?: string;
 };
 
-function buildOmdbNullImdbFields(
-  existing: ExistingTmdbWorkRow | null,
-  omdbFetchedAt: string,
-): OmdbFields {
-  if (shouldKeepExistingNullOmdbState(existing)) {
-    return {};
-  }
+function buildClearedOmdbFields(omdbFetchedAt: string): OmdbFields {
   return {
     rotten_tomatoes_score: null,
     imdb_rating: null,
@@ -372,10 +411,7 @@ function buildOmdbNullImdbFields(
   };
 }
 
-function toOmdbFields(
-  omdb: Awaited<ReturnType<typeof fetchOmdbWorkDetails>>,
-  omdbFetchedAt: string,
-): OmdbFields {
+function toOmdbFields(omdb: OmdbDetails, omdbFetchedAt: string): OmdbFields {
   return {
     rotten_tomatoes_score: omdb.rottenTomatoesScore,
     imdb_rating: omdb.imdbRating,
@@ -385,25 +421,43 @@ function toOmdbFields(
   };
 }
 
-async function buildOmdbFields(
-  details: Awaited<ReturnType<typeof fetchTmdbWorkDetails>>,
+function buildOmdbDecision(
   existing: ExistingTmdbWorkRow | null,
-): Promise<OmdbFields> {
+  imdbId: TmdbWorkDetails["imdbId"],
+): OmdbDecision {
   const omdbFetchedAt = new Date().toISOString();
 
-  if (details.imdbId === null) {
-    return buildOmdbNullImdbFields(existing, omdbFetchedAt);
+  if (imdbId === null) {
+    return shouldKeepExistingNullOmdbState(existing)
+      ? { type: "skip" }
+      : { type: "clear", omdbFetchedAt };
   }
 
-  if (!details.imdbId || shouldSkipOmdbRefresh(existing, details.imdbId)) {
-    return {};
+  if (!imdbId || shouldSkipOmdbRefresh(existing, imdbId)) {
+    return { type: "skip" };
   }
 
-  try {
-    const omdb = await fetchOmdbWorkDetails(details.imdbId);
-    return toOmdbFields(omdb, omdbFetchedAt);
-  } catch {
-    return {};
+  return { type: "fetch", imdbId, omdbFetchedAt };
+}
+
+async function buildOmdbFields(
+  details: TmdbWorkDetails,
+  existing: ExistingTmdbWorkRow | null,
+): Promise<OmdbFields> {
+  const decision = buildOmdbDecision(existing, details.imdbId);
+
+  switch (decision.type) {
+    case "skip":
+      return {};
+    case "clear":
+      return buildClearedOmdbFields(decision.omdbFetchedAt);
+    case "fetch":
+      try {
+        const omdb = await fetchOmdbWorkDetails(decision.imdbId);
+        return toOmdbFields(omdb, decision.omdbFetchedAt);
+      } catch {
+        return {};
+      }
   }
 }
 
@@ -428,7 +482,7 @@ function buildOmdbRatings(omdbFields: OmdbFields): RatingInfo {
 }
 
 function buildTmdbUpdatePayload(
-  details: Awaited<ReturnType<typeof fetchTmdbWorkDetails>>,
+  details: TmdbWorkDetails,
   omdbFields: OmdbFields,
   parentWorkId: string | undefined,
 ) {
@@ -438,5 +492,20 @@ function buildTmdbUpdatePayload(
     ...omdbFields,
     background_fit_score: calcBackgroundFitScore(details.genres, omdbRatings),
     ...(parentWorkId === undefined ? {} : { parent_work_id: parentWorkId }),
+  };
+}
+
+function buildTmdbInsertPayload(
+  details: TmdbWorkDetails,
+  omdbFields: OmdbFields,
+  userId: string,
+  workType: WorkType,
+  parentWorkId: string | undefined,
+) {
+  const omdbRatings = buildOmdbRatings(omdbFields);
+  return {
+    ...buildTmdbWorkInsert(details, userId, workType, parentWorkId ?? null),
+    ...omdbFields,
+    background_fit_score: calcBackgroundFitScore(details.genres, omdbRatings),
   };
 }

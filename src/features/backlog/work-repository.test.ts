@@ -25,6 +25,7 @@ import type {
 } from "../../lib/tmdb.ts";
 import { getMockWorks, setMockWorks } from "../../test/mocks/handlers";
 import { server } from "../../test/mocks/server";
+import type { Work } from "../../test/mocks/types.ts";
 import {
   createSeasonTmdbDetails,
   createSeriesTmdbDetails,
@@ -75,6 +76,8 @@ const sharedSeasonOptions: TmdbSeasonOption[] = [
     episodeCount: 10,
   },
 ];
+const TEST_USER_ID = "user-1";
+const EXISTING_WORK_ID = "existing-work";
 
 function createOmdbDetails() {
   return {
@@ -82,6 +85,55 @@ function createOmdbDetails() {
     imdbRating: 8.4,
     imdbVotes: 120000,
     metacriticScore: 78,
+  };
+}
+
+function expectStoredWork(matcher: Partial<Work>) {
+  expect(getMockWorks()).toContainEqual(expect.objectContaining(matcher));
+}
+
+function expectLinkedSeriesAndSeason(tmdbId: number, seasonNumber: number) {
+  const works = getMockWorks();
+  const seriesWork = works.find((work) => work.work_type === "series");
+  const seasonWork = works.find((work) => work.work_type === "season");
+
+  expect(seriesWork).toEqual(
+    expect.objectContaining({
+      tmdb_id: tmdbId,
+      parent_work_id: null,
+    }),
+  );
+  expect(seasonWork).toEqual(
+    expect.objectContaining({
+      tmdb_id: tmdbId,
+      season_number: seasonNumber,
+      parent_work_id: seriesWork?.id,
+    }),
+  );
+}
+
+function createManualMovieWork(overrides: Partial<Work> = {}): Partial<Work> {
+  const baseWork: Partial<Work> = {
+    id: EXISTING_WORK_ID,
+    created_by: TEST_USER_ID,
+    source_type: "manual",
+    work_type: "movie",
+    search_text: "テスト作品",
+    tmdb_id: null,
+    tmdb_media_type: null,
+    title: "テスト作品",
+    original_title: null,
+    overview: null,
+    poster_path: null,
+    release_date: null,
+    episode_count: null,
+    season_number: null,
+    series_title: null,
+  };
+
+  return {
+    ...baseWork,
+    ...overrides,
   };
 }
 
@@ -232,55 +284,53 @@ describe("upsertTmdbWork", () => {
     episodeCount: 8,
     seriesTitle: "テストシリーズ",
   };
+  const existingTmdbWorkResponse = {
+    success: true,
+    data: { id: EXISTING_WORK_ID },
+    error: null,
+    count: null,
+    status: 200,
+    statusText: "OK",
+  } as const;
 
-  test("十分新しい既存作品は再同期せず再利用する", async () => {
+  function setExistingMovieWork(overrides: Partial<Work> = {}) {
     setMockWorks([
       {
-        id: "existing-work",
+        id: EXISTING_WORK_ID,
         source_type: "tmdb",
         work_type: "movie",
         tmdb_media_type: "movie",
-        tmdb_id: 200,
+        tmdb_id: movieTarget.tmdbId,
         title: "既存作品",
         original_title: "Existing Movie",
         search_text: "existing movie",
-        last_tmdb_synced_at: "2026-03-31T00:00:00.000Z",
-        omdb_fetched_at: "2026-04-08T00:00:00.000Z",
-        imdb_id: "tt0123456",
         episode_count: null,
         season_number: null,
         series_title: null,
+        ...overrides,
       },
     ]);
+  }
 
-    await expect(upsertTmdbWork(movieTarget, "user-1")).resolves.toEqual({
-      success: true,
-      data: { id: "existing-work" },
-      error: null,
-      count: null,
-      status: 200,
-      statusText: "OK",
+  async function expectExistingMovieResult(result: ReturnType<typeof upsertTmdbWork>) {
+    await expect(result).resolves.toEqual(existingTmdbWorkResponse);
+  }
+
+  test("十分新しい既存作品は再同期せず再利用する", async () => {
+    setExistingMovieWork({
+      last_tmdb_synced_at: "2026-03-31T00:00:00.000Z",
+      omdb_fetched_at: "2026-04-08T00:00:00.000Z",
+      imdb_id: "tt0123456",
     });
+
+    await expectExistingMovieResult(upsertTmdbWork(movieTarget, TEST_USER_ID));
     expect(tmdbMocks.fetchTmdbWorkDetails).not.toHaveBeenCalled();
   });
 
   test("期限切れの既存作品は詳細を再取得して update する", async () => {
-    setMockWorks([
-      {
-        id: "existing-work",
-        source_type: "tmdb",
-        work_type: "movie",
-        tmdb_media_type: "movie",
-        tmdb_id: 200,
-        title: "既存作品",
-        original_title: "Existing Movie",
-        search_text: "existing movie",
-        last_tmdb_synced_at: "2026-01-01T00:00:00.000Z",
-        episode_count: null,
-        season_number: null,
-        series_title: null,
-      },
-    ]);
+    setExistingMovieWork({
+      last_tmdb_synced_at: "2026-01-01T00:00:00.000Z",
+    });
     tmdbMocks.fetchTmdbWorkDetails.mockResolvedValue(
       createTmdbDetails({
         tmdbId: movieTarget.tmdbId,
@@ -289,42 +339,20 @@ describe("upsertTmdbWork", () => {
       }),
     );
 
-    await expect(upsertTmdbWork(movieTarget, "user-1")).resolves.toEqual({
-      success: true,
-      data: { id: "existing-work" },
-      error: null,
-      count: null,
-      status: 200,
-      statusText: "OK",
-    });
+    await expectExistingMovieResult(upsertTmdbWork(movieTarget, TEST_USER_ID));
     expect(tmdbMocks.fetchTmdbWorkDetails).toHaveBeenCalledWith(movieTarget);
-    expect(getMockWorks()).toContainEqual(
-      expect.objectContaining({
-        id: "existing-work",
-        title: "更新後タイトル",
-        original_title: "Test Movie",
-      }),
-    );
+    expectStoredWork({
+      id: EXISTING_WORK_ID,
+      title: "更新後タイトル",
+      original_title: "Test Movie",
+    });
   });
 
   test("external_ids 取得失敗時は既存の imdb_id を消さない", async () => {
-    setMockWorks([
-      {
-        id: "existing-work",
-        source_type: "tmdb",
-        work_type: "movie",
-        tmdb_media_type: "movie",
-        tmdb_id: 200,
-        title: "既存作品",
-        original_title: "Existing Movie",
-        search_text: "existing movie",
-        last_tmdb_synced_at: "2026-01-01T00:00:00.000Z",
-        imdb_id: "tt0123456",
-        episode_count: null,
-        season_number: null,
-        series_title: null,
-      },
-    ]);
+    setExistingMovieWork({
+      last_tmdb_synced_at: "2026-01-01T00:00:00.000Z",
+      imdb_id: "tt0123456",
+    });
     tmdbMocks.fetchTmdbWorkDetails.mockResolvedValue(
       createTmdbDetails({
         tmdbId: movieTarget.tmdbId,
@@ -334,42 +362,20 @@ describe("upsertTmdbWork", () => {
       }),
     );
 
-    await expect(upsertTmdbWork(movieTarget, "user-1")).resolves.toEqual({
-      success: true,
-      data: { id: "existing-work" },
-      error: null,
-      count: null,
-      status: 200,
-      statusText: "OK",
-    });
+    await expectExistingMovieResult(upsertTmdbWork(movieTarget, TEST_USER_ID));
 
-    expect(getMockWorks()).toContainEqual(
-      expect.objectContaining({
-        id: "existing-work",
-        imdb_id: "tt0123456",
-      }),
-    );
+    expectStoredWork({
+      id: EXISTING_WORK_ID,
+      imdb_id: "tt0123456",
+    });
   });
 
   test("TMDb が新しくても imdb_id 未保存かつ OMDb 未取得なら詳細を再取得して OMDb を保存する", async () => {
-    setMockWorks([
-      {
-        id: "existing-work",
-        source_type: "tmdb",
-        work_type: "movie",
-        tmdb_media_type: "movie",
-        tmdb_id: 200,
-        title: "既存作品",
-        original_title: "Existing Movie",
-        search_text: "existing movie",
-        last_tmdb_synced_at: "2026-04-08T00:00:00.000Z",
-        omdb_fetched_at: null,
-        imdb_id: null,
-        episode_count: null,
-        season_number: null,
-        series_title: null,
-      },
-    ]);
+    setExistingMovieWork({
+      last_tmdb_synced_at: "2026-04-08T00:00:00.000Z",
+      omdb_fetched_at: null,
+      imdb_id: null,
+    });
     tmdbMocks.fetchTmdbWorkDetails.mockResolvedValue(
       createTmdbDetails({
         tmdbId: movieTarget.tmdbId,
@@ -380,48 +386,26 @@ describe("upsertTmdbWork", () => {
     );
     omdbMocks.fetchOmdbWorkDetails.mockResolvedValue(createOmdbDetails());
 
-    await expect(upsertTmdbWork(movieTarget, "user-1")).resolves.toEqual({
-      success: true,
-      data: { id: "existing-work" },
-      error: null,
-      count: null,
-      status: 200,
-      statusText: "OK",
-    });
+    await expectExistingMovieResult(upsertTmdbWork(movieTarget, TEST_USER_ID));
 
     expect(tmdbMocks.fetchTmdbWorkDetails).toHaveBeenCalledWith(movieTarget);
     expect(omdbMocks.fetchOmdbWorkDetails).toHaveBeenCalledWith("tt7654321");
-    expect(getMockWorks()).toContainEqual(
-      expect.objectContaining({
-        id: "existing-work",
-        imdb_id: "tt7654321",
-        rotten_tomatoes_score: 93,
-        imdb_rating: 8.4,
-        imdb_votes: 120000,
-        metacritic_score: 78,
-      }),
-    );
+    expectStoredWork({
+      id: EXISTING_WORK_ID,
+      imdb_id: "tt7654321",
+      rotten_tomatoes_score: 93,
+      imdb_rating: 8.4,
+      imdb_votes: 120000,
+      metacritic_score: 78,
+    });
   });
 
   test("IMDb ID が無い作品でも OMDb 未取得時の確認結果を記録する", async () => {
-    setMockWorks([
-      {
-        id: "existing-work",
-        source_type: "tmdb",
-        work_type: "movie",
-        tmdb_media_type: "movie",
-        tmdb_id: 200,
-        title: "既存作品",
-        original_title: "Existing Movie",
-        search_text: "existing movie",
-        last_tmdb_synced_at: "2026-04-08T00:00:00.000Z",
-        omdb_fetched_at: null,
-        imdb_id: null,
-        episode_count: null,
-        season_number: null,
-        series_title: null,
-      },
-    ]);
+    setExistingMovieWork({
+      last_tmdb_synced_at: "2026-04-08T00:00:00.000Z",
+      omdb_fetched_at: null,
+      imdb_id: null,
+    });
     tmdbMocks.fetchTmdbWorkDetails.mockResolvedValue(
       createTmdbDetails({
         tmdbId: movieTarget.tmdbId,
@@ -431,48 +415,26 @@ describe("upsertTmdbWork", () => {
       }),
     );
 
-    await expect(upsertTmdbWork(movieTarget, "user-1")).resolves.toEqual({
-      success: true,
-      data: { id: "existing-work" },
-      error: null,
-      count: null,
-      status: 200,
-      statusText: "OK",
-    });
+    await expectExistingMovieResult(upsertTmdbWork(movieTarget, TEST_USER_ID));
 
     expect(omdbMocks.fetchOmdbWorkDetails).not.toHaveBeenCalled();
-    expect(getMockWorks()).toContainEqual(
-      expect.objectContaining({
-        id: "existing-work",
-        imdb_id: null,
-        rotten_tomatoes_score: null,
-        imdb_rating: null,
-        imdb_votes: null,
-        metacritic_score: null,
-        omdb_fetched_at: expect.any(String),
-      }),
-    );
+    expectStoredWork({
+      id: EXISTING_WORK_ID,
+      imdb_id: null,
+      rotten_tomatoes_score: null,
+      imdb_rating: null,
+      imdb_votes: null,
+      metacritic_score: null,
+      omdb_fetched_at: expect.any(String),
+    });
   });
 
   test("TMDb 再同期で imdb_id が変わったら OMDb を即時再取得する", async () => {
-    setMockWorks([
-      {
-        id: "existing-work",
-        source_type: "tmdb",
-        work_type: "movie",
-        tmdb_media_type: "movie",
-        tmdb_id: 200,
-        title: "既存作品",
-        original_title: "Existing Movie",
-        search_text: "existing movie",
-        last_tmdb_synced_at: "2026-01-01T00:00:00.000Z",
-        omdb_fetched_at: "2026-04-08T00:00:00.000Z",
-        imdb_id: "tt0123456",
-        episode_count: null,
-        season_number: null,
-        series_title: null,
-      },
-    ]);
+    setExistingMovieWork({
+      last_tmdb_synced_at: "2026-01-01T00:00:00.000Z",
+      omdb_fetched_at: "2026-04-08T00:00:00.000Z",
+      imdb_id: "tt0123456",
+    });
     tmdbMocks.fetchTmdbWorkDetails.mockResolvedValue(
       createTmdbDetails({
         tmdbId: movieTarget.tmdbId,
@@ -483,23 +445,14 @@ describe("upsertTmdbWork", () => {
     );
     omdbMocks.fetchOmdbWorkDetails.mockResolvedValue(createOmdbDetails());
 
-    await expect(upsertTmdbWork(movieTarget, "user-1")).resolves.toEqual({
-      success: true,
-      data: { id: "existing-work" },
-      error: null,
-      count: null,
-      status: 200,
-      statusText: "OK",
-    });
+    await expectExistingMovieResult(upsertTmdbWork(movieTarget, TEST_USER_ID));
 
     expect(omdbMocks.fetchOmdbWorkDetails).toHaveBeenCalledWith("tt7654321");
-    expect(getMockWorks()).toContainEqual(
-      expect.objectContaining({
-        id: "existing-work",
-        imdb_id: "tt7654321",
-        rotten_tomatoes_score: 93,
-      }),
-    );
+    expectStoredWork({
+      id: EXISTING_WORK_ID,
+      imdb_id: "tt7654321",
+      rotten_tomatoes_score: 93,
+    });
   });
 
   test("シーズン追加時は親 series を先に解決してから insert する", async () => {
@@ -528,36 +481,20 @@ describe("upsertTmdbWork", () => {
         ),
       );
 
-    await expect(upsertTmdbWork(seasonTarget, "user-1")).resolves.toMatchObject({
+    await expect(upsertTmdbWork(seasonTarget, TEST_USER_ID)).resolves.toMatchObject({
       data: { id: expect.any(String) },
       error: null,
       status: 201,
     });
     expect(tmdbMocks.fetchTmdbWorkDetails).toHaveBeenCalledTimes(2);
-
-    const works = getMockWorks();
-    const seriesWork = works.find((work) => work.work_type === "series");
-    const seasonWork = works.find((work) => work.work_type === "season");
-    expect(seriesWork).toEqual(
-      expect.objectContaining({
-        tmdb_id: 300,
-        parent_work_id: null,
-      }),
-    );
-    expect(seasonWork).toEqual(
-      expect.objectContaining({
-        tmdb_id: 300,
-        season_number: 2,
-        parent_work_id: seriesWork?.id,
-      }),
-    );
+    expectLinkedSeriesAndSeason(300, 2);
   });
 });
 
 describe("resolveSelectedSeasonWorkIds", () => {
   test("空入力時はエラーを返す", async () => {
     await expect(
-      resolveSelectedSeasonWorkIds(sharedSeriesResult, "user-1", [], {
+      resolveSelectedSeasonWorkIds(sharedSeriesResult, TEST_USER_ID, [], {
         seasonOptions: sharedSeasonOptions,
       }),
     ).resolves.toEqual({
@@ -568,7 +505,7 @@ describe("resolveSelectedSeasonWorkIds", () => {
 
   test("シーズン情報組み立て失敗時はエラーを返す", async () => {
     await expect(
-      resolveSelectedSeasonWorkIds(sharedSeriesResult, "user-1", [4], {
+      resolveSelectedSeasonWorkIds(sharedSeriesResult, TEST_USER_ID, [4], {
         seasonOptions: sharedSeasonOptions,
       }),
     ).resolves.toEqual({
@@ -583,7 +520,7 @@ describe("resolveSelectedSeasonWorkIds", () => {
     );
 
     await expect(
-      resolveSelectedSeasonWorkIds(sharedSeriesResult, "user-1", [1], {
+      resolveSelectedSeasonWorkIds(sharedSeriesResult, TEST_USER_ID, [1], {
         seasonOptions: sharedSeasonOptions,
       }),
     ).resolves.toMatchObject({
@@ -591,12 +528,10 @@ describe("resolveSelectedSeasonWorkIds", () => {
       workIds: [expect.any(String)],
     });
     expect(tmdbMocks.fetchTmdbWorkDetails).toHaveBeenCalledTimes(1);
-    expect(getMockWorks()).toContainEqual(
-      expect.objectContaining({
-        work_type: "series",
-        tmdb_id: sharedSeriesResult.tmdbId,
-      }),
-    );
+    expectStoredWork({
+      work_type: "series",
+      tmdb_id: sharedSeriesResult.tmdbId,
+    });
   });
 
   test("複数シーズン追加時は親 series を一度だけ解決して workIds を順序どおり返す", async () => {
@@ -604,30 +539,17 @@ describe("resolveSelectedSeasonWorkIds", () => {
       .mockResolvedValueOnce(createSeriesTmdbDetails(sharedSeriesResult, 2))
       .mockResolvedValueOnce(createSeasonTmdbDetails(sharedSeriesResult, sharedSeasonOptions[0]));
 
-    const result = await resolveSelectedSeasonWorkIds(sharedSeriesResult, "user-1", [1, 2], {
+    const result = await resolveSelectedSeasonWorkIds(sharedSeriesResult, TEST_USER_ID, [1, 2], {
       seasonOptions: sharedSeasonOptions,
     });
 
     expect(result.error).toBeNull();
     expect(tmdbMocks.fetchTmdbWorkDetails).toHaveBeenCalledTimes(2);
+    expectLinkedSeriesAndSeason(sharedSeriesResult.tmdbId, 2);
 
     const works = getMockWorks();
     const seriesWork = works.find((work) => work.work_type === "series");
     const seasonWork = works.find((work) => work.work_type === "season");
-
-    expect(seriesWork).toEqual(
-      expect.objectContaining({
-        tmdb_id: sharedSeriesResult.tmdbId,
-        parent_work_id: null,
-      }),
-    );
-    expect(seasonWork).toEqual(
-      expect.objectContaining({
-        tmdb_id: sharedSeriesResult.tmdbId,
-        season_number: 2,
-        parent_work_id: seriesWork?.id,
-      }),
-    );
     expect(result.workIds).toEqual([seriesWork?.id, seasonWork?.id]);
   });
 
@@ -636,7 +558,7 @@ describe("resolveSelectedSeasonWorkIds", () => {
     failSeasonLookup(2);
 
     await expect(
-      resolveSelectedSeasonWorkIds(sharedSeriesResult, "user-1", [1, 2], {
+      resolveSelectedSeasonWorkIds(sharedSeriesResult, TEST_USER_ID, [1, 2], {
         seasonOptions: sharedSeasonOptions,
       }),
     ).resolves.toEqual({
@@ -654,7 +576,7 @@ describe("resolveSelectedSeasonWorkIds", () => {
     );
 
     await expect(
-      resolveSelectedSeasonWorkIds(sharedSeriesResult, "user-1", [2, 3], {
+      resolveSelectedSeasonWorkIds(sharedSeriesResult, TEST_USER_ID, [2, 3], {
         seasonOptions: sharedSeasonOptions,
       }),
     ).resolves.toEqual({
@@ -669,35 +591,17 @@ describe("resolveSelectedSeasonWorkIds", () => {
 
 describe("upsertManualWork", () => {
   test("既存ヒット時は再利用する", async () => {
-    setMockWorks([
-      {
-        id: "existing-work",
-        created_by: "user-1",
-        source_type: "manual",
-        work_type: "movie",
-        search_text: "テスト作品",
-        tmdb_id: null,
-        tmdb_media_type: null,
-        title: "テスト作品",
-        original_title: null,
-        overview: null,
-        poster_path: null,
-        release_date: null,
-        episode_count: null,
-        season_number: null,
-        series_title: null,
-      },
-    ]);
+    setMockWorks([createManualMovieWork()]);
 
-    await expect(upsertManualWork("テスト作品", "movie", "user-1")).resolves.toMatchObject({
-      data: { id: "existing-work" },
+    await expect(upsertManualWork("テスト作品", "movie", TEST_USER_ID)).resolves.toMatchObject({
+      data: { id: EXISTING_WORK_ID },
       error: null,
       status: 200,
     });
   });
 
   test("insert 成功時は新規 id を返す", async () => {
-    await expect(upsertManualWork("テスト作品", "movie", "user-1")).resolves.toMatchObject({
+    await expect(upsertManualWork("テスト作品", "movie", TEST_USER_ID)).resolves.toMatchObject({
       data: { id: expect.any(String) },
       error: null,
       status: 201,
@@ -709,23 +613,11 @@ describe("upsertManualWork", () => {
       http.post(`${SUPABASE_URL}/rest/v1/works`, async ({ request }) => {
         const body = (await request.json()) as { created_by: string; search_text: string };
         setMockWorks([
-          {
+          createManualMovieWork({
             id: "rescued-work",
             created_by: body.created_by,
-            source_type: "manual",
-            work_type: "movie",
             search_text: body.search_text,
-            tmdb_id: null,
-            tmdb_media_type: null,
-            title: "テスト作品",
-            original_title: null,
-            overview: null,
-            poster_path: null,
-            release_date: null,
-            episode_count: null,
-            season_number: null,
-            series_title: null,
-          },
+          }),
         ]);
         return HttpResponse.json(
           { message: "duplicate key value", code: "23505" },
@@ -734,7 +626,7 @@ describe("upsertManualWork", () => {
       }),
     );
 
-    await expect(upsertManualWork("テスト作品", "movie", "user-1")).resolves.toEqual({
+    await expect(upsertManualWork("テスト作品", "movie", TEST_USER_ID)).resolves.toEqual({
       success: true,
       data: { id: "rescued-work" },
       error: null,
@@ -768,7 +660,7 @@ describe("upsertManualWork", () => {
       }),
     );
 
-    await expect(upsertManualWork("テスト作品", "movie", "user-1")).resolves.toEqual({
+    await expect(upsertManualWork("テスト作品", "movie", TEST_USER_ID)).resolves.toEqual({
       success: false,
       data: null,
       error: { message: "reselect failed" },
