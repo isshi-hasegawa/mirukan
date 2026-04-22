@@ -61,10 +61,11 @@ function renderDnd(
   );
 }
 
+// activatorEvent.clientY = 0, delta.y = pointerY で実際の pointer Y を表現
 function dragOver(
   result: ReturnType<typeof renderDnd>["result"],
   overId: string,
-  clientY: number,
+  pointerY: number,
   activeId = "item-1",
 ) {
   act(() => {
@@ -72,7 +73,8 @@ function dragOver(
     result.current.handleDragOver({
       active: { id: activeId },
       over: { id: overId, rect: makeDomRect(100, 200) },
-      activatorEvent: { clientY } as MouseEvent,
+      delta: { x: 0, y: pointerY },
+      activatorEvent: { clientY: 0 } as MouseEvent,
     } as unknown as DragOverEvent);
   });
 }
@@ -246,12 +248,14 @@ describe("useBacklogDnd", () => {
       result.current.handleDragOver({
         active: { id: "item-1" },
         over: { id: "item-3", rect: makeDomRect(100, 200) },
-        activatorEvent: { clientY: 120 } as MouseEvent,
+        delta: { x: 0, y: 120 },
+        activatorEvent: { clientY: 0 } as MouseEvent,
       } as unknown as DragOverEvent);
       result.current.handleDragOver({
         active: { id: "item-1" },
         over: { id: "item-2", rect: makeDomRect(100, 200) },
-        activatorEvent: { clientY: 120 } as MouseEvent,
+        delta: { x: 0, y: 120 },
+        activatorEvent: { clientY: 0 } as MouseEvent,
       } as unknown as DragOverEvent);
     });
 

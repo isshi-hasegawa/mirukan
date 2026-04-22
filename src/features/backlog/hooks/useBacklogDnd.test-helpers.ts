@@ -53,11 +53,3 @@ export function makeDomRect(top = 100, height = 200): DOMRect {
     toJSON: () => ({}),
   } as DOMRect;
 }
-
-export function createTouchEvent(clientY?: number): TouchEvent {
-  return {
-    type: "touchmove",
-    touches: clientY === undefined ? [] : [{ clientY }],
-    changedTouches: clientY === undefined ? [] : [{ clientY }],
-  } as unknown as TouchEvent;
-}

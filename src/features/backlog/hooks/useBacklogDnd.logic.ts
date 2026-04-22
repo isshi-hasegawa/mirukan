@@ -1,15 +1,13 @@
-import type { DragOverEvent } from "@dnd-kit/core";
 import type { BacklogItem, BacklogStatus } from "../types.ts";
 
 export type RectLike = Pick<DOMRect, "top" | "height">;
-type TouchListKey = "touches" | "changedTouches";
 
 type DragOverResolutionInput = Readonly<{
   items: BacklogItem[];
   activeId: string;
   overId: string;
-  rect: RectLike;
-  activatorEvent: DragOverEvent["activatorEvent"];
+  overRect: RectLike;
+  pointerY: number;
   isMobileLayout: boolean;
 }>;
 
@@ -29,38 +27,24 @@ function findItemStatus(items: BacklogItem[], id: string): BacklogStatus | null 
   return items.find((item) => item.id === id)?.status ?? null;
 }
 
-function getDropSideFromRect(rect: RectLike, clientY: number) {
-  return clientY < rect.top + rect.height / 2 ? "before" : "after";
+function resolveDropSide(pointerY: number, overRect: RectLike): "before" | "after" {
+  return pointerY < overRect.top + overRect.height / 2 ? "before" : "after";
 }
 
-function getClientYFromPointerEvent(
-  event: MouseEvent | TouchEvent | null | undefined,
-  rect: RectLike,
-  touchListKey: TouchListKey = "touches",
-) {
-  const fallbackY = rect.top + rect.height / 2;
-
-  if (!event) {
-    return fallbackY;
-  }
-
-  if ("touches" in event && event.type.includes("touch")) {
-    const touchList = touchListKey === "changedTouches" ? event.changedTouches : event.touches;
-    return touchList?.[0]?.clientY ?? fallbackY;
-  }
-
-  return "clientY" in event ? (event.clientY ?? fallbackY) : fallbackY;
+function arrayMove<T>(array: readonly T[], from: number, to: number): T[] {
+  const result = array.slice();
+  const [item] = result.splice(from, 1);
+  result.splice(to, 0, item);
+  return result;
 }
 
-function resolveDropSide(
-  activatorEvent: DragOverEvent["activatorEvent"],
-  rect: RectLike,
-): "before" | "after" {
-  const clientY = getClientYFromPointerEvent(
-    activatorEvent as MouseEvent | TouchEvent | null | undefined,
-    rect,
-  );
-  return getDropSideFromRect(rect, clientY);
+function reorderSameColumn(items: BacklogItem[], activeId: string, overId: string): BacklogItem[] {
+  const activeIdx = items.findIndex((item) => item.id === activeId);
+  const overIdx = items.findIndex((item) => item.id === overId);
+  if (activeIdx === -1 || overIdx === -1) {
+    return items;
+  }
+  return arrayMove(items, activeIdx, overIdx);
 }
 
 function getReorderedColumnItems(
@@ -113,18 +97,6 @@ function moveItemToColumnTop(items: BacklogItem[], activeId: string, status: Bac
   return [...others, { ...activeItem, status }, ...columnItems];
 }
 
-function reorderWithinColumn(
-  items: BacklogItem[],
-  status: BacklogStatus,
-  activeId: string,
-  overId: string,
-  side: "before" | "after",
-) {
-  const columnItems = items.filter((item) => item.status === status);
-  const others = items.filter((item) => item.status !== status);
-  return [...others, ...getReorderedColumnItems(columnItems, activeId, overId, side)];
-}
-
 function moveToColumnEdge(items: BacklogItem[], activeId: string, status: BacklogStatus) {
   return status === "watched"
     ? moveItemToColumnTop(items, activeId, status)
@@ -173,8 +145,8 @@ export function resolveDragOverItems({
   items,
   activeId,
   overId,
-  rect,
-  activatorEvent,
+  overRect,
+  pointerY,
   isMobileLayout,
 }: DragOverResolutionInput): BacklogItem[] {
   if (activeId === overId) {
@@ -200,13 +172,7 @@ export function resolveDragOverItems({
       return items;
     }
 
-    return reorderWithinColumn(
-      items,
-      overStatus,
-      activeId,
-      overId,
-      resolveDropSide(activatorEvent, rect),
-    );
+    return reorderSameColumn(items, activeId, overId);
   }
 
   if (overId.startsWith("column:")) {
@@ -218,7 +184,7 @@ export function resolveDragOverItems({
     activeId,
     overStatus,
     overId,
-    resolveDropSide(activatorEvent, rect),
+    resolveDropSide(pointerY, overRect),
   );
 }
 
