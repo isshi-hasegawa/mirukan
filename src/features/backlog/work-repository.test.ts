@@ -112,6 +112,31 @@ function expectLinkedSeriesAndSeason(tmdbId: number, seasonNumber: number) {
   );
 }
 
+function createManualMovieWork(overrides: Partial<Work> = {}): Partial<Work> {
+  const baseWork: Partial<Work> = {
+    id: EXISTING_WORK_ID,
+    created_by: TEST_USER_ID,
+    source_type: "manual",
+    work_type: "movie",
+    search_text: "テスト作品",
+    tmdb_id: null,
+    tmdb_media_type: null,
+    title: "テスト作品",
+    original_title: null,
+    overview: null,
+    poster_path: null,
+    release_date: null,
+    episode_count: null,
+    season_number: null,
+    series_title: null,
+  };
+
+  return {
+    ...baseWork,
+    ...overrides,
+  };
+}
+
 function setExistingSeriesWork() {
   setMockWorks([
     {
@@ -565,27 +590,6 @@ describe("resolveSelectedSeasonWorkIds", () => {
 });
 
 describe("upsertManualWork", () => {
-  function createManualMovieWork(overrides: Partial<Work> = {}) {
-    return {
-      id: EXISTING_WORK_ID,
-      created_by: TEST_USER_ID,
-      source_type: "manual",
-      work_type: "movie",
-      search_text: "テスト作品",
-      tmdb_id: null,
-      tmdb_media_type: null,
-      title: "テスト作品",
-      original_title: null,
-      overview: null,
-      poster_path: null,
-      release_date: null,
-      episode_count: null,
-      season_number: null,
-      series_title: null,
-      ...overrides,
-    };
-  }
-
   test("既存ヒット時は再利用する", async () => {
     setMockWorks([createManualMovieWork()]);
 
