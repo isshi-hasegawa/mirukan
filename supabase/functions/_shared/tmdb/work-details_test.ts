@@ -1,43 +1,8 @@
 import { assertEquals } from "jsr:@std/assert";
 import { jsonResponse, withEnv, withMockFetch } from "../test-helpers.ts";
+import { createMovieResult, createSeriesResult } from "./test-fixtures.ts";
 import { fetchTmdbWorkDetails } from "./work-details.ts";
-import type { TmdbSearchResult, TmdbSeasonSelectionTarget } from "./types.ts";
-
-function createMovieResult(
-  overrides: Partial<TmdbSearchResult> & { tmdbId: number; title: string },
-): TmdbSearchResult {
-  return {
-    tmdbId: overrides.tmdbId,
-    tmdbMediaType: "movie",
-    workType: "movie",
-    title: overrides.title,
-    originalTitle: overrides.originalTitle ?? `${overrides.title} Original`,
-    overview: overrides.overview ?? "overview",
-    posterPath: overrides.posterPath ?? null,
-    releaseDate: overrides.releaseDate ?? "2024-01-01",
-    jpWatchPlatforms: overrides.jpWatchPlatforms ?? [],
-    hasJapaneseRelease: overrides.hasJapaneseRelease ?? true,
-    rottenTomatoesScore: overrides.rottenTomatoesScore ?? null,
-  };
-}
-
-function createSeriesResult(
-  overrides: Partial<TmdbSearchResult> & { tmdbId: number; title: string },
-): TmdbSearchResult {
-  return {
-    tmdbId: overrides.tmdbId,
-    tmdbMediaType: "tv",
-    workType: "series",
-    title: overrides.title,
-    originalTitle: overrides.originalTitle ?? `${overrides.title} Original`,
-    overview: overrides.overview ?? "overview",
-    posterPath: overrides.posterPath ?? null,
-    releaseDate: overrides.releaseDate ?? "2024-01-01",
-    jpWatchPlatforms: overrides.jpWatchPlatforms ?? [],
-    hasJapaneseRelease: overrides.hasJapaneseRelease ?? true,
-    rottenTomatoesScore: overrides.rottenTomatoesScore ?? null,
-  };
-}
+import type { TmdbSeasonSelectionTarget } from "./types.ts";
 
 Deno.test("fetchTmdbWorkDetails は映画詳細を翻訳タイトルつきで返す", async () => {
   await withEnv(

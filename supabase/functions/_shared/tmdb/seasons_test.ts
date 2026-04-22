@@ -1,25 +1,7 @@
 import { assertEquals } from "jsr:@std/assert";
 import { jsonResponse, withEnv, withMockFetch } from "../test-helpers.ts";
 import { fetchTmdbSeasonOptions } from "./seasons.ts";
-import type { TmdbSearchResult } from "./types.ts";
-
-function createSeriesResult(
-  overrides: Partial<TmdbSearchResult> & { tmdbId: number; title: string },
-): TmdbSearchResult {
-  return {
-    tmdbId: overrides.tmdbId,
-    tmdbMediaType: "tv",
-    workType: "series",
-    title: overrides.title,
-    originalTitle: overrides.originalTitle ?? `${overrides.title} Original`,
-    overview: overrides.overview ?? "overview",
-    posterPath: overrides.posterPath ?? null,
-    releaseDate: overrides.releaseDate ?? "2024-01-01",
-    jpWatchPlatforms: overrides.jpWatchPlatforms ?? [],
-    hasJapaneseRelease: overrides.hasJapaneseRelease ?? true,
-    rottenTomatoesScore: overrides.rottenTomatoesScore ?? null,
-  };
-}
+import { createSeriesResult } from "./test-fixtures.ts";
 
 Deno.test("fetchTmdbSeasonOptions はシーズン候補だけを返し、汎用ラベルを補正する", async () => {
   await withEnv(

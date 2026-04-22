@@ -1,9 +1,12 @@
-import { fetchTmdbJson, firstNonBlank } from "./http.ts";
+import { resolveSeasonTitle } from "../../../../src/lib/tmdb-shared.ts";
+import { fetchTmdbJson } from "./http.ts";
 import {
   type TmdbSearchResult,
   type TmdbSeasonOption,
   type TmdbTvDetailsResponse,
 } from "./types.ts";
+
+export { resolveSeasonTitle };
 
 export async function fetchTmdbSeasonOptions(
   result: TmdbSearchResult,
@@ -26,34 +29,4 @@ export async function fetchTmdbSeasonOptions(
       releaseDate: season.air_date ?? null,
       episodeCount: typeof season.episode_count === "number" ? season.episode_count : null,
     }));
-}
-
-export function resolveSeasonTitle(
-  seriesTitle: string,
-  seasonNumber: number,
-  ...candidates: Array<string | null | undefined>
-) {
-  const fallback = `${seriesTitle} シーズン${seasonNumber}`;
-  const chosen = firstNonBlank(...candidates);
-
-  if (!chosen || isGenericSeasonLabel(chosen)) {
-    return fallback;
-  }
-
-  if (chosen.toLowerCase().includes(seriesTitle.toLowerCase())) {
-    return chosen;
-  }
-
-  return `${seriesTitle} ${chosen}`;
-}
-
-function isGenericSeasonLabel(value: string) {
-  const normalized = value.trim().toLowerCase();
-
-  return (
-    /^season\s*\d+$/i.test(value.trim()) ||
-    /^シーズン\s*\d+$/.test(value.trim()) ||
-    normalized === "season" ||
-    normalized === "シーズン"
-  );
 }

@@ -3,7 +3,6 @@ import { fetchPreferredJapaneseTitleForPath } from "./localization.ts";
 import { fetchImdbId } from "./omdb-enrich.ts";
 import { resolveSeasonTitle } from "./seasons.ts";
 import {
-  type TmdbMediaType,
   type TmdbMovieDetailsResponse,
   type TmdbSeasonDetailsResponse,
   type TmdbSelectionTarget,

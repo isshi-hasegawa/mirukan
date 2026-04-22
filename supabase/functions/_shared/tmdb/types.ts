@@ -1,3 +1,12 @@
+import type {
+  TmdbSearchResult as SharedTmdbSearchResult,
+  TmdbSeasonOption as SharedTmdbSeasonOption,
+  TmdbSeasonSelectionTarget as SharedTmdbSeasonSelectionTarget,
+  TmdbSelectionTarget as SharedTmdbSelectionTarget,
+  TmdbWatchPlatform as SharedTmdbWatchPlatform,
+  TmdbWorkDetails as SharedTmdbWorkDetails,
+} from "../../../../src/lib/tmdb-shared.ts";
+
 export type TmdbMediaType = "movie" | "tv";
 
 export type TmdbMultiSearchResponse = {
@@ -96,24 +105,9 @@ export type TmdbTranslationsResponse = {
   }>;
 };
 
-export type TmdbWatchPlatform = {
-  key: string;
-  logoPath: string | null;
-};
+export type TmdbWatchPlatform = SharedTmdbWatchPlatform;
 
-export type TmdbSearchResult = {
-  tmdbId: number;
-  tmdbMediaType: TmdbMediaType;
-  workType: "movie" | "series";
-  title: string;
-  originalTitle: string | null;
-  overview: string | null;
-  posterPath: string | null;
-  releaseDate: string | null;
-  jpWatchPlatforms: TmdbWatchPlatform[];
-  hasJapaneseRelease: boolean;
-  rottenTomatoesScore?: number | null;
-};
+export type TmdbSearchResult = SharedTmdbSearchResult;
 
 export type TmdbLocalizedSearchMetadata = {
   title: string | null;
@@ -121,48 +115,13 @@ export type TmdbLocalizedSearchMetadata = {
   overview: string | null;
 };
 
-export type TmdbSeasonSelectionTarget = {
-  tmdbId: number;
-  tmdbMediaType: "tv";
-  workType: "season";
-  title: string;
-  originalTitle: string | null;
-  overview: string | null;
-  posterPath: string | null;
-  releaseDate: string | null;
-  seasonNumber: number;
-  episodeCount: number | null;
-  seriesTitle: string;
-};
+export type TmdbSeasonSelectionTarget = SharedTmdbSeasonSelectionTarget;
 
-export type TmdbSeasonOption = {
-  seasonNumber: number;
-  title: string;
-  overview: string | null;
-  posterPath: string | null;
-  releaseDate: string | null;
-  episodeCount: number | null;
-};
+export type TmdbSeasonOption = SharedTmdbSeasonOption;
 
-export type TmdbSelectionTarget = TmdbSearchResult | TmdbSeasonSelectionTarget;
+export type TmdbSelectionTarget = SharedTmdbSelectionTarget;
 
-export type TmdbWorkDetails = {
-  tmdbId: number;
-  tmdbMediaType: TmdbMediaType;
-  workType: "movie" | "series" | "season";
-  title: string;
-  originalTitle: string | null;
-  overview: string | null;
-  posterPath: string | null;
-  releaseDate: string | null;
-  genres: string[];
-  runtimeMinutes: number | null;
-  typicalEpisodeRuntimeMinutes: number | null;
-  episodeCount: number | null;
-  seasonCount: number | null;
-  seasonNumber: number | null;
-  imdbId?: string | null;
-};
+export type TmdbWorkDetails = SharedTmdbWorkDetails;
 
 export const TMDB_PROVIDER_ID_MAP: Record<number, string> = {
   8: "netflix",
