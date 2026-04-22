@@ -8,7 +8,9 @@
 - 変更後はコミットまで行い、pre-commit の通過を確認する。
 - pre-commit で自動修正できないエラーが出た場合は、その内容を修正して再コミットする。
 - `vp check` / `vp check --fix` を手動実行するのは、ユーザーが明示的に要求した場合、またはコミット失敗時の原因切り分けが必要な場合に限る。
-- 依存追加・削除、リファクタリング、ファイル削除の変更では `vp run knip` の実行を検討し、未使用 export / file / dependency が増えていないか確認する。
+- 依存追加・削除、リファクタリング、export の移動、ファイル削除、モジュール分割では、原則 `vp run knip` を実行し、未使用 export / file / dependency が増えていないか確認する。
+- TypeScript / TSX ファイル、型定義、`package.json`、`tsconfig*`、`vite.config*`、ビルド設定、テストコードの型に触れる変更では、`vp run build:analyze` の実行を検討し、PR の `analyze` job と同じ `tsc + analyze build` が通ることを確認する。
+- PR で `analyze` / `knip` の CI 失敗を踏んだ場合は、修正前にローカルでも `vp run build:analyze` / `vp run knip` を再現し、解消を確認してから push する。
 - テストがある変更では、関連する `vp test` を実行する。範囲が判断しづらい場合は `vp test` を実行する。
 - `main` には直接コミットしない。
 - 変更は作業ブランチ上でコミットし、PR 経由で `main` に取り込む。
@@ -63,7 +65,9 @@
 
 ```bash
 vp dev          # 開発サーバー起動
-vp build        # 本番ビルド（型チェック込み）
+vp build        # 本番ビルド
+vp run build    # tsc + 本番ビルド
+vp run build:analyze  # tsc + analyze build（PR の Bundle Analyze 相当）
 vp preview      # 本番ビルドのプレビュー
 vp check        # Lint（型チェックあり）
 vp check --fix  # Lint + 自動修正
