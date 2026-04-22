@@ -31,6 +31,22 @@ function resolveDropSide(pointerY: number, overRect: RectLike): "before" | "afte
   return pointerY < overRect.top + overRect.height / 2 ? "before" : "after";
 }
 
+function arrayMove<T>(array: readonly T[], from: number, to: number): T[] {
+  const result = array.slice();
+  const [item] = result.splice(from, 1);
+  result.splice(to, 0, item);
+  return result;
+}
+
+function reorderSameColumn(items: BacklogItem[], activeId: string, overId: string): BacklogItem[] {
+  const activeIdx = items.findIndex((item) => item.id === activeId);
+  const overIdx = items.findIndex((item) => item.id === overId);
+  if (activeIdx === -1 || overIdx === -1) {
+    return items;
+  }
+  return arrayMove(items, activeIdx, overIdx);
+}
+
 function getReorderedColumnItems(
   columnItems: BacklogItem[],
   activeId: string,
@@ -79,18 +95,6 @@ function moveItemToColumnTop(items: BacklogItem[], activeId: string, status: Bac
   const others = updatedItems.filter((item) => item.status !== status);
 
   return [...others, { ...activeItem, status }, ...columnItems];
-}
-
-function reorderWithinColumn(
-  items: BacklogItem[],
-  status: BacklogStatus,
-  activeId: string,
-  overId: string,
-  side: "before" | "after",
-) {
-  const columnItems = items.filter((item) => item.status === status);
-  const others = items.filter((item) => item.status !== status);
-  return [...others, ...getReorderedColumnItems(columnItems, activeId, overId, side)];
 }
 
 function moveToColumnEdge(items: BacklogItem[], activeId: string, status: BacklogStatus) {
@@ -168,13 +172,7 @@ export function resolveDragOverItems({
       return items;
     }
 
-    return reorderWithinColumn(
-      items,
-      overStatus,
-      activeId,
-      overId,
-      resolveDropSide(pointerY, overRect),
-    );
+    return reorderSameColumn(items, activeId, overId);
   }
 
   if (overId.startsWith("column:")) {

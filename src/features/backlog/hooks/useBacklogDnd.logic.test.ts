@@ -17,63 +17,51 @@ function createWatchingItemsFixture() {
 }
 
 describe("resolveDragOverItems", () => {
-  test("同列内では pointer 位置に応じて before/after を切り替える", () => {
+  test("同列内では active を over の index へ入れ替える", () => {
     const items = [
       createBacklogItem({ id: "item-1", sort_order: 1000 }),
       createBacklogItem({ id: "item-2", sort_order: 2000 }),
       createBacklogItem({ id: "item-3", sort_order: 3000 }),
     ];
 
-    // pointer Y=120 < over center=200 → before
-    const beforeItems = resolveDragOverItems({
+    const moveUp = resolveDragOverItems({
       items,
       activeId: "item-3",
       overId: "item-2",
-      overRect: makeLogicRect(100, 200),
-      pointerY: 120,
+      overRect: makeLogicRect(),
+      pointerY: 0,
       isMobileLayout: false,
     });
-    // pointer Y=260 > over center=200 → after
-    const afterItems = resolveDragOverItems({
+    const moveDown = resolveDragOverItems({
       items,
       activeId: "item-1",
       overId: "item-2",
-      overRect: makeLogicRect(100, 200),
-      pointerY: 260,
+      overRect: makeLogicRect(),
+      pointerY: 0,
       isMobileLayout: false,
     });
 
-    expect(beforeItems.map((item) => item.id)).toEqual(["item-1", "item-3", "item-2"]);
-    expect(afterItems.map((item) => item.id)).toEqual(["item-2", "item-1", "item-3"]);
+    expect(moveUp.map((item) => item.id)).toEqual(["item-1", "item-3", "item-2"]);
+    expect(moveDown.map((item) => item.id)).toEqual(["item-2", "item-1", "item-3"]);
   });
 
-  test("隣接要素への移動（1つ上・1つ下）が正しく動作する", () => {
+  test("同列内の隣接入れ替えは pointer が over 中心を超えていなくても成立する", () => {
+    // 回帰: sortable strategy の視覚シフトと閾値がズレて、小さなドラッグで入れ替わらなかった不具合
     const items = [
       createBacklogItem({ id: "item-1", sort_order: 1000 }),
       createBacklogItem({ id: "item-2", sort_order: 2000 }),
     ];
 
-    // item-1 を item-2 の下へ: pointer > over center → after
-    const moveDown = resolveDragOverItems({
+    const next = resolveDragOverItems({
       items,
       activeId: "item-1",
       overId: "item-2",
-      overRect: makeLogicRect(200, 100),
-      pointerY: 300,
-      isMobileLayout: false,
-    });
-    // item-2 を item-1 の上へ: pointer < over center → before
-    const moveUp = resolveDragOverItems({
-      items,
-      activeId: "item-2",
-      overId: "item-1",
-      overRect: makeLogicRect(100, 100),
-      pointerY: 50,
+      overRect: makeLogicRect(1000, 100),
+      pointerY: 0,
       isMobileLayout: false,
     });
 
-    expect(moveDown.map((item) => item.id)).toEqual(["item-2", "item-1"]);
-    expect(moveUp.map((item) => item.id)).toEqual(["item-2", "item-1"]);
+    expect(next.map((item) => item.id)).toEqual(["item-2", "item-1"]);
   });
 
   test.each([
