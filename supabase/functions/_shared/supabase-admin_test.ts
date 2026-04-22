@@ -3,31 +3,7 @@ import {
   _resetSupabaseAdminClientCacheForTesting,
   getSupabaseAdminClient,
 } from "./supabase-admin.ts";
-
-async function withEnv(values: Record<string, string | undefined>, run: () => Promise<void>) {
-  const previous = new Map<string, string | undefined>();
-
-  for (const [key, value] of Object.entries(values)) {
-    previous.set(key, Deno.env.get(key));
-    if (value === undefined) {
-      Deno.env.delete(key);
-    } else {
-      Deno.env.set(key, value);
-    }
-  }
-
-  try {
-    await run();
-  } finally {
-    for (const [key, value] of previous.entries()) {
-      if (value === undefined) {
-        Deno.env.delete(key);
-      } else {
-        Deno.env.set(key, value);
-      }
-    }
-  }
-}
+import { withEnv } from "./test-helpers.ts";
 
 Deno.test("getSupabaseAdminClient は SUPABASE_URL が無ければ null を返す", async () => {
   _resetSupabaseAdminClientCacheForTesting();

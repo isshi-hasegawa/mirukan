@@ -1,56 +1,6 @@
 import { assertEquals, assertRejects, assertThrows } from "jsr:@std/assert";
 import { extractRatings, fetchOmdbDetails, isDefinitiveOmdbMiss } from "./omdb.ts";
-
-async function withEnv(values: Record<string, string | undefined>, run: () => Promise<void>) {
-  const previous = new Map<string, string | undefined>();
-
-  for (const [key, value] of Object.entries(values)) {
-    previous.set(key, Deno.env.get(key));
-    if (value === undefined) {
-      Deno.env.delete(key);
-    } else {
-      Deno.env.set(key, value);
-    }
-  }
-
-  try {
-    await run();
-  } finally {
-    for (const [key, value] of previous.entries()) {
-      if (value === undefined) {
-        Deno.env.delete(key);
-      } else {
-        Deno.env.set(key, value);
-      }
-    }
-  }
-}
-
-async function withMockFetch(
-  handler: (url: URL, init?: RequestInit) => Response | Promise<Response>,
-  run: () => Promise<void>,
-) {
-  const originalFetch = globalThis.fetch;
-
-  globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
-    const url =
-      input instanceof Request ? new URL(input.url) : input instanceof URL ? input : new URL(input);
-    return await handler(url, init);
-  }) as typeof fetch;
-
-  try {
-    await run();
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
-}
-
-function jsonResponse(payload: unknown, init: ResponseInit = {}) {
-  return new Response(JSON.stringify(payload), {
-    status: init.status ?? 200,
-    headers: { "Content-Type": "application/json", ...init.headers },
-  });
-}
+import { jsonResponse, withEnv, withMockFetch } from "./test-helpers.ts";
 
 Deno.test("isDefinitiveOmdbMiss は未発見系エラーだけを true にする", () => {
   assertEquals(isDefinitiveOmdbMiss("Movie not found!"), true);
