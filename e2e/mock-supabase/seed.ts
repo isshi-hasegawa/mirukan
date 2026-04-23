@@ -1,0 +1,253 @@
+import { TEST_USER_ID } from "./constants.ts";
+import type { BacklogItem, Work } from "./types.ts";
+
+export function createSearchText(title: string) {
+  return title.trim().toLowerCase();
+}
+
+export function createWork(
+  overrides: Partial<Work> & Pick<Work, "id" | "title" | "source_type" | "work_type">,
+): Work {
+  return {
+    id: overrides.id,
+    created_by: overrides.created_by ?? TEST_USER_ID,
+    source_type: overrides.source_type,
+    tmdb_media_type: overrides.tmdb_media_type ?? null,
+    tmdb_id: overrides.tmdb_id ?? null,
+    work_type: overrides.work_type,
+    parent_work_id: overrides.parent_work_id ?? null,
+    title: overrides.title,
+    original_title: overrides.original_title ?? null,
+    search_text: overrides.search_text ?? createSearchText(overrides.title),
+    overview: overrides.overview ?? null,
+    poster_path: overrides.poster_path ?? null,
+    release_date: overrides.release_date ?? null,
+    runtime_minutes: overrides.runtime_minutes ?? null,
+    typical_episode_runtime_minutes: overrides.typical_episode_runtime_minutes ?? null,
+    duration_bucket: overrides.duration_bucket ?? null,
+    episode_count: overrides.episode_count ?? null,
+    season_count: overrides.season_count ?? null,
+    season_number: overrides.season_number ?? null,
+    genres: overrides.genres ?? [],
+    focus_required_score: overrides.focus_required_score ?? null,
+    background_fit_score: overrides.background_fit_score ?? null,
+    completion_load_score: overrides.completion_load_score ?? null,
+    imdb_id: overrides.imdb_id ?? null,
+    omdb_fetched_at: overrides.omdb_fetched_at ?? null,
+    rotten_tomatoes_score: overrides.rotten_tomatoes_score ?? null,
+    imdb_rating: overrides.imdb_rating ?? null,
+    imdb_votes: overrides.imdb_votes ?? null,
+    metacritic_score: overrides.metacritic_score ?? null,
+    last_tmdb_synced_at: overrides.last_tmdb_synced_at ?? null,
+    series_title: overrides.series_title ?? null,
+  };
+}
+
+export function createBacklogItem(
+  overrides: Partial<BacklogItem> & Pick<BacklogItem, "id" | "work_id" | "status" | "created_at">,
+): BacklogItem {
+  return {
+    id: overrides.id,
+    user_id: overrides.user_id ?? TEST_USER_ID,
+    work_id: overrides.work_id,
+    status: overrides.status,
+    primary_platform: overrides.primary_platform ?? null,
+    note: overrides.note ?? null,
+    sort_order: overrides.sort_order ?? 1000,
+    display_title: overrides.display_title ?? null,
+    created_at: overrides.created_at,
+  };
+}
+
+export const works = new Map<string, Work>([
+  [
+    "work-manual-movie",
+    createWork({
+      id: "work-manual-movie",
+      title: "遠い街の休日",
+      source_type: "manual",
+      work_type: "movie",
+      overview: "配信では見つからなかったので手動で積んだ、しっとり系のヒューマンドラマ。",
+      release_date: "2018-04-13",
+      runtime_minutes: 95,
+      duration_bucket: "long",
+      genres: ["Drama", "Family"],
+      focus_required_score: 50,
+      background_fit_score: 25,
+      completion_load_score: 25,
+    }),
+  ],
+  [
+    "work-manual-series",
+    createWork({
+      id: "work-manual-series",
+      title: "週末メモリーズ",
+      source_type: "manual",
+      work_type: "series",
+      overview: "あとで配信先を調べたい、雑談向きの軽めシリーズ。",
+      release_date: "2021-10-08",
+      typical_episode_runtime_minutes: 24,
+      duration_bucket: "short",
+      season_count: 10,
+      genres: ["Comedy"],
+      focus_required_score: 25,
+      background_fit_score: 75,
+      completion_load_score: 25,
+    }),
+  ],
+  [
+    "work-breaking-bad",
+    createWork({
+      id: "work-breaking-bad",
+      title: "ブレイキング・バッド",
+      source_type: "tmdb",
+      work_type: "series",
+      tmdb_media_type: "tv",
+      tmdb_id: 1396,
+      original_title: "Breaking Bad",
+      search_text: "ブレイキング・バッド breaking bad",
+      overview:
+        "A high school chemistry teacher turned meth producer navigates danger, pride, and family collapse.",
+      poster_path: "/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg",
+      release_date: "2008-01-20",
+      typical_episode_runtime_minutes: 47,
+      duration_bucket: "medium",
+      season_count: 5,
+      genres: ["Drama", "Crime"],
+      focus_required_score: 75,
+      background_fit_score: 0,
+      completion_load_score: 100,
+      imdb_id: "tt0903747",
+      omdb_fetched_at: "2026-04-01T00:00:00.000Z",
+      rotten_tomatoes_score: 96,
+      imdb_rating: 9.5,
+      imdb_votes: 2300000,
+      metacritic_score: 87,
+      last_tmdb_synced_at: "2026-04-01T00:00:00.000Z",
+    }),
+  ],
+  [
+    "work-breaking-bad-season2",
+    createWork({
+      id: "work-breaking-bad-season2",
+      title: "ブレイキング・バッド シーズン2",
+      source_type: "tmdb",
+      work_type: "season",
+      tmdb_media_type: "tv",
+      tmdb_id: 1396,
+      parent_work_id: "work-breaking-bad",
+      original_title: "Breaking Bad Season 2",
+      search_text: "ブレイキング・バッド season 2",
+      overview: "ウォルターとジェシーの選択がさらに重くなっていく第二シーズン。",
+      poster_path: "/eSzpy96DwBujGFj0xMbXBcGcfxX.jpg",
+      release_date: "2009-03-08",
+      typical_episode_runtime_minutes: 47,
+      duration_bucket: "medium",
+      episode_count: 13,
+      season_number: 2,
+      genres: ["Drama", "Crime"],
+      focus_required_score: 75,
+      background_fit_score: 0,
+      completion_load_score: 100,
+      imdb_id: "tt0903747",
+      omdb_fetched_at: "2026-04-01T00:00:00.000Z",
+      rotten_tomatoes_score: 100,
+      imdb_rating: 9.4,
+      imdb_votes: 500000,
+      metacritic_score: 90,
+      last_tmdb_synced_at: "2026-04-01T00:00:00.000Z",
+      series_title: "ブレイキング・バッド",
+    }),
+  ],
+  [
+    "work-matrix",
+    createWork({
+      id: "work-matrix",
+      title: "マトリックス",
+      source_type: "tmdb",
+      work_type: "movie",
+      tmdb_media_type: "movie",
+      tmdb_id: 603,
+      original_title: "The Matrix",
+      search_text: "マトリックス the matrix",
+      overview:
+        "A computer hacker learns about the true nature of reality and his role in the war against its controllers.",
+      poster_path: "/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg",
+      release_date: "1999-03-31",
+      runtime_minutes: 136,
+      duration_bucket: "very_long",
+      genres: ["Action", "Science Fiction"],
+      focus_required_score: 75,
+      background_fit_score: 25,
+      completion_load_score: 50,
+      imdb_id: "tt0133093",
+      omdb_fetched_at: "2026-04-01T00:00:00.000Z",
+      rotten_tomatoes_score: 83,
+      imdb_rating: 8.7,
+      imdb_votes: 2200000,
+      metacritic_score: 73,
+      last_tmdb_synced_at: "2026-04-01T00:00:00.000Z",
+    }),
+  ],
+]);
+
+export const backlogItems = new Map<string, BacklogItem>([
+  [
+    "backlog-stacked",
+    createBacklogItem({
+      id: "backlog-stacked",
+      work_id: "work-manual-movie",
+      status: "stacked",
+      note: "配信先不明。週末に腰を据えて観たい。",
+      created_at: "2026-04-10T00:00:00.000Z",
+    }),
+  ],
+  [
+    "backlog-want",
+    createBacklogItem({
+      id: "backlog-want",
+      work_id: "work-manual-series",
+      status: "want_to_watch",
+      note: "軽い気分の日に候補へ回しておく。",
+      created_at: "2026-04-11T00:00:00.000Z",
+    }),
+  ],
+  [
+    "backlog-watching",
+    createBacklogItem({
+      id: "backlog-watching",
+      work_id: "work-breaking-bad",
+      status: "watching",
+      primary_platform: "netflix",
+      note: "今月の平日夜に少しずつ進める。",
+      created_at: "2026-04-12T00:00:00.000Z",
+    }),
+  ],
+  [
+    "backlog-interrupted",
+    createBacklogItem({
+      id: "backlog-interrupted",
+      work_id: "work-breaking-bad-season2",
+      status: "interrupted",
+      primary_platform: "netflix",
+      note: "再開ポイント確認待ち。",
+      created_at: "2026-04-13T00:00:00.000Z",
+    }),
+  ],
+  [
+    "backlog-watched",
+    createBacklogItem({
+      id: "backlog-watched",
+      work_id: "work-matrix",
+      status: "watched",
+      primary_platform: "prime_video",
+      note: "視聴済みだけど比較用に残しているカード。",
+      created_at: "2026-04-14T00:00:00.000Z",
+    }),
+  ],
+]);
+
+export const idCounters = {
+  nextWorkId: 1,
+  nextBacklogItemId: 1,
+};
