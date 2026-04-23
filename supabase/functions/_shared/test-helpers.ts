@@ -1,3 +1,5 @@
+import { _resetSupabaseAdminClientCacheForTesting } from "./supabase-admin.ts";
+
 export async function withEnv(
   values: Record<string, string | undefined>,
   run: () => Promise<void>,
@@ -24,6 +26,23 @@ export async function withEnv(
       }
     }
   }
+}
+
+export async function withSupabaseAdminEnv(run: () => Promise<void>) {
+  _resetSupabaseAdminClientCacheForTesting();
+  await withEnv(
+    {
+      SUPABASE_URL: "http://localhost:54321",
+      SUPABASE_SERVICE_ROLE_KEY: "role-key",
+    },
+    async () => {
+      try {
+        await run();
+      } finally {
+        _resetSupabaseAdminClientCacheForTesting();
+      }
+    },
+  );
 }
 
 function resolveFetchUrl(input: string | URL | Request): URL {
