@@ -63,6 +63,7 @@
   "packageManager": "pnpm@10.33.2",
   "pnpm": {
     "allowBuilds": {
+      "deno": true,
       "msw": true
     },
     "overrides": {
