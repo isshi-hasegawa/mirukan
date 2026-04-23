@@ -3,7 +3,9 @@ export const PORT = Number(process.env.MOCK_SUPABASE_PORT || "55432");
 export const TEST_USER_EMAIL = process.env.TEST_USER_EMAIL || "akari@example.com";
 export const TEST_USER_SECRET = process.env.TEST_USER_SECRET || "ci-login-token";
 export const TEST_USER_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1";
-export const ACCESS_TOKEN = "mock-access-token";
+// auth-js decodes the access token before issuing authenticated requests in browser tests.
+export const ACCESS_TOKEN =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhYWFhYWFhYS1hYWFhLWFhYWEtYWFhYS1hYWFhYWFhYWFhYTEiLCJlbWFpbCI6ImFrYXJpQGV4YW1wbGUuY29tIiwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjo0MTAyNDQ0ODAwfQ.signature";
 export const REFRESH_TOKEN = "mock-refresh-token";
 export const TOKEN_EXPIRES_IN = 60 * 60;
 export const DEFAULT_RELEASE_DATE = "2025-02-02";
