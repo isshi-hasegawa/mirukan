@@ -14,6 +14,25 @@ vi.mock("../../../lib/auth-repository.ts", () => authRepositoryMock);
 
 setupTestLifecycle();
 
+async function submitLogin(
+  user: ReturnType<typeof userEvent.setup>,
+  email = "akari@example.com",
+  password = "password123",
+) {
+  await user.type(screen.getByLabelText("メールアドレス"), email);
+  await user.type(screen.getByLabelText("パスワード"), password);
+  await user.click(screen.getByText("ログイン", { selector: "button[type='submit']" }));
+}
+
+async function submitPasswordReset(
+  user: ReturnType<typeof userEvent.setup>,
+  email = "akari@example.com",
+) {
+  await user.click(screen.getByRole("button", { name: "パスワードを忘れた場合" }));
+  await user.type(screen.getByLabelText("メールアドレス"), email);
+  await user.click(screen.getByRole("button", { name: "リセットメールを送信" }));
+}
+
 describe("LoginPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -103,10 +122,7 @@ describe("LoginPage", () => {
 
     render(<LoginPage />);
 
-    await user.type(screen.getByLabelText("メールアドレス"), "akari@example.com");
-    await user.type(screen.getByLabelText("パスワード"), "password123");
-
-    await user.click(screen.getByText("ログイン", { selector: "button[type='submit']" }));
+    await submitLogin(user);
 
     expect(screen.getByRole("button", { name: "ログインしています..." })).toBeDisabled();
     expect(screen.getByLabelText("メールアドレス")).toBeDisabled();
@@ -129,10 +145,7 @@ describe("LoginPage", () => {
 
     render(<LoginPage />);
 
-    await user.type(screen.getByLabelText("メールアドレス"), "akari@example.com");
-    await user.type(screen.getByLabelText("パスワード"), "password123");
-
-    await user.click(screen.getByText("ログイン", { selector: "button[type='submit']" }));
+    await submitLogin(user);
 
     expect(
       await screen.findByText("メールアドレスまたはパスワードが正しくありません。"),
@@ -150,9 +163,7 @@ describe("LoginPage", () => {
 
     render(<LoginPage />);
 
-    await user.type(screen.getByLabelText("メールアドレス"), "akari@example.com");
-    await user.type(screen.getByLabelText("パスワード"), "password123");
-    await user.click(screen.getByText("ログイン", { selector: "button[type='submit']" }));
+    await submitLogin(user);
 
     expect(
       await screen.findByText(
@@ -235,9 +246,7 @@ describe("LoginPage", () => {
 
     render(<LoginPage showDevLoginHint={false} />);
 
-    await user.click(screen.getByRole("button", { name: "パスワードを忘れた場合" }));
-    await user.type(screen.getByLabelText("メールアドレス"), "akari@example.com");
-    await user.click(screen.getByRole("button", { name: "リセットメールを送信" }));
+    await submitPasswordReset(user);
 
     expect(authRepositoryMock.resetPasswordForEmail).toHaveBeenCalledWith("akari@example.com", {
       redirectTo: globalThis.location.origin,
@@ -256,9 +265,7 @@ describe("LoginPage", () => {
 
     render(<LoginPage showDevLoginHint={false} />);
 
-    await user.click(screen.getByRole("button", { name: "パスワードを忘れた場合" }));
-    await user.type(screen.getByLabelText("メールアドレス"), "akari@example.com");
-    await user.click(screen.getByRole("button", { name: "リセットメールを送信" }));
+    await submitPasswordReset(user);
     await screen.findByText("リセットメールを送信しました");
 
     await user.click(screen.getByRole("button", { name: "ログインへ戻る" }));
@@ -294,9 +301,7 @@ describe("LoginPage", () => {
 
     render(<LoginPage showDevLoginHint={false} />);
 
-    await user.click(screen.getByRole("button", { name: "パスワードを忘れた場合" }));
-    await user.type(screen.getByLabelText("メールアドレス"), "akari@example.com");
-    await user.click(screen.getByRole("button", { name: "リセットメールを送信" }));
+    await submitPasswordReset(user);
 
     expect(
       await screen.findByText(
