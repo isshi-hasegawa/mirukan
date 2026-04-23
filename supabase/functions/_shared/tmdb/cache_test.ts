@@ -6,12 +6,9 @@ import {
   readTmdbMetadataCache,
   writeTmdbMetadataCache,
 } from "./cache.ts";
+import { futureIso } from "./test-helpers.ts";
 import { jsonResponse, withEnv, withMockFetch, withSupabaseAdminEnv } from "../test-helpers.ts";
 import { _resetSupabaseAdminClientCacheForTesting } from "../supabase-admin.ts";
-
-function futureIso(offsetMs = 60_000) {
-  return new Date(Date.now() + offsetMs).toISOString();
-}
 
 Deno.test("TMDB cache helper は freshness と payload 正規化を判定する", () => {
   assertEquals(isCacheEntryFresh(null), false);

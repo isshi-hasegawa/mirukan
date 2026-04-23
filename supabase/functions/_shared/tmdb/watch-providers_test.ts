@@ -1,18 +1,7 @@
 import { assertEquals } from "jsr:@std/assert";
 import { checkJapaneseReleaseCached, fetchWatchProvidersJP } from "./watch-providers.ts";
-import { jsonResponse, withEnv, withMockFetch, withSupabaseAdminEnv } from "../test-helpers.ts";
-
-function futureIso(offsetMs = 60_000) {
-  return new Date(Date.now() + offsetMs).toISOString();
-}
-
-function pastIso(offsetMs = 60_000) {
-  return new Date(Date.now() - offsetMs).toISOString();
-}
-
-async function withSupabaseTmdbEnv(run: () => Promise<void>) {
-  await withEnv({ TMDB_API_KEY: "tmdb-test-key" }, () => withSupabaseAdminEnv(run));
-}
+import { futureIso, pastIso, withSupabaseTmdbEnv } from "./test-helpers.ts";
+import { jsonResponse, withMockFetch, withSupabaseAdminEnv } from "../test-helpers.ts";
 
 Deno.test("fetchWatchProvidersJP は fresh cache を正規化して返す", async () => {
   await withSupabaseAdminEnv(async () => {
