@@ -2,7 +2,7 @@ export type BacklogStatus = "stacked" | "want_to_watch" | "watching" | "interrup
 export type ViewingMode = "focus" | "thoughtful" | "quick" | "background";
 
 export type WorkType = "movie" | "series" | "season" | "game";
-export type SourceType = "tmdb" | "manual" | "igdb";
+type SourceType = "tmdb" | "manual" | "igdb";
 export type PrimaryPlatform =
   | "netflix"
   | "prime_video"
