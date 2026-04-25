@@ -3,7 +3,24 @@ export const PORT = Number(process.env.MOCK_SUPABASE_PORT || "55432");
 export const TEST_USER_EMAIL = process.env.TEST_USER_EMAIL || "akari@example.com";
 export const TEST_USER_SECRET = process.env.TEST_USER_SECRET || "ci-login-token";
 export const TEST_USER_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1";
-export const ACCESS_TOKEN = "mock-access-token";
+function encodeJwtSegment(value: Record<string, unknown>) {
+  return Buffer.from(JSON.stringify(value), "utf8").toString("base64url");
+}
+
+// auth-js decodes the token before issuing authenticated requests in browser tests.
+export function createMockAuthToken() {
+  return [
+    encodeJwtSegment({ alg: "HS256", typ: "JWT" }),
+    encodeJwtSegment({
+      sub: TEST_USER_ID,
+      email: TEST_USER_EMAIL,
+      role: "authenticated",
+      aud: "authenticated",
+      exp: 4_102_444_800,
+    }),
+    encodeJwtSegment({ testOnly: true }),
+  ].join(".");
+}
 export const REFRESH_TOKEN = "mock-refresh-token";
 export const TOKEN_EXPIRES_IN = 60 * 60;
 export const DEFAULT_RELEASE_DATE = "2025-02-02";
