@@ -10,7 +10,7 @@ export function pastIso(offsetMs = 60_000) {
 
 export async function withSupabaseTmdbEnv(
   run: () => Promise<void>,
-  options: { omdbApiKey?: string | undefined } = {},
+  options: { omdbApiKey?: string } = {},
 ) {
   await withEnv(
     {
