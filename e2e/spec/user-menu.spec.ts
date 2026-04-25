@@ -1,9 +1,15 @@
 import { expect, test } from "@playwright/test";
 
+const TEST_USER_EMAIL = process.env.TEST_USER_EMAIL || "akari@example.com";
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 test("ユーザーメニューからログアウトできる", async ({ page }) => {
   await page.goto("/");
 
-  await page.getByRole("button", { name: /akari@example.com/i }).click();
+  await page.getByRole("button", { name: new RegExp(escapeRegExp(TEST_USER_EMAIL), "i") }).click();
   await page.getByRole("menuitem", { name: "ログアウト" }).click();
 
   await expect(page.getByLabel("メールアドレス")).toBeVisible();

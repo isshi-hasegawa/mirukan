@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import {
-  ACCESS_TOKEN,
+  createMockAuthToken,
   REFRESH_TOKEN,
   TEST_USER_EMAIL,
   TEST_USER_ID,
@@ -25,7 +25,7 @@ export default async function globalSetup() {
               {
                 name: "sb-127-auth-token",
                 value: JSON.stringify({
-                  access_token: ACCESS_TOKEN,
+                  access_token: createMockAuthToken(),
                   token_type: "bearer",
                   expires_in: 3600,
                   expires_at: expiresAt,

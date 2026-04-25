@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import {
-  ACCESS_TOKEN,
+  createMockAuthToken,
   REFRESH_TOKEN,
   TEST_USER_EMAIL,
   TEST_USER_ID,
@@ -31,7 +31,7 @@ function createSessionResponse() {
   const expiresAt = Math.floor(Date.now() / 1000) + TOKEN_EXPIRES_IN;
 
   return {
-    access_token: ACCESS_TOKEN,
+    access_token: createMockAuthToken(),
     token_type: "bearer",
     expires_in: TOKEN_EXPIRES_IN,
     expires_at: expiresAt,
