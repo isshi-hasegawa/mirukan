@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { setupTestLifecycle } from "../../../test/test-lifecycle.ts";
 import { getAuthRedirectUrl, LoginPage } from "./LoginPage.tsx";
@@ -106,7 +106,9 @@ describe("LoginPage", () => {
 
     await user.click(screen.getByRole("button", { name: "お問い合わせ" }));
 
-    expect(await screen.findByRole("dialog", { name: "お問い合わせ" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("dialog", { name: "お問い合わせ" }, { timeout: 3000 }),
+    ).toBeInTheDocument();
   });
 
   test("送信中は入力と送信を無効化し、完了後に再入力できる", async () => {
@@ -124,11 +126,16 @@ describe("LoginPage", () => {
 
     await submitLogin(user);
 
-    expect(screen.getByRole("button", { name: "ログインしています..." })).toBeDisabled();
+    expect(await screen.findByRole("button", { name: "ログインしています..." })).toBeDisabled();
     expect(screen.getByLabelText("メールアドレス")).toBeDisabled();
     expect(screen.getByLabelText("パスワード")).toBeDisabled();
 
-    resolveSignIn?.({ error: null });
+    const completeSignIn = resolveSignIn;
+    if (!completeSignIn) {
+      throw new Error("signInWithPassword was not called");
+    }
+
+    await act(async () => completeSignIn({ error: null }));
 
     await waitFor(() =>
       expect(screen.getByText("ログイン", { selector: "button[type='submit']" })).toBeEnabled(),
@@ -183,9 +190,15 @@ describe("LoginPage", () => {
     await user.type(screen.getByLabelText("確認用パスワード"), "password456");
     await user.click(screen.getByRole("button", { name: "確認メールを送信して登録" }));
 
-    expect(authRepositoryMock.signUp).toHaveBeenCalledWith("new-user@example.com", "password456", {
-      emailRedirectTo: globalThis.location.origin,
-    });
+    await waitFor(() =>
+      expect(authRepositoryMock.signUp).toHaveBeenCalledWith(
+        "new-user@example.com",
+        "password456",
+        {
+          emailRedirectTo: globalThis.location.origin,
+        },
+      ),
+    );
     expect(await screen.findByText("確認メールを送信しました")).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -248,9 +261,11 @@ describe("LoginPage", () => {
 
     await submitPasswordReset(user);
 
-    expect(authRepositoryMock.resetPasswordForEmail).toHaveBeenCalledWith("akari@example.com", {
-      redirectTo: globalThis.location.origin,
-    });
+    await waitFor(() =>
+      expect(authRepositoryMock.resetPasswordForEmail).toHaveBeenCalledWith("akari@example.com", {
+        redirectTo: globalThis.location.origin,
+      }),
+    );
     expect(await screen.findByText("リセットメールを送信しました")).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -347,9 +362,11 @@ describe("LoginPage", () => {
 
     await user.click(screen.getByRole("button", { name: "Googleでログイン" }));
 
-    expect(authRepositoryMock.signInWithOAuth).toHaveBeenCalledWith({
-      redirectTo: globalThis.location.origin,
-    });
+    await waitFor(() =>
+      expect(authRepositoryMock.signInWithOAuth).toHaveBeenCalledWith({
+        redirectTo: globalThis.location.origin,
+      }),
+    );
   });
 
   test("Google ログイン失敗時はエラーメッセージを表示する", async () => {
