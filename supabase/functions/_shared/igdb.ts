@@ -132,7 +132,7 @@ const DETAILS_FIELDS = [
 ].join(",");
 
 function escapeIgdbString(value: string): string {
-  return value.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
+  return value.replaceAll("\\", String.raw`\\`).replaceAll('"', '\\"');
 }
 
 export function buildIgdbSearchBody(query: string, limit = 20): string {

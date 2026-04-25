@@ -14,6 +14,12 @@ import {
 } from "./igdb.ts";
 import { jsonResponse } from "./test-helpers.ts";
 
+function fetchInputUrl(input: string | URL | Request): string {
+  if (typeof input === "string") return input;
+  if (input instanceof URL) return input.toString();
+  return input.url;
+}
+
 function createContext(
   fetchImpl: typeof fetch,
   options: { tokenSequence?: string[] } = {},
@@ -63,7 +69,7 @@ Deno.test("unixSecondsToIsoDate は秒を YYYY-MM-DD に変換する", () => {
 Deno.test("buildIgdbSearchBody はクエリをエスケープしてカテゴリで絞る", () => {
   assertEquals(
     buildIgdbSearchBody('Zelda "BOTW"'),
-    `fields id,name,summary,cover.image_id,first_release_date,platforms.slug; search "Zelda \\"BOTW\\""; where category = (0,8,9,10,11); limit 20;`,
+    String.raw`fields id,name,summary,cover.image_id,first_release_date,platforms.slug; search "Zelda \"BOTW\""; where category = (0,8,9,10,11); limit 20;`,
   );
 });
 
@@ -105,9 +111,7 @@ Deno.test("callIgdbEndpoint は 401 で 1 度だけ force refresh して再試�
   let calls = 0;
   const fetchImpl = (async (input: string | URL | Request) => {
     calls += 1;
-    const url =
-      typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
-    assertEquals(url, "https://api.igdb.com/v4/games");
+    assertEquals(fetchInputUrl(input), "https://api.igdb.com/v4/games");
     if (calls === 1) {
       return new Response("Unauthorized", { status: 401 });
     }
@@ -138,9 +142,7 @@ Deno.test("callIgdbEndpoint は連続 401 で例外を投げる", async () => {
 
 Deno.test("searchIgdbWorks は IGDB レスポンスを IgdbSearchResult[] に変換する", async () => {
   const fetchImpl = (async (input: string | URL | Request, init?: RequestInit) => {
-    const url =
-      typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
-    assertEquals(url, "https://api.igdb.com/v4/games");
+    assertEquals(fetchInputUrl(input), "https://api.igdb.com/v4/games");
     assertEquals(init?.method, "POST");
     return jsonResponse([
       {
