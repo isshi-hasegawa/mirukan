@@ -62,7 +62,14 @@ describe("useTmdbSearchRequest", () => {
   });
 
   test("推薦元は watched を優先しつつ Fisher-Yates でシャッフルする", async () => {
-    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0);
+    const getRandomValuesSpy = vi
+      .spyOn(globalThis.crypto, "getRandomValues")
+      .mockImplementation((array) => {
+        if (array instanceof Uint32Array) {
+          array[0] = 0;
+        }
+        return array;
+      });
 
     renderHook(() =>
       useTmdbSearchRequest({
@@ -88,7 +95,7 @@ describe("useTmdbSearchRequest", () => {
       { tmdbId: 3, tmdbMediaType: "movie" },
     ]);
 
-    randomSpy.mockRestore();
+    getRandomValuesSpy.mockRestore();
   });
 
   test("handleQueryChange でクエリ入力後、デバウンス経過で searchTmdbWorks が呼ばれる", async () => {
