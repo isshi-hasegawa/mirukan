@@ -79,6 +79,10 @@ const sharedSeasonOptions: TmdbSeasonOption[] = [
 const TEST_USER_ID = "user-1";
 const EXISTING_WORK_ID = "existing-work";
 
+function daysAgo(days: number) {
+  return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+}
+
 function createOmdbDetails() {
   return {
     rottenTomatoesScore: 93,
@@ -148,8 +152,8 @@ function setExistingSeriesWork() {
       title: "テストシリーズ",
       original_title: "Test Series",
       search_text: "test series",
-      last_tmdb_synced_at: "2026-03-31T00:00:00.000Z",
-      omdb_fetched_at: "2026-04-08T00:00:00.000Z",
+      last_tmdb_synced_at: daysAgo(1),
+      omdb_fetched_at: daysAgo(1),
       imdb_id: "tt0123456",
       episode_count: null,
       season_number: null,
@@ -318,8 +322,8 @@ describe("upsertTmdbWork", () => {
 
   test("十分新しい既存作品は再同期せず再利用する", async () => {
     setExistingMovieWork({
-      last_tmdb_synced_at: "2026-03-31T00:00:00.000Z",
-      omdb_fetched_at: "2026-04-08T00:00:00.000Z",
+      last_tmdb_synced_at: daysAgo(1),
+      omdb_fetched_at: daysAgo(1),
       imdb_id: "tt0123456",
     });
 
